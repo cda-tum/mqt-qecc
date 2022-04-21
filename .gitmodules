@@ -1,0 +1,5 @@
+[submodule "external/googletest"]
+	path = external/googletest
+	url = git@github.com:google/googletest.git
+	branch = main
+	shallow = true
