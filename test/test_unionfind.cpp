@@ -13,5 +13,4 @@ protected:
 TEST_F(UnionFindTest, CheckEqualWhenEqualRandomCircuits) {
 
     Decoder decoder;
-    decoder.main();
 }

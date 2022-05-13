@@ -1,7 +1,9 @@
 # main project library
 add_library(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/Decoder.cpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp)
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/ComponentTree.hpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)
