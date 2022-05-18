@@ -85,7 +85,7 @@ std::vector<std::shared_ptr<TreeNode>> Decoder::decode(std::set<std::shared_ptr<
                     auto nbrIt    = nbrs.begin();
                     auto end      = nbrs.end();
                     while (nbrIt != end) {
-                        if (currRoot != TreeNode::Find(*nbrIt)) {
+                        if (*currRoot != *TreeNode::Find(*nbrIt)) {
                             // if we find one neighbour that is not in the same component the node is in the boundary
                             iter++;
                             goto next;
