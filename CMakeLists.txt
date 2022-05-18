@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14...3.22)
 project(qunionfind
         LANGUAGES CXX
         VERSION 0.1.0
-        DESCRIPTION "A Union-Find Decoder for Quantum LDPC codes"
+        DESCRIPTION "Improved Union-Find Decoder for Quantum LDPC codes"
         )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -52,6 +52,7 @@ add_subdirectory(src)
 
 # add test code
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR BUILD_UNION_FIND_TESTS)
+    message(add test)
     if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/googletest/CMakeLists.txt")
         message(FATAL_ERROR "GoogleTest submodule not cloned properly. Please run `git submodule update --init --recursive` from the main project directory")
     endif ()

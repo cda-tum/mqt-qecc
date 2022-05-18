@@ -25,7 +25,8 @@ macro(package_add_test TESTNAME)
     set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
 endmacro()
 
-package_add_test(${PROJECT_NAME}_test ${CMAKE_CURRENT_SOURCE_DIR}/test_unionfind.cpp)
+package_add_test(${PROJECT_NAME}_test
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_decoding_simulation.cpp)
 
 add_custom_command(TARGET ${PROJECT_NAME}_test
         POST_BUILD

@@ -4,25 +4,26 @@
 
 #include "Code.hpp"
 #include "TreeNode.hpp"
+#include "Codes.hpp"
 
+#include <utility>
 #include <vector>
 
 #ifndef QUNIONFIND_DECODER_HPP
-    #define QUNIONFIND_DECODER_HPP
+#define QUNIONFIND_DECODER_HPP
 
-#endif //QUNIONFIND_DECODER_HPP
 
 class Decoder {
 public:
-    std::vector<TreeNode> decode(std::set<TreeNode>& syndrome);
+    explicit Decoder(Code& code):
+        code(code) {}
+    std::vector<std::shared_ptr<TreeNode>> decode(std::set<std::shared_ptr<TreeNode>>& syndrome); // todo set or vector more efficient?
 
 private:
     Code code;
-
-    bool                  isValidComponent(const TreeNode& component);
-    std::vector<TreeNode> erasureDecoder(std::vector<TreeNode>& erasuree);
-
-    bool                     existsInvalidComponent(std::vector<TreeNode>& vector1);
-    std::vector<std::size_t> peelingDecoder(std::vector<TreeNode>& erasure, std::set<TreeNode>& syndrome);
-    void                     extractValidComponents(std::set<TreeNode>& components, std::vector<TreeNode>& erasure);
+    bool                  isValidComponent(const std::shared_ptr<TreeNode>& component);
+    std::vector<std::shared_ptr<TreeNode>> erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasuree);
+    void                     extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure);
+    std::vector<size_t>                    peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
 };
+#endif //QUNIONFIND_DECODER_HPP
