@@ -56,7 +56,6 @@ public:
      * Merge two trees with given roots
      */
     static void Union(std::shared_ptr<TreeNode>& tree1, std::shared_ptr<TreeNode>& tree2) {
-        std::cout << "in union" << std::endl;
         auto root1 = Find(tree1);
         auto root2 = Find(tree2);
 
@@ -79,6 +78,9 @@ public:
             second->checkVertices.insert(cv);
         }
         first->checkVertices.clear();
+        if(first->isCheck){
+            first->checkVertices.insert(first->vertexIdx);
+        }
     }
 
     /*TreeNode& operator=(const TreeNode& other) {

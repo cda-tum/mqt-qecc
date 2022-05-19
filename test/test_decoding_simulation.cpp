@@ -57,11 +57,6 @@ TEST(UnionFindSimulation, SteaneCodeDecoding) {
         }
     }
     std::cout << "s component " << syndrComponents << std::endl;
-    try {
-        auto estimate = decoder.decode(syndrComponents);
-        std::cout<< "estim " << estimate << std::endl;
-
-    }catch(std::exception& e){
-        std::cout << e.what() << std::endl;
-    }
+    auto estim = decoder.decode(syndrComponents);
+    std::cout << estim << std::endl;
 }

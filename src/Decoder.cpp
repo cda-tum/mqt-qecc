@@ -13,12 +13,12 @@
 std::vector<std::shared_ptr<TreeNode>> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
     auto                                   components = syndrome;
     std::vector<std::shared_ptr<TreeNode>> erasure;
-    std::map<std::size_t, bool>            presentMap{}; // for step 4
 
     while (!components.empty()) {
         for (size_t i = 0; i < components.size(); i++) {
             // Step 1 growth // todo factor this out in order to compare different variants of growth
-            std::vector<std::pair<std::shared_ptr<TreeNode>, std::shared_ptr<TreeNode>>> fusionEdges;
+            std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
+            std::map<std::size_t, bool>                      presentMap{}; // for step 4
             for (auto& component: components) {
                 presentMap.insert(std::make_pair(component->vertexIdx, true));
                 // at this point we can assume that component represents root of the component
@@ -26,9 +26,9 @@ std::vector<std::shared_ptr<TreeNode>> Decoder::decode(std::set<std::shared_ptr<
                 auto bndryNodes = component->boundaryVertices;
 
                 for (const auto& bndryNode: bndryNodes) {
-                    auto nbrs = code.tannerGraph.getNeighbours(bndryNode);
+                    auto nbrs = code.tannerGraph.getNeighboursIdx(bndryNode);
                     for (auto& nbr: nbrs) {
-                        fusionEdges.emplace_back(std::pair(code.tannerGraph.getNodeForId(bndryNode), nbr));
+                        fusionEdges.emplace_back(std::pair(bndryNode, nbr));
                     }
                 }
             }
@@ -36,8 +36,10 @@ std::vector<std::shared_ptr<TreeNode>> Decoder::decode(std::set<std::shared_ptr<
             // Step 2 Fusion of clusters
             auto eIt = fusionEdges.begin();
             while (eIt != fusionEdges.end()) {
-                auto root1 = TreeNode::Find(eIt->first);
-                auto root2 = TreeNode::Find(eIt->second);
+                auto n1    = code.tannerGraph.getNodeForId(eIt->first);
+                auto n2    = code.tannerGraph.getNodeForId(eIt->second);
+                auto root1 = TreeNode::Find(n1);
+                auto root2 = TreeNode::Find(n2);
 
                 //compares vertexIdx only
                 if (*root1 == *root2) {
@@ -80,7 +82,7 @@ std::vector<std::shared_ptr<TreeNode>> Decoder::decode(std::set<std::shared_ptr<
             for (auto& component: components) {
                 auto iter = component->boundaryVertices.begin();
                 while (iter != component->boundaryVertices.end()) {
-                    auto nbrs = code.tannerGraph.getNeighbours(*iter);
+                    auto nbrs     = code.tannerGraph.getNeighbours(*iter);
                     auto currNode = code.tannerGraph.getNodeForId(*iter);
                     auto currRoot = TreeNode::Find(currNode);
                     auto nbrIt    = nbrs.begin();
@@ -272,23 +274,27 @@ void Decoder::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& compon
         if (isValidComponent(*it)) {
             erasure.emplace_back(*it);
             components.erase(it++);
-        } else{
+        } else {
             it++;
         }
     }
 }
+
+// for each check node verify that there is no neighbour that is in the boundary of the component
+// if there is no neighbour in the boundary for each check vertex the check is covered by a node in Int TODO prove this in paper
 bool Decoder::isValidComponent(const std::shared_ptr<TreeNode>& component) {
-    std::vector<bool> valid(component->clusterSize);
+    std::vector<bool> valid(component->checkVertices.size());
     std::size_t       i = 0;
     for (const auto& checkVertex: component->checkVertices) {
         auto nbrs = code.tannerGraph.getNeighbours(checkVertex);
 
         for (auto& nbr: nbrs) {
             if (std::find(component->boundaryVertices.begin(), component->boundaryVertices.end(), nbr->vertexIdx) == component->boundaryVertices.end()) {
-                valid.at(i++) = true;
+                valid.at(i) = true;
                 break;
             }
         }
+        i++;
     }
-    return std::all_of(valid.begin(), valid.end(), [](bool i) { return !i; });
+    return std::all_of(valid.begin(), valid.end(), [](bool i) { return i; });
 }
