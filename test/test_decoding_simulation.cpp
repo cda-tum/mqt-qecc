@@ -52,13 +52,16 @@ TEST(UnionFindSimulation, SteaneCodeDecoding) {
         if(syndr.at(i)){
             auto snode = code.tannerGraph.adjListNodes.at(i+code.getN()).at(0);
             snode->isCheck = true;
-            snode->clusterSize = 1;
-            snode->checkVertices.insert(snode);
-            snode->boundaryVertices.insert(snode);
+            snode->checkVertices.insert(snode->vertexIdx);
             syndrComponents.insert(snode);
         }
     }
     std::cout << "s component " << syndrComponents << std::endl;
-    auto estimate = decoder.decode(syndrComponents);
-    std::cout<< "estim " << estimate << std::endl;
+    try {
+        auto estimate = decoder.decode(syndrComponents);
+        std::cout<< "estim " << estimate << std::endl;
+
+    }catch(std::exception& e){
+        std::cout << e.what() << std::endl;
+    }
 }

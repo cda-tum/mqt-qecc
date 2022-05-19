@@ -19,10 +19,20 @@ struct TannerGraph {
     std::vector<std::vector<bool>>                      adjMatrix;
     std::vector<std::vector<std::shared_ptr<TreeNode>>> adjListNodes;
 
+    std::shared_ptr<TreeNode> getNodeForId(const std::size_t vertexId){
+        return adjListNodes.at(vertexId).at(0);
+    }
     std::vector<std::shared_ptr<TreeNode>> getNeighbours(const std::shared_ptr<TreeNode>& node) {
         std::vector<std::shared_ptr<TreeNode>> result;
         for (size_t i = 1; i < adjListNodes.at(node->vertexIdx).size(); i++) { // at pos 0 is node itself
             result.emplace_back(adjListNodes.at(node->vertexIdx).at(i));
+        }
+        return result;
+    }
+    std::vector<std::shared_ptr<TreeNode>> getNeighbours(const std::size_t vertexId) {
+        std::vector<std::shared_ptr<TreeNode>> result;
+        for (size_t i = 1; i < adjListNodes.at(vertexId).size(); i++) { // at pos 0 is node itself
+            result.emplace_back(adjListNodes.at(vertexId).at(i));
         }
         return result;
     }
@@ -58,24 +68,28 @@ public:
         std::size_t                                         dim      = nrChecks + nrData;
         std::vector<std::vector<bool>>                      adjMatrBool(dim); // todo this contains bool values only not adjacency list check alg for errors
         std::vector<std::vector<std::shared_ptr<TreeNode>>> adjLstNodes(dim);
-
+        std::map<std::size_t, std::shared_ptr<TreeNode>> nodeMap;
+        for (size_t i = 0; i < dim; i++) {
+            std::shared_ptr<TreeNode> n = std::make_shared<TreeNode>(TreeNode(i));
+            nodeMap.insert(std::make_pair(i, n));
+        }
         for (size_t i = 0; i < dim; i++) {
             std::vector<bool>                      rowBool(dim);
             std::vector<std::shared_ptr<TreeNode>> nbrList;
             if (i >= dim - nrChecks) {
                 // set check true
-                TreeNode node = TreeNode(i);
-                node.isCheck  = true;
-                nbrList.emplace_back(std::make_shared<TreeNode>(node));
+                auto node = nodeMap.at(i);
+                node->isCheck = true;
+                nbrList.emplace_back(node);
             } else {
-                nbrList.emplace_back(std::make_shared<TreeNode>(i)); // adjacency list of node n contains n in first position
+                nbrList.emplace_back(nodeMap.at(i)); // adjacency list of node n contains n in first position
             }
             if (i < dim - nrChecks) {
                 for (size_t j = 0; j < nrChecks; j++) {
                     auto val               = Hx.pcm.at(j).at(i);
                     rowBool.at(nrData + j) = val;
                     if (val) {
-                        nbrList.emplace_back(std::make_shared<TreeNode>(TreeNode(nrData + j)));
+                        nbrList.emplace_back(nodeMap.at(nrData + j));
                     }
                 }
             } else {
@@ -83,7 +97,7 @@ public:
                     auto val      = Hx.pcm.at(i - nrData).at(j);
                     rowBool.at(j) = val;
                     if (val) {
-                        nbrList.emplace_back(std::make_shared<TreeNode>(TreeNode(j))); // insert index of vertex here to generate adjacency list containing the nodes
+                        nbrList.emplace_back(nodeMap.at(j)); // insert index of vertex here to generate adjacency list containing the nodes
                     }
                 }
             }
