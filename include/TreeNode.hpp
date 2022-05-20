@@ -18,8 +18,11 @@ public:
     std::shared_ptr<TreeNode>              parent    = nullptr;
     std::vector<std::shared_ptr<TreeNode>> children{};
     size_t                                 clusterSize = 1;
-    std::set<std::size_t>    boundaryVertices{};
-    std::set<std::size_t>    checkVertices{};
+    std::set<std::size_t>                  boundaryVertices{};
+    std::set<std::size_t>                  checkVertices{};
+    // for interior calculation
+    std::set<std::size_t> markedNeighbours{};
+    bool                  marked = false;
 
     TreeNode():
         TreeNode(-1) {}
@@ -78,7 +81,7 @@ public:
             second->checkVertices.insert(cv);
         }
         first->checkVertices.clear();
-        if(first->isCheck){
+        if (first->isCheck) {
             first->checkVertices.insert(first->vertexIdx);
         }
     }

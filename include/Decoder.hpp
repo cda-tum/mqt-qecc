@@ -17,12 +17,12 @@ class Decoder {
 public:
     explicit Decoder(Code& code):
         code(code) {}
-    std::vector<std::shared_ptr<TreeNode>> decode(std::set<std::shared_ptr<TreeNode>>& syndrome); // todo set or vector more efficient?
+    std::vector<std::size_t> decode(std::set<std::shared_ptr<TreeNode>>& syndrome); // todo set or vector more efficient?
 
 private:
     Code code;
     bool                  isValidComponent(const std::shared_ptr<TreeNode>& component);
-    std::vector<std::shared_ptr<TreeNode>> erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasuree);
+    std::vector<std::size_t> erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasuree);
     void                     extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure);
     std::vector<size_t>                    peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
 };
