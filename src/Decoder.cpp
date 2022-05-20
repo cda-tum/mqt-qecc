@@ -108,7 +108,7 @@ std::vector<std::size_t> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& sy
             extractValidComponents(components, erasure);
         }
     }
-    return erasureDecoder(erasure);
+    return peelingDecoder(erasure, syndrome);
 }
 
 std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure) {
@@ -203,9 +203,10 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
 }
 
 std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
-    std::set<std::size_t> eras;
+    std::set<std::size_t> erasureRoots{};
+    std::set<std::size_t> erasureVertices;
     for (auto& i: erasure) {
-        eras.insert(i->vertexIdx);
+        erasureRoots.insert(i->vertexIdx);
     }
     std::set<std::size_t> syndr;
     for (const auto& s: syndrome) {
@@ -213,62 +214,68 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
     }
 
     std::vector<std::size_t> result;
-
     // compute SF
     std::vector<std::set<std::pair<std::size_t, std::size_t>>> spanningForest;
     std::vector<std::set<std::size_t>>                         forestNodes;
     std::set<std::size_t>                                      visited;
-    std::size_t                                                idx          = 0;
     bool                                                       currNodeFlag = true;
-    for (auto& currCompRoot: eras) {
-        std::queue<std::size_t> queue;
+    for (auto& currCompRoot: erasureRoots) {
+        std::queue<std::size_t>                       queue;
+        std::set<std::pair<std::size_t, std::size_t>> tree;
+        std::set<std::size_t>                         treeVertices;
         queue.push(currCompRoot);
+        visited.insert(currCompRoot);
 
         while (!queue.empty()) {
             auto currV = queue.front();
             queue.pop();
             auto nbrs = code.tannerGraph.getNeighboursIdx(currV);
             for (auto& nbr: nbrs) {
-                if (!visited.contains(nbr)) {
+                auto t1 = code.tannerGraph.getNodeForId(nbr);
+                auto t2 = code.tannerGraph.getNodeForId(currV);
+                // nbrs we are looking at have to be in same erasure component, check with Find
+                if ((TreeNode::Find(t1) == TreeNode::Find(t2)) && !visited.contains(nbr)) {
                     visited.insert(nbr);
                     queue.push(nbr);
-                    spanningForest.at(idx).insert(std::make_pair(currV, nbr));
+                    tree.insert(std::make_pair(currV, nbr));
                     if (currNodeFlag) { // avoid adding currV multiple times, maybe theres a more elegant way to do this
-                        forestNodes.at(idx).emplace(nbr);
+                        treeVertices.insert(nbr);
                         currNodeFlag = false;
                     }
                 }
             }
             currNodeFlag = true;
         }
-        idx++;
+        spanningForest.emplace_back(tree);
+        forestNodes.emplace_back(treeVertices);
     }
     std::size_t                                                idxx = 0;
     std::vector<std::set<std::pair<std::size_t, std::size_t>>> pendantEdges;
 
     // compute pendant vertices of SF
     for (const auto& tree: spanningForest) {
+        std::set<std::pair<std::size_t, std::size_t>> pendantETree;
         for (const auto& [v, w]: tree) {
             if (!forestNodes.at(idxx).contains(v)) {
-                pendantEdges.at(0).insert(std::make_pair(v, w));
+                pendantETree.insert(std::make_pair(v, w));
             } else if (!forestNodes.at(idxx).contains(w)) {
-                pendantEdges.at(0).insert(std::make_pair(w, v));
+                pendantETree.insert(std::make_pair(w, v));
             }
         }
-        idxx++;
+        pendantEdges.emplace_back(pendantETree);
     }
 
     // peeling
     for (std::set<std::pair<std::size_t, std::size_t>>& tree: spanningForest) {
         while (!tree.empty()) {
-            for (auto& [u, w]: tree) {
-                tree.erase(std::make_pair(u, w));
+            auto tIt = tree.begin();
+            while (tIt != tree.end()) {
                 // pendant vertex is always left one
-                if (syndr.contains(u)) {
+                if (syndr.contains(tIt->first)) {
                     // R1
-                    result.emplace_back(w);
-                    for (auto const& n: code.tannerGraph.getNeighboursIdx(w)) {
-                        if (tree.contains(std::make_pair(w, n)) || tree.contains(std::make_pair(n, w))) {
+                    result.emplace_back(tIt->second);
+                    for (auto const& n: code.tannerGraph.getNeighboursIdx(tIt->second)) {
+                        if (tree.contains(std::make_pair(tIt->second, n)) || tree.contains(std::make_pair(n, tIt->second))) {
                             if (syndr.contains(n)) {
                                 syndr.erase(n);
                             } else {
@@ -276,7 +283,8 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
                             }
                         }
                     }
-                } // R2: else do nothing
+                } // R2: else remove and do nothing
+                tree.erase(tIt++);
             }
         }
     }
