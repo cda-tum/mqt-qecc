@@ -108,10 +108,10 @@ std::vector<std::size_t> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& sy
             extractValidComponents(components, erasure);
         }
     }
-    return peelingDecoder(erasure, syndrome);
+    return erasureDecoder(erasure, syndrome);
 }
 
-std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure) {
+std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
@@ -203,7 +203,7 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
 }
 
 std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
-    std::set<std::size_t> erasureRoots{};
+    std::set<std::size_t> erasureRoots;
     std::set<std::size_t> erasureVertices;
     for (auto& i: erasure) {
         erasureRoots.insert(i->vertexIdx);
@@ -216,16 +216,15 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
     std::vector<std::size_t> result;
     // compute SF
     std::vector<std::set<std::pair<std::size_t, std::size_t>>> spanningForest;
-    std::vector<std::set<std::size_t>>                         forestNodes;
+    std::vector<std::set<std::size_t>>                         forestVertices;
     std::set<std::size_t>                                      visited;
-    bool                                                       currNodeFlag = true;
     for (auto& currCompRoot: erasureRoots) {
         std::queue<std::size_t>                       queue;
         std::set<std::pair<std::size_t, std::size_t>> tree;
         std::set<std::size_t>                         treeVertices;
         queue.push(currCompRoot);
         visited.insert(currCompRoot);
-
+        treeVertices.insert(currCompRoot);
         while (!queue.empty()) {
             auto currV = queue.front();
             queue.pop();
@@ -233,62 +232,106 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
             for (auto& nbr: nbrs) {
                 auto t1 = code.tannerGraph.getNodeForId(nbr);
                 auto t2 = code.tannerGraph.getNodeForId(currV);
-                // nbrs we are looking at have to be in same erasure component, check with Find
-                if ((TreeNode::Find(t1) == TreeNode::Find(t2)) && !visited.contains(nbr)) {
-                    visited.insert(nbr);
-                    queue.push(nbr);
-                    tree.insert(std::make_pair(currV, nbr));
-                    if (currNodeFlag) { // avoid adding currV multiple times, maybe theres a more elegant way to do this
+                if (!visited.contains(nbr)) {
+                    //add all neighbours to edges to be able to identify pendant ones in next step
+                    // nbrs we are looking at have to be in same erasure component, check with Find
+                    if (TreeNode::Find(t1) == TreeNode::Find(t2)) {
+                        visited.insert(nbr);
+                        queue.push(nbr);
                         treeVertices.insert(nbr);
-                        currNodeFlag = false;
+                        treeVertices.insert(currV);
+                        tree.insert(std::make_pair(currV, nbr));
                     }
                 }
             }
-            currNodeFlag = true;
         }
         spanningForest.emplace_back(tree);
-        forestNodes.emplace_back(treeVertices);
+        forestVertices.emplace_back(treeVertices);
     }
-    std::size_t                                                idxx = 0;
-    std::vector<std::set<std::pair<std::size_t, std::size_t>>> pendantEdges;
+    std::size_t idxx = 0;
+
+    std::vector<std::set<std::size_t>> boundaryVertices;
+    std::size_t                        intTreeIdx = 0;
 
     // compute pendant vertices of SF
-    for (const auto& tree: spanningForest) {
-        std::set<std::pair<std::size_t, std::size_t>> pendantETree;
-        for (const auto& [v, w]: tree) {
-            if (!forestNodes.at(idxx).contains(v)) {
-                pendantETree.insert(std::make_pair(v, w));
-            } else if (!forestNodes.at(idxx).contains(w)) {
-                pendantETree.insert(std::make_pair(w, v));
+    for (const auto& vertices: forestVertices) {
+        std::set<std::size_t> pendants;
+        for (auto& v: vertices) {
+            auto nbrs = code.tannerGraph.getNeighboursIdx(v);
+            for (auto& n: nbrs) {
+                if (!vertices.contains(n)) { // if there is neighbour not in spanning tree
+                    pendants.insert(v);
+                }
             }
         }
-        pendantEdges.emplace_back(pendantETree);
+        boundaryVertices.emplace_back(pendants);
     }
 
     // peeling
-    for (std::set<std::pair<std::size_t, std::size_t>>& tree: spanningForest) {
-        while (!tree.empty()) {
-            auto tIt = tree.begin();
-            while (tIt != tree.end()) {
-                // pendant vertex is always left one
-                if (syndr.contains(tIt->first)) {
-                    // R1
-                    result.emplace_back(tIt->second);
-                    for (auto const& n: code.tannerGraph.getNeighboursIdx(tIt->second)) {
-                        if (tree.contains(std::make_pair(tIt->second, n)) || tree.contains(std::make_pair(n, tIt->second))) {
-                            if (syndr.contains(n)) {
-                                syndr.erase(n);
-                            } else {
-                                syndr.insert(n);
-                            }
+    std::size_t fNIdx = 0;
+    for (auto& tree: spanningForest) {
+        auto boundaryVtcs = boundaryVertices.at(fNIdx);
+        while (!syndr.empty()) {
+            auto edgeIt = tree.begin();
+            while (edgeIt != tree.end()) {
+                std::pair<std::size_t, std::size_t> e;
+                std::size_t                         check;
+                std::size_t                         data;
+                std::cout << "Checking edge (" << edgeIt->first << "," << edgeIt->second << ")" << std::endl;
+                if(code.tannerGraph.getNodeForId(edgeIt->first)->marked || code.tannerGraph.getNodeForId(edgeIt->first)->marked){
+                    tree.erase(edgeIt++);
+                    continue;
+                }
+                std::cout << "pedants: ";
+                for (auto& z: boundaryVtcs) {
+                    std::cout << z << ",";
+                }
+                std::cout << "forest n: " << std::endl;
+                for (auto& z: forestVertices.at(fNIdx)) {
+                    std::cout << z << ",";
+                }
+                std::cout << std::endl;
+                auto frst = edgeIt->first;
+                auto scd  = edgeIt->second;
+                // if in boundary simply remove
+                if (boundaryVtcs.contains(frst)) {
+                    code.tannerGraph.getNodeForId(frst)->marked = true;
+                    forestVertices.at(fNIdx).erase(frst);
+                } else if (boundaryVtcs.contains(scd)) {
+                    code.tannerGraph.getNodeForId(scd)->marked = true;
+                } else {
+                    if (syndr.contains(frst)) {
+                        check = frst;
+                        data  = scd;
+                    } else {
+                        check = scd;
+                        data  = frst;
+                    }
+                    // add data to estimate, remove check from syndrome
+                    result.emplace_back(data);
+                    std::cout << "adding to result: " << data << std::endl;
+                    code.tannerGraph.getNodeForId(data)->marked  = true;
+                    code.tannerGraph.getNodeForId(check)->marked = true;
+                    forestVertices.at(fNIdx).erase(data);
+                    forestVertices.at(fNIdx).erase(check);
+                    syndr.erase(check);
+                }
+                tree.erase(edgeIt++);
+
+                // update boundary vertices
+                boundaryVtcs.clear();
+                for (auto& v: forestVertices.at(fNIdx)) {
+                    auto nbrs = code.tannerGraph.getNeighbours(v);
+                    for (auto& n: nbrs) {
+                        if (!forestVertices.at(fNIdx).contains(n->vertexIdx) && !n->marked) {
+                            boundaryVtcs.insert(v);
                         }
                     }
-                } // R2: else remove and do nothing
-                tree.erase(tIt++);
+                }
             }
         }
+        fNIdx++;
     }
-
     return result;
 }
 

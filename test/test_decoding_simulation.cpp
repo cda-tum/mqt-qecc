@@ -34,7 +34,7 @@ std::vector<bool> dummySampler(const std::size_t n) {
     std::uniform_int_distribution<> distr(0, n);
 
     //result.at(distr(gen)) = true;
-    result.at(0) = true;
+    result.at(1) = true;
 
     return result;
 }
@@ -58,7 +58,11 @@ TEST(UnionFindSimulation, SteaneCodeDecoding) {
     }
     std::cout << "s component " << syndrComponents << std::endl;
     auto estim = decoder.decode(syndrComponents);
+    if(estim.empty()){
+        std::cout << "Decoding failure" << std::endl;
+    }
     for (auto & x: estim) {
         std::cout << "estim: " << x << std::endl;
     }
+    assert(!estim.empty());
 }

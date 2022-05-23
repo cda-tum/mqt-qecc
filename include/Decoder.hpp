@@ -22,7 +22,7 @@ public:
 private:
     Code code;
     bool                  isValidComponent(const std::shared_ptr<TreeNode>& component);
-    std::vector<std::size_t> erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasuree);
+    std::vector<std::size_t> erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
     void                     extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure);
     std::vector<size_t>                    peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
 };
