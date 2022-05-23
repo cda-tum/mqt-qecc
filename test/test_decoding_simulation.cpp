@@ -34,7 +34,7 @@ std::vector<bool> dummySampler(const std::size_t n) {
     std::uniform_int_distribution<> distr(0, n);
 
     //result.at(distr(gen)) = true;
-    result.at(1) = true;
+    result.at(0) = true;
 
     return result;
 }

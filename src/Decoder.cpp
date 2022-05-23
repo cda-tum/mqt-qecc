@@ -21,8 +21,7 @@ std::vector<std::size_t> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& sy
             std::map<std::size_t, bool>                      presentMap{}; // for step 4
             for (auto& component: components) {
                 presentMap.insert(std::make_pair(component->vertexIdx, true));
-                // at this point we can assume that component represents root of the component
-                assert(component->parent == nullptr);
+                assert(component->parent == nullptr); // at this point we can assume that component represents root of the component
                 auto bndryNodes = component->boundaryVertices;
 
                 for (const auto& bndryNode: bndryNodes) {
@@ -43,7 +42,7 @@ std::vector<std::size_t> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& sy
 
                 //compares vertexIdx only
                 if (*root1 == *root2) {
-                    fusionEdges.erase(eIt++); // passes eIt to erase
+                    eIt = fusionEdges.erase(eIt); // passes eIt to erase
                 } else {
                     std::size_t root1Size = root1->clusterSize;
                     std::size_t root2Size = root2->clusterSize;
@@ -70,10 +69,11 @@ std::vector<std::size_t> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& sy
                 auto elem = *it;
                 auto root = TreeNode::Find(elem);
                 if (!presentMap.contains(root->vertexIdx)) {
-                    components.erase(elem);
+                    it=components.erase(it);
                     components.insert(root);
+                }else {
+                    it++;
                 }
-                it++;
             }
 
             // Step 5 Update Boundary Lists, remove vertices that are not in boundary anymore
@@ -88,16 +88,17 @@ std::vector<std::size_t> Decoder::decode(std::set<std::shared_ptr<TreeNode>>& sy
                     auto nbrIt    = nbrs.begin();
                     auto end      = nbrs.end();
                     while (nbrIt != end) {
-                        auto nbrRoot = TreeNode::Find(*nbrIt);
+                        auto nbr = *nbrIt;
+                        auto nbrRoot = TreeNode::Find(nbr);
                         if (currRoot->vertexIdx != nbrRoot->vertexIdx) {
                             // if we find one neighbour that is not in the same component the currNode is in the boundary
                             iter++;
                             break;
                         }
-                        if (nbrIt + 1 == end) {
+                        if (std::next(nbrIt) == end) {
                             // if we have checked all neighbours and found none in another component remove from boundary list
                             //toRemoveList.emplace_back(*iter);
-                            component->boundaryVertices.erase(iter++);
+                            iter = component->boundaryVertices.erase(iter);
                             break;
                         } else {
                             nbrIt++;
@@ -115,7 +116,7 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
-
+    // compute interior of grown erasure components
     for (auto& currCompRoot: erasure) {
         std::set<std::size_t> compErasure;
         assert(currCompRoot->parent == nullptr); // should be due to steps above otherwise we can just call Find here
@@ -132,27 +133,20 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
             auto currV = queue.front();
             queue.pop();
 
-            std::vector<std::shared_ptr<TreeNode>> nbrs;
+            std::vector<std::shared_ptr<TreeNode>> chldrn;
             for (auto& i: currV->children) {
-                nbrs.emplace_back(i);
+                chldrn.emplace_back(i);
             }
-            for (auto& nbr: nbrs) {
-                if (!nbr->marked && !currCompRoot->boundaryVertices.contains(nbr->vertexIdx)) {
-                    currV->markedNeighbours.insert(nbr->vertexIdx);
-                    // add to interior by adding it to the list
-                    nbr->marked = true;
-                    compErasure.insert(nbr->vertexIdx);
-                    queue.push(nbr);
+            for (auto& node: chldrn) {
+                if (!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) {
+                    if(code.tannerGraph.getNeighbours(currV).contains(node)){
+                        currV->markedNeighbours.insert(node->vertexIdx);
+                    }
+                    // add to interior by adding it to the list and marking it
+                    node->marked = true;
+                    compErasure.insert(node->vertexIdx);
+                    queue.push(node);
                 }
-            }
-        }
-        // adapt boundary of interior for current component
-        auto itr = currCompRoot->boundaryVertices.begin();
-        while (itr != currCompRoot->boundaryVertices.end()) {
-            if (!code.tannerGraph.getNodeForId(*itr)->marked) {
-                currCompRoot->boundaryVertices.erase(itr++);
-            } else {
-                itr++;
             }
         }
         erasureSet.emplace_back(compErasure);
@@ -163,23 +157,22 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
     // go through nodes in erasure
     // if current node v is a check node in Int, remove B(v, 1)
     for (auto& component: erasureSet) {
-        // todo delete
-        std::cout << "peeling erasure ";
+        std::cout << "decoding erasure ";
         for (auto& c: component) {
-            std::cout << c << "," << std::endl;
+            std::cout << c << ",";
         }
+        std::cout << std::endl;
         std::set<std::size_t> xi;
-        while (!component.empty()) {
-            auto cn            = code.tannerGraph.getNodeForId(*component.begin());
-            auto componentRoot = TreeNode::Find(cn);
-            auto currN         = code.tannerGraph.getNodeForId(*(componentRoot->boundaryVertices.begin()));
-            std::cout << "currN:" << currN->vertexIdx << std::endl;
-            if (currN->marked && !currN->isCheck) { // we can assume the node given is the root bc of step 4 above
+
+        while (!syndrome.empty()) {
+            auto compNodeIt = component.begin();
+            auto currN      = code.tannerGraph.getNodeForId(*compNodeIt);
+            if (currN->marked && !currN->isCheck) {
                 xi.insert(currN->vertexIdx);
                 std::cout << "added to xi: " << currN->vertexIdx << std::endl;
-                std::cout << "removing all its neighbouring checks and their neigbouhrs" << std::endl;
-                for (auto& i: currN->markedNeighbours) {
-                    auto nNbrs = code.tannerGraph.getNeighboursIdx(i);
+                std::cout << "removing all its neighbouring checks and their neigbouhrs in tanner graph" << std::endl;
+                for (auto& markedNeighbour: currN->markedNeighbours) {
+                    auto nNbrs = code.tannerGraph.getNeighboursIdx(markedNeighbour);
                     auto nnbr  = nNbrs.begin();
                     while (nnbr != nNbrs.end()) {
                         component.erase(*nnbr++);
@@ -187,8 +180,14 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
                 }
                 auto ittt = currN->markedNeighbours.begin();
                 while (ittt != currN->markedNeighbours.end()) {
-                    component.erase(*ittt++);
+                    component.erase(*ittt);
+                    auto temp = code.tannerGraph.getNodeForId(*ittt);
+                    assert(temp->isCheck);
+                    syndrome.erase(temp);
+                    ittt++;
                 }
+            } else {
+                compNodeIt++;
             }
         }
         resList.emplace_back(xi);
@@ -278,8 +277,8 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
                 std::size_t                         check;
                 std::size_t                         data;
                 std::cout << "Checking edge (" << edgeIt->first << "," << edgeIt->second << ")" << std::endl;
-                if(code.tannerGraph.getNodeForId(edgeIt->first)->marked || code.tannerGraph.getNodeForId(edgeIt->first)->marked){
-                    tree.erase(edgeIt++);
+                if (code.tannerGraph.getNodeForId(edgeIt->first)->marked || code.tannerGraph.getNodeForId(edgeIt->first)->marked) {
+                    edgeIt = tree.erase(edgeIt);
                     continue;
                 }
                 std::cout << "pedants: ";
@@ -316,7 +315,7 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
                     forestVertices.at(fNIdx).erase(check);
                     syndr.erase(check);
                 }
-                tree.erase(edgeIt++);
+                edgeIt = tree.erase(edgeIt);
 
                 // update boundary vertices
                 boundaryVtcs.clear();
@@ -340,7 +339,7 @@ void Decoder::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& compon
     while (it != components.end()) {
         if (isValidComponent(*it)) {
             erasure.emplace_back(*it);
-            components.erase(it++);
+            it = components.erase(it);
         } else {
             it++;
         }

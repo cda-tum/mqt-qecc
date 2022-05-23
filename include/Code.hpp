@@ -22,17 +22,17 @@ struct TannerGraph {
     std::shared_ptr<TreeNode> getNodeForId(const std::size_t vertexId) {
         return adjListNodes.at(vertexId).at(0);
     }
-    std::vector<std::shared_ptr<TreeNode>> getNeighbours(const std::shared_ptr<TreeNode>& node) {
-        std::vector<std::shared_ptr<TreeNode>> result;
+    std::set<std::shared_ptr<TreeNode>> getNeighbours(const std::shared_ptr<TreeNode>& node) {
+        std::set<std::shared_ptr<TreeNode>> result;
         for (size_t i = 1; i < adjListNodes.at(node->vertexIdx).size(); i++) { // at pos 0 is node itself
-            result.emplace_back(adjListNodes.at(node->vertexIdx).at(i));
+            result.insert(adjListNodes.at(node->vertexIdx).at(i));
         }
         return result;
     }
-    std::vector<std::shared_ptr<TreeNode>> getNeighbours(const std::size_t vertexId) {
-        std::vector<std::shared_ptr<TreeNode>> result;
+    std::set<std::shared_ptr<TreeNode>> getNeighbours(const std::size_t vertexId) {
+        std::set<std::shared_ptr<TreeNode>> result;
         for (size_t i = 1; i < adjListNodes.at(vertexId).size(); i++) { // at pos 0 is node itself
-            result.emplace_back(adjListNodes.at(vertexId).at(i));
+            result.insert(adjListNodes.at(vertexId).at(i));
         }
         return result;
     }
