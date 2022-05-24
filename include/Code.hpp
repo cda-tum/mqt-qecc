@@ -142,6 +142,51 @@ public:
             return std::vector<bool>{};
         }
     }
+
+    bool checkStabilizer(const std::vector<bool>& est) {
+        return checkVectorInRowspace(Hx.pcm, est);
+    }
+
+    static void swapRows(std::vector<std::vector<bool>>& matrix, const std::size_t row1, const std::size_t row2) {
+        for (std::size_t col = 0; col <= matrix.at(0).size(); col++) {
+            std::swap(matrix.at(row1).at(col), matrix.at(row2).at(col));
+        }
+    }
+
+    static bool checkVectorInRowspace(std::vector<std::vector<bool>> M, std::vector<bool> vec) { //https://stackoverflow.com/questions/11483925/how-to-implementing-gaussian-elimination-for-binary-equations
+        std::size_t nrCols = M.size();
+        std::size_t nrRows = M.at(0).size();
+        std::size_t row = 0;
+
+        for (std::size_t col = 0; col < nrCols && row < nrRows; col++, row++) {
+            if (M[row][col] == 0) {
+                for (std::size_t i = 0; i < nrRows; i++) {
+                    if (M[i][col] != 0) {
+                        swapRows(M, i, row);
+                        std::swap(vec.at(i), vec.at(row));
+                    }
+                }
+                if (M[row][col] == 0) {
+                    return false;
+                }
+
+                for (std::size_t j = 0; j < nrRows; ++j) {
+                    if (j != col) {
+                        if (M[j][col]) {
+                            std::size_t k;
+                            for (k = col; k < nrCols; ++k) {
+                                M[j][k] = M[j][k] ^ M[col][k];
+                            }
+                            vec[k] = vec[k] ^ vec[col];
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+
     friend std::ostream& operator<<(std::ostream& os, Code const& c) {
         return os << c.tannerGraph;
     }

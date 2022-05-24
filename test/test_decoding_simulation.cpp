@@ -4,6 +4,7 @@
 #include "Codes.hpp"
 #include "Decoder.hpp"
 
+#include <bitset>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <locale>
@@ -34,35 +35,85 @@ std::vector<bool> dummySampler(const std::size_t n) {
     std::uniform_int_distribution<> distr(0, n);
 
     //result.at(distr(gen)) = true;
-    result.at(0) = true;
+    result.at(1) = true;
 
     return result;
 }
 
-TEST(UnionFindSimulation, SteaneCodeDecoding) {
+TEST(SteaneCodeTest, SteaneCodeDecoding) {
     SteaneXCode code{};
-    Decoder    decoder{code};
-    std::cout << "code: " << std::endl<< code << std::endl;
+    Decoder     decoder{code};
+    std::cout << "code: " << std::endl
+              << code << std::endl;
     auto err = dummySampler(code.getN());
-    std::cout << "error: "  << err << std::endl;
+    std::cout << "error: " << err << std::endl;
     auto syndr = code.getSyndrome(err);
     std::cout << "syndr: " << syndr << std::endl;
     std::set<std::shared_ptr<TreeNode>> syndrComponents;
     for (size_t i = 0; i < syndr.size(); i++) {
-        if(syndr.at(i)){
-            auto snode = code.tannerGraph.adjListNodes.at(i+code.getN()).at(0);
+        if (syndr.at(i)) {
+            auto snode     = code.tannerGraph.adjListNodes.at(i + code.getN()).at(0);
             snode->isCheck = true;
             snode->checkVertices.insert(snode->vertexIdx);
             syndrComponents.insert(snode);
         }
     }
     std::cout << "s component " << syndrComponents << std::endl;
-    auto estim = decoder.decode(syndrComponents);
-    if(estim.empty()){
+    decoder.decode(syndrComponents);
+    auto result = decoder.result;
+    auto estim = result.estimIdxVector;
+    if (estim.empty()) {
         std::cout << "Decoding failure" << std::endl;
     }
-    for (auto & x: estim) {
+    for (auto& x: estim) {
         std::cout << "estim: " << x << std::endl;
     }
     assert(!estim.empty());
+    std::vector<bool> estimate(code.getN());
+    for (auto e: estim) {
+        estimate.at(e) = true;
+    }
+    if (code.checkStabilizer(estimate)) {
+        std::cout << "Decoding successful, found estimate up to stabilizer: " << std::endl;
+        std::cout << estimate << std::endl;
+        std::cout << "Elapsed time: " << result.decodingTime << "ms" << std::endl;
+    } else {
+        std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
+    }
+}
+
+TEST(BenchmarkSimulation, SteaneCodeDecoding) {
+    SteaneXCode                         code{};
+    Decoder                             decoder{code};
+    auto                                syndr = code.getSyndrome(sampleXError(code.getN()));
+    std::set<std::shared_ptr<TreeNode>> syndrComponents;
+    for (size_t i = 0; i < syndr.size(); i++) {
+        if (syndr.at(i)) {
+            auto snode     = code.tannerGraph.adjListNodes.at(i + code.getN()).at(0);
+            snode->isCheck = true;
+            snode->checkVertices.insert(snode->vertexIdx);
+            syndrComponents.insert(snode);
+        }
+    }
+    decoder.decode(syndrComponents);
+    auto result = decoder.result;
+    auto estim  = result.estimIdxVector;
+    if (estim.empty()) {
+        std::cout << "Decoding failure" << std::endl;
+    }
+    for (auto& x: estim) {
+        std::cout << "estim: " << x << std::endl;
+    }
+    assert(!estim.empty());
+    std::vector<bool> estimate(code.getN());
+    for (auto e: estim) {
+        estimate.at(e) = true;
+    }
+    if (code.checkStabilizer(estimate)) {
+        std::cout << "Decoding successful, found estimate up to stabilizer: " << std::endl;
+        std::cout << estimate << std::endl;
+        std::cout << "Elapsed time: " << result.decodingTime << "ms" << std::endl;
+    } else {
+        std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
+    }
 }
