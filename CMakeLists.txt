@@ -46,6 +46,8 @@ endmacro()
 # Add path for custom modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+check_submodule_present(json)
+
 # add main library code
 add_subdirectory(src)
 

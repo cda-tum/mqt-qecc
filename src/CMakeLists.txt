@@ -46,11 +46,17 @@ if (GENERATE_POSITION_INDEPENDENT_CODE OR BINDINGS)
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 endif ()
 
+# add nlohmann::json library
+add_subdirectory("${PROJECT_SOURCE_DIR}/extern/json" "extern/json" EXCLUDE_FROM_ALL)
+target_link_libraries(${PROJECT_NAME} PUBLIC nlohmann_json)
+
 # add coverage compiler and linker flag to the library and all targets that link against it, if COVERAGE is set
 if (COVERAGE)
     target_compile_options(${PROJECT_NAME} PUBLIC --coverage)
     target_link_libraries(${PROJECT_NAME} PUBLIC --coverage)
 endif ()
+
+
 
 # add MQT alias
 add_library(MQT::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

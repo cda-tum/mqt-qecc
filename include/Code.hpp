@@ -7,7 +7,7 @@
 #include <vector>
 
 #ifndef QUNIONFIND_CODE_HPP
-    #define QUNIONFIND_CODE_HPP
+#define QUNIONFIND_CODE_HPP
 
 struct ParityCheckMatrix {
     explicit ParityCheckMatrix(std::vector<std::vector<bool>> pcm):
@@ -153,10 +153,36 @@ public:
         }
     }
 
+    static void printGF2matrix(const std::vector<std::vector<bool>>& matrix) {
+        for (const auto & i : matrix) {
+            for (size_t j = 0; j < i.size(); j++) {
+                std::cout << i.at(j) << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
     static bool checkVectorInRowspace(std::vector<std::vector<bool>> M, std::vector<bool> vec) { //https://stackoverflow.com/questions/11483925/how-to-implementing-gaussian-elimination-for-binary-equations
-        std::size_t nrCols = M.size();
-        std::size_t nrRows = M.at(0).size();
-        std::size_t row = 0;
+        std::size_t                    nrCols = M.size();
+        std::size_t                    nrRows = M.at(0).size();
+        std::size_t                    row    = 0;
+        std::vector<std::vector<bool>> tranp(nrRows);
+        for (size_t i = 0; i < tranp.size(); i++) {
+            tranp.at(i) = std::vector<bool>(nrCols);
+        }
+        for (size_t i = 0; i < M.size(); i++) {
+            for (size_t j = 0; j < M.at(i).size(); j++) {
+                tranp[j][i] = M[i][j];
+            }
+        }
+        M = tranp;
+
+        std::cout << "vector: " << std::endl;
+        for (size_t i = 0; i < vec.size(); i++) {
+            std::cout << vec.at(i) << " ";
+        }
+        printGF2matrix(M);
 
         for (std::size_t col = 0; col < nrCols && row < nrRows; col++, row++) {
             if (M[row][col] == 0) {
@@ -166,26 +192,33 @@ public:
                         std::swap(vec.at(i), vec.at(row));
                     }
                 }
-                if (M[row][col] == 0) {
-                    return false;
-                }
-
-                for (std::size_t j = 0; j < nrRows; ++j) {
-                    if (j != col) {
-                        if (M[j][col]) {
-                            std::size_t k;
-                            for (k = col; k < nrCols; ++k) {
-                                M[j][k] = M[j][k] ^ M[col][k];
-                            }
-                            vec[k] = vec[k] ^ vec[col];
+            }
+            if (M[row][col] == 0) {
+                return false;
+            }
+            for (std::size_t j = 0; j < nrRows; ++j) {
+                if (j != col) {
+                    if (M[j][col]) {
+                        std::size_t k;
+                        for (k = col; k < nrCols; ++k) {
+                            M[j][k] = M[j][k] ^ M[col][k];
                         }
+                        vec[k] = vec[k] ^ vec[col];
+                    }
+                }
+            }
+        }
+        for (size_t i = 0; i < vec.size(); i++) {
+            if (vec[i]) {
+                for (size_t j = 0; j < M.at(i).size(); j++) {
+                    if (M[i][j]) {
+                        return false;
                     }
                 }
             }
         }
         return true;
     }
-
 
     friend std::ostream& operator<<(std::ostream& os, Code const& c) {
         return os << c.tannerGraph;

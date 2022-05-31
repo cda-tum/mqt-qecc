@@ -11,6 +11,7 @@
 #include <queue>
 #include <set>
 
+// todo identify flagged errors, i.e. when we do not find any error corresponding to the syndrome
 void Decoder::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
     auto                                   components = syndrome;
     std::vector<std::shared_ptr<TreeNode>> erasure;
@@ -67,8 +68,6 @@ void Decoder::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
             }
 
             // Step 5 Update Boundary Lists, remove vertices that are not in boundary anymore
-            // for each vertex v in boundary list of a component check if there is one neighbour that is not in the component, then it is still in the boundary
-            // otherwise, if all its neighbours in the original graph are in the same component its not a boundary vertex anymore and we can remove it from the list
             for (auto& component: components) {
                 auto iter = component->boundaryVertices.begin();
                 while (iter != component->boundaryVertices.end()) {
@@ -102,7 +101,16 @@ void Decoder::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
     auto res = erasureDecoder(erasure, syndrome);
     std::chrono::steady_clock::time_point  decodingTimeEnd = std::chrono::steady_clock::now();
     result.decodingTime = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
-    result.estimIdxVector                                  = res;
+    result.estimNodeIdxVector                              = res;
+    if(res.empty()){
+        result.status = FLAGGED_ERROR;
+    }else{
+        result.status = SUCCESS; // todo how to detect flagged errors?
+    }
+    result.estimBoolVector = std::vector<bool>(code.getN());
+    for (unsigned long re : res) {
+        result.estimBoolVector.at(re) = true;
+    }
 }
 
 void Decoder::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
@@ -282,10 +290,8 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
         spanningForest.emplace_back(tree);
         forestVertices.emplace_back(treeVertices);
     }
-    std::size_t idxx = 0;
 
     std::vector<std::set<std::size_t>> boundaryVertices;
-    std::size_t                        intTreeIdx = 0;
 
     // compute pendant vertices of SF
     for (const auto& vertices: forestVertices) {

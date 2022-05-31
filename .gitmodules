@@ -3,3 +3,9 @@
 	url = git@github.com:google/googletest.git
 	branch = main
 	shallow = true
+
+[submodule "extern/json"]
+	path = extern/json
+	url = git@github.com:nlohmann/json.git
+	branch = develop
+	shallow = true

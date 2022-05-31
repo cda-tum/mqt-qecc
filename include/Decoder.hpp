@@ -9,13 +9,31 @@
 #include <chrono>
 #include <utility>
 #include <vector>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 #ifndef QUNIONFIND_DECODER_HPP
 #define QUNIONFIND_DECODER_HPP
 
+enum DecodingResultStatus{
+    SUCCESS,
+    FLAGGED_ERROR,
+    FAILURE //only to be set from outside when logical operator is introduced
+};
+
 struct DecodingResult{
+    DecodingResultStatus status;
     std::size_t decodingTime;
-    std::vector<std::size_t> estimIdxVector;
+    std::vector<std::size_t> estimNodeIdxVector;
     std::vector<bool>        estimBoolVector;
+    [[nodiscard]] json              to_json() const {
+        return json{
+                {"staus", status},
+                {"decodingTime(ms)",decodingTime},
+                {"esimate",estimBoolVector},
+                {"estimatedNodes",estimNodeIdxVector}
+        };
+    }
 };
 
 class Decoder {

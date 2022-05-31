@@ -6,6 +6,7 @@
 
 #include <bitset>
 #include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <locale>
 #include <random>
@@ -35,7 +36,7 @@ std::vector<bool> dummySampler(const std::size_t n) {
     std::uniform_int_distribution<> distr(0, n);
 
     //result.at(distr(gen)) = true;
-    result.at(1) = true;
+    result.at(0) = true;
 
     return result;
 }
@@ -59,33 +60,50 @@ TEST(SteaneCodeTest, SteaneCodeDecoding) {
         }
     }
     std::cout << "s component " << syndrComponents << std::endl;
+
     decoder.decode(syndrComponents);
-    auto result = decoder.result;
-    auto estim = result.estimIdxVector;
-    if (estim.empty()) {
-        std::cout << "Decoding failure" << std::endl;
-    }
-    for (auto& x: estim) {
-        std::cout << "estim: " << x << std::endl;
-    }
-    assert(!estim.empty());
+    auto decodingResult = decoder.result;
+    auto estim          = decodingResult.estimNodeIdxVector;
+
+    EXPECT_TRUE(!estim.empty());
     std::vector<bool> estimate(code.getN());
     for (auto e: estim) {
         estimate.at(e) = true;
     }
-    if (code.checkStabilizer(estimate)) {
+    std::vector<bool> residualErr(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr.at(i) = err[i] ^ estimate[i];
+    }
+
+    std::cout << "estim: " << estimate << std::endl;
+    std::cout << "r = e'+e " << residualErr << std::endl;
+    auto succ = code.checkStabilizer(residualErr);
+    EXPECT_TRUE(succ);
+
+    if (succ) {
         std::cout << "Decoding successful, found estimate up to stabilizer: " << std::endl;
         std::cout << estimate << std::endl;
-        std::cout << "Elapsed time: " << result.decodingTime << "ms" << std::endl;
+        std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
     } else {
+        decodingResult.status = FAILURE;
         std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
     }
 }
-
+/*
 TEST(BenchmarkSimulation, SteaneCodeDecoding) {
+    std::string        outFilePath = "path";
+    auto               t           = std::time(nullptr);
+    auto               tm          = *std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y");
+    auto          timestamp = oss.str();
+    std::ofstream outfile(outFilePath + "EC-" + timestamp + ".json");
+    outfile << "{ \"runs\" : [";
+
     SteaneXCode                         code{};
     Decoder                             decoder{code};
-    auto                                syndr = code.getSyndrome(sampleXError(code.getN()));
+    auto                                error = sampleXError(code.getN());
+    auto                                syndr = code.getSyndrome(error);
     std::set<std::shared_ptr<TreeNode>> syndrComponents;
     for (size_t i = 0; i < syndr.size(); i++) {
         if (syndr.at(i)) {
@@ -96,24 +114,22 @@ TEST(BenchmarkSimulation, SteaneCodeDecoding) {
         }
     }
     decoder.decode(syndrComponents);
-    auto result = decoder.result;
-    auto estim  = result.estimIdxVector;
-    if (estim.empty()) {
-        std::cout << "Decoding failure" << std::endl;
+    auto              decodingResult = decoder.result;
+    auto              estim          = decodingResult.estimNodeIdxVector;
+    std::vector<bool> residualErr    = decodingResult.estimBoolVector;
+
+    for (std::size_t i = 0; i < residualErr.size(); i++) {
+        residualErr.at(i) = residualErr.at(i) ^ error.at(i);
     }
-    for (auto& x: estim) {
-        std::cout << "estim: " << x << std::endl;
-    }
-    assert(!estim.empty());
-    std::vector<bool> estimate(code.getN());
-    for (auto e: estim) {
-        estimate.at(e) = true;
-    }
-    if (code.checkStabilizer(estimate)) {
-        std::cout << "Decoding successful, found estimate up to stabilizer: " << std::endl;
-        std::cout << estimate << std::endl;
-        std::cout << "Elapsed time: " << result.decodingTime << "ms" << std::endl;
+    auto success = code.checkStabilizer(residualErr);
+    if (success) {
+        std::cout << "Decoding successful, found residualErr up to stabilizer: " << std::endl;
+        std::cout << residualErr << std::endl;
+        std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
     } else {
+        decodingResult.status = FAILURE;
         std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
     }
+    outfile << decodingResult.to_json().dump(2U);
 }
+*/
