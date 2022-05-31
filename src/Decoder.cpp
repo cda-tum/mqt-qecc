@@ -98,17 +98,15 @@ void Decoder::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
             extractValidComponents(components, erasure);
         }
     }
-    auto res = erasureDecoder(erasure, syndrome);
-    std::chrono::steady_clock::time_point  decodingTimeEnd = std::chrono::steady_clock::now();
-    result.decodingTime = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
-    result.estimNodeIdxVector                              = res;
-    if(res.empty()){
+    auto                                  res             = erasureDecoder(erasure, syndrome);
+    std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
+    result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
+    result.estimNodeIdxVector                             = res;
+    if (res.empty()) {
         result.status = FLAGGED_ERROR;
-    }else{
-        result.status = SUCCESS; // todo how to detect flagged errors?
     }
     result.estimBoolVector = std::vector<bool>(code.getN());
-    for (unsigned long re : res) {
+    for (unsigned long re: res) {
         result.estimBoolVector.at(re) = true;
     }
 }

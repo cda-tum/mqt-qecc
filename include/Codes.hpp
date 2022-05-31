@@ -13,7 +13,7 @@ public:
     SteaneXCode():
         Code(ParityCheckMatrix({{1, 0, 0, 1, 0, 1, 1},
                                 {0, 1, 0, 1, 1, 0, 1},
-                                {0, 0, 1, 0, 1, 1, 1}})) {}
+                                {0, 0, 1, 0, 1, 1, 1}})) {K = 3;}
 };
 
 #endif //QUNIONFIND_CODES_HPP

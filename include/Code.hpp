@@ -60,6 +60,7 @@ class Code {
 public:
     TannerGraph       tannerGraph;
     ParityCheckMatrix Hx;
+    std::size_t K =0;
 
     explicit Code(ParityCheckMatrix hx):
         Hx(std::move(hx)) {
@@ -111,6 +112,10 @@ public:
         } else {
             return 0;
         }
+    }
+
+    std::size_t getK(){
+        return K;
     }
     static std::vector<std::vector<bool>> rectMatrixMultiply(const std::vector<std::vector<bool>>& m1, const std::vector<std::vector<bool>>& m2) {
         std::vector<std::vector<bool>> result(m1.size());

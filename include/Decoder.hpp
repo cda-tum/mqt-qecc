@@ -29,9 +29,7 @@ struct DecodingResult{
     [[nodiscard]] json              to_json() const {
         return json{
                 {"staus", status},
-                {"decodingTime(ms)",decodingTime},
-                {"esimate",estimBoolVector},
-                {"estimatedNodes",estimNodeIdxVector}
+                {"decodingTime(ms)",decodingTime}
         };
     }
 };
