@@ -38,7 +38,7 @@ public:
     DecodingResult result;
     explicit Decoder(Code& code):
         code(code) {}
-    virtual void decode(std::set<std::shared_ptr<TreeNode>>& syndrome){}; // todo set or vector more efficient?
+    virtual void decode(std::vector<bool>& syndrome){};
 protected:
     Code code;
 };

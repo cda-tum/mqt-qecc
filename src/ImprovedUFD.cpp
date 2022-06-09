@@ -2,7 +2,7 @@
 // Created by lucas on 21/04/2022.
 //
 
-#include "ImprovedUF.hpp"
+#include "ImprovedUFD.hpp"
 
 #include "Decoder.hpp"
 #include "TreeNode.hpp"
@@ -12,12 +12,33 @@
 #include <queue>
 #include <random>
 #include <set>
+
+/**
+     * returns list of tree node (in UF data structure) representations for syndrome
+     * @param code
+     * @param syndrome
+     * @return
+    */
+std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const std::vector<bool>& syndrome) {
+    std::set<std::shared_ptr<TreeNode>> result{};
+    for (bool j: syndrome) {
+        if (j) {
+            auto syndrNode     = code.tannerGraph.adjListNodes.at(j + code.getN()).at(0);
+            syndrNode->isCheck = true;
+            syndrNode->checkVertices.insert(syndrNode->vertexIdx);
+            result.insert(syndrNode);
+        }
+    }
+    return result;
+}
+
 // todo identify flagged errors?, i.e. when we do not find any error corresponding to the syndrome
-void ImprovedUF::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
+void ImprovedUFD::decode(std::vector<bool>& syndrome) {
     std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
     std::vector<std::size_t>              res;
     if (!syndrome.empty()) {
-        auto                                   components = syndrome;
+        auto syndrComponents = computeInitTreeComponents(syndrome);
+        auto                                   components = syndrComponents;
         std::vector<std::shared_ptr<TreeNode>> erasure;
         while (!components.empty()) {
             for (size_t i = 0; i < components.size(); i++) {
@@ -101,7 +122,7 @@ void ImprovedUF::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
                 extractValidComponents(components, erasure);
             }
         }
-        res = erasureDecoder(erasure, syndrome);
+        res = erasureDecoder(erasure, syndrComponents);
     }
     std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
     result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
@@ -112,8 +133,8 @@ void ImprovedUF::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
     }
 }
 
-void ImprovedUF::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                    std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+                                 std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
     for (auto& component: components) {
         presentMap.insert(std::make_pair(component->vertexIdx, true));
         assert(component->parent == nullptr); // at this point we can assume that component represents root of the component
@@ -128,8 +149,8 @@ void ImprovedUF::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>
     }
 }
 
-void ImprovedUF::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                      std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+                                                   std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
     std::shared_ptr<TreeNode> smallestComponent;
     std::size_t               smallestSize = SIZE_MAX;
     for (const auto& c: components) {
@@ -149,8 +170,8 @@ void ImprovedUF::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::siz
     }
 }
 
-void ImprovedUF::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                    std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+                                                 std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
     std::shared_ptr<TreeNode>       chosenComponent;
     std::random_device              rd;
     std::mt19937                    gen(rd());
@@ -179,7 +200,13 @@ void ImprovedUF::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_
 // todo
 //}
 
-std::vector<std::size_t> ImprovedUF::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+/**
+ * Computes interior of erasure with BFS algorithm then iterates over interior and removes neighbours of check vertices iteratively
+ * @param erasure
+ * @param syndrome
+ * @return
+ */
+std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
@@ -267,8 +294,13 @@ std::vector<std::size_t> ImprovedUF::erasureDecoder(std::vector<std::shared_ptr<
     }
     return res;
 }
-
-std::vector<std::size_t> ImprovedUF::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+/**
+ * Computes spanning forest of erasure and peels iteratively, starting with boundary vertices
+ * @param erasure
+ * @param syndrome
+ * @return
+ */
+std::vector<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
     std::set<std::size_t> erasureRoots;
     std::set<std::size_t> erasureVertices;
     for (auto& i: erasure) {
@@ -404,7 +436,7 @@ std::vector<std::size_t> ImprovedUF::peelingDecoder(std::vector<std::shared_ptr<
  * @param components containts components to check validity for
  * @param erasure contains valid components (including possible new ones at end of function)
  */
-void ImprovedUF::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure) {
+void ImprovedUFD::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure) {
     auto it = components.begin();
     while (it != components.end()) {
         if (isValidComponent(*it)) {
@@ -418,7 +450,7 @@ void ImprovedUF::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& com
 
 // for each check node verify that there is no neighbour that is in the boundary of the component
 // if there is no neighbour in the boundary for each check vertex the check is covered by a node in Int TODO prove this in paper
-bool ImprovedUF::isValidComponent(const std::shared_ptr<TreeNode>& component) {
+bool ImprovedUFD::isValidComponent(const std::shared_ptr<TreeNode>& component) {
     std::vector<bool> valid(component->checkVertices.size());
     std::size_t       i = 0;
     for (const auto& checkVertex: component->checkVertices) {

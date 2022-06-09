@@ -3,7 +3,7 @@
 //
 #include "Codes.hpp"
 #include "Decoder.hpp"
-#include "ImprovedUF.hpp"
+#include "ImprovedUFD.hpp"
 
 #include <bitset>
 #include <filesystem>
@@ -32,25 +32,14 @@ std::vector<bool> dummySampler(const std::size_t n) {
 
 TEST(UnionFindSimulation, SteaneCodeDecodingTest) {
     SteaneXCode code{};
-    ImprovedUF  decoder{code};
+    ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
     auto err = dummySampler(code.getN());
-    std::cout << "error: " << err << std::endl;
+    //std::cout << "error: " << err << std::endl;
     auto syndr = code.getSyndrome(err);
-    std::cout << "syndr: " << syndr << std::endl;
-    std::set<std::shared_ptr<TreeNode>> syndrComponents;
-    for (size_t i = 0; i < syndr.size(); i++) {
-        if (syndr.at(i)) {
-            auto snode     = code.tannerGraph.adjListNodes.at(i + code.getN()).at(0);
-            snode->isCheck = true;
-            snode->checkVertices.insert(snode->vertexIdx);
-            syndrComponents.insert(snode);
-        }
-    }
-    std::cout << "s component " << syndrComponents << std::endl;
-
-    decoder.decode(syndrComponents);
+    //std::cout << "syndr: " << syndr << std::endl;
+    decoder.decode(syndr);
     auto decodingResult = decoder.result;
     auto estim          = decodingResult.estimNodeIdxVector;
 
@@ -64,14 +53,14 @@ TEST(UnionFindSimulation, SteaneCodeDecodingTest) {
         residualErr.at(i) = err[i] ^ estimate[i];
     }
 
-    std::cout << "estim: " << estimate << std::endl;
-    std::cout << "r = e'+e " << residualErr << std::endl;
+    //std::cout << "estim: " << estimate << std::endl;
+    //std::cout << "r = e'+e " << residualErr << std::endl;
     auto succ = code.checkStabilizer(residualErr);
     EXPECT_TRUE(succ);
 
     if (succ) {
         std::cout << "Decoding successful, found estimate up to stabilizer: " << std::endl;
-        std::cout << estimate << std::endl;
+        //std::cout << estimate << std::endl;
         std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
     } else {
         decodingResult.status = FAILURE;
@@ -101,24 +90,7 @@ void computeResidualErr(const std::vector<bool>& error, std::vector<bool>& resid
         residual.at(j) = residual.at(j) ^ error.at(j);
     }
 }
-/**
- * returns list of tree node (in UF data structure) representations for syndrome
- * @param code
- * @param syndrome
- * @return
- */
-std::set<std::shared_ptr<TreeNode>> computeInitTreeComponents(Code& code, const std::vector<bool>& syndrome) {
-    std::set<std::shared_ptr<TreeNode>> result{};
-    for (size_t j = 0; j < syndrome.size(); j++) {
-        if (syndrome.at(j)) {
-            auto syndrNode     = code.tannerGraph.adjListNodes.at(j + code.getN()).at(0);
-            syndrNode->isCheck = true;
-            syndrNode->checkVertices.insert(syndrNode->vertexIdx);
-            result.insert(syndrNode);
-        }
-    }
-    return result;
-}
+
 
 // main simulation for empirical evaluation study
 TEST(UnionFindSimulation, EmpiricalEvaluation) {
@@ -154,20 +126,21 @@ TEST(UnionFindSimulation, EmpiricalEvaluation) {
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
             SteaneXCode code{};
             K = code.getK();
-            ImprovedUF decoder{code};
+            ImprovedUFD decoder{code};
             auto       error           = sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
-            auto       syndrComponents = computeInitTreeComponents(code, code.getSyndrome(error));
-            decoder.decode(syndrComponents);
+            auto syndrome = code.getSyndrome(error);
+            decoder.decode(syndrome);
             auto              decodingResult = decoder.result;
             std::vector<bool> residualErr    = decodingResult.estimBoolVector;
             computeResidualErr(error, residualErr);
             auto success = code.checkStabilizer(residualErr);
 
-            std::cout << "error: " << error << std::endl;
+            std::cout << "error: " ;
+            Utils::printGF2vector(error);
             if (success) {
                 decodingResult.status = SUCCESS;
                 std::cout << "Decoding successful: " << std::endl;
-                std::cout << residualErr << std::endl;
+                Utils::printGF2vector(residualErr);
                 std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
             } else {
                 decodingResult.status = FAILURE;

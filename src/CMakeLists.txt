@@ -1,11 +1,14 @@
 # main project library
 add_library(${PROJECT_NAME}
-        ${CMAKE_CURRENT_SOURCE_DIR}/ImprovedUF.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ImprovedUFD.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/OriginalUFD.cpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/TreeNode.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Codes.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUF.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUFD.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/OriginalUFD.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/QLDPC.hpp)
 
 # set include directories
