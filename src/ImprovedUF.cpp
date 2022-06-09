@@ -2,117 +2,118 @@
 // Created by lucas on 21/04/2022.
 //
 
-#include "Decoder.hpp"
+#include "ImprovedUF.hpp"
 
+#include "Decoder.hpp"
 #include "TreeNode.hpp"
 
 #include <cassert>
 #include <chrono>
 #include <queue>
+#include <random>
 #include <set>
+// todo identify flagged errors?, i.e. when we do not find any error corresponding to the syndrome
+void ImprovedUF::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
+    std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
+    std::vector<std::size_t>              res;
+    if (!syndrome.empty()) {
+        auto                                   components = syndrome;
+        std::vector<std::shared_ptr<TreeNode>> erasure;
+        while (!components.empty()) {
+            for (size_t i = 0; i < components.size(); i++) {
+                // Step 1 growth
+                std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
+                std::map<std::size_t, bool>                      presentMap{}; // for step 4
+                standardGrowth(fusionEdges, presentMap, components);
 
-// todo identify flagged errors, i.e. when we do not find any error corresponding to the syndrome
-void Decoder::decode(std::set<std::shared_ptr<TreeNode>>& syndrome) {
-    auto                                   components = syndrome;
-    std::vector<std::shared_ptr<TreeNode>> erasure;
-    std::chrono::steady_clock::time_point  decodingTimeBegin = std::chrono::steady_clock::now();
-    while (!components.empty()) {
-        for (size_t i = 0; i < components.size(); i++) {
-            // Step 1 growth
-            std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
-            std::map<std::size_t, bool>                      presentMap{}; // for step 4
-            standardGrowth(fusionEdges, presentMap, components);
+                // Step 2 Fusion of clusters
+                auto eIt = fusionEdges.begin();
+                while (eIt != fusionEdges.end()) {
+                    auto n1    = code.tannerGraph.getNodeForId(eIt->first);
+                    auto n2    = code.tannerGraph.getNodeForId(eIt->second);
+                    auto root1 = TreeNode::Find(n1);
+                    auto root2 = TreeNode::Find(n2);
 
-            // Step 2 Fusion of clusters
-            auto eIt = fusionEdges.begin();
-            while (eIt != fusionEdges.end()) {
-                auto n1    = code.tannerGraph.getNodeForId(eIt->first);
-                auto n2    = code.tannerGraph.getNodeForId(eIt->second);
-                auto root1 = TreeNode::Find(n1);
-                auto root2 = TreeNode::Find(n2);
-
-                //compares vertexIdx only
-                if (*root1 == *root2) {
-                    eIt = fusionEdges.erase(eIt); // passes eIt to erase
-                } else {
-                    std::size_t root1Size = root1->clusterSize;
-                    std::size_t root2Size = root2->clusterSize;
-                    TreeNode::Union(root1, root2);
-
-                    if (root1Size <= root2Size) { // Step 3 fusion of boundary lists
-                        for (auto& boundaryVertex: root1->boundaryVertices) {
-                            root2->boundaryVertices.insert(boundaryVertex);
-                        }
-                        root1->boundaryVertices.clear();
+                    //compares vertexIdx only
+                    if (*root1 == *root2) {
+                        eIt = fusionEdges.erase(eIt); // passes eIt to erase
                     } else {
-                        for (auto& boundaryVertex: root2->boundaryVertices) {
-                            root1->boundaryVertices.insert(boundaryVertex);
-                        }
-                        root2->boundaryVertices.clear();
-                    }
-                    eIt++;
-                }
-            }
+                        std::size_t root1Size = root1->clusterSize;
+                        std::size_t root2Size = root2->clusterSize;
+                        TreeNode::Union(root1, root2);
 
-            // Step 4 Update roots avoiding duplicates
-            auto it = components.begin();
-            while (it != components.end()) {
-                auto elem = *it;
-                auto root = TreeNode::Find(elem);
-                if (!presentMap.contains(root->vertexIdx)) {
-                    it = components.erase(it);
-                    components.insert(root);
-                } else {
-                    it++;
-                }
-            }
-
-            // Step 5 Update Boundary Lists, remove vertices that are not in boundary anymore
-            for (auto& component: components) {
-                auto iter = component->boundaryVertices.begin();
-                while (iter != component->boundaryVertices.end()) {
-                    auto nbrs     = code.tannerGraph.getNeighbours(*iter);
-                    auto currNode = code.tannerGraph.getNodeForId(*iter);
-                    auto currRoot = TreeNode::Find(currNode);
-                    auto nbrIt    = nbrs.begin();
-                    auto end      = nbrs.end();
-                    while (nbrIt != end) {
-                        auto nbr     = *nbrIt;
-                        auto nbrRoot = TreeNode::Find(nbr);
-                        if (currRoot->vertexIdx != nbrRoot->vertexIdx) {
-                            // if we find one neighbour that is not in the same component the currNode is in the boundary
-                            iter++;
-                            break;
-                        }
-                        if (std::next(nbrIt) == end) {
-                            // if we have checked all neighbours and found none in another component remove from boundary list
-                            //toRemoveList.emplace_back(*iter);
-                            iter = component->boundaryVertices.erase(iter);
-                            break;
+                        if (root1Size <= root2Size) { // Step 3 fusion of boundary lists
+                            for (auto& boundaryVertex: root1->boundaryVertices) {
+                                root2->boundaryVertices.insert(boundaryVertex);
+                            }
+                            root1->boundaryVertices.clear();
                         } else {
-                            nbrIt++;
+                            for (auto& boundaryVertex: root2->boundaryVertices) {
+                                root1->boundaryVertices.insert(boundaryVertex);
+                            }
+                            root2->boundaryVertices.clear();
+                        }
+                        eIt++;
+                    }
+                }
+
+                // Step 4 Update roots avoiding duplicates
+                auto it = components.begin();
+                while (it != components.end()) {
+                    auto elem = *it;
+                    auto root = TreeNode::Find(elem);
+                    if (!presentMap.contains(root->vertexIdx)) {
+                        it = components.erase(it);
+                        components.insert(root);
+                    } else {
+                        it++;
+                    }
+                }
+
+                // Step 5 Update Boundary Lists, remove vertices that are not in boundary anymore
+                for (auto& component: components) {
+                    auto iter = component->boundaryVertices.begin();
+                    while (iter != component->boundaryVertices.end()) {
+                        auto nbrs     = code.tannerGraph.getNeighbours(*iter);
+                        auto currNode = code.tannerGraph.getNodeForId(*iter);
+                        auto currRoot = TreeNode::Find(currNode);
+                        auto nbrIt    = nbrs.begin();
+                        auto end      = nbrs.end();
+                        while (nbrIt != end) {
+                            auto nbr     = *nbrIt;
+                            auto nbrRoot = TreeNode::Find(nbr);
+                            if (currRoot->vertexIdx != nbrRoot->vertexIdx) {
+                                // if we find one neighbour that is not in the same component the currNode is in the boundary
+                                iter++;
+                                break;
+                            }
+                            if (std::next(nbrIt) == end) {
+                                // if we have checked all neighbours and found none in another component remove from boundary list
+                                //toRemoveList.emplace_back(*iter);
+                                iter = component->boundaryVertices.erase(iter);
+                                break;
+                            } else {
+                                nbrIt++;
+                            }
                         }
                     }
                 }
+                extractValidComponents(components, erasure);
             }
-            extractValidComponents(components, erasure);
         }
+        res = erasureDecoder(erasure, syndrome);
     }
-    auto                                  res             = erasureDecoder(erasure, syndrome);
     std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
     result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
     result.estimNodeIdxVector                             = res;
-    if (res.empty()) {
-        result.status = FLAGGED_ERROR;
-    }
-    result.estimBoolVector = std::vector<bool>(code.getN());
+    result.estimBoolVector                                = std::vector<bool>(code.getN());
     for (unsigned long re: res) {
         result.estimBoolVector.at(re) = true;
     }
 }
 
-void Decoder::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                             std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+void ImprovedUF::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+                    std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
     for (auto& component: components) {
         presentMap.insert(std::make_pair(component->vertexIdx, true));
         assert(component->parent == nullptr); // at this point we can assume that component represents root of the component
@@ -127,8 +128,8 @@ void Decoder::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& f
     }
 }
 
-void Decoder::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                               std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+void ImprovedUF::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+                                      std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
     std::shared_ptr<TreeNode> smallestComponent;
     std::size_t               smallestSize = SIZE_MAX;
     for (const auto& c: components) {
@@ -148,12 +149,37 @@ void Decoder::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t
     }
 }
 
-void orientedGroth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                   std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
-    //todo
+void ImprovedUF::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+                                    std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+    std::shared_ptr<TreeNode>       chosenComponent;
+    std::random_device              rd;
+    std::mt19937                    gen(rd());
+    std::vector<bool>               result;
+    std::uniform_int_distribution<> d(0U, components.size());
+    std::size_t                     chosenIdx = d(gen);
+    auto                            it        = components.begin();
+    std::advance(it, chosenIdx);
+    chosenComponent = *it;
+
+    presentMap.insert(std::make_pair(chosenComponent->vertexIdx, true));
+    assert(chosenComponent->parent == nullptr);
+    auto bndryNodes = chosenComponent->boundaryVertices;
+
+    for (const auto& bndryNode: bndryNodes) {
+        auto nbrs = code.tannerGraph.getNeighboursIdx(bndryNode);
+        for (auto& nbr: nbrs) {
+            fusionEdges.emplace_back(std::pair(bndryNode, nbr));
+        }
+    }
 }
 
-std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+//
+//void ImprovedUF::orientedGroth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+//                  std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+// todo
+//}
+
+std::vector<std::size_t> ImprovedUF::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
@@ -233,16 +259,16 @@ std::vector<std::size_t> Decoder::erasureDecoder(std::vector<std::shared_ptr<Tre
         }
         resList.emplace_back(xi);
     }
-    std::vector<std::size_t> result;
+    std::vector<std::size_t> res;
     for (auto& i: resList) {
         for (auto& n: i) {
-            result.emplace_back(n);
+            res.emplace_back(n);
         }
     }
-    return result;
+    return res;
 }
 
-std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+std::vector<std::size_t> ImprovedUF::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
     std::set<std::size_t> erasureRoots;
     std::set<std::size_t> erasureVertices;
     for (auto& i: erasure) {
@@ -253,7 +279,7 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
         syndr.insert(s->vertexIdx);
     }
 
-    std::vector<std::size_t> result;
+    std::vector<std::size_t> reslt;
     // compute SF
     std::vector<std::set<std::pair<std::size_t, std::size_t>>> spanningForest;
     std::vector<std::set<std::size_t>>                         forestVertices;
@@ -346,8 +372,8 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
                         data  = frst;
                     }
                     // add data to estimate, remove check from syndrome
-                    result.emplace_back(data);
-                    std::cout << "adding to result: " << data << std::endl;
+                    reslt.emplace_back(data);
+                    std::cout << "adding to reslt: " << data << std::endl;
                     code.tannerGraph.getNodeForId(data)->marked  = true;
                     code.tannerGraph.getNodeForId(check)->marked = true;
                     forestVertices.at(fNIdx).erase(data);
@@ -370,10 +396,15 @@ std::vector<std::size_t> Decoder::peelingDecoder(std::vector<std::shared_ptr<Tre
         }
         fNIdx++;
     }
-    return result;
+    return reslt;
 }
 
-void Decoder::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure) {
+/**
+ * Add those components that are valid to the erasure
+ * @param components containts components to check validity for
+ * @param erasure contains valid components (including possible new ones at end of function)
+ */
+void ImprovedUF::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure) {
     auto it = components.begin();
     while (it != components.end()) {
         if (isValidComponent(*it)) {
@@ -387,7 +418,7 @@ void Decoder::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& compon
 
 // for each check node verify that there is no neighbour that is in the boundary of the component
 // if there is no neighbour in the boundary for each check vertex the check is covered by a node in Int TODO prove this in paper
-bool Decoder::isValidComponent(const std::shared_ptr<TreeNode>& component) {
+bool ImprovedUF::isValidComponent(const std::shared_ptr<TreeNode>& component) {
     std::vector<bool> valid(component->checkVertices.size());
     std::size_t       i = 0;
     for (const auto& checkVertex: component->checkVertices) {

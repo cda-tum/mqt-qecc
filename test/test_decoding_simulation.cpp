@@ -3,6 +3,7 @@
 //
 #include "Codes.hpp"
 #include "Decoder.hpp"
+#include "ImprovedUF.hpp"
 
 #include <bitset>
 #include <filesystem>
@@ -10,6 +11,7 @@
 #include <gtest/gtest.h>
 #include <locale>
 #include <random>
+using json = nlohmann::json;
 
 class UnionFindSimulation: public testing::TestWithParam<std::string> {
 protected:
@@ -23,15 +25,14 @@ std::vector<bool> dummySampler(const std::size_t n) {
     std::mt19937                    gen(rd());
     std::uniform_int_distribution<> distr(0, n);
 
-    //result.at(distr(gen)) = true;
     result.at(0) = true;
 
     return result;
 }
 
-TEST(SteaneCodeTest, SteaneCodeDecoding) {
+TEST(UnionFindSimulation, SteaneCodeDecodingTest) {
     SteaneXCode code{};
-    Decoder     decoder{code};
+    ImprovedUF  decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
     auto err = dummySampler(code.getN());
@@ -77,12 +78,13 @@ TEST(SteaneCodeTest, SteaneCodeDecoding) {
         std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
     }
 }
-std::vector<bool> sampleError(const std::size_t n, const double physicalErrRate) {
+
+std::vector<bool> sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
     std::random_device rd;
     std::mt19937       gen(rd());
     std::vector<bool>  result;
 
-    // Setup the weights, iid for each qubit
+    // Setup the weights, iid noise for each bit
     std::discrete_distribution<> d({1 - physicalErrRate, physicalErrRate});
     for (std::size_t i = 0; i < n; i++) {
         result.emplace_back(d(gen));
@@ -92,7 +94,7 @@ std::vector<bool> sampleError(const std::size_t n, const double physicalErrRate)
 /**
  *
  * @param error bool vector representing error
- * @param residual estimate vector that contains residual error at end
+ * @param residual estimate vector that contains residual error at end of function
  */
 void computeResidualErr(const std::vector<bool>& error, std::vector<bool>& residual) {
     for (std::size_t j = 0; j < residual.size(); j++) {
@@ -100,13 +102,13 @@ void computeResidualErr(const std::vector<bool>& error, std::vector<bool>& resid
     }
 }
 /**
- * returns list of tree node representations for syndrome
+ * returns list of tree node (in UF data structure) representations for syndrome
  * @param code
  * @param syndrome
  * @return
  */
 std::set<std::shared_ptr<TreeNode>> computeInitTreeComponents(Code& code, const std::vector<bool>& syndrome) {
-    std::set<std::shared_ptr<TreeNode>> result;
+    std::set<std::shared_ptr<TreeNode>> result{};
     for (size_t j = 0; j < syndrome.size(); j++) {
         if (syndrome.at(j)) {
             auto syndrNode     = code.tannerGraph.adjListNodes.at(j + code.getN()).at(0);
@@ -115,71 +117,82 @@ std::set<std::shared_ptr<TreeNode>> computeInitTreeComponents(Code& code, const 
             result.insert(syndrNode);
         }
     }
+    return result;
 }
 
-TEST(LogicalErrorRateSimulation, SteaneCodeDecoding) {
-    std::string        outFilePath = "path";
-    std::string        dataFilePath = "path";
-    auto               t           = std::time(nullptr);
-    auto               tm          = *std::localtime(&t);
+// main simulation for empirical evaluation study
+TEST(UnionFindSimulation, EmpiricalEvaluation) {
+    std::string        outFilePath  = "/home/luca/Documents/uf-simulations/testrun/out";
+    std::string        dataFilePath = "/home/luca/Documents/uf-simulations/testrun/data";
+    std::cout << outFilePath;
+
+    auto               t            = std::time(nullptr);
+    auto               tm           = *std::localtime(&t);
     std::ostringstream oss;
     oss << std::put_time(&tm, "%d-%m-%Y");
     auto          timestamp = oss.str();
-    std::ofstream            decodingResOutput(outFilePath + timestamp + ".json");
-    std::ofstream            rawDataOutput(dataFilePath + timestamp + ".json");
-    double        physicalErrRate = 0.0001;
-    double maxPhysicalErrRate = 0.1;
-    double stepSize = 0.0001;
-    std::size_t   nrOfRunsPerRate = 10;
-    int nrOfFailedRuns = 0;
-    double blockErrRate = 0.0;
-    double wordErrRate = 0.0;
-    double K = 0.0;
-    std::map<double, double> wordErrRateData;
+    std::ofstream decodingResOutput(outFilePath + timestamp + ".json");
+    std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
+    const double                  normalizationConstant = 10'000.0; //
+    double                        physicalErrRate       = 1.0 / normalizationConstant;
+    double                        stepSize              = 10.0 / normalizationConstant;
+    const double                  maxPhysicalErrRate    = 0.5;
+    const size_t                  nrOfRuns              = std::floor(maxPhysicalErrRate/physicalErrRate);
+    std::size_t                   nrOfRunsPerRate       = 32;
+    std::size_t                   nrOfFailedRuns        = 0U;
+    double                        blockErrRate          = 0.0;
+    double                        wordErrRate           = 0.0;
+    std::size_t                   K                     = 0.0;
+    std::map<std::string, double> wordErrRatePerPhysicalErrRate;
     decodingResOutput << "{ \"runs\" : [ ";
+    for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhysicalErrRate; i++) {
+        nrOfFailedRuns = 0U;
+        blockErrRate   = 0.0;
+        wordErrRate    = 0.0;
+        decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
-    for (; physicalErrRate < maxPhysicalErrRate; physicalErrRate += stepSize) {
-        nrOfFailedRuns = 0;
-        blockErrRate = wordErrRate = 0.0;
-        decodingResOutput << "{ \"run\": { \"physicalErrRate\":" << physicalErrRate << ", \"data\": [ ";
-        for (size_t i = 0; i < nrOfRunsPerRate; i++) {
+        for (size_t j = 0; j < nrOfRunsPerRate; j++) {
             SteaneXCode code{};
             K = code.getK();
-            Decoder     decoder{code};
-            auto        error           = sampleError(code.getN(), physicalErrRate);
-            auto        syndrComponents = computeInitTreeComponents(code, code.getSyndrome(error));
+            ImprovedUF decoder{code};
+            auto       error           = sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
+            auto       syndrComponents = computeInitTreeComponents(code, code.getSyndrome(error));
             decoder.decode(syndrComponents);
             auto              decodingResult = decoder.result;
             std::vector<bool> residualErr    = decodingResult.estimBoolVector;
             computeResidualErr(error, residualErr);
             auto success = code.checkStabilizer(residualErr);
 
+            std::cout << "error: " << error << std::endl;
             if (success) {
                 decodingResult.status = SUCCESS;
-                std::cout << "Decoding successful, found residualErr up to stabilizer: " << std::endl;
+                std::cout << "Decoding successful: " << std::endl;
                 std::cout << residualErr << std::endl;
                 std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
             } else {
                 decodingResult.status = FAILURE;
                 nrOfFailedRuns++;
-                std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
+                std::cout << "Decoding failure" << std::endl;
             }
             decodingResOutput << decodingResult.to_json().dump(2U);
-            if(i != nrOfRunsPerRate-1) {
+            if (j != nrOfRunsPerRate - 1) {
                 decodingResOutput << ", ";
             }
         }
-        blockErrRate = nrOfFailedRuns/nrOfRunsPerRate;
-        wordErrRate = blockErrRate/K;
-        wordErrRateData.insert(std::make_pair(physicalErrRate, wordErrRate));
-        if(physicalErrRate != maxPhysicalErrRate-stepSize) {
+        //compute word error rate WER
+        blockErrRate = (double)nrOfFailedRuns / (double)nrOfRunsPerRate;
+        wordErrRate  = blockErrRate / (double)K; // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
+        wordErrRatePerPhysicalErrRate.insert(std::make_pair(std::to_string(physicalErrRate), wordErrRate)); // to string for json parsing
+        // only for json output
+        if (i != nrOfRuns - 1) {
             decodingResOutput << "]}},";
-        }else{
+        } else {
             decodingResOutput << "]}}";
         }
+        physicalErrRate += stepSize;
     }
     decodingResOutput << "}";
-    json dataj = wordErrRate;
+    json dataj = wordErrRatePerPhysicalErrRate;
     rawDataOutput << dataj.dump(2U);
     decodingResOutput.close();
     rawDataOutput.close();

@@ -7,7 +7,7 @@
 #include <vector>
 
 #ifndef QUNIONFIND_CODE_HPP
-#define QUNIONFIND_CODE_HPP
+    #define QUNIONFIND_CODE_HPP
 
 struct ParityCheckMatrix {
     explicit ParityCheckMatrix(std::vector<std::vector<bool>> pcm):
@@ -56,18 +56,27 @@ struct TannerGraph {
         return os;
     }
 };
+/**
+ * Considers X errors with Z checks only.
+ * Z errors are corrected completely analogously in a symmetric way for Z and X.
+ */
 class Code {
 public:
     TannerGraph       tannerGraph;
-    ParityCheckMatrix Hx;
-    std::size_t K =0;
+    ParityCheckMatrix Hz;
+    std::size_t       K = 0U;
+    std::size_t       N = 0U;
 
-    explicit Code(ParityCheckMatrix hx):
-        Hx(std::move(hx)) {
-        auto                                                nrChecks = Hx.pcm.size();
-        auto                                                nrData   = Hx.pcm.at(0).size();
+    /*
+     * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz (Convention: Rows in first dim, columns in second)
+     * Additionally, the adjacency matrix representation using the Union Find datastructure is construced for Hz
+     */
+    explicit Code(ParityCheckMatrix hz):
+        Hz(std::move(hz)) {
+        auto                                                nrChecks = Hz.pcm.size();
+        auto                                                nrData   = Hz.pcm.at(0).size();
         std::size_t                                         dim      = nrChecks + nrData;
-        std::vector<std::vector<bool>>                      adjMatrBool(dim); // todo this contains bool values only not adjacency list check alg for errors
+        std::vector<std::vector<bool>>                      adjMatrBool(dim);
         std::vector<std::vector<std::shared_ptr<TreeNode>>> adjLstNodes(dim);
         std::map<std::size_t, std::shared_ptr<TreeNode>>    nodeMap;
         for (size_t i = 0; i < dim; i++) {
@@ -81,10 +90,10 @@ public:
         for (size_t i = 0; i < dim; i++) {
             std::vector<bool>                      rowBool(dim);
             std::vector<std::shared_ptr<TreeNode>> nbrList;
-            nbrList.emplace_back(nodeMap.at(i)); // adjacency list of node n contains n in first position
+            nbrList.emplace_back(nodeMap.at(i)); // adjacency list of node n contains n in first position by our convention
             if (i < dim - nrChecks) {
                 for (size_t j = 0; j < nrChecks; j++) {
-                    auto val               = Hx.pcm.at(j).at(i);
+                    auto val               = Hz.pcm.at(j).at(i);
                     rowBool.at(nrData + j) = val;
                     if (val) {
                         nbrList.emplace_back(nodeMap.at(nrData + j));
@@ -92,7 +101,7 @@ public:
                 }
             } else {
                 for (size_t j = 0; j < nrData; j++) {
-                    auto val      = Hx.pcm.at(i - nrData).at(j);
+                    auto val      = Hz.pcm.at(i - nrData).at(j);
                     rowBool.at(j) = val;
                     if (val) {
                         nbrList.emplace_back(nodeMap.at(j)); // insert index of vertex here to generate adjacency list containing the nodes
@@ -104,17 +113,14 @@ public:
         }
         tannerGraph.adjMatrix    = adjMatrBool;
         tannerGraph.adjListNodes = adjLstNodes;
+        N                        = Hz.pcm.at(0).size();
     }
 
-    std::size_t getN() {
-        if (!Hx.pcm.empty()) {
-            return Hx.pcm.at(0).size();
-        } else {
-            return 0;
-        }
+    [[nodiscard]] std::size_t getN() const {
+        return N;
     }
 
-    std::size_t getK(){
+    [[nodiscard]] std::size_t getK() const {
         return K;
     }
     static std::vector<std::vector<bool>> rectMatrixMultiply(const std::vector<std::vector<bool>>& m1, const std::vector<std::vector<bool>>& m2) {
@@ -131,14 +137,14 @@ public:
         }
         return result;
     }
-    std::vector<bool> getSyndrome(const std::vector<bool>& err) {
+    [[nodiscard]] std::vector<bool> getSyndrome(const std::vector<bool>& err) const {
         std::vector<std::vector<bool>> errMat(err.size());
         for (size_t i = 0; i < err.size(); i++) {
             errMat.at(i) = std::vector<bool>{err.at(i)}; //transpose
         }
-        auto res = rectMatrixMultiply(Hx.pcm, errMat);
+        auto res = rectMatrixMultiply(Hz.pcm, errMat);
         if (!res.empty()) {
-            std::vector<bool> rres(Hx.pcm.size());
+            std::vector<bool> rres(Hz.pcm.size());
             for (size_t i = 0; i < rres.size(); i++) {
                 rres.at(i) = res.at(i).at(0); // transpose back
             }
@@ -148,8 +154,8 @@ public:
         }
     }
 
-    bool checkStabilizer(const std::vector<bool>& est) {
-        return checkVectorInRowspace(Hx.pcm, est);
+    [[nodiscard]] bool checkStabilizer(const std::vector<bool>& est) const {
+        return checkVectorInRowspace(Hz.pcm, est);
     }
 
     static void swapRows(std::vector<std::vector<bool>>& matrix, const std::size_t row1, const std::size_t row2) {
@@ -159,34 +165,38 @@ public:
     }
 
     static void printGF2matrix(const std::vector<std::vector<bool>>& matrix) {
-        for (const auto & i : matrix) {
-            for (size_t j = 0; j < i.size(); j++) {
-                std::cout << i.at(j) << " ";
+        for (const auto& i: matrix) {
+            for (bool j: i) {
+                std::cout << j << " ";
             }
             std::cout << std::endl;
         }
         std::cout << std::endl;
     }
 
+    /*
+     * Checks if vec is in the rowspace of matrix M by gaussian elimination (computing reduced echelon form)
+     */
     static bool checkVectorInRowspace(std::vector<std::vector<bool>> M, std::vector<bool> vec) { //https://stackoverflow.com/questions/11483925/how-to-implementing-gaussian-elimination-for-binary-equations
         std::size_t                    nrCols = M.size();
         std::size_t                    nrRows = M.at(0).size();
         std::size_t                    row    = 0;
-        std::vector<std::vector<bool>> tranp(nrRows);
-        for (size_t i = 0; i < tranp.size(); i++) {
-            tranp.at(i) = std::vector<bool>(nrCols);
+        std::vector<std::vector<bool>> transp(nrRows);
+        for (auto& i: transp) {
+            i = std::vector<bool>(nrCols);
         }
         for (size_t i = 0; i < M.size(); i++) {
             for (size_t j = 0; j < M.at(i).size(); j++) {
-                tranp[j][i] = M[i][j];
+                transp[j][i] = M[i][j];
             }
         }
-        M = tranp;
+        M = transp;
 
-        std::cout << "vector: " << std::endl;
-        for (size_t i = 0; i < vec.size(); i++) {
-            std::cout << vec.at(i) << " ";
+        /*std::cout << "vector: " << std::endl;
+        for (auto && i : vec) {
+            std::cout << i << " ";
         }
+         */
         printGF2matrix(M);
 
         for (std::size_t col = 0; col < nrCols && row < nrRows; col++, row++) {

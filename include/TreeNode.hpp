@@ -11,6 +11,9 @@
 #include <set>
 #include <vector>
 
+/**
+ * Union Find data structure as tree with additional information in root node of tree
+ */
 class TreeNode {
 public:
     std::size_t                            vertexIdx = 0;
@@ -42,11 +45,11 @@ public:
         this->vertexIdx = vertexIdx;
         this->boundaryVertices.insert(this->vertexIdx);
     }
+
     /*
-     * Recursive Find using path compression
-     */
+ * Recursive find using path compression
+ */
     static std::shared_ptr<TreeNode> Find(std::shared_ptr<TreeNode>& node) {
-        //std::cout << "in find" << std::endl;
         if (node->parent == nullptr) {
             return node;
         } else {
@@ -54,7 +57,6 @@ public:
             return node->parent;
         }
     }
-
     /*
      * Merge two trees with given roots
      */
