@@ -1,7 +1,8 @@
 //
 // Created by lucas on 21/04/2022.
 //
-
+#ifndef QUNIONFIND_DECODER_HPP
+#define QUNIONFIND_DECODER_HPP
 #include "Code.hpp"
 #include "Codes.hpp"
 #include "TreeNode.hpp"
@@ -12,8 +13,6 @@
 #include <vector>
 
 using json = nlohmann::json;
-#ifndef QUNIONFIND_DECODER_HPP
-#define QUNIONFIND_DECODER_HPP
 
 enum DecodingResultStatus {
     SUCCESS,

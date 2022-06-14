@@ -12,7 +12,6 @@
 #include <queue>
 #include <random>
 #include <set>
-
 /**
      * returns list of tree node (in UF data structure) representations for syndrome
      * @param code
@@ -36,9 +35,11 @@ std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const
 void ImprovedUFD::decode(std::vector<bool>& syndrome) {
     std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
     std::vector<std::size_t>              res;
+    std::cout << "in decoder syndrome: ";
+    Utils::printGF2vector(syndrome);
     if (!syndrome.empty()) {
-        auto syndrComponents = computeInitTreeComponents(syndrome);
-        auto                                   components = syndrComponents;
+        auto                                   syndrComponents = computeInitTreeComponents(syndrome);
+        auto                                   components      = syndrComponents;
         std::vector<std::shared_ptr<TreeNode>> erasure;
         while (!components.empty()) {
             for (size_t i = 0; i < components.size(); i++) {
@@ -251,11 +252,6 @@ std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr
     // go through nodes in erasure
     // if current node v is a check node in Int, remove B(v, 1)
     for (auto& component: erasureSet) {
-        std::cout << "decoding erasure ";
-        for (auto& c: component) {
-            std::cout << c << ",";
-        }
-        std::cout << std::endl;
         std::set<std::size_t> xi;
 
         while (!syndrome.empty()) {
@@ -263,8 +259,6 @@ std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr
             auto currN      = code.tannerGraph.getNodeForId(*compNodeIt);
             if (currN->marked && !currN->isCheck) {
                 xi.insert(currN->vertexIdx);
-                std::cout << "added to xi: " << currN->vertexIdx << std::endl;
-                std::cout << "removing all its neighbouring checks and their neigbouhrs in tanner graph" << std::endl;
                 for (auto& markedNeighbour: currN->markedNeighbours) {
                     auto nNbrs = code.tannerGraph.getNeighboursIdx(markedNeighbour);
                     auto nnbr  = nNbrs.begin();
@@ -373,20 +367,16 @@ std::vector<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr
                 std::pair<std::size_t, std::size_t> e;
                 std::size_t                         check;
                 std::size_t                         data;
-                std::cout << "Checking edge (" << edgeIt->first << "," << edgeIt->second << ")" << std::endl;
                 if (code.tannerGraph.getNodeForId(edgeIt->first)->marked || code.tannerGraph.getNodeForId(edgeIt->first)->marked) {
                     edgeIt = tree.erase(edgeIt);
                     continue;
                 }
-                std::cout << "pedants: ";
                 for (auto& z: boundaryVtcs) {
                     std::cout << z << ",";
                 }
-                std::cout << "forest n: " << std::endl;
                 for (auto& z: forestVertices.at(fNIdx)) {
                     std::cout << z << ",";
                 }
-                std::cout << std::endl;
                 auto frst = edgeIt->first;
                 auto scd  = edgeIt->second;
                 // if in boundary simply remove
@@ -405,7 +395,6 @@ std::vector<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr
                     }
                     // add data to estimate, remove check from syndrome
                     reslt.emplace_back(data);
-                    std::cout << "adding to reslt: " << data << std::endl;
                     code.tannerGraph.getNodeForId(data)->marked  = true;
                     code.tannerGraph.getNodeForId(check)->marked = true;
                     forestVertices.at(fNIdx).erase(data);

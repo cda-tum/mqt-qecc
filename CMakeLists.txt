@@ -16,7 +16,7 @@ option(DEPLOY "Configure for deployment")
 option(BINDINGS "Configure for building Python bindings")
 option(COVERAGE "Configure for coverage report generation")
 option(GENERATE_POSITION_INDEPENDENT_CODE "Generate position independent code")
-option(BUILD_QUSAT_TESTS "Also build tests for project")
+option(BUILD_UNION_FIND_TESTS "Also build tests for project")
 
 if (DEFINED ENV{DEPLOY})
     set(DEPLOY $ENV{DEPLOY} CACHE BOOL "Use deployment configuration from environment" FORCE)

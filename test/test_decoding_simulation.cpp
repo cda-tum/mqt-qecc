@@ -19,98 +19,29 @@ protected:
     }
 };
 
-std::vector<bool> dummySampler(const std::size_t n) {
-    std::vector<bool>               result(n);
-    std::random_device              rd;
-    std::mt19937                    gen(rd());
-    std::uniform_int_distribution<> distr(0, n);
-
-    result.at(0) = true;
-
-    return result;
-}
-
-TEST(UnionFindSimulation, SteaneCodeDecodingTest) {
-    SteaneXCode code{};
-    ImprovedUFD decoder{code};
-    std::cout << "code: " << std::endl
-              << code << std::endl;
-    auto err = dummySampler(code.getN());
-    //std::cout << "error: " << err << std::endl;
-    auto syndr = code.getSyndrome(err);
-    //std::cout << "syndr: " << syndr << std::endl;
-    decoder.decode(syndr);
-    auto decodingResult = decoder.result;
-    auto estim          = decodingResult.estimNodeIdxVector;
-
-    EXPECT_TRUE(!estim.empty());
-    std::vector<bool> estimate(code.getN());
-    for (auto e: estim) {
-        estimate.at(e) = true;
-    }
-    std::vector<bool> residualErr(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = err[i] ^ estimate[i];
-    }
-
-    //std::cout << "estim: " << estimate << std::endl;
-    //std::cout << "r = e'+e " << residualErr << std::endl;
-    auto succ = code.checkStabilizer(residualErr);
-    EXPECT_TRUE(succ);
-
-    if (succ) {
-        std::cout << "Decoding successful, found estimate up to stabilizer: " << std::endl;
-        //std::cout << estimate << std::endl;
-        std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
-    } else {
-        decodingResult.status = FAILURE;
-        std::cout << "Decoding not successful, introduced logical opertor" << std::endl;
-    }
-}
-
-std::vector<bool> sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
-    std::random_device rd;
-    std::mt19937       gen(rd());
-    std::vector<bool>  result;
-
-    // Setup the weights, iid noise for each bit
-    std::discrete_distribution<> d({1 - physicalErrRate, physicalErrRate});
-    for (std::size_t i = 0; i < n; i++) {
-        result.emplace_back(d(gen));
-    }
-    return result;
-}
 /**
- *
- * @param error bool vector representing error
- * @param residual estimate vector that contains residual error at end of function
+ * Simulate WER for growing number of physical err rate
+ * Can also be used for threshold simulations
  */
-void computeResidualErr(const std::vector<bool>& error, std::vector<bool>& residual) {
-    for (std::size_t j = 0; j < residual.size(); j++) {
-        residual.at(j) = residual.at(j) ^ error.at(j);
-    }
-}
-
-
-// main simulation for empirical evaluation study
-TEST(UnionFindSimulation, EmpiricalEvaluation) {
-    std::string        outFilePath  = "/home/luca/Documents/uf-simulations/testrun/out";
-    std::string        dataFilePath = "/home/luca/Documents/uf-simulations/testrun/data";
+TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
+    std::string outFilePath  = "/home/luca/Documents/uf-simulations/decoding/out";
+    std::string dataFilePath = "/home/luca/Documents/uf-simulations/decoding/data";
     std::cout << outFilePath;
 
-    auto               t            = std::time(nullptr);
-    auto               tm           = *std::localtime(&t);
+    auto               t  = std::time(nullptr);
+    auto               tm = *std::localtime(&t);
     std::ostringstream oss;
     oss << std::put_time(&tm, "%d-%m-%Y");
     auto          timestamp = oss.str();
     std::ofstream decodingResOutput(outFilePath + timestamp + ".json");
     std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
+    // Basic Parameter setup
     const double                  normalizationConstant = 10'000.0; //
     double                        physicalErrRate       = 1.0 / normalizationConstant;
-    double                        stepSize              = 10.0 / normalizationConstant;
+    double                        stepSize              = 1.0 / normalizationConstant;
     const double                  maxPhysicalErrRate    = 0.5;
-    const size_t                  nrOfRuns              = std::floor(maxPhysicalErrRate/physicalErrRate);
-    std::size_t                   nrOfRunsPerRate       = 32;
+    const size_t                  nrOfRuns              = std::floor(maxPhysicalErrRate / physicalErrRate);
+    std::size_t                   nrOfRunsPerRate       = 4096; // todo how deep to go?
     std::size_t                   nrOfFailedRuns        = 0U;
     double                        blockErrRate          = 0.0;
     double                        wordErrRate           = 0.0;
@@ -127,25 +58,20 @@ TEST(UnionFindSimulation, EmpiricalEvaluation) {
             SteaneXCode code{};
             K = code.getK();
             ImprovedUFD decoder{code};
-            auto       error           = sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
-            auto syndrome = code.getSyndrome(error);
+            auto        error    = Utils::sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
+            auto        syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);
             auto              decodingResult = decoder.result;
             std::vector<bool> residualErr    = decodingResult.estimBoolVector;
-            computeResidualErr(error, residualErr);
-            auto success = code.checkStabilizer(residualErr);
+            Utils::computeResidualErr(error, residualErr);
+            auto success = code.isVectorStabilizer(residualErr);
 
-            std::cout << "error: " ;
-            Utils::printGF2vector(error);
             if (success) {
                 decodingResult.status = SUCCESS;
-                std::cout << "Decoding successful: " << std::endl;
                 Utils::printGF2vector(residualErr);
-                std::cout << "Elapsed time: " << decodingResult.decodingTime << "ms" << std::endl;
             } else {
                 decodingResult.status = FAILURE;
                 nrOfFailedRuns++;
-                std::cout << "Decoding failure" << std::endl;
             }
             decodingResOutput << decodingResult.to_json().dump(2U);
             if (j != nrOfRunsPerRate - 1) {
@@ -154,7 +80,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluation) {
         }
         //compute word error rate WER
         blockErrRate = (double)nrOfFailedRuns / (double)nrOfRunsPerRate;
-        wordErrRate  = blockErrRate / (double)K; // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
+        wordErrRate  = blockErrRate / (double)K;                                                            // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
         wordErrRatePerPhysicalErrRate.insert(std::make_pair(std::to_string(physicalErrRate), wordErrRate)); // to string for json parsing
         // only for json output
         if (i != nrOfRuns - 1) {
@@ -169,4 +95,48 @@ TEST(UnionFindSimulation, EmpiricalEvaluation) {
     rawDataOutput << dataj.dump(2U);
     decodingResOutput.close();
     rawDataOutput.close();
+}
+
+/**
+ * Simulate average runtime for codes with growing nr of N for several physical err rates (err rates should only increase slope of curve)
+ */
+TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
+    std::string outFilePath  = "/home/luca/Documents/uf-simulations/runtime/out";
+    std::string dataFilePath = "/home/luca/Documents/uf-simulations/runtime/data";
+    std::cout << outFilePath;
+
+    auto               t  = std::time(nullptr);
+    auto               tm = *std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y");
+    auto          timestamp = oss.str();
+    std::ofstream decodingResOutput(outFilePath + timestamp + ".json");
+    std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
+    // Basic Parameter setup
+
+    const double                  physErrRates[]     = {0.0001, 0.0002, 0.0005, 0.001, 0.05};
+    std::size_t                   avgDecodingTimeAcc = 0U;
+    const std::size_t             nrOfTrials         = 1'000'000;
+    double                        avgDecTime         = 0.0;
+    std::map<std::string, double> avgDecodingTimePerSize;
+
+    for (auto physErrRate: physErrRates) {
+        Code codes[] = {};
+        for (const auto& code: codes) {
+            avgDecodingTimeAcc = 0U;
+            for (size_t i = 0; i < nrOfTrials; i++) {
+                auto        c = Code(code.Hz); // construct new for each trial
+                ImprovedUFD decoder{c};
+                auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
+                auto        syndrome = c.getSyndrome(error);
+                decoder.decode(syndrome);
+                auto decodingResult = decoder.result;
+                avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
+            }
+            avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
+            avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
+        }
+    }
+    json dataj = avgDecodingTimePerSize;
+    rawDataOutput << dataj.dump(2U);
 }

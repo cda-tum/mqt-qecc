@@ -1,14 +1,14 @@
 //
 // Created by luca on 26/04/2022.
 //
+
+#ifndef QUNIONFIND_CODE_HPP
+#define QUNIONFIND_CODE_HPP
 #include "TreeNode.hpp"
 #include "Utils.hpp"
 
 #include <utility>
 #include <vector>
-
-#ifndef QUNIONFIND_CODE_HPP
-#define QUNIONFIND_CODE_HPP
 
 struct ParityCheckMatrix {
     explicit ParityCheckMatrix(std::vector<std::vector<bool>> pcm):
@@ -142,8 +142,9 @@ public:
         }
     }
 
-    [[nodiscard]] bool checkStabilizer(const std::vector<bool>& est) const {
-        return Utils::checkVectorInRowspace(Hz.pcm, est);
+    [[nodiscard]] bool isVectorStabilizer(const std::vector<bool>& est) const {
+        auto pcmT = Utils::getTranspose(Hz.pcm);
+        return Utils::isVectorInRowspace(pcmT, est);
     }
 
     friend std::ostream& operator<<(std::ostream& os, Code const& c) {

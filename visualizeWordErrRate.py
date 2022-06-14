@@ -19,8 +19,8 @@ def wer():
         xData.append(float(key))
         yData.append(data[key])
 
-    n = 10
-    ax.plot(xData[::n], yData[::n], 'o', label='code 1', color='b')
+    n = 5
+    ax.plot(xData, yData, 'o', label='code 1', color='b')
     ax.set_xlabel('physical X-error rate')
     ax.set_ylabel('WER')
     ax.legend()

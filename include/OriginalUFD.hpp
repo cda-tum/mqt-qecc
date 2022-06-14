@@ -8,12 +8,13 @@
 class OriginalUFD: virtual public Decoder {
 public:
     explicit OriginalUFD(Code& code):
-        Decoder(code) {};
-    void decode(std::vector<bool> &syndrome) override;
+        Decoder(code){};
+    void decode(std::vector<bool>& syndrome) override;
+
 private:
-    void                     standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                            std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components);
-    bool                     isValidComponent(const std::shared_ptr<TreeNode>& component);
-    bool containsInvalidComponents(const std::set<std::shared_ptr<TreeNode>>& components);
+    bool                     isValidComponent(std::set<std::size_t>& component, const std::vector<bool>& syndrome);
+    bool                     containsInvalidComponents(std::vector<std::set<std::size_t>>& components, const std::vector<bool>& syndrome);
+    std::vector<std::size_t> computeInteriorBitNodes(std::set<std::size_t>& component);
+    std::set<std::size_t>    getEstimateForComponent(std::set<std::size_t>& set, const std::vector<bool>& syndrome);
 };
 #endif //QUNIONFIND_IMPROVEDUF_HPP
