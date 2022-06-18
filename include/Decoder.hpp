@@ -37,7 +37,8 @@ public:
     DecodingResult result;
     explicit Decoder(Code& code):
         code(code) {}
-    virtual void decode(std::vector<bool>& syndrome){};
+    virtual void decode(std::vector<bool>&){};
+
 protected:
     Code code;
 };

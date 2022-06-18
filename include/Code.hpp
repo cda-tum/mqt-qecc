@@ -13,7 +13,7 @@
 struct ParityCheckMatrix {
     explicit ParityCheckMatrix(std::vector<std::vector<bool>> pcm):
         pcm(std::move(pcm)) {}
-    std::vector<std::vector<bool>> pcm;
+    const std::vector<std::vector<bool>> pcm;
 };
 
 struct TannerGraph {

@@ -106,19 +106,7 @@ bool OriginalUFD::isValidComponent(std::set<std::size_t>& component, const std::
             syndr.push_back(false);
         }
     }
-    auto sol = Utils::solveSystem(code.Hz.pcm, syndr);
-    if (sol.empty()) {
-        return false;
-    } else {
-        std::vector<std::size_t> estimNodes;
-        for (size_t i = 0; i < sol.size(); i++) {
-            if (sol.at(i)) {
-                estimNodes.emplace_back(i);
-            }
-        }
-        auto interior = computeInteriorBitNodes(component);
-        return std::includes(interior.begin(), interior.end(), estimNodes.begin(), estimNodes.end());
-    }
+    return !getEstimateForComponent(component, syndrome).empty();
 }
 
 /**
@@ -132,7 +120,7 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(std::set<std::size
     auto cIt = component.begin();
     while (cIt != component.end()) {
         auto nbrs = code.tannerGraph.getNeighboursIdx(*cIt);
-        if (std::includes(component.begin(), component.end(), nbrs.begin(), nbrs.end()) && *cIt <= code.getN()) {
+        if (std::includes(component.begin(), component.end(), nbrs.begin(), nbrs.end()) && *cIt < code.getN()) {
             res.emplace_back(*cIt);
         }
         cIt++;
@@ -142,11 +130,11 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(std::set<std::size
 
 /**
  * Computes estimate vector x for a component and a syndrome
- * @param set
+ * @param component
  * @param syndrome
  * @return
  */
-std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>& set, const std::vector<bool>& syndrome) {
+std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>& component, const std::vector<bool>& syndrome) {
     std::vector<bool>     syndr;
     std::set<std::size_t> res;
     for (bool i: syndrome) {
@@ -156,7 +144,12 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>
             syndr.push_back(false);
         }
     }
+    auto intNodes = computeInteriorBitNodes(component);
+    if (intNodes.empty()) {
+        return std::set<std::size_t>{};
+    }
     auto estim = Utils::solveSystem(code.Hz.pcm, syndr);
+
     for (auto&& i: estim) {
         if (i) {
             res.insert(i);

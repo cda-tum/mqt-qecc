@@ -7,18 +7,18 @@
 
 #include <gtest/gtest.h>
 
-class ImprovedUFDtest: public testing::TestWithParam<std::string> {
+class ImprovedUFDtest: public testing::TestWithParam<std::vector<bool>> {
 protected:
     void setUp() {
     }
 };
 
-TEST(ImprovedUFDtest, SteaneCodeDecodingTest) {
+TEST_P(ImprovedUFDtest, SteaneCodeDecodingTest) {
     SteaneXCode code{};
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
-    std::vector<bool> err = {0, 0, 0, 0, 1, 0, 0};
+    std::vector<bool> err = GetParam();
 
     auto syndr = code.getSyndrome(err);
     decoder.decode(syndr);
