@@ -13,39 +13,40 @@ protected:
     }
 };
 
-TEST(OriginalUFDtest, MatConversion) {
+TEST(UtilsTest, MatConversion) {
+    auto ctxx = flint::nmodxx_ctx(2);
+
     std::vector<std::vector<bool>> matrix = {{1, 1, 0, 1, 0, 0, 1},
                                              {1, 0, 1, 0, 1, 0, 0},
                                              {0, 1, 1, 0, 0, 1, 0}};
-    NTL::Mat<NTL::GF2>             sol;
-    sol.SetDims(matrix.size(), matrix.at(0).size());
+    auto                           sol    = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
     for (size_t i = 0; i < matrix.size(); i++) {
         for (size_t j = 0; j < matrix.at(0).size(); j++) {
-            sol[i][j] = matrix[i][j];
+            sol.at(i, j) = flint::nmodxx::red(matrix[i][j], ctxx);
         }
     }
 
-    auto res = Utils::getNtlMatrix(matrix);
+    auto res = Utils::getFlintMatrix(matrix);
     EXPECT_TRUE(sol == res);
 }
 
-TEST(OriginalUFDtest, MatConversionBack) {
+TEST(UtilsTest, MatConversionBack) {
+    auto ctxx = flint::nmodxx_ctx(2);
+
     std::vector<std::vector<bool>> matrix = {{1, 1, 0, 1, 0, 0, 1},
                                              {1, 0, 1, 0, 1, 0, 0},
                                              {0, 1, 1, 0, 0, 1, 0}};
-    NTL::Mat<NTL::GF2>             ntlmat;
-    ntlmat.SetDims(matrix.size(), matrix.at(0).size());
+    auto                           sol    = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
     for (size_t i = 0; i < matrix.size(); i++) {
         for (size_t j = 0; j < matrix.at(0).size(); j++) {
-            ntlmat[i][j] = matrix[i][j];
+            sol.at(i, j) = flint::nmodxx::red(matrix[i][j], ctxx);
         }
     }
-
-    auto res = Utils::getMatrixFromNtl(ntlmat);
+    auto res = Utils::getMatrixFromFlint(sol);
     EXPECT_TRUE(res == matrix);
 }
 
-TEST(OriginalUFDtest, TestSwapRows) {
+TEST(UtilsTest, TestSwapRows) {
     std::vector<std::vector<bool>> matrix = {{1, 1, 0, 1, 0, 0, 1},
                                              {1, 0, 1, 0, 1, 0, 0},
                                              {0, 1, 1, 0, 0, 1, 0}};
@@ -58,7 +59,7 @@ TEST(OriginalUFDtest, TestSwapRows) {
     EXPECT_TRUE(sol == matrix);
 }
 
-TEST(OriginalUFDtest, TestReduce) {
+TEST(UtilsTest, TestReduce) {
     std::vector<std::vector<bool>> matrix = {{1, 1, 0, 1, 0, 0, 1},
                                              {1, 0, 1, 0, 1, 0, 0},
                                              {0, 1, 1, 0, 0, 1, 0}};
@@ -67,12 +68,14 @@ TEST(OriginalUFDtest, TestReduce) {
                {0, 1, 1, 0, 0, 1, 0},
                {0, 0, 0, 1, 1, 1, 1}};
     auto res = Utils::gauss(matrix);
-    Utils::printGF2matrix(matrix);
+    std::cout << "res:" << std::endl;
+    Utils::printGF2matrix(res);
+    std::cout << "sol" << std::endl;
     Utils::printGF2matrix(sol);
     EXPECT_TRUE(sol == res);
 }
 
-TEST(OriginalUFDtest, TestTranspose) {
+TEST(UtilsTest, TestTranspose) {
     std::vector<std::vector<bool>> matrix  = {{1, 0, 0, 1, 0, 1, 1},
                                               {0, 1, 0, 1, 1, 0, 1},
                                               {0, 0, 1, 0, 1, 1, 1}};
@@ -87,7 +90,7 @@ TEST(OriginalUFDtest, TestTranspose) {
     EXPECT_TRUE(matrixT == Utils::getTranspose(matrix));
 }
 
-TEST(OriginalUFDtest, TestTranspose2) {
+TEST(UtilsTest, TestTranspose2) {
     std::vector<std::vector<bool>> matrix  = {{1, 0, 0, 1, 0, 1, 1},
                                               {0, 1, 0, 1, 1, 0, 1},
                                               {0, 0, 1, 0, 1, 1, 1}};
@@ -109,8 +112,7 @@ TEST(UtilsTest, GaussGF2testNotInRS) {
 
     std::vector<bool> vector = {0, 0, 0, 1, 0, 1, 1};
 
-    auto transp       = Utils::getTranspose(matrix);
-    auto isInRowSpace = Utils::isVectorInRowspace(transp, vector);
+    auto isInRowSpace = Utils::isVectorInRowspace(matrix, vector);
     EXPECT_FALSE(isInRowSpace);
 };
 
@@ -120,8 +122,7 @@ TEST(UtilsTest, GaussGF2testNotInRS2) {
                                               {0, 0, 1, 0}};
     std::vector<bool>              vector2 = {1, 1, 1, 1};
 
-    auto transp2       = Utils::getTranspose(matrix2);
-    auto isInRowSpace2 = Utils::isVectorInRowspace(transp2, vector2);
+    auto isInRowSpace2 = Utils::isVectorInRowspace(matrix2, vector2);
     EXPECT_FALSE(isInRowSpace2);
 };
 
@@ -140,8 +141,7 @@ TEST(UtilsTest, GaussGF2testInRS2) {
                                                     {0, 1, 0, 0},
                                                     {0, 0, 1, 0}};
     std::vector<bool>              vector2       = {1, 1, 1, 0};
-    auto                           transp2       = Utils::getTranspose(matrix2);
-    auto                           isInRowSpace2 = Utils::isVectorInRowspace(transp2, vector2);
+    auto                           isInRowSpace2 = Utils::isVectorInRowspace(matrix2, vector2);
     EXPECT_TRUE(isInRowSpace2);
 };
 
@@ -161,8 +161,7 @@ TEST(UtilsTest, GaussGF2testInRSTrivial) {
                                              {0, 0, 1, 0, 1, 1, 1}};
 
     std::vector<bool> vector       = {0, 0, 0, 0, 0, 0, 0};
-    auto              transp       = Utils::getTranspose(matrix);
-    auto              isInRowSpace = Utils::isVectorInRowspace(transp, vector);
+    auto              isInRowSpace = Utils::isVectorInRowspace(matrix, vector);
     EXPECT_TRUE(isInRowSpace);
 };
 
@@ -190,22 +189,4 @@ TEST(UtilsTest, LinEqSolvTest2) {
     std::cout << "sol";
     Utils::printGF2vector(res);
     EXPECT_TRUE(res == solution);
-};
-
-TEST(UtilsTest, IsInvertibleTest) {
-    std::vector<std::vector<bool>> matrix = {{1, 0, 0},
-                                             {0, 1, 0},
-                                             {0, 0, 1}};
-
-    auto res = Utils::isInvertible(matrix);
-    EXPECT_TRUE(res);
-};
-
-TEST(UtilsTest, DeterminantCompTest) {
-    std::vector<std::vector<bool>> matrix = {{1, 0, 0},
-                                             {0, 1, 0},
-                                             {0, 0, 1}};
-
-    auto res = Utils::computeDeterminant(matrix);
-    EXPECT_TRUE(res == 0);
 };

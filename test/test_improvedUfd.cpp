@@ -13,19 +13,17 @@ protected:
     }
 };
 
-TEST_P(ImprovedUFDtest, SteaneCodeDecodingTest) {
+TEST(ImprovedUFDtest, SteaneCodeDecodingTest) {
     SteaneXCode code{};
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
-    std::vector<bool> err = GetParam();
+    std::vector<bool> err = {0, 0, 1, 0, 0, 0, 0};
 
     auto syndr = code.getSyndrome(err);
     decoder.decode(syndr);
-    auto decodingResult = decoder.result;
-    auto estim          = decodingResult.estimNodeIdxVector;
-
-    EXPECT_TRUE(!estim.empty());
+    auto              decodingResult = decoder.result;
+    auto              estim          = decodingResult.estimNodeIdxVector;
     std::vector<bool> estimate(code.getN());
     for (auto e: estim) {
         estimate.at(e) = true;

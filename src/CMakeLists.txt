@@ -62,8 +62,8 @@ if (COVERAGE)
 endif ()
 
 
-
 # add MQT alias
 add_library(MQT::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ntl)
+link_directories("/usr/local/lib/")
+target_link_libraries(${PROJECT_NAME} PUBLIC flint)
