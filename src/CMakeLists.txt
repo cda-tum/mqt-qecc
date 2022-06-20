@@ -9,7 +9,7 @@ add_library(${PROJECT_NAME}
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUFD.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/OriginalUFD.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/QLDPC.hpp ../include/FlintWrapper.hpp)
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/QLDPC.hpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)

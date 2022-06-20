@@ -11,13 +11,13 @@
 #include <vector>
 
 struct ParityCheckMatrix {
-    explicit ParityCheckMatrix(std::vector<std::vector<bool>> pcm):
+    explicit ParityCheckMatrix(gf2Mat pcm):
         pcm(std::move(pcm)) {}
-    const std::vector<std::vector<bool>> pcm;
+    const gf2Mat pcm;
 };
 
 struct TannerGraph {
-    std::vector<std::vector<bool>>                      adjMatrix;
+    gf2Mat                                              adjMatrix;
     std::vector<std::vector<std::shared_ptr<TreeNode>>> adjListNodes;
 
     std::shared_ptr<TreeNode> getNodeForId(const std::size_t vertexId) {
@@ -77,7 +77,7 @@ public:
         auto                                                nrChecks = Hz.pcm.size();
         auto                                                nrData   = Hz.pcm.at(0).size();
         std::size_t                                         dim      = nrChecks + nrData;
-        std::vector<std::vector<bool>>                      adjMatrBool(dim);
+        gf2Mat                                              adjMatrBool(dim);
         std::vector<std::vector<std::shared_ptr<TreeNode>>> adjLstNodes(dim);
         std::map<std::size_t, std::shared_ptr<TreeNode>>    nodeMap;
         for (size_t i = 0; i < dim; i++) {
@@ -89,7 +89,7 @@ public:
             nodeMap.insert(std::make_pair(i, n));
         }
         for (size_t i = 0; i < dim; i++) {
-            std::vector<bool>                      rowBool(dim);
+            gf2Vec                                 rowBool(dim);
             std::vector<std::shared_ptr<TreeNode>> nbrList;
             nbrList.emplace_back(nodeMap.at(i)); // adjacency list of node n contains n in first position by our convention
             if (i < dim - nrChecks) {
@@ -125,24 +125,24 @@ public:
         return K;
     }
 
-    [[nodiscard]] std::vector<bool> getSyndrome(const std::vector<bool>& err) const {
-        std::vector<std::vector<bool>> errMat(err.size());
+    [[nodiscard]] gf2Vec getSyndrome(const gf2Vec& err) const {
+        gf2Mat errMat(err.size());
         for (size_t i = 0; i < err.size(); i++) {
-            errMat.at(i) = std::vector<bool>{err.at(i)}; //transpose
+            errMat.at(i) = gf2Vec{err.at(i)}; //transpose
         }
         auto res = Utils::rectMatrixMultiply(Hz.pcm, errMat);
         if (!res.empty()) {
-            std::vector<bool> rres(Hz.pcm.size());
+            gf2Vec rres(Hz.pcm.size());
             for (size_t i = 0; i < rres.size(); i++) {
                 rres.at(i) = res.at(i).at(0); // transpose back
             }
             return rres;
         } else {
-            return std::vector<bool>{};
+            return gf2Vec{};
         }
     }
 
-    [[nodiscard]] bool isVectorStabilizer(const std::vector<bool>& est) const {
+    [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {
         return Utils::isVectorInRowspace(Hz.pcm, est);
     }
 

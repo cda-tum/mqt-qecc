@@ -101,13 +101,13 @@ public:
         gf2Mat result(matrix.rows());
         auto   a = flint::nmodxx::red(1, ctxx);
 
-        for (size_t i = 0; i < matrix.rows(); i++) {
+        for (long i = 0; i < matrix.rows(); i++) {
             result.at(i) = gf2Vec(matrix.cols());
-            for (size_t j = 0; j < matrix.cols(); j++) {
+            for (long j = 0; j < matrix.cols(); j++) {
                 if (matrix.at(i, j) == a) {
-                    result[i][j] = 1;
+                    result[i][j] = true;
                 } else {
-                    result[i][j] = 0;
+                    result[i][j] = false;
                 }
             }
         }

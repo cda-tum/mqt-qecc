@@ -24,7 +24,7 @@ struct DecodingResult {
     DecodingResultStatus     status{};
     std::size_t              decodingTime = 0U;
     std::vector<std::size_t> estimNodeIdxVector;
-    std::vector<bool>        estimBoolVector;
+    gf2Vec                   estimBoolVector;
     [[nodiscard]] json       to_json() const {
               return json{
                 {"staus", status},

@@ -18,7 +18,7 @@
      * @param syndrome
      * @return
     */
-std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const std::vector<bool>& syndrome) {
+std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const gf2Vec& syndrome) {
     std::set<std::shared_ptr<TreeNode>> result{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
@@ -32,7 +32,7 @@ std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const
 }
 
 // todo identify flagged errors?, i.e. when we do not find any error corresponding to the syndrome
-void ImprovedUFD::decode(std::vector<bool>& syndrome) {
+void ImprovedUFD::decode(gf2Vec& syndrome) {
     std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
     std::vector<std::size_t>              res;
     std::cout << "in decoder syndrome: ";
@@ -128,7 +128,7 @@ void ImprovedUFD::decode(std::vector<bool>& syndrome) {
     std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
     result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
     result.estimNodeIdxVector                             = res;
-    result.estimBoolVector                                = std::vector<bool>(code.getN());
+    result.estimBoolVector                                = gf2Vec(code.getN());
     for (unsigned long re: res) {
         result.estimBoolVector.at(re) = true;
     }
@@ -176,7 +176,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     std::shared_ptr<TreeNode>       chosenComponent;
     std::random_device              rd;
     std::mt19937                    gen(rd());
-    std::vector<bool>               result;
+    gf2Vec                          result;
     std::uniform_int_distribution<> d(0U, components.size());
     std::size_t                     chosenIdx = d(gen);
     auto                            it        = components.begin();
@@ -440,8 +440,8 @@ void ImprovedUFD::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& co
 // for each check node verify that there is no neighbour that is in the boundary of the component
 // if there is no neighbour in the boundary for each check vertex the check is covered by a node in Int TODO prove this in paper
 bool ImprovedUFD::isValidComponent(const std::shared_ptr<TreeNode>& component) {
-    std::vector<bool> valid(component->checkVertices.size());
-    std::size_t       i = 0;
+    gf2Vec      valid(component->checkVertices.size());
+    std::size_t i = 0;
     for (const auto& checkVertex: component->checkVertices) {
         auto nbrs = code.tannerGraph.getNeighbours(checkVertex);
 
