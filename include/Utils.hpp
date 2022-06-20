@@ -53,6 +53,11 @@ public:
             nmod_mat_set_entry(b, i, bColIdx, tmp);
         }
         int sol = nmod_mat_can_solve(x, mat, b);
+        std::cout << "mat: " << std::endl;
+        nmod_mat_print_pretty(mat);
+        std::cout << "b: " << std::endl;
+        nmod_mat_print_pretty(b);
+
         if (sol == 1) {
             std::cout << "solution exists:" << std::endl;
             nmod_mat_print_pretty(x);

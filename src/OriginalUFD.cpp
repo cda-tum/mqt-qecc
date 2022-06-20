@@ -148,12 +148,28 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>
     if (intNodes.empty()) {
         return std::set<std::size_t>{};
     }
-    auto estim = Utils::solveSystem(code.Hz.pcm, syndr);
+    auto   tmp = Utils::getTranspose(code.Hz.pcm);
+    gf2Mat reduced;
+    for (size_t i = 0; i < intNodes.size(); i++) {
+        auto idx = intNodes.at(i);
+        reduced.emplace_back(tmp.at(idx));
+    }
+    reduced = Utils::getTranspose(reduced);
 
-    for (auto&& i: estim) {
-        if (i) {
-            res.insert(i);
+    auto estim = Utils::solveSystem(code.Hz.pcm, syndr);
+    if (estim.empty()) {
+        return res;
+    } else {
+        std::set<std::size_t> estIdx;
+        for (std::size_t i = 0; i < estim.size(); i++) {
+            if (estim.at(i)) {
+                estIdx.insert(i);
+            }
+        }
+        if (std::includes(intNodes.begin(), intNodes.end(), estIdx.begin(), estIdx.end())) {
+            return estIdx;
         }
     }
+
     return res;
 }
