@@ -17,6 +17,9 @@ extern "C" {
 #include <flint/nmod_mat.h>
 };
 
+typedef std::vector<std::vector<bool>> gf2Mat;
+typedef std::vector<bool>              gf2Vec;
+
 class Utils {
 public:
     /**
@@ -27,14 +30,14 @@ public:
      * @param vec
      * @return
      */
-    static std::vector<bool> solveSystem(const std::vector<std::vector<bool>>& M, const std::vector<bool>& vec) {
-        std::vector<bool> result{};
-        long              rows = M.size();
-        long              cols = M.at(0).size();
-        nmod_mat_t        mat;
-        nmod_mat_t        x;
-        nmod_mat_t        b;
-        mp_limb_t         mod = 2U;
+    static gf2Vec solveSystem(const gf2Mat& M, const gf2Vec& vec) {
+        gf2Vec     result{};
+        long       rows = M.size();
+        long       cols = M.at(0).size();
+        nmod_mat_t mat;
+        nmod_mat_t x;
+        nmod_mat_t b;
+        mp_limb_t  mod = 2U;
         nmod_mat_init(mat, rows, cols, mod);
         nmod_mat_init(x, cols, 1, mod);
         nmod_mat_init(b, rows, 1, mod);
@@ -51,9 +54,9 @@ public:
         }
         int sol = nmod_mat_can_solve(x, mat, b);
         if (sol == 1) {
+            std::cout << "solution exists:" << std::endl;
             nmod_mat_print_pretty(x);
-            std::cout << "solution exists" << std::endl;
-            result       = std::vector<bool>(nmod_mat_nrows(x));
+            result       = gf2Vec(nmod_mat_nrows(x));
             auto xColIdx = nmod_mat_ncols(x) - 1;
             for (long i = 0; i < nmod_mat_nrows(x); i++) {
                 result.at(i) = nmod_mat_get_entry(x, i, xColIdx);
@@ -65,14 +68,14 @@ public:
         return result;
     }
 
-    static std::vector<std::vector<bool>> gauss(const std::vector<std::vector<bool>>& matrix) {
-        std::vector<std::vector<bool>> result(matrix.size());
-        auto                           mat = getFlintMatrix(matrix);
+    static gf2Mat gauss(const gf2Mat& matrix) {
+        gf2Mat result(matrix.at(0).size());
+        auto   mat = getFlintMatrix(matrix);
         mat.set_rref(); // reduced row echelon form
         return getMatrixFromFlint(mat);
     }
 
-    static flint::nmod_matxx getFlintMatrix(const std::vector<std::vector<bool>>& matrix) {
+    static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
         auto ctxx   = flint::nmodxx_ctx(2);
         auto result = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
         for (size_t i = 0; i < matrix.size(); i++) {
@@ -87,14 +90,13 @@ public:
         return result;
     }
 
-    static std::vector<std::vector<bool>> getMatrixFromFlint(const flint::nmod_matxx& matrix) {
-        auto ctxx = flint::nmodxx_ctx(2);
-
-        std::vector<std::vector<bool>> result(matrix.rows());
-        auto                           a = flint::nmodxx::red(1, ctxx);
+    static gf2Mat getMatrixFromFlint(const flint::nmod_matxx& matrix) {
+        auto   ctxx = flint::nmodxx_ctx(2);
+        gf2Mat result(matrix.rows());
+        auto   a = flint::nmodxx::red(1, ctxx);
 
         for (size_t i = 0; i < matrix.rows(); i++) {
-            result.at(i) = std::vector<bool>(matrix.cols());
+            result.at(i) = gf2Vec(matrix.cols());
             for (size_t j = 0; j < matrix.cols(); j++) {
                 if (matrix.at(i, j) == a) {
                     result[i][j] = 1;
@@ -112,8 +114,55 @@ public:
      * @param vec
      * @return
      */
-    static bool isVectorInRowspace(const std::vector<std::vector<bool>>& M, const std::vector<bool>& vec) {
-        return !solveSystem(getTranspose(M), vec).empty();
+    static bool isVectorInRowspace(const gf2Mat& M, const gf2Vec& vec) {
+        if (std::none_of(vec.begin(), vec.end(), [](const bool val) { return val; })) { // all zeros vector trivial
+            return true;
+        }
+        gf2Mat matrix;
+        if (vec.size() == M.at(0).size()) {
+            matrix = getTranspose(M); // v is in rowspace of M <=> v is in col space of M^T
+        } else {
+            throw std::errc::invalid_argument;
+        }
+        auto augm = getAugmentedMatrix(matrix, vec);
+        matrix    = gauss(augm);
+        printGF2matrix(matrix);
+        gf2Vec vector(vec.size());
+
+        for (size_t i = 0; i < matrix.size(); i++) {
+            vector.at(i) = matrix[i][matrix.at(i).size() - 1];
+        }
+        printGF2vector(vector);
+        // check consistency
+        for (size_t i = 0; i < vector.size(); i++) {
+            if (vector[i]) {
+                for (size_t j = 0; j < matrix.at(i).size(); j++) {
+                    if (std::none_of(matrix.at(i).begin(), matrix.at(i).end() - 1, [](const bool val) { return val; })) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Computes and returns the matrix obtained by appending the column vector to the input matrix, result = (matrix|vector)
+     * @param matrix
+     * @param vector
+     * @return
+     */
+    static gf2Mat getAugmentedMatrix(const gf2Mat& matrix, const gf2Vec& vector) {
+        gf2Mat result(matrix.size());
+
+        for (size_t i = 0; i < matrix.size(); i++) {
+            result.at(i) = gf2Vec(matrix.at(i).size() + 1);
+            for (std::size_t j = 0; j < matrix.at(0).size(); j++) {
+                result[i][j] = matrix[i][j];
+            }
+            result[i][matrix.at(0).size()] = vector.at(i);
+        }
+        return result;
     }
 
     /**
@@ -121,10 +170,10 @@ public:
      * @param matrix
      * @return
      */
-    static std::vector<std::vector<bool>> getTranspose(const std::vector<std::vector<bool>>& matrix) {
-        std::vector<std::vector<bool>> transp(matrix.at(0).size());
+    static gf2Mat getTranspose(const gf2Mat& matrix) {
+        gf2Mat transp(matrix.at(0).size());
         for (auto& i: transp) {
-            i = std::vector<bool>(matrix.size());
+            i = gf2Vec(matrix.size());
         }
         for (size_t i = 0; i < matrix.size(); i++) {
             for (size_t j = 0; j < matrix.at(i).size(); j++) {
@@ -140,7 +189,7 @@ public:
      * @param m2
      * @return
      */
-    static std::vector<std::vector<bool>> rectMatrixMultiply(const std::vector<std::vector<bool>>& m1, const std::vector<std::vector<bool>>& m2) {
+    static gf2Mat rectMatrixMultiply(const gf2Mat& m1, const gf2Mat& m2) {
         auto mat1   = getFlintMatrix(m1);
         auto mat2   = getFlintMatrix(m2);
         auto result = flint::nmod_matxx(mat1.rows(), mat2.cols(), 2);
@@ -148,13 +197,13 @@ public:
         return getMatrixFromFlint(result);
     }
 
-    static void swapRows(std::vector<std::vector<bool>>& matrix, const std::size_t row1, const std::size_t row2) {
+    static void swapRows(gf2Mat& matrix, const std::size_t row1, const std::size_t row2) {
         for (std::size_t col = 0; col < matrix.at(0).size(); col++) {
             std::swap(matrix.at(row1).at(col), matrix.at(row2).at(col));
         }
     }
 
-    static void printGF2matrix(const std::vector<std::vector<bool>>& matrix) {
+    static void printGF2matrix(const gf2Mat& matrix) {
         for (const auto& i: matrix) {
             for (bool j: i) {
                 std::cout << j << " ";
@@ -164,7 +213,7 @@ public:
         std::cout << std::endl;
     }
 
-    static void printGF2vector(const std::vector<bool>& vector) {
+    static void printGF2vector(const gf2Vec& vector) {
         if (vector.empty()) {
             std::cout << "[]";
             return;
@@ -182,10 +231,10 @@ public:
      * @param physicalErrRate
      * @return
      */
-    static std::vector<bool> sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
+    static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
         std::random_device rd;
         std::mt19937       gen(rd());
-        std::vector<bool>  result;
+        gf2Vec             result;
 
         // Setup the weights, iid noise for each bit
         std::discrete_distribution<> d({1 - physicalErrRate, physicalErrRate});
@@ -200,7 +249,7 @@ public:
          * @param error bool vector representing error
          * @param residual estimate vector that contains residual error at end of function
     */
-    static void computeResidualErr(const std::vector<bool>& error, std::vector<bool>& residual) {
+    static void computeResidualErr(const gf2Vec& error, gf2Vec& residual) {
         for (std::size_t j = 0; j < residual.size(); j++) {
             residual.at(j) = residual.at(j) ^ error.at(j);
         }

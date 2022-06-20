@@ -143,8 +143,7 @@ public:
     }
 
     [[nodiscard]] bool isVectorStabilizer(const std::vector<bool>& est) const {
-        auto pcmT = Utils::getTranspose(Hz.pcm);
-        return Utils::isVectorInRowspace(pcmT, est);
+        return Utils::isVectorInRowspace(Hz.pcm, est);
     }
 
     friend std::ostream& operator<<(std::ostream& os, Code const& c) {

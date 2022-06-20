@@ -20,9 +20,9 @@
     */
 std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const std::vector<bool>& syndrome) {
     std::set<std::shared_ptr<TreeNode>> result{};
-    for (bool j: syndrome) {
-        if (j) {
-            auto syndrNode     = code.tannerGraph.adjListNodes.at(j + code.getN()).at(0);
+    for (std::size_t i = 0; i < syndrome.size(); i++) {
+        if (syndrome.at(i)) {
+            auto syndrNode     = code.tannerGraph.adjListNodes.at(i + code.getN()).at(0);
             syndrNode->isCheck = true;
             syndrNode->checkVertices.insert(syndrNode->vertexIdx);
             result.insert(syndrNode);
