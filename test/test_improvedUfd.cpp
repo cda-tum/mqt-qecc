@@ -12,23 +12,79 @@ protected:
     void setUp() {
     }
 };
-INSTANTIATE_TEST_SUITE_P(CorrectableErrs, ImprovedUFDtest,
+
+class UniquelyCorrectableErrTest: public ImprovedUFDtest {
+};
+class InCorrectableErrTest: public ImprovedUFDtest {
+};
+class UpToStabCorrectableErrTest: public ImprovedUFDtest {
+};
+INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0},
-                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0},
+                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0}));
+
+INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, InCorrectableErrTest,
+                         testing::Values(
                                  std::vector<bool>{0, 0, 0, 1, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 0, 0},
-                                 std::vector<bool>{0, 0, 0, 0, 0, 1, 0},
-                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 1}));
+                                 std::vector<bool>{0, 0, 0, 0, 0, 1, 0}));
 
-TEST_F(ImprovedUFDtest, SteaneCodeDecodingTestEstim) {
+INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest,
+                         testing::Values(
+                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
+                                 std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
+                                 //std::vector<bool>{0, 0, 1, 1, 0, 0, 0},
+                                 std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
+                                 std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
+/**
+/**
+ * Tests for unambigous syndromes, estimates must be computed exactly
+ */
+TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     SteaneXCode code{};
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
-    std::vector<bool> err = {1, 0, 0, 0, 0, 0, 0};
+    std::vector<bool> err = GetParam();
+
+    auto syndr = code.getSyndrome(err);
+    std::cout << "syndrome: ";
+    Utils::printGF2vector(syndr);
+    decoder.decode(syndr);
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i);
+    }
+    std::cout << std::endl;
+    gf2Vec sol = GetParam();
+
+    std::cout << "Estim: " << std::endl;
+    Utils::printGF2vector(estim);
+    std::cout << "EstimIdx: " << std::endl;
+    Utils::printGF2vector(estim2);
+    std::cout << "Sol: " << std::endl;
+    Utils::printGF2vector(sol);
+    EXPECT_TRUE(sol == estim);
+    EXPECT_TRUE(sol == estim2);
+}
+
+/**
+ * Tests for ambigous errors that cannot be corrected
+ */
+TEST_P(InCorrectableErrTest, SteaneCodeDecodingTestEstim) {
+    SteaneXCode code{};
+    ImprovedUFD decoder{code};
+    std::cout << "code: " << std::endl
+              << code << std::endl;
+    std::vector<bool> err = GetParam();
 
     auto syndr = code.getSyndrome(err);
     decoder.decode(syndr);
@@ -41,48 +97,46 @@ TEST_F(ImprovedUFDtest, SteaneCodeDecodingTestEstim) {
         estim2.at(estimIdx.at(i)) = true;
         std::cout << estimIdx.at(i);
     }
-    std::cout << std::endl;
-    gf2Vec sol = {1, 0, 0, 0, 0, 0, 0};
+    std::vector<bool> residualErr(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr.at(i) = err[i] ^ estim[i];
+    }
 
-    std::cout << "Estim: " << std::endl;
-    Utils::printGF2vector(estim);
-    std::cout << "EstimIdx: " << std::endl;
-    Utils::printGF2vector(estim2);
-    std::cout << "Sol: " << std::endl;
-    Utils::printGF2vector(sol);
-    EXPECT_TRUE(sol == estim);
-    EXPECT_TRUE(sol == estim2);
+    EXPECT_FALSE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
 }
 
-TEST_P(ImprovedUFDtest, SteaneCodeDecodingTestFull) {
+/**
+ * Tests for errors that are correctable up to stabilizer
+ */
+TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     SteaneXCode code{};
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
-
+    std::cout << "err :" << std::endl;
+    Utils::printGF2vector(err);
     auto syndr = code.getSyndrome(err);
     decoder.decode(syndr);
-    auto              decodingResult = decoder.result;
-    auto              estim          = decodingResult.estimNodeIdxVector;
-    std::vector<bool> estimate(code.getN());
-    for (auto e: estim) {
-        estimate.at(e) = true;
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i);
     }
+    std::cout << std::endl;
     std::vector<bool> residualErr(err.size());
     for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = err[i] ^ estimate[i];
+        residualErr.at(i) = err[i] ^ estim[i];
+    }
+    std::vector<bool> residualErr2(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr2.at(i) = err[i] ^ estim2[i];
     }
 
-    std::cout << "err: ";
-    Utils::printGF2vector(err);
-    std::cout << "syndr: ";
-    Utils::printGF2vector(syndr);
-    std::cout << "est: ";
-    Utils::printGF2vector(estimate);
-    std::cout << "resid: ";
-    Utils::printGF2vector(residualErr);
-    auto succ = code.isVectorStabilizer(residualErr);
-    std::cout << "is in rowspace: " << succ << std::endl;
-    EXPECT_TRUE(succ);
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
 }
