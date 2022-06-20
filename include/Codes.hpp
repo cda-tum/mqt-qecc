@@ -15,9 +15,9 @@ public:
                                 {0, 1, 0, 1, 1, 0, 1},
                                 {0, 0, 1, 0, 1, 1, 1}})) {K = 3;}
 };
-class LargeCode: public Code {
-public: LargeCode() :
-        Code(ParityCheckMatrix({{1, 0},
-                                {0, 1}})) {K = 100;}
+class HGPcode: public Code {
+public:
+    HGPcode():
+        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qunionfind/examples/hgp_(4,7)-[[900,36,10]]_hx.txt"))) { K = 36; }
 };
 #endif //QUNIONFIND_CODES_HPP

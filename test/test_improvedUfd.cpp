@@ -7,17 +7,17 @@
 
 #include <gtest/gtest.h>
 
-class ImprovedUFDtest: public testing::TestWithParam<std::vector<bool>> {
+class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {
 protected:
     void setUp() {
     }
 };
 
-class UniquelyCorrectableErrTest: public ImprovedUFDtest {
+class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {
 };
-class InCorrectableErrTest: public ImprovedUFDtest {
+class InCorrectableErrTest: public ImprovedUFDtestBase {
 };
-class UpToStabCorrectableErrTest: public ImprovedUFDtest {
+class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {
 };
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest,
                          testing::Values(
@@ -114,6 +114,42 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
+    std::cout << "err :" << std::endl;
+    Utils::printGF2vector(err);
+    auto syndr = code.getSyndrome(err);
+    decoder.decode(syndr);
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i);
+    }
+    std::cout << std::endl;
+    std::vector<bool> residualErr(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr.at(i) = err[i] ^ estim[i];
+    }
+    std::vector<bool> residualErr2(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr2.at(i) = err[i] ^ estim2[i];
+    }
+
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+}
+
+/**
+ * Tests for errors that are correctable up to stabilizer
+ */
+TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
+    HGPcode           code{};
+    ImprovedUFD       decoder{code};
+    std::vector<bool> err = gf2Vec(code.N);
+    err.at(0)             = 1;
+
     std::cout << "err :" << std::endl;
     Utils::printGF2vector(err);
     auto syndr = code.getSyndrome(err);

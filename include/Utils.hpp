@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <flint/nmod_matxx.h>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <random>
@@ -258,6 +259,31 @@ public:
         for (std::size_t j = 0; j < residual.size(); j++) {
             residual.at(j) = residual.at(j) ^ error.at(j);
         }
+    }
+
+    static gf2Mat importGf2MatrixFromFile(const std::string& filepath) {
+        std::string   line;
+        int           word;
+        std::ifstream inFile(filepath);
+        gf2Mat        result;
+
+        if (inFile) {
+            while (getline(inFile, line, '\n')) {
+                gf2Vec             tempVec;
+                std::istringstream instream(line);
+                while (instream >> word) {
+                    tempVec.push_back(word);
+                }
+                result.emplace_back(tempVec);
+            }
+        } else {
+            std::cerr << "File " << filepath << " cannot be opened." << std::endl;
+        }
+
+        inFile.close();
+        std::cout << "imported: " << std::endl;
+        printGF2matrix(result);
+        return result;
     }
 };
 #endif //QUNIONFIND_UTILS_HPP
