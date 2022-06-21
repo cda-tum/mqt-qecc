@@ -71,9 +71,9 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
         decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
-            SteaneXCode code{};
+            SteaneXCode code     = SteaneXCode();
             K = code.getK();
-            ImprovedUFD decoder{code};
+            ImprovedUFD decoder  = ImprovedUFD(code);
             auto        error    = Utils::sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
             auto        syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);
@@ -131,25 +131,39 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     std::ofstream decodingResOutput(outFilePath + timestamp + ".json");
     std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
     // Basic Parameter setup
-
-    const double                  physErrRates[]     = {0.0001, 0.0002, 0.0005, 0.001, 0.05};
+    const double                  physErrRates[]     = {0.01, 0.02, 0.03, 0.05, 0.1};
     std::size_t                   avgDecodingTimeAcc = 0U;
-    const std::size_t             nrOfTrials         = 1'000'000;
+    const std::size_t             nrOfTrials         = 1'0;
     double                        avgDecTime         = 0.0;
     std::map<std::string, double> avgDecodingTimePerSize;
+    std::vector<Code>             codes;
+    std::string                   inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/test/";
+    for (const auto& file: std::filesystem::directory_iterator(inPath)) {
+        codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(file.path()))));
+    }
 
     for (auto physErrRate: physErrRates) {
-        Code codes[] = {};
         for (const auto& code: codes) {
             avgDecodingTimeAcc = 0U;
-            for (size_t i = 0; i < nrOfTrials; i++) {
-                auto        c = Code(code.Hz); // construct new for each trial
-                ImprovedUFD decoder{c};
+            std::cout << "Code: " << Utils::getStringFrom(code.Hz.pcm) << std::endl;
+            for (std::size_t i = 0; i < nrOfTrials; i++) {
+                auto        c        = Code(code.Hz); // construct new for each trial
+                ImprovedUFD decoder  = ImprovedUFD(c);
                 auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
                 auto        syndrome = c.getSyndrome(error);
+
+                std::cout << "error: " << Utils::getStringFrom(error) << ", rate: " << physErrRate << std::endl;
+                std::cout << "starting decoding" << std::endl;
                 decoder.decode(syndrome);
+                std::cout << "decoding done " << std::endl;
+
                 auto decodingResult = decoder.result;
-                avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
+
+                std::cout << "runtime: " << decodingResult.decodingTime << std::endl
+                          << std::endl;
+
+                avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
+                decodingResOutput << decodingResult.to_json();
             }
             avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
             avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));

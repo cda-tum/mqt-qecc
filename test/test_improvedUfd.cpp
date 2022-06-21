@@ -175,3 +175,38 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
     EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
 }
+/**
+ * Tests for toric code
+ */
+TEST_F(UniquelyCorrectableErrTest, ToricCodeTest) {
+    ToricCode_8 code;
+    ImprovedUFD decoder(code);
+    std::cout << "Adj lists code: " << std::endl
+              << code << std::endl;
+    std::vector<bool> err = {0, 0, 0, 0, 0, 0, 1, 0};
+    std::cout << "error: ";
+    Utils::printGF2vector(err);
+    std::cout << std::endl;
+    auto syndr = code.getSyndrome(err);
+    std::cout << "syndrome: ";
+    Utils::printGF2vector(syndr);
+    std::cout << std::endl;
+    decoder.decode(syndr);
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i) << "; ";
+    }
+    std::cout << std::endl;
+    gf2Vec sol = err;
+
+    std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
+    std::cout << "Estim from Idx: " << Utils::getStringFrom(estim2) << std::endl;
+    std::cout << "Sol: " << Utils::getStringFrom(sol) << std::endl;
+    EXPECT_TRUE(sol == estim);
+    EXPECT_TRUE(sol == estim2);
+}

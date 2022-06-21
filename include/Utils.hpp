@@ -210,24 +210,42 @@ public:
     }
 
     static void printGF2matrix(const gf2Mat& matrix) {
-        for (const auto& i: matrix) {
-            for (bool j: i) {
-                std::cout << j << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
+        std::cout << getStringFrom(matrix);
     }
 
     static void printGF2vector(const gf2Vec& vector) {
+        std::cout << getStringFrom(vector);
+    }
+
+    static std::string getStringFrom(const gf2Mat& matrix) {
+        if (matrix.empty()) {
+            return "[]";
+        }
+        std::stringstream s;
+        s << matrix.size() << "x" << matrix.at(0).size() << "matrix [" << std::endl;
+        for (const auto& i: matrix) {
+            s << "[ ";
+            for (bool j: i) {
+                s << j << " ";
+            }
+            s << "]";
+            s << std::endl;
+        }
+        s << "]";
+        return s.str();
+    }
+
+    static std::string getStringFrom(const gf2Vec& vector) {
         if (vector.empty()) {
-            std::cout << "[]";
-            return;
+            return "[]";
         }
+        std::stringstream s;
+        s << "[ ";
         for (const auto& i: vector) {
-            std::cout << i << " ";
+            s << i << " ";
         }
-        std::cout << std::endl;
+        s << "]";
+        return s.str();
     }
 
     /**
@@ -283,6 +301,7 @@ public:
         inFile.close();
         std::cout << "imported: " << std::endl;
         printGF2matrix(result);
+        std::cout << std::endl;
         return result;
     }
 };
