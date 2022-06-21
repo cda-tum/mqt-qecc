@@ -3,6 +3,8 @@
 //
 #include "Codes.hpp"
 #include "Decoder.hpp"
+#include "DecodingRunInformation.hpp"
+#include "DecodingSimulator.hpp"
 #include "ImprovedUFD.hpp"
 
 #include <bitset>
@@ -19,13 +21,27 @@ protected:
     }
 };
 
+TEST(UnionFindSimulation, TestSimulator) {
+    DecodingSimulator simulator;
+    std::string       rawOut = "./testRawFile", testOut = "./testStatFile";
+    double            minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
+    std::size_t       runsPerRate = 2, runsPerCode = 2;
+    SteaneXCode       code;
+    ImprovedUFD       decoder(code);
+    simulator.simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
+    std::vector<double> erRates = {minErate, maxErate};
+    std::vector<Code>   codes   = {code};
+    simulator.simulateRuntime(rawOut, testOut, erRates, runsPerCode, codes);
+    EXPECT_TRUE(true);
+}
+
 /**
  * Simulate WER for growing number of physical err rate
  * Can also be used for threshold simulations
  */
 TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
-    std::string outFilePath  = "/home/luca/Documents/uf-simulations/decoding/out";
-    std::string dataFilePath = "/home/luca/Documents/uf-simulations/decoding/data";
+    std::string outFilePath  = "./out";
+    std::string dataFilePath = "./raw";
     std::cout << outFilePath;
 
     auto               t  = std::time(nullptr);
@@ -40,7 +56,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     double                        physicalErrRate       = 1.0 / normalizationConstant;
     double                        stepSize              = 1.0 / normalizationConstant;
     const double                  maxPhysicalErrRate    = 0.5;
-    const size_t                  nrOfRuns              = std::floor(maxPhysicalErrRate / physicalErrRate);
+    const std::size_t             nrOfRuns              = std::floor(maxPhysicalErrRate / physicalErrRate);
     std::size_t                   nrOfRunsPerRate       = 4096; // todo how deep to go?
     std::size_t                   nrOfFailedRuns        = 0U;
     double                        blockErrRate          = 0.0;
@@ -64,13 +80,15 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
             auto              decodingResult = decoder.result;
             std::vector<bool> residualErr    = decodingResult.estimBoolVector;
             Utils::computeResidualErr(error, residualErr);
-            auto success = code.isVectorStabilizer(residualErr);
+            auto                   success = code.isVectorStabilizer(residualErr);
+            DecodingRunInformation stats;
+            stats.result = decodingResult;
 
             if (success) {
-                decodingResult.status = SUCCESS;
+                stats.status = SUCCESS;
                 Utils::printGF2vector(residualErr);
             } else {
-                decodingResult.status = FAILURE;
+                stats.status = FAILURE;
                 nrOfFailedRuns++;
             }
             decodingResOutput << decodingResult.to_json().dump(2U);

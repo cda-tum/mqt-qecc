@@ -1,5 +1,5 @@
 //
-// Created by luca on 13/06/22.
+// Created by lucas on 13/06/22.
 //
 
 #include "Codes.hpp"
@@ -36,10 +36,8 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest_
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
                                  std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
-                                 //std::vector<bool>{0, 0, 1, 1, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
-/**
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
  */

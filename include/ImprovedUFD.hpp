@@ -7,7 +7,7 @@
 #include "Decoder.hpp"
 class ImprovedUFD: virtual public Decoder {
 public:
-    explicit ImprovedUFD(Code& code):
+    explicit ImprovedUFD(const Code& code):
         Decoder(code){};
     void decode(std::vector<bool>& syndrome) override;
 

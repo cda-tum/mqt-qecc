@@ -1,5 +1,5 @@
 //
-// Created by luca on 09/06/22.
+// Created by lucas on 09/06/22.
 //
 
 #ifndef QUNIONFIND_IMPROVEDUF_HPP
@@ -7,7 +7,7 @@
 #include "Decoder.hpp"
 class OriginalUFD: virtual public Decoder {
 public:
-    explicit OriginalUFD(Code& code):
+    explicit OriginalUFD(const Code& code):
         Decoder(code){};
     void decode(std::vector<bool>& syndrome) override;
 

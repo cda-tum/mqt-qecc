@@ -1,5 +1,5 @@
 //
-// Created by luca on 26/04/2022.
+// Created by lucas on 26/04/2022.
 //
 
 #ifndef QUNIONFIND_TREENODE_HPP

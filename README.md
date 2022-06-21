@@ -1,6 +1,6 @@
 # MQT QECC - A tool for Quantum Error Correcting Codes written in C++
 
-A tool for quantum error correcting codes and respective numerical simulations developed by the
+A tool for quantum error correcting codes and numerical simulations developed by the
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
 based on methods proposed in [todo](localhost)
 
@@ -8,9 +8,9 @@ QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and devel
 [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the
 [Johannes Kepler University Linz](https://jku.at)).
 
-It can be used to decode quantum LDPC codes and conduct numerical evaluations.
+The tool can be used to decode quantum LDPC codes and conduct respective numerical evaluations.
 
-At the moment we have implemented the general Union-Find decoder and an improvement. Furthermore,
+At the moment we have implemented the general Union-Find decoder and an improved version of the algorithm. To,
 to construct codes we use the open-source software by Joshka Roffe et
 al: [bias_tailored_qldpc](https://github.com/quantumgizmos/bias_tailored_qldpc).
 
@@ -35,10 +35,11 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
     ```
   This enables platform specific compiler optimizations that cannot be enabled on portable wheels.
 - Once installed, start using it in Python:
-    ```python
-    from mqt.qecc import *
-    results = decode(code)
-    ```
+  ```python
+  from mqt.qecc import *
+  results = decode(code)
+  decoding_simulator.simulate_wer(...)
+  ```
 
 ### System Requirements
 

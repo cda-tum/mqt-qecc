@@ -1,5 +1,5 @@
 //
-// Created by luca on 17/05/2022.
+// Created by lucas on 17/05/2022.
 //
 
 #ifndef QUNIONFIND_CODES_HPP

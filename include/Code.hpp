@@ -1,5 +1,5 @@
 //
-// Created by luca on 26/04/2022.
+// Created by lucas on 26/04/2022.
 //
 
 #ifndef QUNIONFIND_CODE_HPP
@@ -69,7 +69,8 @@ public:
     std::size_t       N = 0U;
 
     /*
-     * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz (Convention: Rows in first dim, columns in second)
+     * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
+     * Convention: Rows in first dim, columns in second
      * Additionally, the adjacency matrix representation using the Union Find datastructure is construced for Hz
      */
     explicit Code(ParityCheckMatrix hz):

@@ -1,5 +1,5 @@
 //
-// Created by luca on 09/06/22.
+// Created by lucas on 09/06/22.
 //
 #ifndef QUNIONFIND_UTILS_HPP
 #define QUNIONFIND_UTILS_HPP

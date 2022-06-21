@@ -126,6 +126,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
         res = erasureDecoder(erasure, syndrComponents);
     }
     std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
+    this->result                                          = DecodingResult();
     result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
     result.estimNodeIdxVector                             = res;
     result.estimBoolVector                                = gf2Vec(code.getN());

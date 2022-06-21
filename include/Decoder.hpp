@@ -13,31 +13,32 @@
 #include <vector>
 
 using json = nlohmann::json;
-
-enum DecodingResultStatus {
-    SUCCESS,
-    FLAGGED_ERROR,
-    FAILURE //only to be set from outside when logical operator is introduced
-};
-
 struct DecodingResult {
-    DecodingResultStatus     status{};
-    std::size_t              decodingTime = 0U;
+    std::size_t              decodingTime = 0U; // in ms
     std::vector<std::size_t> estimNodeIdxVector;
     gf2Vec                   estimBoolVector;
     [[nodiscard]] json       to_json() const {
               return json{
-                {"staus", status},
-                {"decodingTime(ms)", decodingTime}};
+                {"decodingTime(ms)", decodingTime,
+                       "estimate", estimBoolVector,
+                       "estimatedNodes", estimNodeIdxVector}};
     }
 };
-
 class Decoder {
 public:
     DecodingResult result;
-    explicit Decoder(Code& code):
-        code(code) {}
+
+    explicit Decoder(Code code):
+        code(std::move(code)) {}
     virtual void decode(std::vector<bool>&){};
+
+    Decoder(const Decoder& other):
+        Decoder(Code(other.code)) {
+        this->result = DecodingResult();
+    }
+    [[nodiscard]] Code getCode() const {
+        return this->code;
+    }
 
 protected:
     Code code;

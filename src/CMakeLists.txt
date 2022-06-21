@@ -2,6 +2,7 @@
 add_library(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/ImprovedUFD.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/OriginalUFD.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/DecodingSimulator.cpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/TreeNode.hpp
@@ -9,7 +10,8 @@ add_library(${PROJECT_NAME}
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUFD.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/OriginalUFD.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/QLDPC.hpp)
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingSimulator.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)

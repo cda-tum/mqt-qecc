@@ -1,5 +1,5 @@
 //
-// Created by luca on 13/06/22.
+// Created by lucas on 13/06/22.
 //
 
 #include "Codes.hpp"
@@ -15,7 +15,7 @@ protected:
 
 class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {
 };
-class InCorrectableErrTest: public ImprovedUFDtestBase {
+class IncorrectableErrTest: public ImprovedUFDtestBase {
 };
 class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {
 };
@@ -26,7 +26,7 @@ INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest,
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 1, 0, 0, 0, 0}));
 
-INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, InCorrectableErrTest,
+INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, IncorrectableErrTest,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 1, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 0, 0},
@@ -39,7 +39,6 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest,
                                  //std::vector<bool>{0, 0, 1, 1, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
-/**
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
@@ -79,7 +78,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
 /**
  * Tests for ambigous errors that cannot be corrected
  */
-TEST_P(InCorrectableErrTest, SteaneCodeDecodingTestEstim) {
+TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim) {
     SteaneXCode code{};
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
