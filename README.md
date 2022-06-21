@@ -10,9 +10,9 @@ QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and devel
 
 The tool can be used to decode quantum LDPC codes and conduct respective numerical evaluations.
 
-At the moment we have implemented the general Union-Find decoder and an improved version of the algorithm. To,
+At the moment we have implemented the general Union-Find decoder [[1]](https://ieeexplore.ieee.org/abstract/document/9682738) and an improved version of the algorithm. To,
 to construct codes we use the open-source software by Joshka Roffe et
-al: [bias_tailored_qldpc](https://github.com/quantumgizmos/bias_tailored_qldpc).
+al: [[2]](https://github.com/quantumgizmos/bias_tailored_qldpc).
 
 For more information, please visit [cda.cit.tum.de/](https://www.cda.cit.tum.de/).
 
