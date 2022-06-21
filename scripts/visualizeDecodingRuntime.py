@@ -1,6 +1,6 @@
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import pandas as pd
-import matplotlib.colors as mcolors
 
 
 def runtime():

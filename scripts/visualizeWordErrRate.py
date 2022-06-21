@@ -1,8 +1,6 @@
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-
 import json
-import numpy as np
+
+import matplotlib.pyplot as plt
 
 
 def wer():
@@ -30,5 +28,6 @@ def wer():
     print(xData)
     print(yData)
     plt.show()
+
 
 wer()
