@@ -22,7 +22,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
     std::vector<std::set<std::size_t>>    components;
     if (!syndrome.empty()) {
         // Init a single component for each syndrome vertex
-        for (size_t i = 0; i < syndrome.size(); i++) {
+        for (std::size_t i = 0; i < syndrome.size(); i++) {
             std::set<std::size_t> comp{};
             if (syndrome.at(i)) {
                 comp.insert(code.getN() + i);
@@ -47,7 +47,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
                 neibrsToAdd.emplace_back(compNbrs);
                 currCompIt++;
             }
-            for (size_t i = 0; i < components.size(); i++) {
+            for (std::size_t i = 0; i < components.size(); i++) {
                 auto nbrs = neibrsToAdd.at(i);
                 components.at(i).insert(nbrs.begin(), nbrs.end());
             }
@@ -150,7 +150,7 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>
     }
     auto   tmp = Utils::getTranspose(code.Hz.pcm);
     gf2Mat reduced;
-    for (size_t i = 0; i < intNodes.size(); i++) {
+    for (std::size_t i = 0; i < intNodes.size(); i++) {
         auto idx = intNodes.at(i);
         reduced.emplace_back(tmp.at(idx));
     }

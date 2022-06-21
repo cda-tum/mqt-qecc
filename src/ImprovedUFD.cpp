@@ -35,8 +35,7 @@ std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const
 void ImprovedUFD::decode(gf2Vec& syndrome) {
     std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
     std::vector<std::size_t>              res;
-    std::cout << "in decoder syndrome: ";
-    Utils::printGF2vector(syndrome);
+
     if (!syndrome.empty()) {
         auto                                   syndrComponents = computeInitTreeComponents(syndrome);
         auto                                   components      = syndrComponents;
@@ -127,7 +126,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
     }
     std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
     this->result                                          = DecodingResult();
-    result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
+    result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
     result.estimNodeIdxVector                             = res;
     result.estimBoolVector                                = gf2Vec(code.getN());
     for (unsigned long re: res) {
