@@ -145,14 +145,15 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     for (auto physErrRate: physErrRates) {
         for (const auto& code: codes) {
             avgDecodingTimeAcc = 0U;
-            std::cout << "Code: " << Utils::getStringFrom(code.Hz.pcm) << std::endl;
+            std::cout << "code: " << std::endl
+                      << Utils::getStringFrom(code.Hz.pcm) << std::endl;
             for (std::size_t i = 0; i < nrOfTrials; i++) {
-                auto        c        = Code(code.Hz); // construct new for each trial
+                Code        c        = Code(code.Hz); // construct new for each trial
                 ImprovedUFD decoder  = ImprovedUFD(c);
                 auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
                 auto        syndrome = c.getSyndrome(error);
-
                 std::cout << "error: " << Utils::getStringFrom(error) << ", rate: " << physErrRate << std::endl;
+                std::cout << "synd: " << Utils::getStringFrom(syndrome) << std::endl;
                 std::cout << "starting decoding" << std::endl;
                 decoder.decode(syndrome);
                 std::cout << "decoding done " << std::endl;

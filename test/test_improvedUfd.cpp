@@ -6,10 +6,10 @@
 #include "ImprovedUFD.hpp"
 
 #include <gtest/gtest.h>
-
 class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {};
 class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {};
 class UniquelyCorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
+class UniquelyCorrectableErrLargeToricCodeTest: public ImprovedUFDtestBase {};
 class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
 class IncorrectableErrTest: public ImprovedUFDtestBase {};
 class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {};
@@ -45,14 +45,11 @@ INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrsToric, UniquelyCorrectableErrTo
 
 INSTANTIATE_TEST_SUITE_P(NotorrectableSingleBitErrsToric, IncorrectableErrToricCodeTest,
                          testing::Values(
-                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0, 0},
-                                 std::vector<bool>{0, 0, 0, 1, 0, 0, 0, 0},
-                                 std::vector<bool>{0, 0, 0, 0, 0, 1, 0, 0},
-                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 1}));
-
-INSTANTIATE_TEST_SUITE_P(UptoStabCorrectableErrsToric, UptoStabCorrectableErrToricCodeTest,
-                         testing::Values(
-                                 std::vector<bool>{0, 1, 1, 0, 0, 0, 0, 0} // all 1 but corrr by chance
+                                 // std::vector<bool>{0, 0, 1, 0, 0, 0, 0, 0},
+                                 // std::vector<bool>{0, 0, 0, 1, 0, 0, 0, 0},
+                                 // std::vector<bool>{0, 0, 0, 0, 0, 1, 0, 0},
+                                 std::vector<bool>{0, 1, 0, 0, 0, 1, 0, 0} // reg test
+                                                                           //std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 1}
                                  ));
 
 /**
@@ -99,9 +96,8 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
-    std::vector<bool> err = GetParam();
-
-    auto syndr = code.getSyndrome(err);
+    std::vector<bool> err   = GetParam();
+    auto              syndr = code.getSyndrome(err);
     decoder.decode(syndr);
     auto   decodingResult = decoder.result;
     auto   estim          = decodingResult.estimBoolVector;
@@ -300,4 +296,40 @@ TEST_P(UptoStabCorrectableErrToricCodeTest, ToricCodeTest3) {
 
     EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
     EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+}
+
+/**
+ * Tests for toric code one bit correctable errs
+ */
+TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
+    ToricCode_32 code;
+    ImprovedUFD  decoder(code);
+    std::cout << "Adj lists code: " << std::endl
+              << Utils::getStringFrom(code.Hz.pcm) << std::endl;
+    std::vector<bool> err = {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
+    std::cout << "error: ";
+    Utils::printGF2vector(err);
+    std::cout << std::endl;
+    auto syndr = code.getSyndrome(err);
+    std::cout << "syndrome: ";
+    Utils::printGF2vector(syndr);
+    std::cout << std::endl;
+    decoder.decode(syndr);
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i) << "; ";
+    }
+    EXPECT_TRUE(estim == estim2);
+
+    std::cout << std::endl;
+    gf2Vec sol = err;
+    std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
+    std::cout << "Estim from Idx: " << Utils::getStringFrom(estim2) << std::endl;
+    std::cout << "Sol: " << Utils::getStringFrom(sol) << std::endl;
+    EXPECT_TRUE(sol == estim2);
 }

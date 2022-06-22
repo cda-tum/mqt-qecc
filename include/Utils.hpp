@@ -219,14 +219,22 @@ public:
         if (matrix.empty()) {
             return "[]";
         }
+        auto              nrows = matrix.size();
+        auto              ncols = matrix.at(0).size();
         std::stringstream s;
-        s << matrix.size() << "x" << matrix.at(0).size() << "matrix [" << std::endl;
-        for (const auto& i: matrix) {
-            s << "[ ";
-            for (bool j: i) {
-                s << j << " ";
+        s << nrows << "x" << ncols << "matrix [" << std::endl;
+        for (std::size_t i = 0; i < nrows; i++) {
+            s << "[";
+            for (std::size_t j = 0; j < ncols; j++) {
+                s << matrix.at(i).at(j);
+                if (j != ncols - 1) {
+                    s << ",";
+                }
             }
             s << "]";
+            if (i != nrows - 1) {
+                s << ",";
+            }
             s << std::endl;
         }
         s << "]";
@@ -237,10 +245,14 @@ public:
         if (vector.empty()) {
             return "[]";
         }
+        auto              nelems = vector.size();
         std::stringstream s;
-        s << "[ ";
-        for (const auto& i: vector) {
-            s << i << " ";
+        s << "[";
+        for (std::size_t j = 0; j < nelems; j++) {
+            s << vector.at(j);
+            if (j != nelems - 1) {
+                s << ",";
+            }
         }
         s << "]";
         return s.str();
@@ -297,9 +309,6 @@ public:
         }
 
         inFile.close();
-        std::cout << "imported: " << std::endl;
-        printGF2matrix(result);
-        std::cout << std::endl;
         return result;
     }
 };

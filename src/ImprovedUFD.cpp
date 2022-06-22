@@ -37,15 +37,16 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
     std::set<std::size_t>                 res;
 
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
-        auto                                   syndrComponents = computeInitTreeComponents(syndrome);
-        auto                                   components      = syndrComponents;
+        auto                                   syndrComponents   = computeInitTreeComponents(syndrome);
+        auto                                   invalidComponents = syndrComponents;
         std::vector<std::shared_ptr<TreeNode>> erasure;
-        while (!components.empty()) {
-            for (size_t i = 0; i < components.size(); i++) {
+        while (!invalidComponents.empty()) {
+            for (size_t i = 0; i < invalidComponents.size(); i++) {
                 // Step 1 growth
                 std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
                 std::map<std::size_t, bool>                      presentMap{}; // for step 4
-                standardGrowth(fusionEdges, presentMap, components);
+
+                standardGrowth(fusionEdges, presentMap, invalidComponents);
 
                 // Step 2 Fusion of clusters
                 auto eIt = fusionEdges.begin();
@@ -79,20 +80,22 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 }
 
                 // Step 4 Update roots avoiding duplicates
-                auto it = components.begin();
-                while (it != components.end()) {
+                auto it = invalidComponents.begin();
+                while (it != invalidComponents.end()) {
                     auto elem = *it;
                     auto root = TreeNode::Find(elem);
-                    if (!presentMap.contains(root->vertexIdx)) {
-                        it = components.erase(it);
-                        components.insert(root);
+                    if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
+                        // root already in component list, no replacement necessary
+                        it = invalidComponents.erase(it);
                     } else {
-                        it++;
+                        // root of component not yet in list, replace node by its root in components;
+                        it = invalidComponents.erase(it);
+                        invalidComponents.insert(root);
                     }
                 }
 
                 // Step 5 Update Boundary Lists, remove vertices that are not in boundary anymore
-                for (auto& component: components) {
+                for (auto& component: invalidComponents) {
                     auto iter = component->boundaryVertices.begin();
                     while (iter != component->boundaryVertices.end()) {
                         auto nbrs     = code.tannerGraph.getNeighbours(*iter);
@@ -119,7 +122,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                         }
                     }
                 }
-                extractValidComponents(components, erasure);
+                extractValidComponents(invalidComponents, erasure);
             }
         }
         res = erasureDecoder(erasure, syndrComponents);
@@ -208,6 +211,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @return
  */
 std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+    std::cout << "in erasure decoder" << std::endl;
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
@@ -252,38 +256,48 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
     std::vector<std::set<std::size_t>> resList;
     // go through nodes in erasure
     // if current node v is a bit node in Int, remove adjacent check nodes c_i and B(c_i,1)
-    for (auto& component: erasureSet) {
-        std::set<std::size_t> xi;
-        while (!syndrome.empty()) {
-            auto compNodeIt = component.begin();
-            auto currN      = code.tannerGraph.getNodeForId(*compNodeIt);
-            if (currN->marked && !currN->isCheck) {
-                xi.insert(currN->vertexIdx); // add bit node to estimate
-                // if we add a bit node we have to delete adjacent check nodes and their neighbours
-                // start with deleting all adjacent check nodes in interior (marked ones)
-                for (auto& adjCheck: code.tannerGraph.getNeighbours(currN->vertexIdx)) {
-                    if (adjCheck->marked) {
-                        auto nNbrs = code.tannerGraph.getNeighbours(adjCheck);
-                        auto nnbr  = nNbrs.begin();
-                        // remove bit nodes adjacent to same check
-                        while (nnbr != nNbrs.end()) {
-                            if ((*nnbr)->marked && (*nnbr)->vertexIdx != currN->vertexIdx) { // dont self remove
-                                auto id = (*nnbr)->vertexIdx;
-                                component.erase(id);
-                            }
-                            nnbr++;
-                        }
-                        // then delete check itself
-                        component.erase(compNodeIt++);
-                        // also remove check from syndrome
-                        syndrome.erase(adjCheck);
-                    }
-                }
-            } else {
-                compNodeIt++;
+    while (!syndrome.empty()) {
+        for (auto& component: erasureSet) {
+            if (std::all_of(component.begin(), component.end(), [this](std::size_t elem) { return code.tannerGraph.getNodeForId(elem)->isCheck; })) {
+                throw new std::exception; // todo remove
             }
+            std::set<std::size_t> xi;
+            std::cout << "syndrome not empty" << std::endl;
+            auto compNodeIt = component.begin();
+            while (compNodeIt != component.end()) {
+                std::set<std::size_t> toDelete;
+                auto                  currN = code.tannerGraph.getNodeForId(*compNodeIt);
+                std::cout << "currN:" << currN->vertexIdx << std::endl;
+                if (!currN->isCheck) {
+                    xi.insert(currN->vertexIdx); // add bit node to estimate
+                    // if we add a bit node we have to delete adjacent check nodes and their neighbours
+                    for (auto& adjCheck: code.tannerGraph.getNeighbours(currN->vertexIdx)) {
+                        if (adjCheck->marked) {
+                            auto nNbrs = code.tannerGraph.getNeighbours(adjCheck);
+                            auto nnbr  = nNbrs.begin();
+                            // remove bit nodes adjacent to neighbour check
+                            while (nnbr != nNbrs.end()) {
+                                if ((*nnbr)->marked && (*nnbr)->vertexIdx && (*nnbr)->vertexIdx != currN->vertexIdx) {
+                                    auto id = (*nnbr)->vertexIdx;
+                                    std::cout << "removing from comp " << id << std::endl;
+                                    component.erase(id);
+                                }
+                                nnbr++;
+                            }
+                            // remove check from syndrome and component
+                            std::cout << "removing from sydr" << adjCheck->vertexIdx << std::endl;
+                            syndrome.erase(adjCheck);
+                            component.erase(adjCheck->vertexIdx);
+                        }
+                    }
+                    // finally, remove node bitnode
+                    component.erase(*compNodeIt++);
+                } else {
+                    compNodeIt++;
+                }
+            }
+            resList.emplace_back(xi);
         }
-        resList.emplace_back(xi);
     }
     std::set<std::size_t> res;
     for (auto& i: resList) {
@@ -422,15 +436,15 @@ std::set<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr<Tr
 
 /**
  * Add those components that are valid to the erasure
- * @param components containts components to check validity for
- * @param erasure contains valid components (including possible new ones at end of function)
+ * @param invalidComponents containts components to check validity for
+ * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void ImprovedUFD::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& components, std::vector<std::shared_ptr<TreeNode>>& erasure) {
-    auto it = components.begin();
-    while (it != components.end()) {
+void ImprovedUFD::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& invalidComponents, std::vector<std::shared_ptr<TreeNode>>& validComponents) {
+    auto it = invalidComponents.begin();
+    while (it != invalidComponents.end()) {
         if (isValidComponent(*it)) {
-            erasure.emplace_back(*it);
-            it = components.erase(it);
+            validComponents.emplace_back(*it);
+            it = invalidComponents.erase(it);
         } else {
             it++;
         }
