@@ -132,13 +132,11 @@ public:
         }
         auto augm = getAugmentedMatrix(matrix, vec);
         matrix    = gauss(augm);
-        printGF2matrix(matrix);
         gf2Vec vector(vec.size());
 
         for (size_t i = 0; i < matrix.size(); i++) {
             vector.at(i) = matrix[i][matrix.at(i).size() - 1];
         }
-        printGF2vector(vector);
         // check consistency
         for (size_t i = 0; i < vector.size(); i++) {
             if (vector[i]) {

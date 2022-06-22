@@ -122,7 +122,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 extractValidComponents(components, erasure);
             }
         }
-        res = peelingDecoder(erasure, syndrComponents);
+        res = erasureDecoder(erasure, syndrComponents);
     }
     std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
     this->result                                          = DecodingResult();
@@ -211,37 +211,38 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
-    // compute interior of grown erasure components
+    // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
     for (auto& currCompRoot: erasure) {
         std::set<std::size_t> compErasure;
+        const auto            boundaryVertices = currCompRoot->boundaryVertices; // boundary vertices are stored in root of each component
+        if (currCompRoot->parent != nullptr) {
+            currCompRoot = TreeNode::Find(currCompRoot);
+        }
         assert(currCompRoot->parent == nullptr); // should be due to steps above otherwise we can just call Find here
         std::queue<std::shared_ptr<TreeNode>> queue;
 
-        // if currComp root is not in boundary, add it as first vertex to Int
-        if (!currCompRoot->boundaryVertices.contains(currCompRoot->vertexIdx)) {
-            currCompRoot->marked = true;
-            compErasure.insert(currCompRoot->vertexIdx);
-        }
+        // start traversal at component root
         queue.push(currCompRoot);
 
         while (!queue.empty()) {
             auto currV = queue.front();
             queue.pop();
-
+            if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
+                // add to interior by adding it to the list and marking it
+                currV->marked = true;
+                compErasure.insert(currV->vertexIdx);
+            }
             std::vector<std::shared_ptr<TreeNode>> chldrn;
             for (auto& i: currV->children) {
                 chldrn.emplace_back(i);
             }
             for (auto& node: chldrn) {
-                if (!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) {
-                    if (code.tannerGraph.getNeighbours(currV).contains(node)) {
-                        currV->markedNeighbours.insert(node->vertexIdx);
-                    }
+                if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
                     compErasure.insert(node->vertexIdx);
-                    queue.push(node);
                 }
+                queue.push(node); // step into depth
             }
         }
         erasureSet.emplace_back(compErasure);
@@ -250,29 +251,33 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
 
     std::vector<std::set<std::size_t>> resList;
     // go through nodes in erasure
-    // if current node v is a check node in Int, remove B(v, 1)
+    // if current node v is a bit node in Int, remove adjacent check nodes c_i and B(c_i,1)
     for (auto& component: erasureSet) {
         std::set<std::size_t> xi;
-
-        while (!syndrome.empty()) { //todo theres a bug somewhere here, does not terminate
+        while (!syndrome.empty()) {
             auto compNodeIt = component.begin();
             auto currN      = code.tannerGraph.getNodeForId(*compNodeIt);
             if (currN->marked && !currN->isCheck) {
-                xi.insert(currN->vertexIdx);
-                for (auto& markedNeighbour: currN->markedNeighbours) {
-                    auto nNbrs = code.tannerGraph.getNeighboursIdx(markedNeighbour);
-                    auto nnbr  = nNbrs.begin();
-                    while (nnbr != nNbrs.end()) {
-                        component.erase(*nnbr++);
+                xi.insert(currN->vertexIdx); // add bit node to estimate
+                // if we add a bit node we have to delete adjacent check nodes and their neighbours
+                // start with deleting all adjacent check nodes in interior (marked ones)
+                for (auto& adjCheck: code.tannerGraph.getNeighbours(currN->vertexIdx)) {
+                    if (adjCheck->marked) {
+                        auto nNbrs = code.tannerGraph.getNeighbours(adjCheck);
+                        auto nnbr  = nNbrs.begin();
+                        // remove bit nodes adjacent to same check
+                        while (nnbr != nNbrs.end()) {
+                            if ((*nnbr)->marked && (*nnbr)->vertexIdx != currN->vertexIdx) { // dont self remove
+                                auto id = (*nnbr)->vertexIdx;
+                                component.erase(id);
+                            }
+                            nnbr++;
+                        }
+                        // then delete check itself
+                        component.erase(compNodeIt++);
+                        // also remove check from syndrome
+                        syndrome.erase(adjCheck);
                     }
-                }
-                auto ittt = currN->markedNeighbours.begin();
-                while (ittt != currN->markedNeighbours.end()) {
-                    component.erase(*ittt);
-                    auto temp = code.tannerGraph.getNodeForId(*ittt);
-                    assert(temp->isCheck);
-                    syndrome.erase(temp);
-                    ittt++;
                 }
             } else {
                 compNodeIt++;
@@ -295,6 +300,7 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
  * @return
  */
 std::set<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+    std::cout << "peeling erasure" << std::endl;
     std::set<std::size_t> erasureRoots;
     std::set<std::size_t> erasureVertices;
     for (auto& i: erasure) {
