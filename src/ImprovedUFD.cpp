@@ -259,7 +259,9 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
     while (!syndrome.empty()) {
         for (auto& component: erasureSet) {
             if (std::all_of(component.begin(), component.end(), [this](std::size_t elem) { return code.tannerGraph.getNodeForId(elem)->isCheck; })) {
-                throw new std::exception; // todo remove
+                // decoder did not succeed
+                std::cout << "i failed :'(" << std::endl;
+                return std::set<std::size_t>{};
             }
             std::set<std::size_t> xi;
             std::cout << "syndrome not empty" << std::endl;

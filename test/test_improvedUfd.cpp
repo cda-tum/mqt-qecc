@@ -9,11 +9,9 @@
 class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {};
 class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {};
 class UniquelyCorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
-class UniquelyCorrectableErrLargeToricCodeTest: public ImprovedUFDtestBase {};
 class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
 class IncorrectableErrTest: public ImprovedUFDtestBase {};
 class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {};
-class UptoStabCorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
 
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest,
                          testing::Values(
@@ -28,7 +26,7 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, IncorrectableErrTest,
                                  std::vector<bool>{0, 0, 0, 0, 1, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 0, 1, 0}));
 
-INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest,
+INSTANTIATE_TEST_SUITE_P(UptoStabCorrectable, UpToStabCorrectableErrTest,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
                                  std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
@@ -45,12 +43,11 @@ INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrsToric, UniquelyCorrectableErrTo
 
 INSTANTIATE_TEST_SUITE_P(NotorrectableSingleBitErrsToric, IncorrectableErrToricCodeTest,
                          testing::Values(
-                                 // std::vector<bool>{0, 0, 1, 0, 0, 0, 0, 0},
-                                 // std::vector<bool>{0, 0, 0, 1, 0, 0, 0, 0},
-                                 // std::vector<bool>{0, 0, 0, 0, 0, 1, 0, 0},
-                                 std::vector<bool>{0, 1, 0, 0, 0, 1, 0, 0} // reg test
-                                                                           //std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 1}
-                                 ));
+                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0, 0},
+                                 std::vector<bool>{0, 0, 0, 1, 0, 0, 0, 0},
+                                 std::vector<bool>{0, 0, 0, 0, 0, 1, 0, 0},
+                                 std::vector<bool>{0, 1, 0, 0, 0, 1, 0, 0}, // reg test
+                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 1}));
 
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
@@ -153,41 +150,6 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
 }
 
 /**
- * Tests for errors that are correctable up to stabilizer
- */
-TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
-    HGPcode           code{};
-    ImprovedUFD       decoder{code};
-    std::vector<bool> err = gf2Vec(code.N);
-    err.at(0)             = 1;
-
-    std::cout << "err :" << std::endl;
-    Utils::printGF2vector(err);
-    auto syndr = code.getSyndrome(err);
-    decoder.decode(syndr);
-    auto   decodingResult = decoder.result;
-    auto   estim          = decodingResult.estimBoolVector;
-    auto   estimIdx       = decodingResult.estimNodeIdxVector;
-    gf2Vec estim2(err.size());
-    std::cout << "estiIdxs: ";
-    for (size_t i = 0; i < estimIdx.size(); i++) {
-        estim2.at(estimIdx.at(i)) = true;
-        std::cout << estimIdx.at(i);
-    }
-    std::cout << std::endl;
-    std::vector<bool> residualErr(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = err[i] ^ estim[i];
-    }
-    std::vector<bool> residualErr2(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr2.at(i) = err[i] ^ estim2[i];
-    }
-
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
-}
-/**
  * Tests for toric code one bit correctable errs
  */
 TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
@@ -264,43 +226,6 @@ TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
 /**
  * Tests for toric code one bit correctable errs
  */
-TEST_P(UptoStabCorrectableErrToricCodeTest, ToricCodeTest3) {
-    ToricCode_8 code;
-    ImprovedUFD decoder(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
-    std::vector<bool> err = GetParam();
-    std::cout << "err :" << Utils::getStringFrom(err) << std::endl;
-    auto syndr = code.getSyndrome(err);
-    std::cout << "syndrome" << Utils::getStringFrom(syndr) << std::endl;
-    decoder.decode(syndr);
-    auto   decodingResult = decoder.result;
-    auto   estim          = decodingResult.estimBoolVector;
-    auto   estimIdx       = decodingResult.estimNodeIdxVector;
-    gf2Vec estim2(err.size());
-    std::cout << "estiIdxs: ";
-    for (size_t i = 0; i < estimIdx.size(); i++) {
-        estim2.at(estimIdx.at(i)) = true;
-        std::cout << estimIdx.at(i);
-    }
-    std::cout << std::endl;
-    std::cout << "estim:" << Utils::getStringFrom(estim) << std::endl;
-    std::vector<bool> residualErr(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = err[i] ^ estim[i];
-    }
-    std::vector<bool> residualErr2(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr2.at(i) = err[i] ^ estim2[i];
-    }
-
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
-}
-
-/**
- * Tests for toric code one bit correctable errs
- */
 TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     ToricCode_32 code;
     ImprovedUFD  decoder(code);
@@ -332,4 +257,74 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     std::cout << "Estim from Idx: " << Utils::getStringFrom(estim2) << std::endl;
     std::cout << "Sol: " << Utils::getStringFrom(sol) << std::endl;
     EXPECT_TRUE(sol == estim2);
+}
+/**
+ * Tests for errors that are correctable up to stabilizer
+ */
+TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
+    HGPcode           code{};
+    ImprovedUFD       decoder{code};
+    std::vector<bool> err = gf2Vec(code.N);
+    err.at(0)             = 1;
+
+    std::cout << "err :" << std::endl;
+    Utils::printGF2vector(err);
+    auto syndr = code.getSyndrome(err);
+    decoder.decode(syndr);
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i);
+    }
+    std::cout << std::endl;
+    std::vector<bool> residualErr(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr.at(i) = err[i] ^ estim[i];
+    }
+    std::vector<bool> residualErr2(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr2.at(i) = err[i] ^ estim2[i];
+    }
+
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+}
+
+/**
+ * Tests for errors that are correctable up to stabilizer
+ */
+TEST_F(ImprovedUFDtestBase, ToricCode18) {
+    ToricCode_18      code{};
+    ImprovedUFD       decoder{code};
+    std::vector<bool> err = {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1};
+    std::cout << code << std::endl;
+    std::cout << "err :" << std::endl;
+    Utils::printGF2vector(err);
+    auto syndr = code.getSyndrome(err);
+    decoder.decode(syndr);
+    auto   decodingResult = decoder.result;
+    auto   estim          = decodingResult.estimBoolVector;
+    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec estim2(err.size());
+    std::cout << "estiIdxs: ";
+    for (size_t i = 0; i < estimIdx.size(); i++) {
+        estim2.at(estimIdx.at(i)) = true;
+        std::cout << estimIdx.at(i);
+    }
+    std::cout << std::endl;
+    std::vector<bool> residualErr(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr.at(i) = err[i] ^ estim[i];
+    }
+    std::vector<bool> residualErr2(err.size());
+    for (size_t i = 0; i < err.size(); i++) {
+        residualErr2.at(i) = err[i] ^ estim2[i];
+    }
+
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
 }

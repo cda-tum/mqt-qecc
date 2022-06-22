@@ -26,6 +26,13 @@ public:
     ToricCode_8():
         Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qunionfind/examples/test/toric_(nan,nan)-[[8,2,2]]_hx.txt"))) { K = 2; }
 };
+
+class ToricCode_18: public Code {
+public:
+    ToricCode_18():
+        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qunionfind/examples/test/toric_(nan,nan)-[[18,2,3]]_hx.txt"))) { K = 2; }
+};
+
 class ToricCode_32: public Code {
 public:
     ToricCode_32():

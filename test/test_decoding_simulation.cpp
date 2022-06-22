@@ -131,9 +131,9 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     std::ofstream decodingResOutput(outFilePath + timestamp + ".json");
     std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
     // Basic Parameter setup
-    const double                  physErrRates[]     = {0.01, 0.02, 0.03, 0.05, 0.1};
+    const double                  physErrRates[]     = {0.0001, 0.0002, 0.0003, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
     std::size_t                   avgDecodingTimeAcc = 0U;
-    const std::size_t             nrOfTrials         = 1'0;
+    const std::size_t             nrOfTrials         = 1'000'000;
     double                        avgDecTime         = 0.0;
     std::map<std::string, double> avgDecodingTimePerSize;
     std::vector<Code>             codes;
