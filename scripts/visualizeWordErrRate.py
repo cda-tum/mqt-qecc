@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def wer():
-    inputFilename = '/home/luca/Documents/uf-simulations/testrun/data09-06-2022.json'
+    inputFilename = '/home/luca/Documents/codeRepos/qunionfind/scripts/raw23-06-2022.json'
 
     fig, ax = plt.subplots()
 

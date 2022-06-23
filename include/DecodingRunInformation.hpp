@@ -22,12 +22,33 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"},
  * result contains information obtained from the decoder
  */
 struct DecodingRunInformation {
+    double               physicalErrR = 0.0;
+    std::size_t          codeSize     = 0U;
+    gf2Vec               error        = {};
+    gf2Vec               syndrome     = {};
     DecodingResultStatus status{};
     DecodingResult       result{};
     [[nodiscard]] json   to_json() const {
           return json{
-                {"decodingResult", result.to_json(),
-                   "decodingStatus", status}};
+                {"physicalErrRate", physicalErrR},
+                {"codeSize", codeSize},
+                {"error", Utils::getStringFrom(error)},
+                {"syndrome", Utils::getStringFrom(syndrome)},
+                {"decodingResult", result.to_json()},
+                {"decodingStatus", status}};
+    }
+
+    void from_json(const json& j) {
+        j.at("physicalErrRate").get_to(physicalErrR);
+        j.at("codeSize").get_to(codeSize);
+        j.at("error").get_to(error);
+        j.at("syndrome").get_to(syndrome);
+        j.at("decodingStatus").get_to(status);
+    }
+
+    [[nodiscard]] std::string toString() const {
+        std::stringstream ss{};
+        return this->to_json().dump(2U);
     }
 };
 #endif //QUNIONFIND_DECODINGRUNINFORMATION_HPP

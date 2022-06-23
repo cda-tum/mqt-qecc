@@ -33,8 +33,8 @@ std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const
 
 // todo identify flagged errors?, i.e. when we do not find any error corresponding to the syndrome
 void ImprovedUFD::decode(gf2Vec& syndrome) {
-    std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
-    std::set<std::size_t>                 res;
+    std::chrono::high_resolution_clock::time_point decodingTimeBegin = std::chrono::high_resolution_clock::now();
+    std::set<std::size_t>                          res;
 
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
         auto                                   syndrComponents   = computeInitTreeComponents(syndrome);
@@ -46,9 +46,11 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
                 std::map<std::size_t, bool>                      presentMap{}; // for step 4
 
+                // to grow all components (including valid ones)
+                invalidComponents.insert(erasure.begin(), erasure.end());
                 standardGrowth(fusionEdges, presentMap, invalidComponents);
 
-                // Step 2 Fusion of clusters
+                // Fuse clusters that grew together
                 auto eIt = fusionEdges.begin();
                 while (eIt != fusionEdges.end()) {
                     auto n1    = code.tannerGraph.getNodeForId(eIt->first);
@@ -79,7 +81,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                     }
                 }
 
-                // Step 4 Update roots avoiding duplicates
+                // Replace nodes in list by their roots avoiding duplicates
                 auto it = invalidComponents.begin();
                 while (it != invalidComponents.end()) {
                     auto elem = *it;
@@ -94,7 +96,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                     }
                 }
 
-                // Step 5 Update Boundary Lists, remove vertices that are not in boundary anymore
+                // Update Boundary Lists: remove vertices that are not in boundary anymore
                 for (auto& component: invalidComponents) {
                     auto iter = component->boundaryVertices.begin();
                     while (iter != component->boundaryVertices.end()) {
@@ -127,7 +129,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
         }
         res = erasureDecoder(erasure, syndrComponents);
     }
-    std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
+    std::chrono::high_resolution_clock::time_point decodingTimeEnd = std::chrono::high_resolution_clock::now();
     this->result                                          = DecodingResult();
     result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
     result.estimBoolVector                                = gf2Vec(code.getN());
@@ -198,12 +200,6 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     }
 }
 
-//
-//void ImprovedUF::orientedGroth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-//                  std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
-// todo
-//}
-
 /**
  * Computes interior of erasure with BFS algorithm then iterates over interior and removes neighbours of check vertices iteratively
  * @param erasure
@@ -211,7 +207,6 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @return
  */
 std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
-    std::cout << "in erasure decoder" << std::endl;
     std::set<std::shared_ptr<TreeNode>> interior;
     std::vector<std::set<std::size_t>>  erasureSet{};
     std::size_t                         erasureSetIdx = 0;
@@ -260,16 +255,14 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
         for (auto& component: erasureSet) {
             if (std::all_of(component.begin(), component.end(), [this](std::size_t elem) { return code.tannerGraph.getNodeForId(elem)->isCheck; })) {
                 // decoder did not succeed
-                std::cout << "i failed :'(" << std::endl;
+                //std::cout << "i failed :'(" << std::endl;
                 return std::set<std::size_t>{};
             }
             std::set<std::size_t> xi;
-            std::cout << "syndrome not empty" << std::endl;
             auto compNodeIt = component.begin();
             while (compNodeIt != component.end()) {
                 std::set<std::size_t> toDelete;
                 auto                  currN = code.tannerGraph.getNodeForId(*compNodeIt);
-                std::cout << "currN:" << currN->vertexIdx << std::endl;
                 if (!currN->isCheck) {
                     xi.insert(currN->vertexIdx); // add bit node to estimate
                     // if we add a bit node we have to delete adjacent check nodes and their neighbours
@@ -281,13 +274,11 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
                             while (nnbr != nNbrs.end()) {
                                 if ((*nnbr)->marked && (*nnbr)->vertexIdx && (*nnbr)->vertexIdx != currN->vertexIdx) {
                                     auto id = (*nnbr)->vertexIdx;
-                                    std::cout << "removing from comp " << id << std::endl;
                                     component.erase(id);
                                 }
                                 nnbr++;
                             }
                             // remove check from syndrome and component
-                            std::cout << "removing from sydr" << adjCheck->vertexIdx << std::endl;
                             syndrome.erase(adjCheck);
                             component.erase(adjCheck->vertexIdx);
                         }
@@ -315,7 +306,7 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
  * @param syndrome
  * @return
  */
-std::set<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
     std::cout << "peeling erasure" << std::endl;
     std::set<std::size_t> erasureRoots;
     std::set<std::size_t> erasureVertices;
@@ -381,10 +372,10 @@ std::set<std::size_t> ImprovedUFD::peelingDecoder(std::vector<std::shared_ptr<Tr
 
     // peeling
     std::size_t fNIdx = 0;
-    for (auto& tree: spanningForest) {
-        auto boundaryVtcs = boundaryVertices.at(fNIdx);
-        while (!syndr.empty()) {
-            auto edgeIt = tree.begin();
+    while (!syndr.empty()) {
+        for (auto& tree: spanningForest) {
+            auto boundaryVtcs = boundaryVertices.at(fNIdx);
+            auto edgeIt       = tree.begin();
             while (edgeIt != tree.end()) {
                 std::pair<std::size_t, std::size_t> e;
                 std::size_t                         check;

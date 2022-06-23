@@ -1,48 +1,43 @@
+import json
+
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-import pandas as pd
 
 
 def runtime():
-    inputFilenames = ['/home/luca/Documents/uf-simulations/testrun/out09-06-2022.json']
+    inputFilen = '/home/luca/Documents/uf-simulations/testrun/raw-final23-06-2022.json'
     fig, ax = plt.subplots()
     colors = mcolors.BASE_COLORS
     xData = []
     yData = []
+    pers = []
 
-    for file in inputFilenames:
-        data = pd.read_json(file)['runs']
-        fileXData = []
-        fileYData = []
+    with open(inputFilen) as data_file:
+        data = json.load(data_file)
 
-        for r in range(0, len(data)):
-            currRun = data[r]['run']
-            physErrRate = currRun['physicalErrRate']
-            fileXData.append(physErrRate)
-            rData = currRun['data']
-            avgDecodingTime = 0
-            for decodingRun in rData:
-                avgDecodingTime += decodingRun['decodingTime(ms)']
-            if avgDecodingTime == 0:
-                avgDecodingTime = 0
-            else:
-                avgDecodingTime = avgDecodingTime / len(rData)
-            fileYData.append(avgDecodingTime)
-        xData.append(fileXData)
-        yData.append(fileYData)
+    for per in data:
+        perXData = []
+        perYData = []
 
-    for i in range(0, len(xData)):
+        for c in data[per]:
+            perXData.append(float(c))
+            perYData.append(float(data[per][c]))
+        pers.append(float(per))
+        xData.append(perXData)
+        yData.append(perYData)
+
+    for i in range(len(xData)):
         col, val = colors.popitem()
         if (col == 'w' or col == 'k'):
             col, val = colors.popitem()
             if (col == 'w' or col == 'k'):
                 col, val = colors.popitem()
-        ax.plot(xData[i], yData[i], label='decoder ' + str(i), color=col)
-    ax.set_xlabel('physical error rate')
+        label = '% 6.3f' % pers[i]
+        ax.plot(xData[i], yData[i], label='PER' + label, color=col)
+
+    ax.set_xlabel('code size')
     ax.set_ylabel('Avg runtime(ms)')
     ax.legend()
-    ax.set_xscale('log')
-    ax.set_yscale('log')
     plt.show()
 
 

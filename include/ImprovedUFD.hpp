@@ -21,7 +21,7 @@ private:
     bool                                isValidComponent(const std::shared_ptr<TreeNode>& component);
     std::set<std::size_t>               erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
     void                                extractValidComponents(std::set<std::shared_ptr<TreeNode>>& invalidComponents, std::vector<std::shared_ptr<TreeNode>>& erasure);
-    std::set<size_t>                    peelingDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
+    std::set<size_t>                    peeling(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome);
     std::set<std::shared_ptr<TreeNode>> computeInitTreeComponents(const std::vector<bool>& syndrome);
 };
 #endif //QUNIONFIND_IMPROVEDUFD_HPP

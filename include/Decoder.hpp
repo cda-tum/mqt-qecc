@@ -14,14 +14,18 @@
 
 using json = nlohmann::json;
 struct DecodingResult {
-    std::size_t              decodingTime = 0U; // in ms
-    std::vector<std::size_t> estimNodeIdxVector;
-    gf2Vec                   estimBoolVector;
+    std::size_t              decodingTime       = 0U; // in ms
+    std::vector<std::size_t> estimNodeIdxVector = {};
+    gf2Vec                   estimBoolVector    = {};
     [[nodiscard]] json       to_json() const {
               return json{
-                {"decodingTime(ms)", decodingTime,
-                       "estimate", estimBoolVector,
-                       "estimatedNodes", estimNodeIdxVector}};
+                {"decodingTime(ms)", decodingTime},
+                {"estimate", Utils::getStringFrom(estimBoolVector)}};
+    }
+    void from_json(const json& j) {
+        j.at("decodingTime(ms)").get_to(decodingTime);
+        j.at("estimate").get_to(estimBoolVector);
+        j.at("estimatedNodes").get_to(estimNodeIdxVector);
     }
 };
 class Decoder {

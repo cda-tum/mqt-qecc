@@ -2,7 +2,7 @@
 
 A tool for quantum error correcting codes and numerical simulations developed by the
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
-based on methods proposed in [todo](localhost)
+based on methods proposed in [[1]](todo)
 
 QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and developed by the
 [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the
@@ -10,9 +10,11 @@ QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and devel
 
 The tool can be used to decode quantum LDPC codes and conduct respective numerical evaluations.
 
-At the moment we have implemented the general Union-Find decoder [[1]](https://ieeexplore.ieee.org/abstract/document/9682738) and an improved version of the algorithm. To,
+At the moment we have implemented the general Union-Find
+decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
+and an improved version of the algorithm as proposed in [[1]](todo). To,
 to construct codes we use the open-source software by Joshka Roffe et
-al: [[2]](https://github.com/quantumgizmos/bias_tailored_qldpc).
+al: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc).
 
 For more information, please visit [cda.cit.tum.de/](https://www.cda.cit.tum.de/).
 
@@ -50,8 +52,8 @@ version of 3.14.
 
 `flint` [flint2](https://github.com/wbhart/flint2) is used for matrix operations in GF(2). For an installation
 guide please refer to the official [flint documentation](https://flintlib.org/doc/building.html). The easiest way
-is to download the respective .tar.gz file, install locally and then use the environment variable `LD_LIBRARY_PATH`
-to specify the location of flint.
+is to download and build locally and then use the environment variable `LD_LIBRARY_PATH`
+to specify the location of flint (e.g. `export LD_LIBRARY_PATH=/usr/local/lib` on UNIX).
 
 ### Configure, Build, and Install
 
