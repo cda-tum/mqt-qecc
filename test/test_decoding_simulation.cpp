@@ -44,21 +44,18 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
      * ***************** Comment out accordingly *****************
      */
     //****server
-    const std::string outpath            = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/out/";
-    const std::string outFilePath        = outpath + "results";
-    const std::string dataFilePathInterm = outpath + "raw-interm";
-    const std::string dataFilePath       = outpath + "raw-final";
-    const std::string inCodePath         = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
-    const std::size_t code_K             = 18;
+    const std::string outpath    = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/out/";
+    const std::string inCodePath = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
+    const std::size_t code_K     = 18;
     //**** local
     //    const std::string outpath            = "/home/luca/Documents/uf-simulations/testrun/";
-    //    const std::string outFilePath        = outpath + "results";
-    //    const std::string dataFilePath       = outpath + "raw";
-    //    const std::string dataFilePathInterm = outpath + "raw-interm";
     //    const std::string inCodePath         = "/home/luca/Documents/codeRepos/qunionfind/examples/hgp_(4,7)-[[900,36,10]]_hx.txt";
     //    const std::size_t code_K             = 36;
     // ***************** configure end *****************
 
+    const std::string outFilePath        = outpath + "results";
+    const std::string dataFilePathInterm = outpath + "raw-interm";
+    const std::string dataFilePath       = outpath + "raw-final";
     std::cout << "writing output to " << outpath << std::endl;
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t);
@@ -69,6 +66,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
     std::ofstream rawIntermediateOut(dataFilePathInterm + timestamp + ".json");
     rawIntermediateOut.rdbuf()->pubsetbuf(0, 0);
+
     /**
      * ***************** Comment out accordingly *****************
      */
@@ -163,16 +161,17 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    std::string outFile         = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/results";
-    std::string runningDataFile = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/raw";
-    std::string finalDataFile   = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/raw-final";
+    const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/runs2/out/";
+    const std::string inPath  = "/home/berent/ufpaper/simulations/runtimeSim/runs2/in/toricCodes/";
     //**** local:
-    //std::string outFile         = "/home/luca/Documents/uf-simulations/testrun/results";
-    //std::string runningDataFile = "/home/luca/Documents/uf-simulations/testrun/raw-running";
-    //std::string finalDataFile   = "/home/luca/Documents/uf-simulations/testrun/raw-final";
+    //const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/runs2/out/";
+    //const std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/test/";
     // ***************** config end *****************
 
-    std::cout << "writing results to " << outFile << " and " << runningDataFile << std::endl;
+    const std::string outFile         = outPath + "results";
+    const std::string runningDataFile = outPath + "raw-running";
+    const std::string finalDataFile   = outPath + "raw-final";
+    std::cout << "writing results to " << outPath << std::endl;
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t);
     std::ostringstream oss;
@@ -188,9 +187,9 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     // Basic Parameter setup
     //**** paper eval:
     //const double      physErrRates[] = {0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
-    const std::size_t nrOfTrials = 1'000'0;
+    const std::size_t nrOfTrials = 1'000;
     //****tests:
-    const double physErrRates[] = {0.001, 0.003, 0.005, 0.01, 0.03, 0.05};
+    const double physErrRates[] = {0.01};
     //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
@@ -198,15 +197,6 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     double                                               avgDecTime         = 0.0;
     std::map<std::string, std::map<std::string, double>> dataPerRate;
     std::vector<Code>                                    codes;
-
-    /**
-     * ***************** Input Codes, comment out accordingly *****************
-     */
-    //**** server
-    std::string inPath = "/home/berent/ufpaper/simulations/runtimeSim/runs1/in/toricCodes/";
-    //**** local:
-    //std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/test/";
-    // ***************** configure end *****************
 
     for (const auto& file: std::filesystem::directory_iterator(inPath)) {
         codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(file.path()))));

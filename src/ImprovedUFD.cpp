@@ -31,10 +31,9 @@ std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const
     return result;
 }
 
-// todo identify flagged errors?, i.e. when we do not find any error corresponding to the syndrome
 void ImprovedUFD::decode(gf2Vec& syndrome) {
-    std::chrono::high_resolution_clock::time_point decodingTimeBegin = std::chrono::high_resolution_clock::now();
-    std::set<std::size_t>                          res;
+    auto                  decodingTimeBegin = std::chrono::high_resolution_clock::now();
+    std::set<std::size_t> res;
 
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
         auto                                   syndrComponents   = computeInitTreeComponents(syndrome);
@@ -129,10 +128,10 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
         }
         res = erasureDecoder(erasure, syndrComponents);
     }
-    std::chrono::high_resolution_clock::time_point decodingTimeEnd = std::chrono::high_resolution_clock::now();
-    this->result                                          = DecodingResult();
-    result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
-    result.estimBoolVector                                = gf2Vec(code.getN());
+    auto decodingTimeEnd   = std::chrono::high_resolution_clock::now();
+    this->result           = DecodingResult();
+    result.decodingTime    = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
+    result.estimBoolVector = gf2Vec(code.getN());
     for (auto re: res) {
         result.estimBoolVector.at(re) = true;
         result.estimNodeIdxVector.emplace_back(re);
@@ -259,7 +258,7 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
                 return std::set<std::size_t>{};
             }
             std::set<std::size_t> xi;
-            auto compNodeIt = component.begin();
+            auto                  compNodeIt = component.begin();
             while (compNodeIt != component.end()) {
                 std::set<std::size_t> toDelete;
                 auto                  currN = code.tannerGraph.getNodeForId(*compNodeIt);
@@ -329,7 +328,6 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
         std::set<std::size_t>                         treeVertices;
         queue.push(currCompRoot);
         visited.insert(currCompRoot);
-        treeVertices.insert(currCompRoot);
         while (!queue.empty()) {
             auto currV = queue.front();
             queue.pop();
@@ -338,7 +336,7 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
                 auto t1 = code.tannerGraph.getNodeForId(nbr);
                 auto t2 = code.tannerGraph.getNodeForId(currV);
                 if (!visited.contains(nbr)) {
-                    //add all neighbours to edges to be able to identify pendant ones in next step
+                    // add all neighbours to edges to be able to identify pendant ones in next step
                     // nbrs we are looking at have to be in same erasure component, check with Find
                     if (TreeNode::Find(t1) == TreeNode::Find(t2)) {
                         visited.insert(nbr);
@@ -346,6 +344,8 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
                         treeVertices.insert(nbr);
                         treeVertices.insert(currV);
                         tree.insert(std::make_pair(currV, nbr));
+                        // here markedNeighbours contains list of nbrs in ST
+                        t2->markedNeighbours.insert(nbr);
                     }
                 }
             }
@@ -354,7 +354,8 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
         forestVertices.emplace_back(treeVertices);
     }
 
-    std::vector<std::set<std::size_t>> boundaryVertices;
+    std::vector<std::set<std::size_t>>                                      boundaryVertices;
+    std::vector<std::map<std::size_t, std::pair<std::size_t, std::size_t>>> egs;
 
     // compute pendant vertices of SF
     for (const auto& vertices: forestVertices) {
@@ -377,9 +378,8 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
             auto boundaryVtcs = boundaryVertices.at(fNIdx);
             auto edgeIt       = tree.begin();
             while (edgeIt != tree.end()) {
-                std::pair<std::size_t, std::size_t> e;
-                std::size_t                         check;
-                std::size_t                         data;
+                std::size_t data;
+                std::size_t check;
                 if (code.tannerGraph.getNodeForId(edgeIt->first)->marked || code.tannerGraph.getNodeForId(edgeIt->first)->marked) {
                     edgeIt = tree.erase(edgeIt);
                     continue;
@@ -389,23 +389,33 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
                 // if in boundary simply remove
                 if (boundaryVtcs.contains(frst)) {
                     code.tannerGraph.getNodeForId(frst)->marked = true;
+                    forestVertices.at(fNIdx).erase(frst);
                 } else if (boundaryVtcs.contains(scd)) {
                     code.tannerGraph.getNodeForId(scd)->marked = true;
+                    forestVertices.at(fNIdx).erase(scd);
                 } else {
                     if (syndr.contains(frst)) {
                         check = frst;
                         data  = scd;
                     } else {
-                        check = scd;
                         data  = frst;
+                        check = scd;
                     }
                     // add data to estimate, remove check from syndrome
-                    reslt.insert(data);
-                    code.tannerGraph.getNodeForId(data)->marked  = true;
-                    code.tannerGraph.getNodeForId(check)->marked = true;
+                    auto dNode = code.tannerGraph.getNodeForId(data);
+                    auto cNode = code.tannerGraph.getNodeForId(check);
+                    // if check marked its already covered
+                    if (!cNode->marked) {
+                        reslt.insert(data);
+                    }
+                    dNode->marked = true;
+                    // remove all check neibrs of in ST
+                    for (auto& nbr: dNode->markedNeighbours) {
+                        code.tannerGraph.getNodeForId(nbr)->marked = true;
+                        forestVertices.at(fNIdx).erase(nbr);
+                        syndr.erase(nbr);
+                    }
                     forestVertices.at(fNIdx).erase(data);
-                    forestVertices.at(fNIdx).erase(check);
-                    syndr.erase(check);
                 }
                 edgeIt = tree.erase(edgeIt);
 

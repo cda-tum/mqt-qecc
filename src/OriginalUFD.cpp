@@ -18,8 +18,8 @@
  * @param syndrome
  */
 void OriginalUFD::decode(std::vector<bool>& syndrome) {
-    std::chrono::steady_clock::time_point decodingTimeBegin = std::chrono::steady_clock::now();
-    std::vector<std::set<std::size_t>>    components;
+    std::chrono::high_resolution_clock::time_point decodingTimeBegin = std::chrono::high_resolution_clock::now();
+    std::vector<std::set<std::size_t>>             components;
     if (!syndrome.empty()) {
         // Init a single component for each syndrome vertex
         for (std::size_t i = 0; i < syndrome.size(); i++) {
@@ -64,10 +64,10 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
     }
     std::vector<std::size_t> res(tmp.begin(), tmp.end());
 
-    std::chrono::steady_clock::time_point decodingTimeEnd = std::chrono::steady_clock::now();
-    result.decodingTime                                   = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeBegin - decodingTimeEnd).count();
-    result.estimNodeIdxVector                             = res;
-    result.estimBoolVector                                = std::vector<bool>(code.getN());
+    std::chrono::high_resolution_clock::time_point decodingTimeEnd = std::chrono::high_resolution_clock::now();
+    result.decodingTime                                            = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
+    result.estimNodeIdxVector                                      = res;
+    result.estimBoolVector                                         = std::vector<bool>(code.getN());
     for (unsigned long re: res) {
         result.estimBoolVector.at(re) = true;
     }
