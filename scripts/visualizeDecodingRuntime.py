@@ -11,6 +11,14 @@ def LinFun(x, a, b):
     return np.multiply(a, x) + b
 
 
+def QuadFun(x, a, b):
+    return np.multiply(a, np.power(x, 2)) + b
+
+
+def PowThreeFun(x, a, b):
+    return np.multiply(a, np.power(x, 3)) + b
+
+
 def runtime():
     inputFilen = '/home/luca/Documents/codeRepos/qunionfind/scripts/raw-final27-06-2022.json'
     fig, ax = plt.subplots()
@@ -27,8 +35,9 @@ def runtime():
         perYData = []
 
         for c in data[per]:
-            perXData.append(float(c))
-            perYData.append(float(data[per][c]))
+            if float(data[per][c]) != 0.0:
+                perXData.append(float(c))
+                perYData.append(float(data[per][c]))
         pers.append(float(per))
         xData.append(perXData)
         yData.append(perYData)
@@ -43,12 +52,20 @@ def runtime():
         orders.append(np.argsort(xData[i]))
         xData[i] = np.array(xData[i])[orders[i]]
         yData[i] = np.array(yData[i])[orders[i]]
-        ax.plot(xData[i], yData[i], 'o', label='PER' + label, color=col)
-        optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i], yData[i])
-        func = str(math.ceil(optimizedParameters[1])) + 'x^2+' + str(math.ceil(optimizedParameters[0]))
-        ax.plot(xData[i], LinFun(xData[i], *optimizedParameters), color='r')
         print(xData[i])
         print(yData[i])
+        ax.plot(xData[i], yData[i], 'o', label='PER=' + label, color='b')
+        print(xData[i])
+        print(yData[i])
+        linx = xData[i].copy()
+        liny = yData[i].copy()
+        optimizedParameters, pcov = opt.curve_fit(LinFun, linx, liny)
+        optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, linx, liny)
+        print(str(math.ceil(optimizedParameters[1])) + 'x+' + str(math.ceil(optimizedParameters[0])))
+        ax.plot(linx, LinFun(linx, *optimizedParameters), color='b', label='O(n)')
+        ax.plot(linx, QuadFun(linx, *optimizedParameters2), color='r', label='O(n)')
+        # ax.plot(xData[i], np.power(xData[i],3), color='r', label='O(n^3)')
+
     # fits
 
     ax.set_xlabel('code size')

@@ -11,15 +11,14 @@
 #include <chrono>
 #include <queue>
 #include <random>
-#include <set>
 /**
      * returns list of tree node (in UF data structure) representations for syndrome
      * @param code
      * @param syndrome
      * @return
     */
-std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const gf2Vec& syndrome) {
-    std::set<std::shared_ptr<TreeNode>> result{};
+std::unordered_set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const gf2Vec& syndrome) {
+    std::unordered_set<std::shared_ptr<TreeNode>> result{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
             auto syndrNode     = code.tannerGraph.adjListNodes.at(i + code.getN()).at(0);
@@ -32,8 +31,8 @@ std::set<std::shared_ptr<TreeNode>> ImprovedUFD::computeInitTreeComponents(const
 }
 
 void ImprovedUFD::decode(gf2Vec& syndrome) {
-    auto                  decodingTimeBegin = std::chrono::high_resolution_clock::now();
-    std::set<std::size_t> res;
+    auto                            decodingTimeBegin = std::chrono::high_resolution_clock::now();
+    std::unordered_set<std::size_t> res;
 
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
         auto                                   syndrComponents   = computeInitTreeComponents(syndrome);
@@ -139,7 +138,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
 }
 
 void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                 std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+                                 std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) {
     for (auto& component: components) {
         presentMap.insert(std::make_pair(component->vertexIdx, true));
         assert(component->parent == nullptr); // at this point we can assume that component represents root of the component
@@ -155,7 +154,7 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
 }
 
 void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                   std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+                                                   std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) {
     std::shared_ptr<TreeNode> smallestComponent;
     std::size_t               smallestSize = SIZE_MAX;
     for (const auto& c: components) {
@@ -176,7 +175,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
 }
 
 void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                 std::map<std::size_t, bool>& presentMap, const std::set<std::shared_ptr<TreeNode>>& components) {
+                                                 std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) {
     std::shared_ptr<TreeNode>       chosenComponent;
     std::random_device              rd;
     std::mt19937                    gen(rd());
@@ -205,14 +204,14 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @param syndrome
  * @return
  */
-std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
-    std::set<std::shared_ptr<TreeNode>> interior;
-    std::vector<std::set<std::size_t>>  erasureSet{};
-    std::size_t                         erasureSetIdx = 0;
+std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::unordered_set<std::shared_ptr<TreeNode>>& syndrome) {
+    std::unordered_set<std::shared_ptr<TreeNode>> interior;
+    std::vector<std::unordered_set<std::size_t>>  erasureSet{};
+    std::size_t                                   erasureSetIdx = 0;
     // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
     for (auto& currCompRoot: erasure) {
-        std::set<std::size_t> compErasure;
-        const auto            boundaryVertices = currCompRoot->boundaryVertices; // boundary vertices are stored in root of each component
+        std::unordered_set<std::size_t> compErasure;
+        const auto                      boundaryVertices = currCompRoot->boundaryVertices; // boundary vertices are stored in root of each component
         if (currCompRoot->parent != nullptr) {
             currCompRoot = TreeNode::Find(currCompRoot);
         }
@@ -247,7 +246,7 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
         erasureSetIdx++;
     }
 
-    std::vector<std::set<std::size_t>> resList;
+    std::vector<std::unordered_set<std::size_t>> resList;
     // go through nodes in erasure
     // if current node v is a bit node in Int, remove adjacent check nodes c_i and B(c_i,1)
     while (!syndrome.empty()) {
@@ -255,13 +254,12 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
             if (std::all_of(component.begin(), component.end(), [this](std::size_t elem) { return code.tannerGraph.getNodeForId(elem)->isCheck; })) {
                 // decoder did not succeed
                 //std::cout << "i failed :'(" << std::endl;
-                return std::set<std::size_t>{};
+                return std::unordered_set<std::size_t>{};
             }
-            std::set<std::size_t> xi;
-            auto                  compNodeIt = component.begin();
-            while (compNodeIt != component.end()) {
-                std::set<std::size_t> toDelete;
-                auto                  currN = code.tannerGraph.getNodeForId(*compNodeIt);
+            std::unordered_set<std::size_t> xi;
+            auto                            compNodeIt = component.begin();
+            while (compNodeIt != component.end() && !syndrome.empty()) {
+                auto currN = code.tannerGraph.getNodeForId(*compNodeIt);
                 if (!currN->isCheck) {
                     xi.insert(currN->vertexIdx); // add bit node to estimate
                     // if we add a bit node we have to delete adjacent check nodes and their neighbours
@@ -271,7 +269,7 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
                             auto nnbr  = nNbrs.begin();
                             // remove bit nodes adjacent to neighbour check
                             while (nnbr != nNbrs.end()) {
-                                if ((*nnbr)->marked && (*nnbr)->vertexIdx && (*nnbr)->vertexIdx != currN->vertexIdx) {
+                                if ((*nnbr)->marked && (*nnbr)->vertexIdx != currN->vertexIdx) {
                                     auto id = (*nnbr)->vertexIdx;
                                     component.erase(id);
                                 }
@@ -291,7 +289,7 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
             resList.emplace_back(xi);
         }
     }
-    std::set<std::size_t> res;
+    std::unordered_set<std::size_t> res;
     for (auto& i: resList) {
         for (auto& n: i) {
             res.insert(n);
@@ -305,27 +303,27 @@ std::set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::shared_ptr<Tr
  * @param syndrome
  * @return
  */
-std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>>& erasure, std::set<std::shared_ptr<TreeNode>>& syndrome) {
+std::unordered_set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>>& erasure, std::unordered_set<std::shared_ptr<TreeNode>>& syndrome) {
     std::cout << "peeling erasure" << std::endl;
-    std::set<std::size_t> erasureRoots;
-    std::set<std::size_t> erasureVertices;
+    std::unordered_set<std::size_t> erasureRoots;
+    std::unordered_set<std::size_t> erasureVertices;
     for (auto& i: erasure) {
         erasureRoots.insert(i->vertexIdx);
     }
-    std::set<std::size_t> syndr;
+    std::unordered_set<std::size_t> syndr;
     for (const auto& s: syndrome) {
         syndr.insert(s->vertexIdx);
     }
 
-    std::set<std::size_t> reslt;
+    std::unordered_set<std::size_t> reslt;
     // compute SF between checks
-    std::vector<std::set<std::pair<std::size_t, std::size_t>>> spanningForest;
-    std::vector<std::set<std::size_t>>                         forestVertices;
-    std::set<std::size_t>                                      visited;
+    std::vector<std::unordered_set<std::pair<std::size_t, std::size_t>>> spanningForest;
+    std::vector<std::unordered_set<std::size_t>>                         forestVertices;
+    std::unordered_set<std::size_t>                                      visited;
     for (auto& currCompRoot: erasureRoots) {
-        std::queue<std::size_t>                       queue;
-        std::set<std::pair<std::size_t, std::size_t>> tree;
-        std::set<std::size_t>                         treeVertices;
+        std::queue<std::size_t>                                 queue;
+        std::unordered_set<std::pair<std::size_t, std::size_t>> tree;
+        std::unordered_set<std::size_t>                         treeVertices;
         queue.push(currCompRoot);
         visited.insert(currCompRoot);
         while (!queue.empty()) {
@@ -354,12 +352,12 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
         forestVertices.emplace_back(treeVertices);
     }
 
-    std::vector<std::set<std::size_t>>                                      boundaryVertices;
+    std::vector<std::unordered_set<std::size_t>>                            boundaryVertices;
     std::vector<std::map<std::size_t, std::pair<std::size_t, std::size_t>>> egs;
 
     // compute pendant vertices of SF
     for (const auto& vertices: forestVertices) {
-        std::set<std::size_t> pendants;
+        std::unordered_set<std::size_t> pendants;
         for (auto& v: vertices) {
             auto nbrs = code.tannerGraph.getNeighboursIdx(v);
             for (auto& n: nbrs) {
@@ -441,7 +439,7 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
  * @param invalidComponents containts components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void ImprovedUFD::extractValidComponents(std::set<std::shared_ptr<TreeNode>>& invalidComponents, std::vector<std::shared_ptr<TreeNode>>& validComponents) {
+void ImprovedUFD::extractValidComponents(std::unordered_set<std::shared_ptr<TreeNode>>& invalidComponents, std::vector<std::shared_ptr<TreeNode>>& validComponents) {
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
         if (isValidComponent(*it)) {

@@ -8,10 +8,10 @@
 #include <gtest/gtest.h>
 class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {};
 class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {};
-class UniquelyCorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
-class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};
+class UniquelyCorrectableErrToricCodeTest: public ImprovedUFDtestBase {}; // test cases wrong not uniquely determined
+class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};       // test cases not uniuqley fixed
 class IncorrectableErrTest: public ImprovedUFDtestBase {};
-class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {};
+class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {}; // first case not dec
 class CorrectableLargeToric: public ImprovedUFDtestBase {};
 
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest,
@@ -29,7 +29,7 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, IncorrectableErrTest,
 
 INSTANTIATE_TEST_SUITE_P(UptoStabCorrectable, UpToStabCorrectableErrTest,
                          testing::Values(
-                                 //std::vector<bool>{0, 0, 0, 0, 0, 0, 1}, works for peeling
+                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
                                  std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
@@ -147,7 +147,7 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     std::cout << "estiIdxs: ";
     for (size_t i = 0; i < estimIdx.size(); i++) {
         estim2.at(estimIdx.at(i)) = true;
-        //std::cout << estimIdx.at(i);
+        std::cout << estimIdx.at(i);
     }
     std::cout << std::endl;
     std::vector<bool> residualErr(err.size());
