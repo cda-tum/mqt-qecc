@@ -7,18 +7,11 @@
 
 #include <gtest/gtest.h>
 
-class OriginalUFDtest: public testing::TestWithParam<std::vector<bool>> {
-protected:
-    void setUp() {
-    }
-};
+class OriginalUFDtest: public testing::TestWithParam<std::vector<bool>> {};
+class UniquelyCorrectableErrTest_original: public OriginalUFDtest {};
+class InCorrectableErrTest_original: public OriginalUFDtest {};
+class UpToStabCorrectableErrTest_original: public OriginalUFDtest {};
 
-class UniquelyCorrectableErrTest_original: public OriginalUFDtest {
-};
-class InCorrectableErrTest_original: public OriginalUFDtest {
-};
-class UpToStabCorrectableErrTest_original: public OriginalUFDtest {
-};
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest_original,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 0},

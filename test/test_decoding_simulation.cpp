@@ -43,15 +43,23 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     /**
      * ***************** Comment out accordingly *****************
      */
-    //server
-    std::string outFilePath  = "/home/berent/ufpaper/simulations/decodingPerfSim/run1/out/results";
-    std::string dataFilePath = "/home/berent/ufpaper/simulations/decodingPerfSim/run1/out/raw";
-    // local
-    //std::string outFilePath  = "/home/luca/Documents/uf-simulations/testrun/results";
-    //std::string dataFilePath = "/home/luca/Documents/uf-simulations/testrun/raw";
+    //****server
+    const std::string outpath            = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/out/";
+    const std::string outFilePath        = outpath + "results";
+    const std::string dataFilePathInterm = outpath + "raw-interm";
+    const std::string dataFilePath       = outpath + "raw-final";
+    const std::string inCodePath         = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
+    const std::size_t code_K             = 18;
+    //**** local
+    //    const std::string outpath            = "/home/luca/Documents/uf-simulations/testrun/";
+    //    const std::string outFilePath        = outpath + "results";
+    //    const std::string dataFilePath       = outpath + "raw";
+    //    const std::string dataFilePathInterm = outpath + "raw-interm";
+    //    const std::string inCodePath         = "/home/luca/Documents/codeRepos/qunionfind/examples/hgp_(4,7)-[[900,36,10]]_hx.txt";
+    //    const std::size_t code_K             = 36;
     // ***************** configure end *****************
 
-    std::cout << "writing output to " << outFilePath << " and " << dataFilePath << std::endl;
+    std::cout << "writing output to " << outpath << std::endl;
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t);
     std::ostringstream oss;
@@ -59,25 +67,25 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     auto          timestamp = oss.str();
     std::ofstream decodingResOutput(outFilePath + timestamp + ".json");
     std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
-
+    std::ofstream rawIntermediateOut(dataFilePathInterm + timestamp + ".json");
+    rawIntermediateOut.rdbuf()->pubsetbuf(0, 0);
     /**
      * ***************** Comment out accordingly *****************
      */
     //**** Paper eval
     const double      normalizationConstant = 10'000.0; //
-    double            physicalErrRate       = 1.0 / normalizationConstant;
-    double            stepSize              = 1.0 / normalizationConstant;
-    const double      maxPhysicalErrRate    = 0.5;
+    double            physicalErrRate       = 0.0001;
+    const double      stepSize              = 2;
+    const double      maxPhysicalErrRate    = 0.1;
     const std::size_t nrOfRuns              = std::floor(maxPhysicalErrRate / physicalErrRate);
-    std::size_t       nrOfRunsPerRate       = 4096; // todo how deep to go?
-
+    const std::size_t nrOfRunsPerRate       = 4096; // todo how deep to go?
     //**** tests
-    //const double      normalizationConstant = 10'00; //
-    //double            physicalErrRate       = 1.0 / normalizationConstant;
-    //double            stepSize              = 1.0 / normalizationConstant;
-    //const double      maxPhysicalErrRate    = 0.1;
-    //const std::size_t nrOfRuns              = std::floor(maxPhysicalErrRate / physicalErrRate);
-    //std::size_t       nrOfRunsPerRate       = 50;
+    //    const double      normalizationConstant = 100; //
+    //    double            physicalErrRate       = 1.0 / normalizationConstant;
+    //    double            stepSize              = 1.0 / normalizationConstant;
+    //    const double      maxPhysicalErrRate    = 0.1;
+    //    const std::size_t nrOfRuns              = std::floor(maxPhysicalErrRate / physicalErrRate);
+    //    std::size_t       nrOfRunsPerRate       = 1;
     // ***************** configure end *****************
 
     std::size_t                   nrOfFailedRuns = 0U;
@@ -86,6 +94,8 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     std::size_t                   K              = 0.0;
     std::map<std::string, double> wordErrRatePerPhysicalErrRate;
     decodingResOutput << "{ \"runs\" : [ ";
+    rawIntermediateOut << "{ ";
+
     for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhysicalErrRate; i++) {
         nrOfFailedRuns = 0U;
         blockErrRate   = 0.0;
@@ -93,7 +103,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
         decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
-            HGPcode code         = HGPcode("/home/berent/ufpaper/simulations/decodingPerfSim/run1/source/code/hgp_(4,7)-[[900,36,10]]_hx.txt", 36);
+            HGPcode code         = HGPcode(inCodePath, code_K);
             K                    = code.getK();
             ImprovedUFD decoder  = ImprovedUFD(code);
             auto        error    = Utils::sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
@@ -122,22 +132,27 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
             }
         }
         //compute word error rate WER
-        blockErrRate = (double)nrOfFailedRuns / (double)nrOfRunsPerRate;
-        wordErrRate  = blockErrRate / (double)K;                                                            // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
-        wordErrRatePerPhysicalErrRate.insert(std::make_pair(std::to_string(physicalErrRate), wordErrRate)); // to string for json parsing
+        blockErrRate   = (double)nrOfFailedRuns / (double)nrOfRunsPerRate;
+        wordErrRate    = blockErrRate / (double)K; // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
+        auto datapoint = std::make_pair(std::to_string(physicalErrRate), wordErrRate);
+        wordErrRatePerPhysicalErrRate.insert(datapoint); // to string for json parsing
+        rawIntermediateOut << R"( ")" << datapoint.first << R"(" )"
+                           << ":" + std::to_string(datapoint.second);
         // only for json output
         if (i != nrOfRuns - 1) {
             decodingResOutput << "]}},";
+            rawIntermediateOut << ",";
         } else {
             decodingResOutput << "]}}";
+            rawIntermediateOut << "}";
         }
-        physicalErrRate += stepSize;
+        physicalErrRate *= stepSize;
     }
-    decodingResOutput << "}";
     json dataj = wordErrRatePerPhysicalErrRate;
     rawDataOutput << dataj.dump(2U);
     decodingResOutput.close();
     rawDataOutput.close();
+    rawIntermediateOut.close();
 }
 
 /**
@@ -147,14 +162,14 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     /**
      * ***************** Comment out accordingly *****************
      */
-    // server:
-    //std::string outFile  = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/results";
-    //std::string runningDataFile = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/raw";
-    //std::string finalDataFile = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/raw-final";
-    // local:
-    std::string outFile         = "/home/luca/Documents/uf-simulations/testrun/results";
-    std::string runningDataFile = "/home/luca/Documents/uf-simulations/testrun/raw-running";
-    std::string finalDataFile   = "/home/luca/Documents/uf-simulations/testrun/raw-final";
+    //**** server:
+    std::string outFile         = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/results";
+    std::string runningDataFile = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/raw";
+    std::string finalDataFile   = "/home/berent/ufpaper/simulations/runtimeSim/runs1/out/raw-final";
+    //**** local:
+    //std::string outFile         = "/home/luca/Documents/uf-simulations/testrun/results";
+    //std::string runningDataFile = "/home/luca/Documents/uf-simulations/testrun/raw-running";
+    //std::string finalDataFile   = "/home/luca/Documents/uf-simulations/testrun/raw-final";
     // ***************** config end *****************
 
     std::cout << "writing results to " << outFile << " and " << runningDataFile << std::endl;
@@ -171,12 +186,12 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      * ***************** Basic parameters, comment out accordingly *****************
      */
     // Basic Parameter setup
-    // paper eval:
+    //**** paper eval:
     //const double      physErrRates[] = {0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
-    //const std::size_t nrOfTrials     = 1'000'000;
-    // tests:
-    const double      physErrRates[] = {0.001, 0.003, 0.005, 0.01, 0.03, 0.05};
-    const std::size_t nrOfTrials     = 1'0;
+    const std::size_t nrOfTrials = 1'000'0;
+    //****tests:
+    const double physErrRates[] = {0.001, 0.003, 0.005, 0.01, 0.03, 0.05};
+    //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
     std::size_t                                          avgDecodingTimeAcc = 0U;
@@ -187,10 +202,10 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     /**
      * ***************** Input Codes, comment out accordingly *****************
      */
-    //server
-    //std::string inPath = "/home/berent/ufpaper/simulations/runtimeSim/runs1/in/toricCodes/";
-    // local:
-    std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/test/";
+    //**** server
+    std::string inPath = "/home/berent/ufpaper/simulations/runtimeSim/runs1/in/toricCodes/";
+    //**** local:
+    //std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/test/";
     // ***************** configure end *****************
 
     for (const auto& file: std::filesystem::directory_iterator(inPath)) {
@@ -198,6 +213,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     }
     for (auto physErrRate: physErrRates) {
         std::map<std::string, double> avgTimePerSizeData;
+        std::cout << "Simulating physical err rate " << physErrRate << std::endl;
         for (const auto& code: codes) {
             avgDecodingTimeAcc = 0U;
             for (std::size_t i = 0; i < nrOfTrials; i++) {

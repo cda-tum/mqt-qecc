@@ -1,7 +1,6 @@
+import ldpc.protograph as pt
 import numpy as np
 from bposd.hgp import hgp
-
-from ldpc.codes import ring_code
 
 # med sized HGP code from
 
@@ -14,15 +13,17 @@ qcode.canonical_logicals()
 qcode.test()
 print(qcode.code_params)
 print(qcode.hx)
-print("hz:")
+print("hx:")
 print(qcode.hz)
 np.savetxt(f"examples/hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
 
-# toric code
-for i in range(2, 1000):
-    h1 = ring_code(i)
-    h2 = ring_code(i)
-
-    qcode = hgp(h1, h2, compute_distance=True)
-    if qcode.test:  # to make sure it is a valid css code
-        np.savetxt(f"examples/toric_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+# larger code
+a1 = pt.array([
+    [(0), (11), (7), (12)],
+    [(1), (8), (1), (8)],
+    [(11), (0), (4), (8)],
+    [(6), (2), (4), (12)]])
+H = a1.to_binary(lift_parameter=13)
+qcode = hgp(H, H, compute_distance=True)
+qcode.test()
+np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')

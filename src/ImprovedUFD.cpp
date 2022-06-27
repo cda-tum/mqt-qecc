@@ -319,7 +319,7 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
     }
 
     std::set<std::size_t> reslt;
-    // compute SF
+    // compute SF between checks
     std::vector<std::set<std::pair<std::size_t, std::size_t>>> spanningForest;
     std::vector<std::set<std::size_t>>                         forestVertices;
     std::set<std::size_t>                                      visited;
@@ -389,7 +389,6 @@ std::set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>
                 // if in boundary simply remove
                 if (boundaryVtcs.contains(frst)) {
                     code.tannerGraph.getNodeForId(frst)->marked = true;
-                    forestVertices.at(fNIdx).erase(frst);
                 } else if (boundaryVtcs.contains(scd)) {
                     code.tannerGraph.getNodeForId(scd)->marked = true;
                 } else {
