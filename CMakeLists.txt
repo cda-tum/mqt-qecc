@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.14...3.22)
 
-project(qunionfind
+project(qecc
         LANGUAGES CXX
         VERSION 0.1.0
-        DESCRIPTION "Improved Union-Find Decoder for Quantum LDPC codes"
+        DESCRIPTION "QECC - A MQT Library for Quantum Error Correcting Codes"
         )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -47,6 +47,8 @@ endmacro()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 check_submodule_present(json)
+check_submodule_present(pybind11)
+check_submodule_present(pybind11_json)
 
 # add main library code
 add_subdirectory(src)
@@ -65,3 +67,8 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR BUILD_UNION_FIND_TESTS)
 endif ()
 # enable organization of targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# add Python binding code
+if(BINDINGS)
+    add_subdirectory(mqt/qecc)
+endif()
