@@ -44,10 +44,19 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
                 std::map<std::size_t, bool>                      presentMap{}; // for step 4
 
-                // to grow all components (including valid ones)
-                invalidComponents.insert(erasure.begin(), erasure.end());
-                standardGrowth(fusionEdges, presentMap, invalidComponents);
-
+                if (!this->growth || this->growth == GrowthVariant::ALL_COMPONENTS) {
+                    // to grow all components (including valid ones)
+                    invalidComponents.insert(erasure.begin(), erasure.end());
+                    standardGrowth(fusionEdges, presentMap, invalidComponents);
+                } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
+                    standardGrowth(fusionEdges, presentMap, invalidComponents);
+                } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
+                    singleClusterSmallestFirstGrowth(fusionEdges, presentMap, invalidComponents);
+                } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
+                    singleClusterRandomFirstGrowth(fusionEdges, presentMap, invalidComponents);
+                } else {
+                    throw std::invalid_argument("Unsupported growth variant");
+                }
                 // Fuse clusters that grew together
                 auto eIt = fusionEdges.begin();
                 while (eIt != fusionEdges.end()) {

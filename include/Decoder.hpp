@@ -13,6 +13,17 @@
 #include <vector>
 
 using json = nlohmann::json;
+
+enum GrowthVariant {
+    ALL_COMPONENTS, // standard growth
+    INVALID_COMPONENTS,
+    SINGLE_SMALLEST,
+    SINGLE_RANDOM
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{ALL_COMPONENTS, "all components"},
+                                             {INVALID_COMPONENTS, "invalid components"},
+                                             {SINGLE_SMALLEST, "smallest component only"},
+                                             {SINGLE_RANDOM, "single random component"}})
 struct DecodingResult {
     std::size_t              decodingTime       = 0U; // in ms
     std::vector<std::size_t> estimNodeIdxVector = {};
@@ -31,7 +42,7 @@ struct DecodingResult {
 class Decoder {
 public:
     DecodingResult result;
-
+    GrowthVariant  growth;
     explicit Decoder(Code code):
         code(std::move(code)) {}
     virtual void decode(std::vector<bool>&){};
@@ -42,6 +53,12 @@ public:
     }
     [[nodiscard]] Code getCode() const {
         return this->code;
+    }
+    [[nodiscard]] GrowthVariant getGrowth() const {
+        return growth;
+    }
+    void setGrowth(GrowthVariant g) {
+        Decoder::growth = g;
     }
 
 protected:

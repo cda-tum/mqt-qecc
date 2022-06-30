@@ -94,8 +94,8 @@ std::string DecodingSimulator::generateOutFileName(const std::string& filepath) 
 void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutputFilepath,
                                         const std::string&         decodingStatisticsOutputFilepath,
                                         const std::vector<double>& physicalErrRates,
-                                        const std::size_t          nrRunsPerCode,
-                                        const std::vector<Code>&   codes) {
+                                        const std::size_t          nrRuns,
+                                        Code&                      code) {
     auto          jsonFileName = generateOutFileName(decodingStatisticsOutputFilepath);
     auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
     std::ofstream statisticsOutstr(jsonFileName);
@@ -105,24 +105,22 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
 
     // Basic Parameter setup
     std::size_t                   avgDecodingTimeAcc = 0U;
-    const std::size_t             nrOfTrials         = nrRunsPerCode;
+    const std::size_t             nrOfTrials         = nrRuns;
     double                        avgDecTime         = 0.0;
     std::map<std::string, double> avgDecodingTimePerSize;
     for (auto physErrRate: physicalErrRates) {
-        for (const auto& code: codes) {
-            avgDecodingTimeAcc = 0U;
-            for (size_t i = 0; i < nrOfTrials; i++) {
-                auto        c = Code(code.Hz); // construct new for each trial
-                ImprovedUFD decoder(c);
-                auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
-                auto        syndrome = c.getSyndrome(error);
-                decoder.decode(syndrome);
-                auto decodingResult = decoder.result;
-                avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
-            }
-            avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
-            avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
+        avgDecodingTimeAcc = 0U;
+        for (size_t i = 0; i < nrOfTrials; i++) {
+            auto        c = Code(code.Hz); // construct new for each trial
+            ImprovedUFD decoder(c);
+            auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
+            auto        syndrome = c.getSyndrome(error);
+            decoder.decode(syndrome);
+            auto decodingResult = decoder.result;
+            avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
         }
+        avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
+        avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
     }
     json dataj = avgDecodingTimePerSize;
     rawDataOutput << dataj.dump(2U);

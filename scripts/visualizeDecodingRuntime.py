@@ -1,5 +1,4 @@
 import json
-import math
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -35,9 +34,10 @@ def runtime():
         perYData = []
 
         for c in data[per]:
-            if float(data[per][c]) != 0.0:
+            runt = float(data[per][c])
+            if runt != 0.0:  # skip 0 runtime
                 perXData.append(float(c))
-                perYData.append(float(data[per][c]))
+                perYData.append(runt)
         pers.append(float(per))
         xData.append(perXData)
         yData.append(perYData)
@@ -52,19 +52,12 @@ def runtime():
         orders.append(np.argsort(xData[i]))
         xData[i] = np.array(xData[i])[orders[i]]
         yData[i] = np.array(yData[i])[orders[i]]
-        print(xData[i])
-        print(yData[i])
         ax.plot(xData[i], yData[i], 'o', label='PER=' + label, color='b')
-        print(xData[i])
-        print(yData[i])
-        linx = xData[i].copy()
-        liny = yData[i].copy()
-        optimizedParameters, pcov = opt.curve_fit(LinFun, linx, liny)
-        optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, linx, liny)
-        print(str(math.ceil(optimizedParameters[1])) + 'x+' + str(math.ceil(optimizedParameters[0])))
-        ax.plot(linx, LinFun(linx, *optimizedParameters), color='b', label='O(n)')
-        ax.plot(linx, QuadFun(linx, *optimizedParameters2), color='r', label='O(n)')
-        # ax.plot(xData[i], np.power(xData[i],3), color='r', label='O(n^3)')
+        optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i], yData[i])
+        # optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, xData[i], yData[i])
+        ax.plot(xData[i], LinFun(xData[i], *optimizedParameters), color='b', label='O(n)')
+        # ax.plot(xData[i], QuadFun(xData[i], *optimizedParameters2), color='r', label='O(n^2)')
+        print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
 
     # fits
 

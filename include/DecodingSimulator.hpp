@@ -10,12 +10,6 @@
 #include <string>
 #include <utility>
 
-enum GrowthVariants {
-    ALL_COMPONENTS, // == standard growth
-    SINGLE_SMALLEST,
-    SINGLE_RANDOM
-};
-
 class DecodingSimulator {
 public:
     /**
@@ -48,14 +42,14 @@ public:
      * @param rawDataOutputFilepath
      * @param decodingStatisticsOutputFilepath
      * @param physicalErrRates
-     * @param nrRunsPerCode
+     * @param nrRuns
      * @param codes
      */
     void simulateRuntime(const std::string&         rawDataOutputFilepath,
                          const std::string&         decodingStatisticsOutputFilepath,
                          const std::vector<double>& physicalErrRates,
-                         std::size_t                nrRunsPerCode,
-                         const std::vector<Code>&   codes);
+                         std::size_t                nrRuns,
+                         Code&                      code);
 
 private:
     static std::string generateOutFileName(const std::string& filepath);

@@ -15,7 +15,7 @@ print(qcode.code_params)
 print(qcode.hx)
 print("hx:")
 print(qcode.hz)
-np.savetxt(f"examples/hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+np.savetxt(f"examples/hgp_{qcode.code_params}_hz.txt", qcode.hz, fmt='%d', newline='\n')
 
 # larger code
 a1 = pt.array([
@@ -26,4 +26,4 @@ a1 = pt.array([
 H = a1.to_binary(lift_parameter=13)
 qcode = hgp(H, H, compute_distance=True)
 qcode.test()
-np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+np.savetxt(f"./hgp_{qcode.code_params}_hz.txt", qcode.hz, fmt='%d', newline='\n')

@@ -11,4 +11,4 @@ a1 = pt.array([
 
 qcode = lifted_hgp(lift_parameter=13, a=a1, b=a1)
 if qcode.test:
-    np.savetxt(f"examples/lp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+    np.savetxt(f"examples/lp_{qcode.code_params}_hz.txt", qcode.hz, fmt='%d', newline='\n')
