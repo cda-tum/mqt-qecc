@@ -42,7 +42,7 @@ struct DecodingResult {
 class Decoder {
 public:
     DecodingResult result;
-    GrowthVariant  growth;
+    GrowthVariant  growth = ALL_COMPONENTS; // standard
     explicit Decoder(Code code):
         code(std::move(code)) {}
     virtual void decode(std::vector<bool>&){};

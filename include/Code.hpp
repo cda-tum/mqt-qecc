@@ -17,38 +17,16 @@ struct ParityCheckMatrix {
 };
 
 struct TannerGraph {
-    gf2Mat                                              adjMatrix;
-    std::vector<std::vector<std::shared_ptr<TreeNode>>> adjListNodes;
+    std::vector<std::vector<std::size_t>> adjList;
 
-    std::shared_ptr<TreeNode> getNodeForId(const std::size_t vertexId) {
-        return adjListNodes.at(vertexId).at(0);
-    }
-    std::set<std::shared_ptr<TreeNode>> getNeighbours(const std::shared_ptr<TreeNode>& node) {
-        std::set<std::shared_ptr<TreeNode>> result;
-        for (size_t i = 1; i < adjListNodes.at(node->vertexIdx).size(); i++) { // at pos 0 is node itself
-            result.insert(adjListNodes.at(node->vertexIdx).at(i));
-        }
-        return result;
-    }
-    std::set<std::shared_ptr<TreeNode>> getNeighbours(const std::size_t vertexId) {
-        std::set<std::shared_ptr<TreeNode>> result;
-        for (size_t i = 1; i < adjListNodes.at(vertexId).size(); i++) { // at pos 0 is node itself
-            result.insert(adjListNodes.at(vertexId).at(i));
-        }
-        return result;
-    }
-    std::vector<std::size_t> getNeighboursIdx(const std::size_t& node) {
-        std::vector<std::size_t> result;
-        for (size_t i = 1; i < adjListNodes.at(node).size(); i++) { // at pos 0 is node itself
-            result.emplace_back(adjListNodes.at(node).at(i)->vertexIdx);
-        }
-        return result;
+    std::vector<std::size_t> getNeighbours(const std::size_t& node) {
+        return adjList.at(node);
     }
 
     friend std::ostream& operator<<(std::ostream& os, TannerGraph const& c) {
-        for (const auto& i: c.adjMatrix) {
-            os << "| ";
-            for (bool j: i) {
+        for (const auto& i: c.adjList) {
+            os << ": | ";
+            for (auto j: i) {
                 os << j << " ";
             }
             os << "|";
@@ -75,47 +53,32 @@ public:
      */
     explicit Code(ParityCheckMatrix hz):
         Hz(std::move(hz)) {
-        auto                                                nrChecks = Hz.pcm.size();
-        auto                                                nrData   = Hz.pcm.at(0).size();
-        std::size_t                                         dim      = nrChecks + nrData;
-        gf2Mat                                              adjMatrBool(dim);
-        std::vector<std::vector<std::shared_ptr<TreeNode>>> adjLstNodes(dim);
-        std::map<std::size_t, std::shared_ptr<TreeNode>>    nodeMap;
+        auto                                  nrChecks = Hz.pcm.size();
+        auto                                  nrData   = Hz.pcm.at(0).size();
+        std::size_t                           dim      = nrChecks + nrData;
+        std::vector<std::vector<std::size_t>> adjMat(dim);
+
         for (size_t i = 0; i < dim; i++) {
-            std::shared_ptr<TreeNode> n = std::make_shared<TreeNode>(TreeNode(i));
-            if (i >= nrData) {
-                n->isCheck = true;
-                n->checkVertices.insert(n->vertexIdx);
-            }
-            nodeMap.insert(std::make_pair(i, n));
-        }
-        for (size_t i = 0; i < dim; i++) {
-            gf2Vec                                 rowBool(dim);
-            std::vector<std::shared_ptr<TreeNode>> nbrList;
-            nbrList.emplace_back(nodeMap.at(i)); // adjacency list of node n contains n in first position by our convention
+            std::vector<std::size_t> row;
             if (i < dim - nrChecks) {
                 for (size_t j = 0; j < nrChecks; j++) {
-                    auto val               = Hz.pcm.at(j).at(i);
-                    rowBool.at(nrData + j) = val;
+                    auto val = Hz.pcm.at(j).at(i);
                     if (val) {
-                        nbrList.emplace_back(nodeMap.at(nrData + j));
+                        row.emplace_back(nrData + j);
                     }
                 }
             } else {
                 for (size_t j = 0; j < nrData; j++) {
-                    auto val      = Hz.pcm.at(i - nrData).at(j);
-                    rowBool.at(j) = val;
+                    auto val = Hz.pcm.at(i - nrData).at(j);
                     if (val) {
-                        nbrList.emplace_back(nodeMap.at(j)); // insert index of vertex here to generate adjacency list containing the nodes
+                        row.emplace_back(j);
                     }
                 }
             }
-            adjMatrBool.at(i) = rowBool;
-            adjLstNodes.at(i) = nbrList;
+            adjMat.at(i) = row;
         }
-        tannerGraph.adjMatrix    = adjMatrBool;
-        tannerGraph.adjListNodes = adjLstNodes;
-        N                        = Hz.pcm.at(0).size();
+        tannerGraph.adjList = adjMat;
+        N                   = nrData;
     }
 
     [[nodiscard]] std::size_t getN() const {
@@ -147,8 +110,26 @@ public:
         return Utils::isVectorInRowspace(Hz.pcm, est);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, Code const& c) {
-        return os << c.tannerGraph;
+    friend std::ostream& operator<<(std::ostream& os, const Code& c) {
+        auto   nrChecks = c.Hz.pcm.size();
+        auto   nrData   = c.Hz.pcm.at(0).size();
+        auto   dim      = nrChecks + nrData;
+        gf2Mat res(dim);
+
+        for (size_t i = 0; i < dim; i++) {
+            gf2Vec row(dim);
+            if (i < dim - nrChecks) {
+                for (size_t j = 0; j < nrChecks; j++) {
+                    row.at(nrData + j) = c.Hz.pcm.at(j).at(i);
+                }
+            } else {
+                for (size_t j = 0; j < nrData; j++) {
+                    row.at(j) = c.Hz.pcm.at(i - nrData).at(j);
+                }
+            }
+            res.at(i) = row;
+        }
+        return os << Utils::getStringFrom(res);
     }
 };
 #endif //QUNIONFIND_CODE_HPP

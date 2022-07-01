@@ -21,25 +21,14 @@ public:
     std::shared_ptr<TreeNode>              parent    = nullptr;
     std::vector<std::shared_ptr<TreeNode>> children{};
     size_t                                 clusterSize = 1;
-    std::set<std::size_t>                  boundaryVertices{};
-    std::set<std::size_t>                  checkVertices{};
+    std::set<std::size_t>    boundaryVertices{};
+    std::set<std::size_t>    checkVertices{};
     // for interior calculation
     std::set<std::size_t> markedNeighbours{};
     bool                  marked = false;
 
     TreeNode():
         TreeNode(-1) {}
-    //TreeNode(TreeNode&&) = default; // forces a move constructor anyway
-
-    /*TreeNode(const TreeNode& other) {
-        vertexIdx = other.vertexIdx;
-        isCheck   = other.isCheck;
-        parent = other.parent;
-        children = other.children;
-        clusterSize      = other.clusterSize;
-        boundaryVertices = other.boundaryVertices;
-        checkVertices    = other.checkVertices;
-    }*/
 
     explicit TreeNode(const std::size_t vertexIdx) {
         this->vertexIdx = vertexIdx;
