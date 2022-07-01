@@ -16,9 +16,6 @@
 #include <random>
 using json = nlohmann::json;
 class UnionFindSimulation: public testing::TestWithParam<std::string> {
-protected:
-    void setUp() {
-    }
 };
 
 TEST(UnionFindSimulation, TestSimulator) {
@@ -30,8 +27,7 @@ TEST(UnionFindSimulation, TestSimulator) {
     ImprovedUFD       decoder(code);
     simulator.simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
     std::vector<double> erRates = {minErate, maxErate};
-    std::vector<Code>   codes   = {code};
-    simulator.simulateRuntime(rawOut, testOut, erRates, runsPerCode, codes);
+    simulator.simulateRuntime(rawOut, testOut, erRates, runsPerCode, code);
     EXPECT_TRUE(true);
 }
 
@@ -66,6 +62,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     std::ofstream rawDataOutput(dataFilePath + timestamp + ".json");
     std::ofstream rawIntermediateOut(dataFilePathInterm + timestamp + ".json");
     rawIntermediateOut.rdbuf()->pubsetbuf(0, 0);
+    rawDataOutput.rdbuf()->pubsetbuf(0, 0);
 
     /**
      * ***************** Comment out accordingly *****************
@@ -101,9 +98,10 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
         decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
-            HGPcode code         = HGPcode(inCodePath, code_K);
-            K                    = code.getK();
-            ImprovedUFD decoder  = ImprovedUFD(code);
+            std::cout << "run nr " << j << std::endl;
+            HGPcode code(inCodePath, code_K);
+            K = code.getK();
+            ImprovedUFD decoder(code);
             auto        error    = Utils::sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
             auto        syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);
@@ -129,6 +127,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
                 decodingResOutput << ", ";
             }
         }
+        std::cout << "computing wer " << std::endl;
         //compute word error rate WER
         blockErrRate   = (double)nrOfFailedRuns / (double)nrOfRunsPerRate;
         wordErrRate    = blockErrRate / (double)K; // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
@@ -144,6 +143,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
             decodingResOutput << "]}}";
             rawIntermediateOut << "}";
         }
+        std::cout << "stepping to next PER " << std::endl;
         physicalErrRate *= stepSize;
     }
     json dataj = wordErrRatePerPhysicalErrRate;
@@ -161,16 +161,17 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/runs2/out/";
-    const std::string inPath  = "/home/berent/ufpaper/simulations/runtimeSim/runs2/in/toricCodes/";
+    const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
+    const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/sepruns/out/";
+    const std::string inPath  = "/home/berent/ufpaper/simulations/runtimeSim/sepruns/in/toricCodes/"+codeN;
     //**** local:
-    //const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/runs2/out/";
-    //const std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/test/";
+    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/trun/";
+    //const std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/toricCodes/";
     // ***************** config end *****************
 
-    const std::string outFile         = outPath + "results";
-    const std::string runningDataFile = outPath + "raw-running";
-    const std::string finalDataFile   = outPath + "raw-final";
+    const std::string outFile         = outPath + "results"+codeN ;
+    const std::string runningDataFile = outPath + "raw-running"+codeN ;
+    const std::string finalDataFile   = outPath + "raw-final"+codeN ;
     std::cout << "writing results to " << outPath << std::endl;
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t);
@@ -180,6 +181,8 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     std::ofstream dataOutStream(outFile + timestamp + ".json");
     std::ofstream intermediateRawOut(runningDataFile + timestamp + ".json"); // appends data after each step for intermediate results
     std::ofstream finalRawOut(finalDataFile + timestamp + ".json");          // single, final data dump at end
+    intermediateRawOut.rdbuf()->pubsetbuf(0, 0);
+    finalRawOut.rdbuf()->pubsetbuf(0, 0);
 
     /**
      * ***************** Basic parameters, comment out accordingly *****************
@@ -187,56 +190,64 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     // Basic Parameter setup
     //**** paper eval:
     //const double      physErrRates[] = {0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
-    const std::size_t nrOfTrials = 1'000;
+    const std::size_t nrOfTrials = 10'000;
     //****tests:
-    const double physErrRates[] = {0.01};
+    const double physErrRate = 0.05;
     //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
     std::size_t                                          avgDecodingTimeAcc = 0U;
     double                                               avgDecTime         = 0.0;
     std::map<std::string, std::map<std::string, double>> dataPerRate;
+    std::map<std::string, double>                        tmp;
     std::vector<Code>                                    codes;
-
-    for (const auto& file: std::filesystem::directory_iterator(inPath)) {
-        codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(file.path()))));
-    }
-    for (auto physErrRate: physErrRates) {
-        std::map<std::string, double> avgTimePerSizeData;
-        std::cout << "Simulating physical err rate " << physErrRate << std::endl;
-        for (const auto& code: codes) {
-            avgDecodingTimeAcc = 0U;
-            for (std::size_t i = 0; i < nrOfTrials; i++) {
-                Code        c        = Code(code.Hz); // construct new for each trial
-                ImprovedUFD decoder  = ImprovedUFD(c);
-                auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
-                auto        syndrome = c.getSyndrome(error);
-                //std::cout << "error: " << Utils::getStringFrom(error) << ", rate: " << physErrRate << std::endl;
-                //std::cout << "synd: " << Utils::getStringFrom(syndrome) << std::endl;
-                //std::cout << "starting decoding" << std::endl;
-                decoder.decode(syndrome);
-                //std::cout << "decoding done " << std::endl;
-                auto decodingResult = decoder.result;
-                //std::cout << "runtime: " << decodingResult.decodingTime << std::endl << std::endl;
-                DecodingRunInformation info;
-                info.result        = decodingResult;
-                info.physicalErrR  = physErrRate;
-                info.codeSize      = code.getN();
-                info.syndrome      = syndrome;
-                info.error         = error;
-                avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
-                nlohmann::json j   = info.to_json();
-                dataOutStream << j.dump(2U);
-                dataOutStream << ",";
-            }
-            avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
-            avgTimePerSizeData.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
+    std::cout << "reading codes " << std::endl;
+//    for (const auto& file: std::filesystem::directory_iterator(inPath)) {
+//        codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(file.path()))));
+//    }
+    codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(inPath))));
+    std::map<std::string, double> avgTimePerSizeData;
+    std::cout << "Simulating physical err rate " << physErrRate << std::endl;
+    for (const auto& code: codes) {
+        std::cout << "next code " << std::endl;
+        avgDecodingTimeAcc = 0U;
+        for (std::size_t i = 0; i < nrOfTrials; i++) {
+            std::cout << "run nr " << i << std::endl;
+            Code        c(code.Hz); // construct new for each trial
+            ImprovedUFD decoder(c);
+            auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
+            auto        syndrome = c.getSyndrome(error);
+            //std::cout << "error: " << Utils::getStringFrom(error) << ", rate: " << physErrRate << std::endl;
+            //std::cout << "synd: " << Utils::getStringFrom(syndrome) << std::endl;
+            std::cout << "starting decoding" << std::endl;
+            decoder.decode(syndrome);
+            std::cout << "decoding done " << std::endl;
+            auto decodingResult = decoder.result;
+            //std::cout << "runtime: " << decodingResult.decodingTime << std::endl << std::endl;
+            DecodingRunInformation info;
+            info.result        = decodingResult;
+            info.physicalErrR  = physErrRate;
+            info.codeSize      = c.getN();
+            info.syndrome      = syndrome;
+            info.error         = error;
+            avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
+            nlohmann::json j   = info.to_json();
+            dataOutStream << j.dump(2U);
+            dataOutStream << ",";
         }
+        std::cout << "computing avg time " << std::endl;
+        avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
+        avgTimePerSizeData.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
+        json tj = std::make_pair<>(std::to_string(code.getN()), avgDecodingTimeAcc);
+        std::cout << tj.dump(2U);
+
         dataPerRate.insert(std::make_pair(std::to_string(physErrRate), avgTimePerSizeData));
         json dataj = dataPerRate;
+        std::cout << "printing interm result " << std::endl;
         intermediateRawOut << dataj.dump(2U);
         intermediateRawOut << ",";
     }
+    std::cout << "printing final res" << std::endl;
     json finalRaw = dataPerRate;
     finalRawOut << finalRaw.dump(2U);
     finalRawOut.close();

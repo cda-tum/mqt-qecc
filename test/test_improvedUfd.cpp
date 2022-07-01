@@ -9,7 +9,7 @@
 class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {};
 class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {};
 class UniquelyCorrectableErrToricCodeTest: public ImprovedUFDtestBase {}; // test cases wrong not uniquely determined
-class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};       // test cases not uniuqley fixed
+class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};       // test cases not uniquely fixed
 class IncorrectableErrTest: public ImprovedUFDtestBase {};
 class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {}; // first case not dec
 class CorrectableLargeToric: public ImprovedUFDtestBase {};
@@ -29,14 +29,13 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, IncorrectableErrTest,
 
 INSTANTIATE_TEST_SUITE_P(UptoStabCorrectable, UpToStabCorrectableErrTest,
                          testing::Values(
-                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
                                  std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
 
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrsToric, UniquelyCorrectableErrToricCodeTest,
                          testing::Values(
-                                 //std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 0},
+                                 std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 0, 0, 0},
@@ -71,8 +70,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     std::vector<bool> err = GetParam();
 
     auto syndr = code.getSyndrome(err);
-    std::cout << "syndrome: ";
-    Utils::printGF2vector(syndr);
+    std::cout << "syndrome: " << Utils::getStringFrom(syndr) << std::endl;
     decoder.decode(syndr);
     auto   decodingResult = decoder.result;
     auto   estim          = decodingResult.estimBoolVector;
@@ -86,10 +84,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     std::cout << std::endl;
     gf2Vec sol = GetParam();
 
-    std::cout << "Estim: " << std::endl;
-    Utils::printGF2vector(estim);
-    std::cout << "EstimIdx: " << std::endl;
-    Utils::printGF2vector(estim2);
+    std::cout << "Estim: " <<  Utils::getStringFrom(estim) << std::endl;
     std::cout << "Sol: " << std::endl;
     Utils::printGF2vector(sol);
     EXPECT_TRUE(sol == estim);
@@ -109,6 +104,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     decoder.decode(syndr);
     auto   decodingResult = decoder.result;
     auto   estim          = decodingResult.estimBoolVector;
+    std::cout  << "estim: " << Utils::getStringFrom(estim) << std::endl;
     auto   estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec estim2(err.size());
     std::cout << "estiIdxs: ";
