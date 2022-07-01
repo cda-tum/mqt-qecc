@@ -7,15 +7,57 @@
 #include "TreeNode.hpp"
 #include "Utils.hpp"
 
+#include <unordered_map>
 #include <utility>
 #include <vector>
+
+struct CodeProperties{
+    std::size_t n;
+    std::size_t k;
+    std::size_t d;
+};
 
 struct ParityCheckMatrix {
     explicit ParityCheckMatrix(gf2Mat pcm):
         pcm(std::move(pcm)) {}
     const gf2Mat pcm;
-};
 
+    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
+
+    /**
+     * If H is nxm we have n checks and m bit nodes.
+     * Indices of bit nodes range from 0 to m-1, and indices of check nodes from m to n-1
+     * @param nodeIdx
+     * @return a list of node indices of adjacent nodes
+     */
+    std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
+        if (nbrCache.contains(nodeIdx)) {
+            return nbrCache.at(nodeIdx);
+        } else {
+            auto                     nrChecks = pcm.size();
+            auto                     nrBits   = pcm.at(0).size();
+            std::vector<std::size_t> res;
+            if (nodeIdx < nrBits) {
+                for (std::size_t i = 0; i < nrChecks; i++) {
+                    if (pcm.at(i).at(nodeIdx)) {
+                        res.emplace_back(nrBits + i);
+                    }
+                }
+            } else {
+                for (std::size_t i = 0; i < nrBits; i++) {
+                    if (pcm.at(nodeIdx - nrBits).at(i)) {
+                        res.emplace_back(i);
+                    }
+                }
+            }
+            nbrCache.insert(std::make_pair(nodeIdx, res));
+            return res;
+        }
+    }
+};
+/**
+ * A graph representation for convenience using adjacency lists
+ */
 struct TannerGraph {
     std::vector<std::vector<std::size_t>> adjList;
 
@@ -49,7 +91,6 @@ public:
     /*
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
      * Convention: Rows in first dim, columns in second
-     * Additionally, the adjacency matrix representation using the Union Find datastructure is construced for Hz
      */
     explicit Code(ParityCheckMatrix hz):
         Hz(std::move(hz)) {
@@ -108,6 +149,14 @@ public:
 
     [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {
         return Utils::isVectorInRowspace(Hz.pcm, est);
+    }
+
+    CodeProperties getProperties() const{
+        CodeProperties res;
+        res.n = this->N;
+        res.k = this->getK();
+        //todo res.d
+        return res;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Code& c) {

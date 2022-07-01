@@ -4,15 +4,15 @@ A tool for quantum error correcting codes and numerical simulations developed by
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
 based on methods proposed in [[1]](todo)
 
-QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and developed by the
+QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ 
 [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the
 [Johannes Kepler University Linz](https://jku.at)).
 
-The tool can be used to decode quantum LDPC codes and conduct respective numerical evaluations.
+The tool can be used to decode quantum LDPC codes and conduct respective numerical simulations.
 
-At the moment we have implemented the general Union-Find
+At the moment the general QLDPC
 decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
-and an improved version of the algorithm as proposed in [[1]](todo). To,
+and an improved version of the algorithm as proposed in [[1]](todo) are implemented. At the moment to,
 to construct codes we use the open-source software by Joshka Roffe et
 al: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc).
 
@@ -39,8 +39,11 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
 - Once installed, start using it in Python:
   ```python
   from mqt.qecc import *
-  results = decode(code)
-  decoding_simulator.simulate_wer(...)
+  
+  code = import_code_from_file(code_file)
+  syndrome = code.compute_syndrome(error)
+  decoder = decoder(code)
+  result = decoder.decode(syndrome)
   ```
 
 ### System Requirements
@@ -91,8 +94,8 @@ trigger a parallel build.
 
 Building the project this way generates
 
-- the main library `libqec.a` (Unix) / `libqec_lib.lib` (Windows) in the `build/src` directory
-- a test executable `qec_test` containing a small set of unit tests in the `build/test` directory
+- the main library `qecc.a` (Unix) / `qecc_lib.lib` (Windows) in the `build/src` directory
+- a test executable `qecc_test` containing a small set of unit tests in the `build/test` directory
 
 ### Extending the Python Bindings
 

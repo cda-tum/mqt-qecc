@@ -24,7 +24,7 @@ void DecodingSimulator::simulateWER(std::string&   rawDataOutputFilepath,
     double                        stepSize        = physErrRateStepSize;
     const double                  maxPhErrRate    = maxPhysicalErrRate;
     const size_t                  nrOfRuns        = std::floor(maxPhErrRate / minPhysicalErrRate);
-    std::size_t                   nrRunsPerRate   = nrOfRunsPerErrRate; // todo how deep to go?
+    std::size_t                   nrRunsPerRate   = nrOfRunsPerErrRate;
     std::size_t                   nrOfFailedRuns  = 0U;
     double                        blockErrRate    = 0.0;
     double                        wordErrRate     = 0.0;
@@ -95,7 +95,8 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
                                         const std::string&         decodingStatisticsOutputFilepath,
                                         const std::vector<double>& physicalErrRates,
                                         const std::size_t          nrRuns,
-                                        Code&                      code) {
+                                        Code&                      inCode,
+                                        Decoder& inDecoder) {
     auto          jsonFileName = generateOutFileName(decodingStatisticsOutputFilepath);
     auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
     std::ofstream statisticsOutstr(jsonFileName);
@@ -111,8 +112,8 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
     for (auto physErrRate: physicalErrRates) {
         avgDecodingTimeAcc = 0U;
         for (size_t i = 0; i < nrOfTrials; i++) {
-            auto        c = Code(code.Hz); // construct new for each trial
-            ImprovedUFD decoder(c);
+            auto        c = Code(inCode.Hz); // construct new for each trial
+            Decoder decoder(c);
             auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
             auto        syndrome = c.getSyndrome(error);
             decoder.decode(syndrome);
@@ -120,7 +121,7 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
             avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
         }
         avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
-        avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
+        avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(inCode.getN()), avgDecTime));
     }
     json dataj = avgDecodingTimePerSize;
     rawDataOutput << dataj.dump(2U);

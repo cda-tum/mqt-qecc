@@ -49,7 +49,8 @@ public:
                          const std::string&         decodingStatisticsOutputFilepath,
                          const std::vector<double>& physicalErrRates,
                          std::size_t                nrRuns,
-                         Code&                      code);
+                         Code&                      code,
+                         Decoder& decoder);
 
 private:
     static std::string generateOutFileName(const std::string& filepath);
