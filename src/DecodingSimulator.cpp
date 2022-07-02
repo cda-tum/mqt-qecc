@@ -4,8 +4,8 @@
 //
 // Created by lucas on 21/06/22.
 //
-void DecodingSimulator::simulateWER(std::string&   rawDataOutputFilepath,
-                                    std::string&   statsOutputFilepath,
+void DecodingSimulator::simulateWER(const std::string&   rawDataOutputFilepath,
+                                    const std::string&   statsOutputFilepath,
                                     const double   minPhysicalErrRate,
                                     const double   maxPhysicalErrRate,
                                     const double   physErrRateStepSize,
@@ -95,8 +95,8 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
                                         const std::string&         decodingStatisticsOutputFilepath,
                                         const std::vector<double>& physicalErrRates,
                                         const std::size_t          nrRuns,
-                                        Code&                      inCode,
-                                        Decoder& inDecoder) {
+                                        const Code&                      inCode,
+                                        const Decoder& inDecoder) {
     auto          jsonFileName = generateOutFileName(decodingStatisticsOutputFilepath);
     auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
     std::ofstream statisticsOutstr(jsonFileName);

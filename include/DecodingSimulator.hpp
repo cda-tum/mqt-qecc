@@ -27,12 +27,12 @@ public:
      * @param nrOfRunsPerErrRate number of runs to average WER over
      * @param decoder
      */
-    void simulateWER(std::string&   rawDataOutputFilepath,
-                     std::string&   statsOutputFilepath,
+    void simulateWER(const std::string&   rawDataOutputFilepath,
+                     const std::string&   statsOutputFilepath,
                      double         minPhysicalErrRate,
                      double         maxPhysicalErrRate,
                      double         physErrRateStepSize,
-                     size_t         nrOfRunsPerErrRate,
+                     std::size_t         nrOfRunsPerErrRate,
                      const Decoder& decoder); // code is field of decoder
 
     /**
@@ -49,8 +49,8 @@ public:
                          const std::string&         decodingStatisticsOutputFilepath,
                          const std::vector<double>& physicalErrRates,
                          std::size_t                nrRuns,
-                         Code&                      code,
-                         Decoder& decoder);
+                         const Code&                      code,
+                         const Decoder& decoder);
 
 private:
     static std::string generateOutFileName(const std::string& filepath);

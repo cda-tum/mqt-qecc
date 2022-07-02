@@ -65,7 +65,7 @@ struct TannerGraph {
         return adjList.at(node);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, TannerGraph const& c) {
+    friend std::ostream& operator<<(std::ostream& os, const TannerGraph& c) {
         for (const auto& i: c.adjList) {
             os << ": | ";
             for (auto j: i) {

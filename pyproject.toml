@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "wheel", "cmake"]
+build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = "cp3*"
+skip = "*-win32 *-musllinux* *-manylinux_i686"
+test-skip = "*_arm64"
+test-command = "python -c \"from mqt import qecc\""
+environment = { DEPLOY = "ON" }
+build-verbosity = 3
+
+[tool.cibuildwheel.linux]
+environment = { LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:/opt/python/cp39-cp39/lib/python3.9/site-packages/z3/lib:/usr/local/lib/", DEPLOY = "ON" }
+
+[tool.cibuildwheel.macos]
+archs = "x86_64"
+environment = { MACOSX_DEPLOYMENT_TARGET = "10.15", DEPLOY = "ON" }
+
+[tool.cibuildwheel.windows]

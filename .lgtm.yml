@@ -1,0 +1,12 @@
+path_classifiers:
+  test:
+    - test
+
+extraction:
+  cpp:
+    configure:
+      command:
+        - cmake -S . -B build -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
+    index:
+      build_command:
+        - cmake --build build --parallel 2
