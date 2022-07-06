@@ -7,11 +7,12 @@
 #include "TreeNode.hpp"
 #include "Utils.hpp"
 
+#include <iostream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-struct CodeProperties{
+struct CodeProperties {
     std::size_t n;
     std::size_t k;
     std::size_t d;
@@ -20,7 +21,30 @@ struct CodeProperties{
 struct ParityCheckMatrix {
     explicit ParityCheckMatrix(gf2Mat pcm):
         pcm(std::move(pcm)) {}
-    const gf2Mat pcm;
+
+    explicit ParityCheckMatrix(const std::string& filePath) {
+        std::string   line;
+        int           word;
+        std::ifstream inFile(filePath);
+        gf2Mat        result;
+
+        if (inFile) {
+            while (getline(inFile, line, '\n')) {
+                gf2Vec             tempVec;
+                std::istringstream instream(line);
+                while (instream >> word) {
+                    tempVec.push_back(word);
+                }
+                pcm.emplace_back(tempVec);
+            }
+        } else {
+            std::cerr << "File " << filePath << " cannot be opened." << std::endl;
+        }
+
+        inFile.close();
+    }
+
+    gf2Mat pcm;
 
     std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
 
@@ -31,28 +55,28 @@ struct ParityCheckMatrix {
      * @return a list of node indices of adjacent nodes
      */
     std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
-        if (nbrCache.contains(nodeIdx)) {
+        /*if (nbrCache.contains(nodeIdx)) {
             return nbrCache.at(nodeIdx);
-        } else {
-            auto                     nrChecks = pcm.size();
-            auto                     nrBits   = pcm.at(0).size();
-            std::vector<std::size_t> res;
-            if (nodeIdx < nrBits) {
-                for (std::size_t i = 0; i < nrChecks; i++) {
-                    if (pcm.at(i).at(nodeIdx)) {
-                        res.emplace_back(nrBits + i);
-                    }
-                }
-            } else {
-                for (std::size_t i = 0; i < nrBits; i++) {
-                    if (pcm.at(nodeIdx - nrBits).at(i)) {
-                        res.emplace_back(i);
-                    }
+        } else {*/
+        auto                     nrChecks = pcm.size();
+        auto                     nrBits   = pcm.at(0).size();
+        std::vector<std::size_t> res;
+        if (nodeIdx < nrBits) {
+            for (std::size_t i = 0; i < nrChecks; i++) {
+                if (pcm.at(i).at(nodeIdx)) {
+                    res.emplace_back(nrBits + i);
                 }
             }
-            nbrCache.insert(std::make_pair(nodeIdx, res));
-            return res;
+        } else {
+            for (std::size_t i = 0; i < nrBits; i++) {
+                if (pcm.at(nodeIdx - nrBits).at(i)) {
+                    res.emplace_back(i);
+                }
+            }
         }
+        //nbrCache.insert(std::make_pair(nodeIdx, res));
+        return res;
+        //}
     }
 };
 /**
@@ -83,7 +107,6 @@ struct TannerGraph {
  */
 class Code {
 public:
-    TannerGraph       tannerGraph;
     ParityCheckMatrix Hz;
     std::size_t       K = 0U;
     std::size_t       N = 0U;
@@ -94,32 +117,12 @@ public:
      */
     explicit Code(ParityCheckMatrix hz):
         Hz(std::move(hz)) {
-        auto                                  nrChecks = Hz.pcm.size();
-        auto                                  nrData   = Hz.pcm.at(0).size();
-        std::size_t                           dim      = nrChecks + nrData;
-        std::vector<std::vector<std::size_t>> adjMat(dim);
+        N = Hz.pcm.at(0).size();
+    }
 
-        for (size_t i = 0; i < dim; i++) {
-            std::vector<std::size_t> row;
-            if (i < dim - nrChecks) {
-                for (size_t j = 0; j < nrChecks; j++) {
-                    auto val = Hz.pcm.at(j).at(i);
-                    if (val) {
-                        row.emplace_back(nrData + j);
-                    }
-                }
-            } else {
-                for (size_t j = 0; j < nrData; j++) {
-                    auto val = Hz.pcm.at(i - nrData).at(j);
-                    if (val) {
-                        row.emplace_back(j);
-                    }
-                }
-            }
-            adjMat.at(i) = row;
-        }
-        tannerGraph.adjList = adjMat;
-        N                   = nrData;
+    explicit Code(const std::string& pathToPcm):
+        Hz(pathToPcm) {
+        N = Hz.pcm.at(0).size();
     }
 
     [[nodiscard]] std::size_t getN() const {
@@ -151,7 +154,7 @@ public:
         return Utils::isVectorInRowspace(Hz.pcm, est);
     }
 
-    CodeProperties getProperties() const{
+    CodeProperties getProperties() const {
         CodeProperties res;
         res.n = this->N;
         res.k = this->getK();

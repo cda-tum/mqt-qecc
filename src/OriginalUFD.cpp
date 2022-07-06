@@ -41,7 +41,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
 
             while (currCompIt != components.end()) {
                 for (auto node: *currCompIt) {
-                    auto nbrs = code.tannerGraph.getNeighbours(node);
+                    auto nbrs = code.Hz.getNbrs(node);
                     compNbrs.insert(nbrs.begin(), nbrs.end());
                 }
                 neibrsToAdd.emplace_back(compNbrs);
@@ -119,7 +119,7 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(std::set<std::size
 
     auto cIt = component.begin();
     while (cIt != component.end()) {
-        auto nbrs = code.tannerGraph.getNeighbours(*cIt);
+        auto nbrs = code.Hz.getNbrs(*cIt);
         if (std::includes(component.begin(), component.end(), nbrs.begin(), nbrs.end()) && *cIt < code.getN()) {
             res.emplace_back(*cIt);
         }

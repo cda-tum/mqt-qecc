@@ -108,7 +108,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 for (auto& component: invalidComponents) {
                     auto iter = component->boundaryVertices.begin();
                     while (iter != component->boundaryVertices.end()) {
-                        auto nbrs = code.tannerGraph.getNeighbours(*iter);
+                        auto nbrs =  code.Hz.getNbrs(*iter);
                         auto currNode = getNodeFromIdx(*iter);
                         auto currRoot = TreeNode::Find(currNode);
                         auto nbrIt    = nbrs.begin();
@@ -155,7 +155,7 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
         auto bndryNodes = component->boundaryVertices;
 
         for (const auto& bndryNode: bndryNodes) {
-            auto nbrs = code.tannerGraph.getNeighbours(bndryNode);
+            auto nbrs = code.Hz.getNbrs(bndryNode);
             for (auto& nbr: nbrs) {
                 fusionEdges.emplace_back(std::pair(bndryNode, nbr));
             }
@@ -177,7 +177,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     auto bndryNodes = smallestComponent->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        auto nbrs = code.tannerGraph.getNeighbours(bndryNode);
+        auto nbrs =  code.Hz.getNbrs(bndryNode);
         for (auto& nbr: nbrs) {
             fusionEdges.emplace_back(std::pair(bndryNode, nbr));
         }
@@ -201,7 +201,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     auto bndryNodes = chosenComponent->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        auto nbrs = code.tannerGraph.getNeighbours(bndryNode);
+        auto nbrs =  code.Hz.getNbrs(bndryNode);
         for (auto& nbr: nbrs) {
             fusionEdges.emplace_back(std::pair(bndryNode, nbr));
         }
@@ -273,10 +273,10 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::sha
                 if (!currN->isCheck) {
                     xi.insert(currN->vertexIdx); // add bit node to estimate
                     // if we add a bit node we have to delete adjacent check nodes and their neighbours
-                    for (auto& adjCheck: code.tannerGraph.getNeighbours(currN->vertexIdx)) {
+                    for (auto& adjCheck:  code.Hz.getNbrs(currN->vertexIdx)) {
                         auto adjCheckNode = getNodeFromIdx(adjCheck);
                         if (adjCheckNode->marked) {
-                            auto nNbrs = code.tannerGraph.getNeighbours(adjCheck);
+                            auto nNbrs =  code.Hz.getNbrs(adjCheck);
                             auto nnbr  = nNbrs.begin();
                             // remove bit nodes adjacent to neighbour check
                             while (nnbr != nNbrs.end()) {
@@ -309,142 +309,6 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::sha
     }
     return res;
 }
-///**
-// * Computes spanning forest of erasure and peels iteratively, starting with boundary vertices
-// * @param erasure
-// * @param syndrome
-// * @return
-// */
-//std::unordered_set<std::size_t> ImprovedUFD::peeling(std::vector<std::shared_ptr<TreeNode>>& erasure, std::unordered_set<std::shared_ptr<TreeNode>>& syndrome) {
-//    std::cout << "peeling erasure" << std::endl;
-//    std::unordered_set<std::size_t> erasureRoots;
-//    std::unordered_set<std::size_t> erasureVertices;
-//    for (auto& i: erasure) {
-//        erasureRoots.insert(i->vertexIdx);
-//    }
-//    std::unordered_set<std::size_t> syndr;
-//    for (const auto& s: syndrome) {
-//        syndr.insert(s->vertexIdx);
-//    }
-//
-//    std::unordered_set<std::size_t> reslt;
-//    // compute SF between checks
-//    std::vector<std::unordered_set<std::pair<std::size_t, std::size_t>>> spanningForest;
-//    std::vector<std::unordered_set<std::size_t>>                         forestVertices;
-//    std::unordered_set<std::size_t>                                      visited;
-//    for (auto& currCompRoot: erasureRoots) {
-//        std::queue<std::size_t>                                 queue;
-//        std::unordered_set<std::pair<std::size_t, std::size_t>> tree;
-//        std::unordered_set<std::size_t>                         treeVertices;
-//        queue.push(currCompRoot);
-//        visited.insert(currCompRoot);
-//        while (!queue.empty()) {
-//            auto currV = queue.front();
-//            queue.pop();
-//            auto nbrs = code.tannerGraph.getNeighbours(currV);
-//            for (auto& nbr: nbrs) {
-//                auto t1 = code.tannerGraph.getNodeForId(nbr);
-//                auto t2 = code.tannerGraph.getNodeForId(currV);
-//                if (!visited.contains(nbr)) {
-//                    // add all neighbours to edges to be able to identify pendant ones in next step
-//                    // nbrs we are looking at have to be in same erasure component, check with Find
-//                    if (TreeNode::Find(t1) == TreeNode::Find(t2)) {
-//                        visited.insert(nbr);
-//                        queue.push(nbr);
-//                        treeVertices.insert(nbr);
-//                        treeVertices.insert(currV);
-//                        tree.insert(std::make_pair(currV, nbr));
-//                        // here markedNeighbours contains list of nbrs in ST
-//                        t2->markedNeighbours.insert(nbr);
-//                    }
-//                }
-//            }
-//        }
-//        spanningForest.emplace_back(tree);
-//        forestVertices.emplace_back(treeVertices);
-//    }
-//
-//    std::vector<std::unordered_set<std::size_t>>                            boundaryVertices;
-//    std::vector<std::map<std::size_t, std::pair<std::size_t, std::size_t>>> egs;
-//
-//    // compute pendant vertices of SF
-//    for (const auto& vertices: forestVertices) {
-//        std::unordered_set<std::size_t> pendants;
-//        for (auto& v: vertices) {
-//            auto nbrs = code.tannerGraph.getNeighbours(v);
-//            for (auto& n: nbrs) {
-//                if (!vertices.contains(n)) { // if there is neighbour not in spanning tree
-//                    pendants.insert(v);
-//                }
-//            }
-//        }
-//        boundaryVertices.emplace_back(pendants);
-//    }
-//
-//    // peeling
-//    std::size_t fNIdx = 0;
-//    while (!syndr.empty()) {
-//        for (auto& tree: spanningForest) {
-//            auto boundaryVtcs = boundaryVertices.at(fNIdx);
-//            auto edgeIt       = tree.begin();
-//            while (edgeIt != tree.end()) {
-//                std::size_t data;
-//                std::size_t check;
-//                if (code.tannerGraph.getNodeForId(edgeIt->first)->marked || code.tannerGraph.getNodeForId(edgeIt->first)->marked) {
-//                    edgeIt = tree.erase(edgeIt);
-//                    continue;
-//                }
-//                auto frst = edgeIt->first;
-//                auto scd  = edgeIt->second;
-//                // if in boundary simply remove
-//                if (boundaryVtcs.contains(frst)) {
-//                    code.tannerGraph.getNodeForId(frst)->marked = true;
-//                    forestVertices.at(fNIdx).erase(frst);
-//                } else if (boundaryVtcs.contains(scd)) {
-//                    code.tannerGraph.getNodeForId(scd)->marked = true;
-//                    forestVertices.at(fNIdx).erase(scd);
-//                } else {
-//                    if (syndr.contains(frst)) {
-//                        check = frst;
-//                        data  = scd;
-//                    } else {
-//                        data  = frst;
-//                        check = scd;
-//                    }
-//                    // add data to estimate, remove check from syndrome
-//                    auto dNode = code.tannerGraph.getNodeForId(data);
-//                    auto cNode = code.tannerGraph.getNodeForId(check);
-//                    // if check marked its already covered
-//                    if (!cNode->marked) {
-//                        reslt.insert(data);
-//                    }
-//                    dNode->marked = true;
-//                    // remove all check neibrs of in ST
-//                    for (auto& nbr: dNode->markedNeighbours) {
-//                        code.tannerGraph.getNodeForId(nbr)->marked = true;
-//                        forestVertices.at(fNIdx).erase(nbr);
-//                        syndr.erase(nbr);
-//                    }
-//                    forestVertices.at(fNIdx).erase(data);
-//                }
-//                edgeIt = tree.erase(edgeIt);
-//
-//                // update boundary vertices
-//                boundaryVtcs.clear();
-//                for (auto& v: forestVertices.at(fNIdx)) {
-//                    auto nbrs = code.tannerGraph.getNeighbours(v);
-//                    for (auto& n: nbrs) {
-//                        if (!forestVertices.at(fNIdx).contains(n->vertexIdx) && !n->marked) {
-//                            boundaryVtcs.insert(v);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        fNIdx++;
-//    }
-//    return reslt;
-//}
 
 /**
  * Add those components that are valid to the erasure
@@ -469,7 +333,7 @@ bool ImprovedUFD::isValidComponent(const std::shared_ptr<TreeNode>& component) {
     gf2Vec      valid(component->checkVertices.size());
     std::size_t i = 0;
     for (const auto& checkVertex: component->checkVertices) {
-        auto nbrs = code.tannerGraph.getNeighbours(checkVertex);
+        auto nbrs =  code.Hz.getNbrs(checkVertex);
 
         for (auto& nbr: nbrs) {
             if (std::find(component->boundaryVertices.begin(), component->boundaryVertices.end(), nbr) == component->boundaryVertices.end()) {
