@@ -27,7 +27,7 @@ TEST(UnionFindSimulation, TestSimulator) {
     ImprovedUFD       decoder(code);
     simulator.simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
     std::vector<double> erRates = {minErate, maxErate};
-    simulator.simulateRuntime(rawOut, testOut, erRates, runsPerCode, code);
+    simulator.simulateRuntime(rawOut, testOut, erRates, runsPerCode, code, decoder);
     EXPECT_TRUE(true);
 }
 
@@ -40,8 +40,8 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
      * ***************** Comment out accordingly *****************
      */
     //****server
-    const std::string outpath    = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/out/";
-    const std::string inCodePath = "/home/berent/ufpaper/simulations/decodingPerfSim/run5/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
+    const std::string outpath    = "/home/berent/ufpaper/simulations/decodingPerfSim/run6/out/";
+    const std::string inCodePath = "/home/berent/ufpaper/simulations/decodingPerfSim/run6/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
     const std::size_t code_K     = 18;
     //**** local
     //    const std::string outpath            = "/home/luca/Documents/uf-simulations/testrun/";
@@ -68,7 +68,6 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
      * ***************** Comment out accordingly *****************
      */
     //**** Paper eval
-    const double      normalizationConstant = 10'000.0; //
     double            physicalErrRate       = 0.0001;
     const double      stepSize              = 2;
     const double      maxPhysicalErrRate    = 0.1;
@@ -161,17 +160,17 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
-    const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/sepruns/out/";
-    const std::string inPath  = "/home/berent/ufpaper/simulations/runtimeSim/sepruns/in/toricCodes/"+codeN;
+    //const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
+    //const std::string outPath = "/home/berent/ufpaper/simulations/runtimeSim/runs11/out/";
+    //const std::string inPath  = "/home/berent/ufpaper/simulations/runtimeSim/runs11/in/toricCodesEx/";
     //**** local:
-    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/trun/";
-    //const std::string inPath = "/home/luca/Documents/codeRepos/qunionfind/examples/toricCodes/";
+    const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/avgRun1/";
+    const std::string inPath = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes/";
     // ***************** config end *****************
 
-    const std::string outFile         = outPath + "results"+codeN ;
-    const std::string runningDataFile = outPath + "raw-running"+codeN ;
-    const std::string finalDataFile   = outPath + "raw-final"+codeN ;
+    const std::string outFile         = outPath + "results_";
+    const std::string runningDataFile = outPath + "raw-running_";
+    const std::string finalDataFile   = outPath + "raw-final_" ;
     std::cout << "writing results to " << outPath << std::endl;
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t);
@@ -192,7 +191,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     //const double      physErrRates[] = {0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
     const std::size_t nrOfTrials = 10'000;
     //****tests:
-    const double physErrRate = 0.05;
+    const double physErrRate = 0.02;
     //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
@@ -200,56 +199,53 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     double                                               avgDecTime         = 0.0;
     std::map<std::string, std::map<std::string, double>> dataPerRate;
     std::map<std::string, double>                        tmp;
-    std::vector<Code>                                    codes;
+    std::vector<std::string>                                    codePaths;
     std::cout << "reading codes " << std::endl;
-//    for (const auto& file: std::filesystem::directory_iterator(inPath)) {
-//        codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(file.path()))));
-//    }
-    codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(inPath))));
+    std::map<std::string, std::size_t> avgSampleRuns;
+    for (const auto& file: std::filesystem::directory_iterator(inPath)) {
+        codePaths.emplace_back(file.path());
+    }
+    //codes.emplace_back(Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(inPath))));
     std::map<std::string, double> avgTimePerSizeData;
     std::cout << "Simulating physical err rate " << physErrRate << std::endl;
-    for (const auto& code: codes) {
-        std::cout << "next code " << std::endl;
+    for (const auto& currPath: codePaths) {
+        std::cout << "next code : " << currPath << std::endl;
         avgDecodingTimeAcc = 0U;
-        for (std::size_t i = 0; i < nrOfTrials; i++) {
-            std::cout << "run nr " << i << std::endl;
-            Code        c(code.Hz); // construct new for each trial
-            ImprovedUFD decoder(c);
-            auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
-            auto        syndrome = c.getSyndrome(error);
-            //std::cout << "error: " << Utils::getStringFrom(error) << ", rate: " << physErrRate << std::endl;
-            //std::cout << "synd: " << Utils::getStringFrom(syndrome) << std::endl;
-            std::cout << "starting decoding" << std::endl;
-            decoder.decode(syndrome);
-            std::cout << "decoding done " << std::endl;
-            auto decodingResult = decoder.result;
-            //std::cout << "runtime: " << decodingResult.decodingTime << std::endl << std::endl;
-            DecodingRunInformation info;
-            info.result        = decodingResult;
-            info.physicalErrR  = physErrRate;
-            info.codeSize      = c.getN();
-            info.syndrome      = syndrome;
-            info.error         = error;
-            avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
-            nlohmann::json j   = info.to_json();
-            dataOutStream << j.dump(2U);
-            dataOutStream << ",";
+        for (size_t j = 0; j < 5; j++) { // 5 runs to compute average
+            for (std::size_t i = 0; i < nrOfTrials; i++) { // nr of monte carlo samples
+                //std::cout << "run nr " << i << std::endl;
+                //std::cout << "making code" << std::endl;
+                Code code(currPath); // construct new for each trial
+                //std::cout << "making decoder" << std::endl;
+                ImprovedUFD decoder(code);
+                //std::cout << "sampling error" << std::endl;
+                auto error    = Utils::sampleErrorIidPauliNoise(code.getN(), physErrRate);
+                auto syndrome = code.getSyndrome(error);
+                //std::cout << "starting decoding" << std::endl;
+                decoder.decode(syndrome);
+                //std::cout << "decoding done " << std::endl;
+                auto                   decodingResult = decoder.result;
+                DecodingRunInformation info;
+                info.result        = decodingResult;
+                info.physicalErrR  = physErrRate;
+                info.codeSize      = code.getN();
+                info.syndrome      = syndrome;
+                info.error         = error;
+                avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
+                nlohmann::json j   = info.to_json();
+                dataOutStream << j.dump(2U);
+                dataOutStream << ",";
+                dataOutStream.flush();
+            }
+            avgSampleRuns.insert(std::make_pair(std::to_string(j), avgDecodingTimeAcc));
+            std::cout << currPath << " \"run\": " << j << ", \"time\":" << avgDecodingTimeAcc << std::endl;
         }
-        std::cout << "computing avg time " << std::endl;
-        avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
-        avgTimePerSizeData.insert(std::make_pair<>(std::to_string(code.getN()), avgDecTime));
-        json tj = std::make_pair<>(std::to_string(code.getN()), avgDecodingTimeAcc);
-        std::cout << tj.dump(2U);
-
-        dataPerRate.insert(std::make_pair(std::to_string(physErrRate), avgTimePerSizeData));
-        json dataj = dataPerRate;
-        std::cout << "printing interm result " << std::endl;
-        intermediateRawOut << dataj.dump(2U);
-        intermediateRawOut << ",";
+        json avgData = avgSampleRuns;
+        std::cout << "interm:" << avgData.dump(2U) << std::endl;
+        intermediateRawOut << avgData.dump(2U);
+        intermediateRawOut.flush();
+        avgSampleRuns = {};
     }
-    std::cout << "printing final res" << std::endl;
-    json finalRaw = dataPerRate;
-    finalRawOut << finalRaw.dump(2U);
     finalRawOut.close();
     intermediateRawOut.close();
     dataOutStream.close();
