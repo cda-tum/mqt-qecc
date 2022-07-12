@@ -35,13 +35,13 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest_
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
 TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
-    SteaneXCode code{};
+    auto code = new SteaneXCode();
     OriginalUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
 
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code->getSyndrome(err);
     std::cout << "syndrome: ";
     Utils::printGF2vector(syndr);
     decoder.decode(syndr);
@@ -71,13 +71,13 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  * Tests for ambigous errors that cannot be corrected
  */
 TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
-    SteaneXCode code{};
+    auto code = new SteaneXCode();
     OriginalUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
 
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code->getSyndrome(err);
     decoder.decode(syndr);
     auto   decodingResult = decoder.result;
     auto   estim          = decodingResult.estimBoolVector;
@@ -93,21 +93,21 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
         residualErr.at(i) = err[i] ^ estim[i];
     }
 
-    EXPECT_FALSE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_FALSE(Utils::isVectorInRowspace(code->Hz.pcm, residualErr));
 }
 
 /**
  * Tests for errors that are correctable up to stabilizer
  */
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
-    SteaneXCode code{};
+    auto code = new SteaneXCode();
     OriginalUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
     std::cout << "err :" << std::endl;
     Utils::printGF2vector(err);
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code->getSyndrome(err);
     decoder.decode(syndr);
     auto   decodingResult = decoder.result;
     auto   estim          = decodingResult.estimBoolVector;
@@ -128,6 +128,6 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
         residualErr2.at(i) = err[i] ^ estim2[i];
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(code->Hz.pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(code->Hz.pcm, residualErr2));
 }

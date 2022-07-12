@@ -25,7 +25,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
         for (std::size_t i = 0; i < syndrome.size(); i++) {
             std::set<std::size_t> comp{};
             if (syndrome.at(i)) {
-                comp.insert(code.getN() + i);
+                comp.insert(code->getN() + i);
             }
 
             if (!comp.empty()) {
@@ -41,7 +41,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
 
             while (currCompIt != components.end()) {
                 for (auto node: *currCompIt) {
-                    auto nbrs = code.Hz.getNbrs(node);
+                    auto nbrs = code->Hz.getNbrs(node);
                     compNbrs.insert(nbrs.begin(), nbrs.end());
                 }
                 neibrsToAdd.emplace_back(compNbrs);
@@ -67,7 +67,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
     std::chrono::high_resolution_clock::time_point decodingTimeEnd = std::chrono::high_resolution_clock::now();
     result.decodingTime                                            = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
     result.estimNodeIdxVector                                      = res;
-    result.estimBoolVector                                         = std::vector<bool>(code.getN());
+    result.estimBoolVector                                         = std::vector<bool>(code->getN());
     for (unsigned long re: res) {
         result.estimBoolVector.at(re) = true;
     }
@@ -119,8 +119,8 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(std::set<std::size
 
     auto cIt = component.begin();
     while (cIt != component.end()) {
-        auto nbrs = code.Hz.getNbrs(*cIt);
-        if (std::includes(component.begin(), component.end(), nbrs.begin(), nbrs.end()) && *cIt < code.getN()) {
+        auto nbrs = code->Hz.getNbrs(*cIt);
+        if (std::includes(component.begin(), component.end(), nbrs.begin(), nbrs.end()) && *cIt < code->getN()) {
             res.emplace_back(*cIt);
         }
         cIt++;
@@ -148,7 +148,7 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>
     if (intNodes.empty()) {
         return std::set<std::size_t>{};
     }
-    auto   tmp = Utils::getTranspose(code.Hz.pcm);
+    auto   tmp = Utils::getTranspose(code->Hz.pcm);
     gf2Mat reduced;
     for (std::size_t i = 0; i < intNodes.size(); i++) {
         auto idx = intNodes.at(i);
@@ -156,7 +156,7 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(std::set<std::size_t>
     }
     reduced = Utils::getTranspose(reduced);
 
-    auto estim = Utils::solveSystem(code.Hz.pcm, syndr);
+    auto estim = Utils::solveSystem(code->Hz.pcm, syndr);
     if (estim.empty()) {
         return res;
     } else {

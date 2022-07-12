@@ -26,6 +26,7 @@ public:
     // for interior calculation
     std::set<std::size_t> markedNeighbours{};
     bool                  marked = false;
+    bool deleted=false;
 
     TreeNode():
         TreeNode(-1) {}

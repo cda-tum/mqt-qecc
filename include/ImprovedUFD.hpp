@@ -33,7 +33,7 @@ struct std::hash<TreeNode> {
 
 class ImprovedUFD: virtual public Decoder {
 public:
-    explicit ImprovedUFD(const Code& code):
+    explicit ImprovedUFD(Code* code):
         Decoder(code){};
     void decode(std::vector<bool>& syndrome) override;
 
@@ -49,6 +49,6 @@ private:
     bool                                          isValidComponent(const std::shared_ptr<TreeNode>& component);
     std::unordered_set<std::size_t>               erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::unordered_set<std::shared_ptr<TreeNode>>& syndrome);
     void                                          extractValidComponents(std::unordered_set<std::shared_ptr<TreeNode>>& invalidComponents, std::vector<std::shared_ptr<TreeNode>>& erasure);
-    std::unordered_set<std::shared_ptr<TreeNode>> computeInitTreeComponents(const std::vector<bool>& syndrome);
+    std::unordered_set<std::shared_ptr<TreeNode>> computeInitTreeComponents(const gf2Vec& syndrome);
 };
 #endif //QUNIONFIND_IMPROVEDUFD_HPP

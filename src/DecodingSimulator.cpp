@@ -38,7 +38,7 @@ void DecodingSimulator::simulateWER(const std::string&   rawDataOutputFilepath,
         statisticsOutstr << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
         for (size_t j = 0; j < nrRunsPerRate; j++) {
-            Code code(inDecoder.getCode().Hz); // construct objects new to ensure clean state
+            Code code(inDecoder.getCode()->Hz); // construct objects new to ensure clean state
             K = code.getK();
             Decoder decoder(inDecoder);
             auto    error    = Utils::sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
@@ -112,13 +112,14 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
     for (auto physErrRate: physicalErrRates) {
         avgDecodingTimeAcc = 0U;
         for (size_t i = 0; i < nrOfTrials; i++) {
-            auto        c = Code(inCode.Hz); // construct new for each trial
+            auto        c = new Code(inCode.Hz); // construct new for each trial
             Decoder decoder(c);
-            auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
-            auto        syndrome = c.getSyndrome(error);
+            auto        error    = Utils::sampleErrorIidPauliNoise(c->getN(), physErrRate);
+            auto        syndrome = c->getSyndrome(error);
             decoder.decode(syndrome);
             auto decodingResult = decoder.result;
             avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
+            delete c;
         }
         avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
         avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(inCode.getN()), avgDecTime));
