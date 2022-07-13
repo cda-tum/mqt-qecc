@@ -18,9 +18,9 @@ public:
 class HGPcode: public Code {
 public:
     HGPcode(const std::string& inFile, const std::size_t K):
-        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile(inFile))) { this->K = K; };
+        Code(inFile) { this->K = K; };
     HGPcode():
-        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qecc/examples/hgp_(4,7)-[[900,36,10]]_hx.txt"))) { K = 36; }
+        Code("/home/luca/Documents/codeRepos/qecc/examples/hgp_(4,7)-[[900,36,10]]_hx.txt") { K = 36; }
 };
 
 class ToricCode_8: public Code {

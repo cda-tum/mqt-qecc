@@ -4,6 +4,7 @@
 
 #ifndef QUNIONFIND_CODE_HPP
 #define QUNIONFIND_CODE_HPP
+#include "QeccException.hpp"
 #include "TreeNode.hpp"
 #include "Utils.hpp"
 
@@ -23,12 +24,16 @@ struct ParityCheckMatrix {
         pcm(std::move(pcm)) {}
 
     explicit ParityCheckMatrix(const std::string& filePath) {
+        if (filePath.empty()) {
+            throw QeccException("Cannot open pcm, filepath empty");
+        }
         std::string   line;
         int           word;
-        std::ifstream inFile(filePath);
+        std::ifstream inFile;
         gf2Mat        result;
 
-        if (inFile) {
+        try {
+            inFile.open(filePath);
             while (getline(inFile, line, '\n')) {
                 gf2Vec             tempVec;
                 std::istringstream instream(line);
@@ -37,10 +42,10 @@ struct ParityCheckMatrix {
                 }
                 pcm.emplace_back(tempVec);
             }
-        } else {
-            std::cerr << "File " << filePath << " cannot be opened." << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "error opening file " << filePath << std::endl;
+            throw QeccException(e.what());
         }
-
         inFile.close();
     }
 
@@ -58,6 +63,10 @@ struct ParityCheckMatrix {
         /*if (nbrCache.contains(nodeIdx)) {
             return nbrCache.at(nodeIdx);
         } else {*/
+        if (pcm.empty() || pcm.at(0).empty()) {
+            std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
+            throw QeccException("Cannot return neighbours, pcm empty");
+        }
         auto                     nrChecks = pcm.size();
         auto                     nrBits   = pcm.at(0).size();
         std::vector<std::size_t> res;
@@ -122,6 +131,10 @@ public:
 
     explicit Code(const std::string& pathToPcm):
         Hz(pathToPcm) {
+        std::cout << "initializing Code object" << std::endl;
+        if (Hz.pcm.empty() || Hz.pcm.at(0).empty()) {
+            throw QeccException("Cannot construct Code, Hz empy");
+        }
         N = Hz.pcm.at(0).size();
     }
 
@@ -134,6 +147,9 @@ public:
     }
 
     [[nodiscard]] gf2Vec getSyndrome(const gf2Vec& err) const {
+        if (err.empty()) {
+            throw QeccException("Cannot compute syndrome, err empy");
+        }
         gf2Mat errMat(err.size());
         for (size_t i = 0; i < err.size(); i++) {
             errMat.at(i) = gf2Vec{err.at(i)}; //transpose

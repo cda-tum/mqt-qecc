@@ -78,20 +78,6 @@ public:
         }
     }
 
-    /*TreeNode& operator=(const TreeNode& other) {
-        if (this == &other) {
-            return *this;
-        }
-        vertexIdx = other.vertexIdx;
-        isCheck   = other.isCheck;
-        parent = other.parent;
-        children = other.children;
-        clusterSize      = other.clusterSize;
-        boundaryVertices = other.boundaryVertices;
-        checkVertices    = other.checkVertices;
-
-        return *this;
-    }*/
     bool operator==(const TreeNode& other) const {
         return this->vertexIdx == other.vertexIdx;
     }

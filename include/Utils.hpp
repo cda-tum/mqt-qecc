@@ -16,7 +16,7 @@
 #include <vector>
 extern "C" {
 #include <flint/nmod_mat.h>
-};
+}
 
 typedef std::vector<std::vector<bool>> gf2Mat;
 typedef std::vector<bool>              gf2Vec;
@@ -32,6 +32,13 @@ public:
      * @return
      */
     static gf2Vec solveSystem(const gf2Mat& M, const gf2Vec& vec) {
+        assertMatrixPresent(M);
+        assertVectorPresent(vec);
+        if(M.size() > std::numeric_limits<long>::max() || M.at(0).size() > std::numeric_limits<long>::max()){
+            throw QeccException("size of matrix too large for flint");
+        }
+
+
         gf2Vec     result{};
         long       rows = M.size();
         long       cols = M.at(0).size();
@@ -45,12 +52,12 @@ public:
 
         for (long i = 0; i < nmod_mat_nrows(mat); i++) {
             for (long j = 0; j < nmod_mat_ncols(mat); j++) {
-                nmod_mat_set_entry(mat, i, j, M[i][j]);
+                nmod_mat_set_entry(mat, i, j, M.at(i).at(j));
             }
         }
         auto bColIdx = nmod_mat_ncols(b) - 1;
         for (long i = 0; i < nmod_mat_nrows(b); i++) {
-            mp_limb_t tmp = vec[i];
+            mp_limb_t tmp = vec.at(i);
             nmod_mat_set_entry(b, i, bColIdx, tmp);
         }
         int sol = nmod_mat_can_solve(x, mat, b);
@@ -75,6 +82,7 @@ public:
     }
 
     static gf2Mat gauss(const gf2Mat& matrix) {
+        assertMatrixPresent(matrix);
         gf2Mat result(matrix.at(0).size());
         auto   mat = getFlintMatrix(matrix);
         mat.set_rref(); // reduced row echelon form
@@ -82,6 +90,7 @@ public:
     }
 
     static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
+        assertMatrixPresent(matrix);
         auto ctxx   = flint::nmodxx_ctx(2);
         auto result = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
         for (size_t i = 0; i < matrix.size(); i++) {
@@ -121,6 +130,8 @@ public:
      * @return
      */
     static bool isVectorInRowspace(const gf2Mat& M, const gf2Vec& vec) {
+        assertMatrixPresent(M);
+        assertVectorPresent(vec);
         if (std::none_of(vec.begin(), vec.end(), [](const bool val) { return val; })) { // all zeros vector trivial
             return true;
         }
@@ -128,7 +139,7 @@ public:
         if (vec.size() == M.at(0).size()) {
             matrix = getTranspose(M); // v is in rowspace of M <=> v is in col space of M^T
         } else {
-            throw std::errc::invalid_argument;
+            throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
         auto augm = getAugmentedMatrix(matrix, vec);
         matrix    = gauss(augm);
@@ -157,14 +168,16 @@ public:
      * @return
      */
     static gf2Mat getAugmentedMatrix(const gf2Mat& matrix, const gf2Vec& vector) {
+        assertMatrixPresent(matrix);
+        assertVectorPresent(vector);
         gf2Mat result(matrix.size());
 
         for (size_t i = 0; i < matrix.size(); i++) {
             result.at(i) = gf2Vec(matrix.at(i).size() + 1);
             for (std::size_t j = 0; j < matrix.at(0).size(); j++) {
-                result[i][j] = matrix[i][j];
+                result.at(i).at(j) = matrix.at(i).at(j);
             }
-            result[i][matrix.at(0).size()] = vector.at(i);
+            result.at(i).at(matrix.at(0).size()) = vector.at(i);
         }
         return result;
     }
@@ -175,13 +188,14 @@ public:
      * @return
      */
     static gf2Mat getTranspose(const gf2Mat& matrix) {
+        assertMatrixPresent(matrix);
         gf2Mat transp(matrix.at(0).size());
         for (auto& i: transp) {
             i = gf2Vec(matrix.size());
         }
         for (size_t i = 0; i < matrix.size(); i++) {
             for (size_t j = 0; j < matrix.at(i).size(); j++) {
-                transp[j][i] = matrix[i][j];
+                transp.at(j).at(i) = matrix.at(i).at(j);
             }
         }
         return transp;
@@ -194,11 +208,26 @@ public:
      * @return
      */
     static gf2Mat rectMatrixMultiply(const gf2Mat& m1, const gf2Mat& m2) {
+        assertMatrixPresent(m1);
+        assertMatrixPresent(m2);
+
         auto mat1   = getFlintMatrix(m1);
         auto mat2   = getFlintMatrix(m2);
         auto result = flint::nmod_matxx(mat1.rows(), mat2.cols(), 2);
         result      = mat1.mul_classical(mat2);
         return getMatrixFromFlint(result);
+    }
+
+    static void assertMatrixPresent(const gf2Mat& matrix) {
+        if (matrix.empty() || matrix.at(0).empty()) {
+            throw QeccException("Matrix is empty");
+        }
+    }
+
+    static void assertVectorPresent(const gf2Vec& vector) {
+        if (vector.empty()) {
+            throw QeccException("Vector is empty");
+        }
     }
 
     static void swapRows(gf2Mat& matrix, const std::size_t row1, const std::size_t row2) {

@@ -114,7 +114,7 @@ TEST(UtilsTest, GaussGF2testNotInRS) {
 
     auto isInRowSpace = Utils::isVectorInRowspace(matrix, vector);
     EXPECT_FALSE(isInRowSpace);
-};
+}
 
 TEST(UtilsTest, GaussGF2testNotInRS2) {
     gf2Mat matrix2 = {{1, 0, 0, 0},
@@ -124,7 +124,7 @@ TEST(UtilsTest, GaussGF2testNotInRS2) {
 
     auto isInRowSpace2 = Utils::isVectorInRowspace(matrix2, vector2);
     EXPECT_FALSE(isInRowSpace2);
-};
+}
 
 TEST(UtilsTest, GaussGF2testInRS) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
@@ -134,7 +134,7 @@ TEST(UtilsTest, GaussGF2testInRS) {
     gf2Vec vector       = {1, 0, 0, 1, 0, 1, 1};
     auto   isInRowSpace = Utils::isVectorInRowspace(matrix, vector);
     EXPECT_TRUE(isInRowSpace);
-};
+}
 
 TEST(UtilsTest, GaussGF2testInRS2) {
     gf2Mat matrix2       = {{1, 0, 0, 0},
@@ -143,7 +143,7 @@ TEST(UtilsTest, GaussGF2testInRS2) {
     gf2Vec vector2       = {1, 1, 1, 0};
     auto   isInRowSpace2 = Utils::isVectorInRowspace(matrix2, vector2);
     EXPECT_TRUE(isInRowSpace2);
-};
+}
 
 TEST(UtilsTest, GaussGF2testNotInRSTrivial) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
@@ -153,7 +153,7 @@ TEST(UtilsTest, GaussGF2testNotInRSTrivial) {
     gf2Vec vector       = {1, 1, 1, 1, 1, 1, 1};
     auto   isInRowSpace = Utils::isVectorInRowspace(matrix, vector);
     EXPECT_FALSE(isInRowSpace);
-};
+}
 
 TEST(UtilsTest, GaussGF2testInRSTrivial) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
@@ -163,7 +163,7 @@ TEST(UtilsTest, GaussGF2testInRSTrivial) {
     gf2Vec vector       = {0, 0, 0, 0, 0, 0, 0};
     auto   isInRowSpace = Utils::isVectorInRowspace(matrix, vector);
     EXPECT_TRUE(isInRowSpace);
-};
+}
 
 TEST(UtilsTest, LinEqSolvTest) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
@@ -176,7 +176,7 @@ TEST(UtilsTest, LinEqSolvTest) {
     std::cout << "res: ";
     Utils::printGF2vector(res);
     EXPECT_TRUE(res == solution);
-};
+}
 
 TEST(UtilsTest, LinEqSolvTest2) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
@@ -189,7 +189,7 @@ TEST(UtilsTest, LinEqSolvTest2) {
     std::cout << "sol";
     Utils::printGF2vector(res);
     EXPECT_TRUE(res == solution);
-};
+}
 TEST(UtilsTest, ImportCode) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                      {0, 1, 0, 1, 1, 0, 1},
@@ -197,4 +197,4 @@ TEST(UtilsTest, ImportCode) {
 
     auto res = Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qunionfind/examples/testCode.txt");
     EXPECT_TRUE(res == matrix);
-};
+}

@@ -61,10 +61,10 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 // Fuse clusters that grew together
                 auto eIt = fusionEdges.begin();
                 while (eIt != fusionEdges.end()) {
-                    std::shared_ptr<TreeNode> n1 = getNodeFromIdx(eIt->first);
-                    std::shared_ptr<TreeNode> n2 = getNodeFromIdx(eIt->second);
-                    auto root1 = TreeNode::Find(n1);
-                    auto root2 = TreeNode::Find(n2);
+                    std::shared_ptr<TreeNode> n1    = getNodeFromIdx(eIt->first);
+                    std::shared_ptr<TreeNode> n2    = getNodeFromIdx(eIt->second);
+                    auto                      root1 = TreeNode::Find(n1);
+                    auto                      root2 = TreeNode::Find(n2);
 
                     //compares vertexIdx only
                     if (*root1 == *root2) {
@@ -108,7 +108,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 for (auto& component: invalidComponents) {
                     auto iter = component->boundaryVertices.begin();
                     while (iter != component->boundaryVertices.end()) {
-                        auto nbrs =  code->Hz.getNbrs(*iter);
+                        auto nbrs     = code->Hz.getNbrs(*iter);
                         auto currNode = getNodeFromIdx(*iter);
                         auto currRoot = TreeNode::Find(currNode);
                         auto nbrIt    = nbrs.begin();
@@ -177,7 +177,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     auto bndryNodes = smallestComponent->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        auto nbrs =  code->Hz.getNbrs(bndryNode);
+        auto nbrs = code->Hz.getNbrs(bndryNode);
         for (auto& nbr: nbrs) {
             fusionEdges.emplace_back(std::pair(bndryNode, nbr));
         }
@@ -186,10 +186,13 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
 
 void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                  std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) {
-    std::shared_ptr<TreeNode>       chosenComponent;
-    std::random_device              rd;
-    std::mt19937                    gen(rd());
-    gf2Vec                          result;
+    std::shared_ptr<TreeNode> chosenComponent;
+    std::random_device        rd;
+    std::mt19937              gen(rd());
+    gf2Vec                    result;
+    if (components.size() > std::numeric_limits<int>::max()) {
+        throw QeccException("cannot setup distribution, size too large for function");
+    }
     std::uniform_int_distribution<> d(0U, components.size());
     std::size_t                     chosenIdx = d(gen);
     auto                            it        = components.begin();
@@ -201,7 +204,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     auto bndryNodes = chosenComponent->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        auto nbrs =  code->Hz.getNbrs(bndryNode);
+        auto nbrs = code->Hz.getNbrs(bndryNode);
         for (auto& nbr: nbrs) {
             fusionEdges.emplace_back(std::pair(bndryNode, nbr));
         }
@@ -259,38 +262,38 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::sha
     std::vector<std::unordered_set<std::size_t>> resList;
     // go through nodes in erasure
     // if current node v is a bit node in Int, remove adjacent check nodes c_i and B(c_i,1)
-        for (auto& component: erasureSet) {
-            std::unordered_set<std::size_t> xi;
-            auto                            compNodeIt = component.begin();
-            while (compNodeIt != component.end() && !syndrome.empty()) {
-                std::cout << "not empty, next node" << std::endl;
-                auto currN = getNodeFromIdx(*compNodeIt++);
-                if (!currN->isCheck && !currN->deleted) {
-                    xi.insert(currN->vertexIdx); // add bit node to estimate
-                    // if we add a bit node we have to delete adjacent check nodes and their neighbours
-                    for (auto& adjCheck:  code->Hz.getNbrs(currN->vertexIdx)) {
-                        auto adjCheckNode = getNodeFromIdx(adjCheck);
-                        if (adjCheckNode->marked && !adjCheckNode->deleted) {
-                            auto nNbrs =  code->Hz.getNbrs(adjCheck);
-                            auto nnbr  = nNbrs.begin();
-                            // remove bit nodes adjacent to neighbour check
-                            while (nnbr != nNbrs.end()) {
-                                auto nnbrNode = getNodeFromIdx(*nnbr++);
-                                if (!nnbrNode->deleted && nnbrNode->marked) { //also removes currN
-                                    nnbrNode->deleted = true;
-                                }
+    for (auto& component: erasureSet) {
+        std::unordered_set<std::size_t> xi;
+        auto                            compNodeIt = component.begin();
+        while (compNodeIt != component.end() && !syndrome.empty()) {
+            std::cout << "not empty, next node" << std::endl;
+            auto currN = getNodeFromIdx(*compNodeIt++);
+            if (!currN->isCheck && !currN->deleted) {
+                xi.insert(currN->vertexIdx); // add bit node to estimate
+                // if we add a bit node we have to delete adjacent check nodes and their neighbours
+                for (auto& adjCheck: code->Hz.getNbrs(currN->vertexIdx)) {
+                    auto adjCheckNode = getNodeFromIdx(adjCheck);
+                    if (adjCheckNode->marked && !adjCheckNode->deleted) {
+                        auto nNbrs = code->Hz.getNbrs(adjCheck);
+                        auto nnbr  = nNbrs.begin();
+                        // remove bit nodes adjacent to neighbour check
+                        while (nnbr != nNbrs.end()) {
+                            auto nnbrNode = getNodeFromIdx(*nnbr++);
+                            if (!nnbrNode->deleted && nnbrNode->marked) { //also removes currN
+                                nnbrNode->deleted = true;
                             }
-                            // remove check from syndrome and component
-                            syndrome.erase(adjCheckNode);
-                            adjCheckNode->deleted = true;
                         }
+                        // remove check from syndrome and component
+                        syndrome.erase(adjCheckNode);
+                        adjCheckNode->deleted = true;
                     }
-                    // finally, remove node bitnode
-                    currN->deleted = true;
                 }
+                // finally, remove node bitnode
+                currN->deleted = true;
             }
-            resList.emplace_back(xi);
         }
+        resList.emplace_back(xi);
+    }
 
     std::unordered_set<std::size_t> res;
     for (auto& i: resList) {
@@ -324,7 +327,7 @@ bool ImprovedUFD::isValidComponent(const std::shared_ptr<TreeNode>& component) {
     gf2Vec      valid(component->checkVertices.size());
     std::size_t i = 0;
     for (const auto& checkVertex: component->checkVertices) {
-        auto nbrs =  code->Hz.getNbrs(checkVertex);
+        auto nbrs = code->Hz.getNbrs(checkVertex);
 
         for (auto& nbr: nbrs) {
             if (std::find(component->boundaryVertices.begin(), component->boundaryVertices.end(), nbr) == component->boundaryVertices.end()) {

@@ -8,7 +8,12 @@ project(qecc
 
 set(CMAKE_CXX_STANDARD 20)
 
+#add_compile_options(-fsanitize=address)
+#add_link_options(-fsanitize=address)
+#add_compile_options(-fsanitize=undefined)
+#add_link_options(-fsanitize=undefined)
 # enable organization of targets into folders
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # configuration options

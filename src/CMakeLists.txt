@@ -11,7 +11,8 @@ add_library(${PROJECT_NAME}_lib
         ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUFD.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/OriginalUFD.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingSimulator.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp)
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/QeccException.hpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME}_lib PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)
@@ -28,6 +29,7 @@ if (ipo_supported)
 endif ()
 
 # set compiler flags depending on compiler
+#target_compile_options(${PROJECT_NAME}_lib PUBLIC -fsanitize=address -fsanitize=undefined)
 if (MSVC)
     target_compile_options(${PROJECT_NAME}_lib PUBLIC /utf-8)
 else ()
@@ -69,3 +71,6 @@ target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)
 
 # add MQT alias
 add_library(MQT::${PROJECT_NAME}_lib ALIAS ${PROJECT_NAME}_lib)
+
+#target_link_libraries(${PROJECT_NAME}_lib PUBLIC -fsanitize=address)
+#target_link_libraries(${PROJECT_NAME}_lib PUBLIC -fsanitize=undefined)
