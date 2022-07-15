@@ -43,7 +43,7 @@ class Decoder {
 public:
     DecodingResult result;
     GrowthVariant  growth = ALL_COMPONENTS; // standard
-    explicit Decoder(std::unique_ptr<Code>& code): code(std::make_unique<Code>(Code(code->Hz))){}
+    explicit Decoder(Code& code): code(std::make_unique<Code>(code)){}
     virtual void decode(std::vector<bool>&){};
 
     Decoder(const Decoder& other) {

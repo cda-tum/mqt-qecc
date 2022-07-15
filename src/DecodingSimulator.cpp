@@ -112,10 +112,10 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
     for (auto physErrRate: physicalErrRates) {
         avgDecodingTimeAcc = 0U;
         for (size_t i = 0; i < nrOfTrials; i++) {
-            auto        c = std::make_unique<Code>(Code(inCode.Hz)); // construct new for each trial
+            auto        c = Code(inCode.Hz); // construct new for each trial
             Decoder decoder(c);
-            auto        error    = Utils::sampleErrorIidPauliNoise(c->getN(), physErrRate);
-            auto        syndrome = c->getSyndrome(error);
+            auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
+            auto        syndrome = c.getSyndrome(error);
             decoder.decode(syndrome);
             auto decodingResult = decoder.result;
             avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;

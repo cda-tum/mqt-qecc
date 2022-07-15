@@ -33,7 +33,7 @@ struct std::hash<TreeNode> {
 
 class ImprovedUFD: virtual public Decoder {
 public:
-    explicit ImprovedUFD(std::unique_ptr<Code>& code):
+    explicit ImprovedUFD(Code& code):
         Decoder(code){};
     void decode(std::vector<bool>& syndrome) override;
 
