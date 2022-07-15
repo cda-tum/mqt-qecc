@@ -34,40 +34,40 @@ public:
     static gf2Vec solveSystem(const gf2Mat& M, const gf2Vec& vec) {
         assertMatrixPresent(M);
         assertVectorPresent(vec);
-        if(M.size() > std::numeric_limits<long>::max() || M.at(0).size() > std::numeric_limits<long>::max()){
+        if(M.size() > std::numeric_limits<long int>::max() || M.at(0).size() > std::numeric_limits<long int>::max()){
             throw QeccException("size of matrix too large for flint");
         }
 
         gf2Vec     result{};
-        long       rows = M.size();
-        long       cols = M.at(0).size();
+        slong       rows = M.size();
+        slong       cols = M.at(0).size();
         nmod_mat_t mat;
         nmod_mat_t x;
         nmod_mat_t b;
-        mp_limb_t  mod = 2U;
+        mp_limb_t  mod = 2;
         // initializes mat to rows x cols matrix with coefficients mod 2
         nmod_mat_init(mat, rows, cols, mod);
         nmod_mat_init(x, cols, 1, mod);
         nmod_mat_init(b, rows, 1, mod);
 
-        for (long i = 0; i < nmod_mat_nrows(mat); i++) {
-            for (long j = 0; j < nmod_mat_ncols(mat); j++) {
+        for (slong i = 0; i < nmod_mat_nrows(mat); i++) {
+            for (slong j = 0; j < nmod_mat_ncols(mat); j++) {
                 mp_limb_t val;
                 if(M.at(i).at(j)){
-                    val = 1U;
+                    val = 1;
                 }else{
-                    val = 0U;
+                    val = 0;
                 }
                 nmod_mat_set_entry(mat, i, j, val);
             }
         }
-        auto bColIdx = nmod_mat_ncols(b) - 1;
-        for (long i = 0; i < nmod_mat_nrows(b); i++) {
+        slong bColIdx = nmod_mat_ncols(b) - 1;
+        for (slong i = 0; i < nmod_mat_nrows(b); i++) {
             mp_limb_t tmp;
             if(vec.at(i)){
-                tmp = 1U;
+                tmp = 1;
             }else{
-                tmp = 0U;
+                tmp = 0;
             }
             nmod_mat_set_entry(b, i, bColIdx, tmp);
         }
@@ -108,7 +108,7 @@ public:
         auto result = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
         for (size_t i = 0; i < matrix.size(); i++) {
             for (size_t j = 0; j < matrix.at(0).size(); j++) {
-                if (matrix[i][j]) {
+                if (matrix.at(i).at(j)) {
                     result.at(i, j) = flint::nmodxx::red(1, ctxx);
                 } else {
                     result.at(i, j) = flint::nmodxx::red(0, ctxx);
@@ -123,9 +123,9 @@ public:
         gf2Mat result(matrix.rows());
         auto   a = flint::nmodxx::red(1, ctxx);
 
-        for (long i = 0; i < matrix.rows(); i++) {
+        for (slong i = 0; i < matrix.rows(); i++) {
             result.at(i) = gf2Vec(matrix.cols());
-            for (long j = 0; j < matrix.cols(); j++) {
+            for (slong j = 0; j < matrix.cols(); j++) {
                 if (matrix.at(i, j) == a) {
                     result[i][j] = true;
                 } else {

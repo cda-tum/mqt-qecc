@@ -266,7 +266,6 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::sha
         std::unordered_set<std::size_t> xi;
         auto                            compNodeIt = component.begin();
         while (compNodeIt != component.end() && !syndrome.empty()) {
-            std::cout << "not empty, next node" << std::endl;
             auto currN = getNodeFromIdx(*compNodeIt++);
             if (!currN->isCheck && !currN->deleted) {
                 xi.insert(currN->vertexIdx); // add bit node to estimate
