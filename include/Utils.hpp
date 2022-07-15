@@ -38,7 +38,6 @@ public:
             throw QeccException("size of matrix too large for flint");
         }
 
-
         gf2Vec     result{};
         long       rows = M.size();
         long       cols = M.at(0).size();
@@ -46,18 +45,30 @@ public:
         nmod_mat_t x;
         nmod_mat_t b;
         mp_limb_t  mod = 2U;
+        // initializes mat to rows x cols matrix with coefficients mod 2
         nmod_mat_init(mat, rows, cols, mod);
         nmod_mat_init(x, cols, 1, mod);
         nmod_mat_init(b, rows, 1, mod);
 
         for (long i = 0; i < nmod_mat_nrows(mat); i++) {
             for (long j = 0; j < nmod_mat_ncols(mat); j++) {
-                nmod_mat_set_entry(mat, i, j, M.at(i).at(j));
+                mp_limb_t val;
+                if(M.at(i).at(j)){
+                    val = 1U;
+                }else{
+                    val = 0U;
+                }
+                nmod_mat_set_entry(mat, i, j, val);
             }
         }
         auto bColIdx = nmod_mat_ncols(b) - 1;
         for (long i = 0; i < nmod_mat_nrows(b); i++) {
-            mp_limb_t tmp = vec.at(i);
+            mp_limb_t tmp;
+            if(vec.at(i)){
+                tmp = 1U;
+            }else{
+                tmp = 0U;
+            }
             nmod_mat_set_entry(b, i, bColIdx, tmp);
         }
         int sol = nmod_mat_can_solve(x, mat, b);
@@ -77,7 +88,9 @@ public:
         } else {
             std::cout << "no sol" << std::endl;
         }
-
+        nmod_mat_clear(mat);
+        nmod_mat_clear(x);
+        nmod_mat_clear(b);
         return result;
     }
 

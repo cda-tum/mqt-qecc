@@ -31,7 +31,7 @@ struct ParityCheckMatrix {
         int           word;
         std::ifstream inFile;
         gf2Mat        result;
-
+        pcm = {};
         try {
             inFile.open(filePath);
             while (getline(inFile, line, '\n')) {
@@ -49,7 +49,7 @@ struct ParityCheckMatrix {
         inFile.close();
     }
 
-    gf2Mat pcm;
+    gf2Mat pcm{};
 
     std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
 
