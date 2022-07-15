@@ -25,13 +25,14 @@ struct ParityCheckMatrix {
 
     explicit ParityCheckMatrix(const std::string& filePath) {
         if (filePath.empty()) {
-            throw QeccException("Cannot open pcm, filepath empty");
+            throw QeccException("[PCM::ctor] - Cannot open pcm, filepath empty");
         }
         std::string   line;
         int           word;
         std::ifstream inFile;
         gf2Mat        result;
         pcm = {};
+        std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
         try {
             inFile.open(filePath);
             while (getline(inFile, line, '\n')) {
@@ -43,10 +44,11 @@ struct ParityCheckMatrix {
                 pcm.emplace_back(tempVec);
             }
         } catch (const std::exception& e) {
-            std::cerr << "error opening file " << filePath << std::endl;
+            std::cerr << "[PCM::ctor] - error opening file " << filePath << std::endl;
             throw QeccException(e.what());
         }
         inFile.close();
+        std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
     }
 
     gf2Mat pcm{};
@@ -131,9 +133,9 @@ public:
 
     explicit Code(const std::string& pathToPcm):
         Hz(pathToPcm) {
-        std::cout << "initializing Code object" << std::endl;
+        std::cout << "[Code::ctor] - initializing Code object" << std::endl;
         if (Hz.pcm.empty() || Hz.pcm.at(0).empty()) {
-            throw QeccException("Cannot construct Code, Hz empy");
+            throw QeccException("[Code::ctor] - Cannot construct Code, Hz empy");
         }
         N = Hz.pcm.at(0).size();
     }
