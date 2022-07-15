@@ -43,14 +43,17 @@ class Decoder {
 public:
     DecodingResult result;
     GrowthVariant  growth = ALL_COMPONENTS; // standard
-    explicit Decoder(Code* code): code(code){}
+    explicit Decoder(std::unique_ptr<Code>& code): code(std::make_unique<Code>(Code(code->Hz))){}
     virtual void decode(std::vector<bool>&){};
 
-    Decoder(const Decoder& other): code(other.code) {
+    Decoder(const Decoder& other) {
+        this->code = std::make_unique<Code>(Code(other.code->Hz));
         this->result = DecodingResult();
     }
-    [[nodiscard]] Code* getCode() const {
-        return this->code;
+    virtual ~Decoder() = default;
+
+    [[nodiscard]] std::unique_ptr<Code> getCode() const {
+        return std::make_unique<Code>(*this->code);
     }
     [[nodiscard]] GrowthVariant getGrowth() const {
         return growth;
@@ -59,6 +62,6 @@ public:
         Decoder::growth = g;
     }
 protected:
-    Code* code;
+    std::unique_ptr<Code> code;
 };
 #endif //QUNIONFIND_DECODER_HPP

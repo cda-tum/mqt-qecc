@@ -35,8 +35,8 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest_
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
 TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
-    auto code = new SteaneXCode();
-    OriginalUFD decoder{code};
+    auto code = std::make_unique<Code>(SteaneXCode());
+    OriginalUFD decoder(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -71,7 +71,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  * Tests for ambigous errors that cannot be corrected
  */
 TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
-    auto code = new SteaneXCode();
+    auto code = std::make_unique<Code>(SteaneXCode());
     OriginalUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -100,7 +100,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  * Tests for errors that are correctable up to stabilizer
  */
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
-    auto code = new SteaneXCode();
+    auto code = std::make_unique<Code>(SteaneXCode());
     OriginalUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;

@@ -33,13 +33,13 @@ struct std::hash<TreeNode> {
 
 class ImprovedUFD: virtual public Decoder {
 public:
-    explicit ImprovedUFD(Code* code):
+    explicit ImprovedUFD(std::unique_ptr<Code>& code):
         Decoder(code){};
     void decode(std::vector<bool>& syndrome) override;
 
 private:
     std::unordered_map<std::size_t, std::shared_ptr<TreeNode>>    nodeMap;
-    std::shared_ptr<TreeNode> getNodeFromIdx(const std::size_t idx);
+    std::shared_ptr<TreeNode> getNodeFromIdx(std::size_t idx);
     void                                          standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                                  std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components);
     void                                          singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,

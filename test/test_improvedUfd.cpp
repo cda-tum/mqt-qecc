@@ -65,7 +65,7 @@ INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, CorrectableLargeToric,
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
 TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
-    auto code = new SteaneXCode();
+    auto code = std::make_unique<Code>(SteaneXCode());
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -97,7 +97,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
  * Tests for ambigous errors that cannot be corrected
  */
 TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
-    auto code = new SteaneXCode();
+    auto code = std::make_unique<Code>(SteaneXCode());
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -126,7 +126,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
  * Tests for errors that are correctable up to stabilizer
  */
 TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
-    auto code = new SteaneXCode();
+    auto code = std::make_unique<Code>(SteaneXCode());
     ImprovedUFD decoder{code};
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -166,7 +166,7 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
  * Tests for toric code one bit correctable errs
  */
 TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
-    auto code = new ToricCode_8();
+    auto code = std::make_unique<Code>(ToricCode_8());
     ImprovedUFD decoder(code);
     std::cout << "Adj lists code: " << std::endl
               << code << std::endl;
@@ -201,7 +201,7 @@ TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
  * Tests for toric code one bit not uniquely corr errs
  */
 TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
-    auto code = new ToricCode_8();
+    auto code = std::make_unique<Code>(ToricCode_8());
     ImprovedUFD decoder(code);
     std::cout << "Adj lists code: " << std::endl
               << code << std::endl;
@@ -240,7 +240,7 @@ TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
  * Tests for toric code one bit correctable errs
  */
 TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
-    auto code = new ToricCode_32();
+    auto code = std::make_unique<Code>(ToricCode_32());
     ImprovedUFD  decoder(code);
     std::cout << "Adj lists code: " << std::endl
               << Utils::getStringFrom(code->Hz.pcm) << std::endl;
@@ -276,7 +276,7 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
  * Tests for toric code one bit correctable errs
  */
 TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
-    auto code = new ToricCode_32();
+    auto code = std::make_unique<Code>(ToricCode_32());
     ImprovedUFD  decoder(code);
     std::cout << "Adj lists code: " << std::endl
               << Utils::getStringFrom(code->Hz.pcm) << std::endl;
@@ -311,8 +311,8 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
  * Tests for errors that are correctable up to stabilizer
  */
 TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
-    auto code = new HGPcode();
-    ImprovedUFD       decoder{code};
+    auto code = std::make_unique<Code>(HGPcode());
+    ImprovedUFD       decoder(code);
     std::vector<bool> err = gf2Vec(code->N);
     err.at(0)             = 1;
 
