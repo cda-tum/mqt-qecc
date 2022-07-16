@@ -65,8 +65,7 @@ if (COVERAGE)
     target_link_libraries(${PROJECT_NAME}_lib PUBLIC --coverage)
 endif ()
 
-
-link_directories("/usr/local/lib/")
+find_package(FLINT REQUIRED)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)
 
 # add MQT alias
