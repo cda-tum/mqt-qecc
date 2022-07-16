@@ -2,11 +2,10 @@ cmake_minimum_required(VERSION 3.14...3.22)
 
 project(qecc
         LANGUAGES CXX
-        VERSION 0.1.0
         DESCRIPTION "QECC - A MQT Library for Quantum Error Correcting Codes"
         )
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 #add_compile_options(-fsanitize=address)
 #add_link_options(-fsanitize=address)
@@ -48,9 +47,6 @@ macro(check_submodule_present MODULENAME)
     endif ()
 endmacro()
 
-# Add path for custom modules
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
 check_submodule_present(json)
 check_submodule_present(pybind11)
 check_submodule_present(pybind11_json)
@@ -58,20 +54,14 @@ check_submodule_present(pybind11_json)
 # add main library code
 add_subdirectory(src)
 
-
 # add test code
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR BUILD_UNION_FIND_TESTS)
-    message(add test)
-    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/googletest/CMakeLists.txt")
-        message(FATAL_ERROR "GoogleTest submodule not cloned properly. Please run `git submodule update --init --recursive` from the main project directory")
-    endif ()
+if (BUILD_QECC_TESTS)
+    check_submodule_present(googletest)
 
     enable_testing()
     include(GoogleTest)
     add_subdirectory(test)
 endif ()
-# enable organization of targets into folders
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # add Python binding code
 if(BINDINGS)
