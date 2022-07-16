@@ -19,16 +19,16 @@ class UnionFindSimulation: public testing::TestWithParam<std::string> {
 };
 
 TEST(UnionFindSimulation, TestSimulator) {
-    std::string       rawOut = "./testRawFile", testOut = "./testStatFile";
-    double            minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
-    std::size_t       runsPerRate = 2, runsPerCode = 2;
-    auto              code = SteaneXCode();
+    std::string rawOut = "./testRawFile", testOut = "./testStatFile";
+    double      minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
+    std::size_t runsPerRate = 2, runsPerCode = 2;
+    auto        code = SteaneXCode();
     try {
         ImprovedUFD decoder(code);
         DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
         std::vector<double> erRates = {minErate, maxErate};
         DecodingSimulator::simulateRuntime(rawOut, testOut, erRates, runsPerCode, decoder);
-    }catch(QeccException& e){
+    } catch (QeccException& e) {
         std::cerr << "Exception caught " << e.getMessage();
     }
     EXPECT_TRUE(true);
@@ -85,29 +85,25 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     //    std::size_t       nrOfRunsPerRate       = 1;
     // ***************** configure end *****************
 
-    std::size_t                   nrOfFailedRuns = 0U;
-    double                        blockErrRate   = 0.0;
-    double                        wordErrRate    = 0.0;
-    std::size_t                   K              = 0.0;
-    std::map<std::string, double> wordErrRatePerPhysicalErrRate;
+    std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     decodingResOutput << "{ \"runs\" : [ ";
     rawIntermediateOut << "{ ";
 
+    auto       code = HGPcode(inCodePath, code_K);
+    const auto K    = code.getK();
+    const auto N    = code.getN();
     for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhysicalErrRate; i++) {
-        nrOfFailedRuns = 0U;
-        blockErrRate   = 0.0;
-        wordErrRate    = 0.0;
+        std::size_t nrOfFailedRuns = 0U;
         decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
             std::cout << "run nr " << j << std::endl;
-            auto code = HGPcode(inCodePath, code_K);
-            K         = code.getK();
+
             ImprovedUFD decoder(code);
-            auto        error    = Utils::sampleErrorIidPauliNoise(code.getN(), physicalErrRate);
+            auto        error    = Utils::sampleErrorIidPauliNoise(N, physicalErrRate);
             auto        syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);
-            auto              decodingResult = decoder.result;
+            auto const&       decodingResult = decoder.result;
             std::vector<bool> residualErr    = decodingResult.estimBoolVector;
             Utils::computeResidualErr(error, residualErr);
             auto                   success = code.isVectorStabilizer(residualErr);
@@ -123,7 +119,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
             stats.physicalErrR = physicalErrRate;
             stats.error        = error;
             stats.syndrome     = syndrome;
-            stats.codeSize     = code.getN();
+            stats.codeSize     = N;
             decodingResOutput << stats.to_json().dump(2U);
             if (j != nrOfRunsPerRate - 1) {
                 decodingResOutput << ", ";
@@ -131,12 +127,11 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
         }
         std::cout << "computing wer " << std::endl;
         //compute word error rate WER
-        blockErrRate   = (double)nrOfFailedRuns / (double)nrOfRunsPerRate;
-        wordErrRate    = blockErrRate / (double)K; // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
-        auto datapoint = std::make_pair(std::to_string(physicalErrRate), wordErrRate);
-        wordErrRatePerPhysicalErrRate.insert(datapoint); // to string for json parsing
-        rawIntermediateOut << R"( ")" << datapoint.first << R"(" )"
-                           << ":" + std::to_string(datapoint.second);
+        const auto blockErrRate    = static_cast<double>(nrOfFailedRuns) / static_cast<double>(nrOfRunsPerRate);
+        const auto wordErrRate     = blockErrRate / static_cast<double>(K);                                                   // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
+        const auto& [it, inserted] = wordErrRatePerPhysicalErrRate.try_emplace(std::to_string(physicalErrRate), wordErrRate); // to string for json parsing
+        rawIntermediateOut << R"( ")" << it->first << R"(" )"
+                           << ":" + std::to_string(it->second);
         // only for json output
         if (i != nrOfRuns - 1) {
             decodingResOutput << "]}},";
@@ -198,28 +193,28 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
-    std::size_t                                          avgDecodingTimeAcc = 0U;
-    double                                               avgDecTime         = 0.0;
-    std::map<std::string, std::map<std::string, double>> dataPerRate;
-    std::map<std::string, double>                        tmp;
-    std::vector<std::string>                             codePaths;
+    std::size_t                                                                    avgDecodingTimeAcc = 0U;
+    double                                                                         avgDecTime         = 0.0;
+    std::map<std::string, std::map<std::string, double, std::less<>>, std::less<>> dataPerRate;
+    std::map<std::string, double, std::less<>>                                     tmp;
+    std::vector<std::string>                                                       codePaths;
     std::cout << "reading codes " << std::endl;
-    std::map<std::string, std::size_t> avgSampleRuns;
+    std::map<std::string, std::size_t, std::less<>> avgSampleRuns;
     for (const auto& file: std::filesystem::directory_iterator(inPath)) {
         codePaths.emplace_back(file.path());
     }
     //codePaths.emplace_back("/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/toric_(nan,nan)-[[6962,2,59]]_hx.txt");
-    std::map<std::string, double> avgTimePerSizeData;
+    std::map<std::string, double, std::less<>> avgTimePerSizeData;
     std::cout << "Simulating physical err rate " << physErrRate << std::endl;
     try {
         for (const auto& currPath: codePaths) {
             std::cout << "next code : " << currPath << std::endl;
             avgDecodingTimeAcc = 0U;
+            auto       code    = Code(currPath); // construct new for each trial
+            const auto codeN   = code.getN();
             for (std::size_t j = 0; j < 5; j++) {              // 5 runs to compute average
                 for (std::size_t i = 0; i < nrOfTrials; i++) { // nr of monte carlo samples
                     std::cout << "run nr " << i << std::endl;
-                    auto code = Code(currPath); // construct new for each trial
-                    auto codeN = code.getN();
                     std::cout << "making decoder" << std::endl;
                     ImprovedUFD decoder(code);
                     std::cout << "sampling error" << std::endl;
@@ -229,7 +224,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
                     std::cout << "starting decoding" << std::endl;
                     decoder.decode(syndrome);
                     std::cout << "decoding done " << std::endl;
-                    auto                   decodingResult = decoder.result;
+                    auto const&            decodingResult = decoder.result;
                     DecodingRunInformation info;
                     info.result       = decodingResult;
                     info.physicalErrR = physErrRate;
@@ -243,7 +238,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
                     dataOutStream << ",";
                     dataOutStream.flush();
                 }
-                avgSampleRuns.insert(std::make_pair(std::to_string(j), avgDecodingTimeAcc));
+                avgSampleRuns.try_emplace(std::to_string(j), avgDecodingTimeAcc);
                 std::cout << currPath << " \"run\": " << j << ", \"time\":" << avgDecodingTimeAcc << std::endl;
             }
             json avgData = avgSampleRuns;
