@@ -16,30 +16,30 @@
  */
 class TreeNode {
 public:
-    std::size_t                            vertexIdx = 0;
+    std::size_t                            vertexIdx = 0U;
     bool                                   isCheck   = false;
     std::shared_ptr<TreeNode>              parent    = nullptr;
     std::vector<std::shared_ptr<TreeNode>> children{};
-    size_t                                 clusterSize = 1;
-    std::set<std::size_t>    boundaryVertices{};
-    std::set<std::size_t>    checkVertices{};
+    size_t                                 clusterSize = 1U;
+    std::set<std::size_t>                  boundaryVertices{};
+    std::set<std::size_t>                  checkVertices{};
     // for interior calculation
     std::set<std::size_t> markedNeighbours{};
-    bool                  marked = false;
-    bool deleted=false;
+    bool                  marked  = false;
+    bool                  deleted = false;
 
     TreeNode():
-        TreeNode(-1) {}
+        TreeNode(std::numeric_limits<decltype(vertexIdx)>::max()) {}
 
-    explicit TreeNode(const std::size_t vertexIdx) {
-        this->vertexIdx = vertexIdx;
-        this->boundaryVertices.insert(this->vertexIdx);
+    explicit TreeNode(const std::size_t vertexIdx):
+        vertexIdx(vertexIdx) {
+        boundaryVertices.emplace(vertexIdx);
     }
 
     /*
  * Recursive find using path compression
  */
-    static std::shared_ptr<TreeNode> Find(std::shared_ptr<TreeNode>& node) {
+    static std::shared_ptr<TreeNode> Find(const std::shared_ptr<TreeNode>& node) {
         if (node->parent == nullptr) {
             return node;
         } else {
@@ -50,7 +50,7 @@ public:
     /*
      * Merge two trees with given roots
      */
-    static void Union(std::shared_ptr<TreeNode>& tree1, std::shared_ptr<TreeNode>& tree2) {
+    static void Union(const std::shared_ptr<TreeNode>& tree1, const std::shared_ptr<TreeNode>& tree2) {
         auto root1 = Find(tree1);
         auto root2 = Find(tree2);
 
@@ -60,12 +60,12 @@ public:
 
         if (root1->clusterSize <= root2->clusterSize) {
             addFirstToSecondTree(root1, root2);
-        } else if (root1->clusterSize > root2->clusterSize) {
+        } else {
             addFirstToSecondTree(root2, root1);
         }
     }
 
-    static void addFirstToSecondTree(std::shared_ptr<TreeNode>& first, std::shared_ptr<TreeNode>& second) {
+    static void addFirstToSecondTree(std::shared_ptr<TreeNode>& first, const std::shared_ptr<TreeNode>& second) {
         first->parent = second;
         second->children.emplace_back(first);
         second->clusterSize += first->clusterSize;
@@ -74,15 +74,15 @@ public:
         }
         first->checkVertices.clear();
         if (first->isCheck) {
-            first->checkVertices.insert(first->vertexIdx);
+            first->checkVertices.emplace(first->vertexIdx);
         }
     }
 
     bool operator==(const TreeNode& other) const {
-        return this->vertexIdx == other.vertexIdx;
+        return vertexIdx == other.vertexIdx;
     }
-    bool operator<(const TreeNode& other) const {
-        return this->vertexIdx < other.vertexIdx;
+    auto operator<=>(const TreeNode& other) const {
+        return (vertexIdx <=> other.vertexIdx);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const TreeNode& v) {

@@ -45,14 +45,14 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     std::cout << "syndrome: ";
     Utils::printGF2vector(syndr);
     decoder.decode(syndr);
-    auto   decodingResult = decoder.result;
-    auto   estim          = decodingResult.estimBoolVector;
-    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    const auto&   decodingResult = decoder.result;
+    const auto&   estim          = decodingResult.estimBoolVector;
+    const auto&   estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (size_t i = 0; i < estimIdx.size(); i++) {
-        estim2.at(estimIdx.at(i)) = true;
-        std::cout << estimIdx.at(i);
+    for (unsigned long idx : estimIdx) {
+        estim2.at(idx) = true;
+        std::cout << idx;
     }
     std::cout << std::endl;
     gf2Vec sol = GetParam();
@@ -79,18 +79,18 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 
     auto syndr = code.getSyndrome(err);
     decoder.decode(syndr);
-    auto   decodingResult = decoder.result;
-    auto   estim          = decodingResult.estimBoolVector;
-    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    const auto&   decodingResult = decoder.result;
+    const auto&   estim          = decodingResult.estimBoolVector;
+    const auto&   estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (size_t i = 0; i < estimIdx.size(); i++) {
-        estim2.at(estimIdx.at(i)) = true;
-        std::cout << estimIdx.at(i);
+    for (unsigned long idx : estimIdx) {
+        estim2.at(idx) = true;
+        std::cout << idx;
     }
     std::vector<bool> residualErr(err.size());
     for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = err[i] ^ estim[i];
+        residualErr.at(i) = (err[i] != estim[i]);
     }
 
     EXPECT_FALSE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
@@ -109,23 +109,23 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     Utils::printGF2vector(err);
     auto syndr = code.getSyndrome(err);
     decoder.decode(syndr);
-    auto   decodingResult = decoder.result;
-    auto   estim          = decodingResult.estimBoolVector;
-    auto   estimIdx       = decodingResult.estimNodeIdxVector;
+    const auto&   decodingResult = decoder.result;
+    const auto&   estim          = decodingResult.estimBoolVector;
+    const auto&   estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (size_t i = 0; i < estimIdx.size(); i++) {
-        estim2.at(estimIdx.at(i)) = true;
-        std::cout << estimIdx.at(i);
+    for (unsigned long idx : estimIdx) {
+        estim2.at(idx) = true;
+        std::cout << idx;
     }
     std::cout << std::endl;
     std::vector<bool> residualErr(err.size());
     for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = err[i] ^ estim[i];
+        residualErr.at(i) = (err[i] != estim[i]);
     }
     std::vector<bool> residualErr2(err.size());
     for (size_t i = 0; i < err.size(); i++) {
-        residualErr2.at(i) = err[i] ^ estim2[i];
+        residualErr2.at(i) = (err[i] != estim2[i]);
     }
 
     EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));

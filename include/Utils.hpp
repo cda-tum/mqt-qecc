@@ -18,8 +18,8 @@ extern "C" {
 #include <flint/nmod_mat.h>
 }
 
-typedef std::vector<std::vector<bool>> gf2Mat;
-typedef std::vector<bool>              gf2Vec;
+using gf2Mat = std::vector<std::vector<bool>>;
+using gf2Vec = std::vector<bool>;
 
 class Utils {
 public:
@@ -34,13 +34,13 @@ public:
     static gf2Vec solveSystem(const gf2Mat& M, const gf2Vec& vec) {
         assertMatrixPresent(M);
         assertVectorPresent(vec);
-        if(M.size() > std::numeric_limits<long int>::max() || M.at(0).size() > std::numeric_limits<long int>::max()){
+        if (M.size() > std::numeric_limits<long int>::max() || M.front().size() > std::numeric_limits<long int>::max()) {
             throw QeccException("size of matrix too large for flint");
         }
 
         gf2Vec     result{};
-        slong       rows = M.size();
-        slong       cols = M.at(0).size();
+        slong      rows = M.size();
+        slong      cols = M.front().size();
         nmod_mat_t mat;
         nmod_mat_t x;
         nmod_mat_t b;
@@ -52,24 +52,12 @@ public:
 
         for (slong i = 0; i < nmod_mat_nrows(mat); i++) {
             for (slong j = 0; j < nmod_mat_ncols(mat); j++) {
-                mp_limb_t val;
-                if(M.at(i).at(j)){
-                    val = 1;
-                }else{
-                    val = 0;
-                }
-                nmod_mat_set_entry(mat, i, j, val);
+                nmod_mat_set_entry(mat, i, j, M.at(i).at(j) ? 1U : 0U);
             }
         }
         slong bColIdx = nmod_mat_ncols(b) - 1;
         for (slong i = 0; i < nmod_mat_nrows(b); i++) {
-            mp_limb_t tmp;
-            if(vec.at(i)){
-                tmp = 1;
-            }else{
-                tmp = 0;
-            }
-            nmod_mat_set_entry(b, i, bColIdx, tmp);
+            nmod_mat_set_entry(b, i, bColIdx, vec.at(i) ? 1U : 0U);
         }
         int sol = nmod_mat_can_solve(x, mat, b);
         std::cout << "mat: " << std::endl;
@@ -312,8 +300,8 @@ public:
         std::mt19937       gen(rd());
         gf2Vec             result;
 
-        // Setup the weights, iid noise for each bit
-        std::discrete_distribution<> d({1 - physicalErrRate, physicalErrRate});
+        // Set up the weights, iid noise for each bit
+        std::discrete_distribution d({1 - physicalErrRate, physicalErrRate});
         for (std::size_t i = 0; i < n; i++) {
             result.emplace_back(d(gen));
         }
@@ -327,7 +315,7 @@ public:
     */
     static void computeResidualErr(const gf2Vec& error, gf2Vec& residual) {
         for (std::size_t j = 0; j < residual.size(); j++) {
-            residual.at(j) = residual.at(j) ^ error.at(j);
+            residual.at(j) = (residual.at(j) != error.at(j));
         }
     }
 

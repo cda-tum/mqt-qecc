@@ -27,13 +27,13 @@ public:
      * @param nrOfRunsPerErrRate number of runs to average WER over
      * @param decoder
      */
-    void simulateWER(const std::string&   rawDataOutputFilepath,
-                     const std::string&   statsOutputFilepath,
-                     double         minPhysicalErrRate,
-                     double         maxPhysicalErrRate,
-                     double         physErrRateStepSize,
-                     std::size_t         nrOfRunsPerErrRate,
-                     const Decoder& decoder); // code is field of decoder
+    static void simulateWER(const std::string& rawDataOutputFilepath,
+                            const std::string& statsOutputFilepath,
+                            double             minPhysicalErrRate,
+                            double             maxPhysicalErrRate,
+                            double             physErrRateStepSize,
+                            std::size_t        nrOfRunsPerErrRate,
+                            Decoder&           decoder); // code is field of decoder
 
     /**
      * Runs the specified number of decoding runs for each physical error rate on each code and
@@ -45,12 +45,11 @@ public:
      * @param nrRuns
      * @param codes
      */
-    void simulateRuntime(const std::string&         rawDataOutputFilepath,
-                         const std::string&         decodingStatisticsOutputFilepath,
-                         const std::vector<double>& physicalErrRates,
-                         std::size_t                nrRuns,
-                         const Code&                      code,
-                         const Decoder& decoder);
+    static void simulateRuntime(const std::string&         rawDataOutputFilepath,
+                                const std::string&         decodingStatisticsOutputFilepath,
+                                const std::vector<double>& physicalErrRates,
+                                std::size_t                nrRuns,
+                                Decoder&                   decoder);
 
 private:
     static std::string generateOutFileName(const std::string& filepath);

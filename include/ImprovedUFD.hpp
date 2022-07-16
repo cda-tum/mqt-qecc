@@ -31,22 +31,22 @@ struct std::hash<TreeNode> {
     }
 };
 
-class ImprovedUFD: virtual public Decoder {
+class ImprovedUFD: public Decoder {
 public:
-    explicit ImprovedUFD(Code& code):
-        Decoder(code){};
+    using Decoder::Decoder;
     void decode(std::vector<bool>& syndrome) override;
 
 private:
-    std::unordered_map<std::size_t, std::shared_ptr<TreeNode>>    nodeMap;
-    std::shared_ptr<TreeNode> getNodeFromIdx(std::size_t idx);
+    std::unordered_map<std::size_t, std::shared_ptr<TreeNode>> nodeMap;
+
+    std::shared_ptr<TreeNode>                     getNodeFromIdx(std::size_t idx);
     void                                          standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                 std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components);
+                                                                 std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) const;
     void                                          singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                                 std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components);
+                                                                                 std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) const;
     void                                          singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                                   std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components);
-    bool                                          isValidComponent(const std::shared_ptr<TreeNode>& component);
+                                                                                   std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::shared_ptr<TreeNode>>& components) const;
+    bool                                          isValidComponent(const std::shared_ptr<TreeNode>& component) const;
     std::unordered_set<std::size_t>               erasureDecoder(std::vector<std::shared_ptr<TreeNode>>& erasure, std::unordered_set<std::shared_ptr<TreeNode>>& syndrome);
     void                                          extractValidComponents(std::unordered_set<std::shared_ptr<TreeNode>>& invalidComponents, std::vector<std::shared_ptr<TreeNode>>& erasure);
     std::unordered_set<std::shared_ptr<TreeNode>> computeInitTreeComponents(const gf2Vec& syndrome);

@@ -65,12 +65,12 @@ struct ParityCheckMatrix {
         /*if (nbrCache.contains(nodeIdx)) {
             return nbrCache.at(nodeIdx);
         } else {*/
-        if (pcm.empty() || pcm.at(0).empty()) {
+        if (pcm.empty() || pcm.front().empty()) {
             std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
             throw QeccException("Cannot return neighbours, pcm empty");
         }
         auto                     nrChecks = pcm.size();
-        auto                     nrBits   = pcm.at(0).size();
+        auto                     nrBits   = pcm.front().size();
         std::vector<std::size_t> res;
         if (nodeIdx < nrBits) {
             for (std::size_t i = 0; i < nrChecks; i++) {
@@ -128,16 +128,16 @@ public:
      */
     explicit Code(ParityCheckMatrix hz):
         Hz(std::move(hz)) {
-        N = Hz.pcm.at(0).size();
+        N = Hz.pcm.front().size();
     }
 
     explicit Code(const std::string& pathToPcm):
         Hz(pathToPcm) {
         std::cout << "[Code::ctor] - initializing Code object" << std::endl;
-        if (Hz.pcm.empty() || Hz.pcm.at(0).empty()) {
-            throw QeccException("[Code::ctor] - Cannot construct Code, Hz empy");
+        if (Hz.pcm.empty() || Hz.pcm.front().empty()) {
+            throw QeccException("[Code::ctor] - Cannot construct Code, Hz empty");
         }
-        N = Hz.pcm.at(0).size();
+        N = Hz.pcm.front().size();
     }
 
     [[nodiscard]] std::size_t getN() const {
@@ -172,17 +172,15 @@ public:
         return Utils::isVectorInRowspace(Hz.pcm, est);
     }
 
-    CodeProperties getProperties() const {
-        CodeProperties res;
-        res.n = this->N;
-        res.k = this->getK();
+    [[nodiscard]] CodeProperties getProperties() const {
+        CodeProperties res{.n = N, .k = getK()};
         //todo res.d
         return res;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Code& c) {
         auto   nrChecks = c.Hz.pcm.size();
-        auto   nrData   = c.Hz.pcm.at(0).size();
+        auto   nrData   = c.Hz.pcm.front().size();
         auto   dim      = nrChecks + nrData;
         gf2Mat res(dim);
 

@@ -14,16 +14,16 @@
 
 using json = nlohmann::json;
 
-enum GrowthVariant {
+enum class GrowthVariant {
     ALL_COMPONENTS, // standard growth
     INVALID_COMPONENTS,
     SINGLE_SMALLEST,
     SINGLE_RANDOM
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{ALL_COMPONENTS, "all components"},
-                                             {INVALID_COMPONENTS, "invalid components"},
-                                             {SINGLE_SMALLEST, "smallest component only"},
-                                             {SINGLE_RANDOM, "single random component"}})
+NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::ALL_COMPONENTS, "all components"},
+                                             {GrowthVariant::INVALID_COMPONENTS, "invalid components"},
+                                             {GrowthVariant::SINGLE_SMALLEST, "smallest component only"},
+                                             {GrowthVariant::SINGLE_RANDOM, "single random component"}})
 struct DecodingResult {
     std::size_t              decodingTime       = 0U; // in ms
     std::vector<std::size_t> estimNodeIdxVector = {};
@@ -41,19 +41,15 @@ struct DecodingResult {
 };
 class Decoder {
 public:
-    DecodingResult result;
-    GrowthVariant  growth = ALL_COMPONENTS; // standard
+    DecodingResult result{};
+    GrowthVariant  growth = GrowthVariant::ALL_COMPONENTS; // standard
     explicit Decoder(Code& code): code(std::make_unique<Code>(code)){}
-    virtual void decode(std::vector<bool>&){};
+    virtual void decode(std::vector<bool>&) {};
 
-    Decoder(const Decoder& other) {
-        this->code = std::make_unique<Code>(Code(other.code->Hz));
-        this->result = DecodingResult();
-    }
     virtual ~Decoder() = default;
 
-    [[nodiscard]] std::unique_ptr<Code> getCode() const {
-        return std::make_unique<Code>(*this->code);
+    [[nodiscard]] const std::unique_ptr<Code>& getCode() const {
+        return code;
     }
     [[nodiscard]] GrowthVariant getGrowth() const {
         return growth;
@@ -61,7 +57,10 @@ public:
     void setGrowth(GrowthVariant g) {
         Decoder::growth = g;
     }
-protected:
+    virtual void reset() {
+        result = DecodingResult{};
+    }
+private:
     std::unique_ptr<Code> code;
 };
 #endif //QUNIONFIND_DECODER_HPP

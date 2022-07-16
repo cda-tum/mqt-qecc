@@ -19,16 +19,15 @@ class UnionFindSimulation: public testing::TestWithParam<std::string> {
 };
 
 TEST(UnionFindSimulation, TestSimulator) {
-    DecodingSimulator simulator;
     std::string       rawOut = "./testRawFile", testOut = "./testStatFile";
     double            minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
     std::size_t       runsPerRate = 2, runsPerCode = 2;
     auto              code = SteaneXCode();
     try {
         ImprovedUFD decoder(code);
-        simulator.simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
+        DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
         std::vector<double> erRates = {minErate, maxErate};
-        simulator.simulateRuntime(rawOut, testOut, erRates, runsPerCode, code, decoder);
+        DecodingSimulator::simulateRuntime(rawOut, testOut, erRates, runsPerCode, decoder);
     }catch(QeccException& e){
         std::cerr << "Exception caught " << e.getMessage();
     }

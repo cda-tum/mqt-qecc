@@ -4,13 +4,13 @@
 //
 // Created by lucas on 21/06/22.
 //
-void DecodingSimulator::simulateWER(const std::string&   rawDataOutputFilepath,
-                                    const std::string&   statsOutputFilepath,
-                                    const double   minPhysicalErrRate,
-                                    const double   maxPhysicalErrRate,
-                                    const double   physErrRateStepSize,
-                                    const size_t   nrOfRunsPerErrRate,
-                                    const Decoder& inDecoder) {
+void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
+                                    const std::string& statsOutputFilepath,
+                                    const double       minPhysicalErrRate,
+                                    const double       maxPhysicalErrRate,
+                                    const double       physErrRateStepSize,
+                                    const size_t       nrOfRunsPerErrRate,
+                                    Decoder&           decoder) {
     auto          jsonFileName = generateOutFileName(statsOutputFilepath);
     auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
     std::ofstream statisticsOutstr(jsonFileName);
@@ -20,34 +20,33 @@ void DecodingSimulator::simulateWER(const std::string&   rawDataOutputFilepath,
     std::cout << "Writing raw data to " << dataFileName << std::endl;
 
     // Basic Parameter setup
-    double                        physicalErrRate = minPhysicalErrRate;
-    double                        stepSize        = physErrRateStepSize;
-    const double                  maxPhErrRate    = maxPhysicalErrRate;
-    const size_t                  nrOfRuns        = std::floor(maxPhErrRate / minPhysicalErrRate);
-    std::size_t                   nrRunsPerRate   = nrOfRunsPerErrRate;
-    std::size_t                   nrOfFailedRuns  = 0U;
-    double                        blockErrRate    = 0.0;
-    double                        wordErrRate     = 0.0;
-    std::size_t                   K               = 0.0;
-    std::map<std::string, double> wordErrRatePerPhysicalErrRate;
+    double       physicalErrRate = minPhysicalErrRate;
+    double       stepSize        = physErrRateStepSize;
+    const double maxPhErrRate    = maxPhysicalErrRate;
+    const auto   nrOfRuns        = static_cast<std::size_t>(std::floor(maxPhErrRate / minPhysicalErrRate));
+    std::size_t  nrRunsPerRate   = nrOfRunsPerErrRate;
+
+    std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     statisticsOutstr << "{ \"runs\" : [ ";
+
+    const auto& code = decoder.getCode();
+    const auto  K    = code->getK();
+    const auto  N    = code->getN();
+
     for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhErrRate; i++) {
-        nrOfFailedRuns = 0U;
-        blockErrRate   = 0.0;
-        wordErrRate    = 0.0;
+        auto nrOfFailedRuns = 0U;
         statisticsOutstr << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
 
         for (size_t j = 0; j < nrRunsPerRate; j++) {
-            auto code = new Code(inDecoder.getCode()->Hz); // construct objects new to ensure clean state
-            K = code->getK();
-            Decoder decoder(inDecoder);
-            auto    error    = Utils::sampleErrorIidPauliNoise(code->getN(), physicalErrRate);
-            auto    syndrome = code->getSyndrome(error);
+            // reset decoder results
+            decoder.reset();
+            const auto error    = Utils::sampleErrorIidPauliNoise(N, physicalErrRate);
+            auto       syndrome = code->getSyndrome(error);
             decoder.decode(syndrome);
-            auto              decodingResult = decoder.result;
+            auto const&       decodingResult = decoder.result;
             std::vector<bool> residualErr    = decodingResult.estimBoolVector;
             Utils::computeResidualErr(error, residualErr);
-            auto success = code->isVectorStabilizer(residualErr);
+            const auto success = code->isVectorStabilizer(residualErr);
 
             DecodingRunInformation stats;
             stats.result = decoder.result;
@@ -64,9 +63,9 @@ void DecodingSimulator::simulateWER(const std::string&   rawDataOutputFilepath,
             }
         }
         //compute word error rate WER
-        blockErrRate = (double)nrOfFailedRuns / (double)nrRunsPerRate;
-        wordErrRate  = blockErrRate / (double)K;                                                            // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
-        wordErrRatePerPhysicalErrRate.insert(std::make_pair(std::to_string(physicalErrRate), wordErrRate)); // to string for json parsing
+        const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(nrRunsPerRate);
+        const auto wordErrRate  = blockErrRate / static_cast<double>(K);                         // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
+        wordErrRatePerPhysicalErrRate.try_emplace(std::to_string(physicalErrRate), wordErrRate); // to string for json parsing
         // only for json output
         if (i != nrOfRuns - 1) {
             statisticsOutstr << "]}},";
@@ -95,8 +94,7 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
                                         const std::string&         decodingStatisticsOutputFilepath,
                                         const std::vector<double>& physicalErrRates,
                                         const std::size_t          nrRuns,
-                                        const Code&                      inCode,
-                                        const Decoder& inDecoder) {
+                                        Decoder&                   decoder) {
     auto          jsonFileName = generateOutFileName(decodingStatisticsOutputFilepath);
     auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
     std::ofstream statisticsOutstr(jsonFileName);
@@ -105,23 +103,25 @@ void DecodingSimulator::simulateRuntime(const std::string&         rawDataOutput
     std::cout << "Writing raw data to " << dataFileName << std::endl;
 
     // Basic Parameter setup
-    std::size_t                   avgDecodingTimeAcc = 0U;
-    const std::size_t             nrOfTrials         = nrRuns;
-    double                        avgDecTime         = 0.0;
-    std::map<std::string, double> avgDecodingTimePerSize;
+    const std::size_t                          nrOfTrials = nrRuns;
+    double                                     avgDecTime = 0.0;
+    std::map<std::string, double, std::less<>> avgDecodingTimePerSize;
+
+    const auto& code = decoder.getCode();
+    const auto  N    = code->getN();
+
     for (auto physErrRate: physicalErrRates) {
-        avgDecodingTimeAcc = 0U;
+        auto avgDecodingTimeAcc = 0U;
         for (size_t i = 0; i < nrOfTrials; i++) {
-            auto        c = Code(inCode.Hz); // construct new for each trial
-            Decoder decoder(c);
-            auto        error    = Utils::sampleErrorIidPauliNoise(c.getN(), physErrRate);
-            auto        syndrome = c.getSyndrome(error);
+            decoder.reset();
+            const auto error    = Utils::sampleErrorIidPauliNoise(N, physErrRate);
+            auto       syndrome = code->getSyndrome(error);
             decoder.decode(syndrome);
-            auto decodingResult = decoder.result;
-            avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
+            const auto& decodingResult = decoder.result;
+            avgDecodingTimeAcc         = avgDecodingTimeAcc + decodingResult.decodingTime;
         }
-        avgDecTime = (double)avgDecodingTimeAcc / (double)nrOfTrials;
-        avgDecodingTimePerSize.insert(std::make_pair<>(std::to_string(inCode.getN()), avgDecTime));
+        avgDecTime = static_cast<double>(avgDecodingTimeAcc) / static_cast<double>(nrOfTrials);
+        avgDecodingTimePerSize.try_emplace(std::to_string(N), avgDecTime);
     }
     json dataj = avgDecodingTimePerSize;
     rawDataOutput << dataj.dump(2U);
