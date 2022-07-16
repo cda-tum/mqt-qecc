@@ -18,7 +18,7 @@ add_library(${PROJECT_NAME}_lib
 target_include_directories(${PROJECT_NAME}_lib PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)
 
 # set required C++ standard and disable compiler specific extensions
-target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_20)
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 
 # enable interprocedural optimization if it is supported
