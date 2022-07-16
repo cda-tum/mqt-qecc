@@ -49,16 +49,16 @@
 GTEST_DECLARE_string_(internal_run_death_test);
 
 namespace testing {
-    namespace internal {
+namespace internal {
 
 // Names of the flags (needed for parsing Google Test flags).
-        const char kDeathTestStyleFlag[] = "death_test_style";
-        const char kDeathTestUseFork[] = "death_test_use_fork";
-        const char kInternalRunDeathTestFlag[] = "internal_run_death_test";
+const char kDeathTestStyleFlag[] = "death_test_style";
+const char kDeathTestUseFork[] = "death_test_use_fork";
+const char kInternalRunDeathTestFlag[] = "internal_run_death_test";
 
 #if GTEST_HAS_DEATH_TEST
 
-        GTEST_DISABLE_MSC_WARNINGS_PUSH_(4251 \
+GTEST_DISABLE_MSC_WARNINGS_PUSH_(4251 \
 /* class A needs to have dll-interface to be used by clients of class B */)
 
 // DeathTest is a class that hides much of the complexity of the
@@ -74,128 +74,122 @@ namespace testing {
 //               by wait(2)
 // exit code:    The integer code passed to exit(3), _exit(2), or
 //               returned from main()
-        class GTEST_API_ DeathTest {
-        public:
-            // Create returns false if there was an error determining the
-            // appropriate action to take for the current death test; for example,
-            // if the gtest_death_test_style flag is set to an invalid value.
-            // The LastMessage method will return a more detailed message in that
-            // case.  Otherwise, the DeathTest pointer pointed to by the "test"
-            // argument is set.  If the death test should be skipped, the pointer
-            // is set to NULL; otherwise, it is set to the address of a new concrete
-            // DeathTest object that controls the execution of the current test.
-            static bool Create(const char *statement, Matcher<const std::string &> matcher,
-                               const char *file, int line, DeathTest **test);
+class GTEST_API_ DeathTest {
+ public:
+  // Create returns false if there was an error determining the
+  // appropriate action to take for the current death test; for example,
+  // if the gtest_death_test_style flag is set to an invalid value.
+  // The LastMessage method will return a more detailed message in that
+  // case.  Otherwise, the DeathTest pointer pointed to by the "test"
+  // argument is set.  If the death test should be skipped, the pointer
+  // is set to NULL; otherwise, it is set to the address of a new concrete
+  // DeathTest object that controls the execution of the current test.
+  static bool Create(const char* statement, Matcher<const std::string&> matcher,
+                     const char* file, int line, DeathTest** test);
+  DeathTest();
+  virtual ~DeathTest() {}
 
-            DeathTest();
+  // A helper class that aborts a death test when it's deleted.
+  class ReturnSentinel {
+   public:
+    explicit ReturnSentinel(DeathTest* test) : test_(test) {}
+    ~ReturnSentinel() { test_->Abort(TEST_ENCOUNTERED_RETURN_STATEMENT); }
 
-            virtual ~DeathTest() {}
+   private:
+    DeathTest* const test_;
+    ReturnSentinel(const ReturnSentinel&) = delete;
+    ReturnSentinel& operator=(const ReturnSentinel&) = delete;
+  } GTEST_ATTRIBUTE_UNUSED_;
 
-            // A helper class that aborts a death test when it's deleted.
-            class ReturnSentinel {
-            public:
-                explicit ReturnSentinel(DeathTest *test) : test_(test) {}
+  // An enumeration of possible roles that may be taken when a death
+  // test is encountered.  EXECUTE means that the death test logic should
+  // be executed immediately.  OVERSEE means that the program should prepare
+  // the appropriate environment for a child process to execute the death
+  // test, then wait for it to complete.
+  enum TestRole { OVERSEE_TEST, EXECUTE_TEST };
 
-                ~ReturnSentinel() { test_->Abort(TEST_ENCOUNTERED_RETURN_STATEMENT); }
+  // An enumeration of the three reasons that a test might be aborted.
+  enum AbortReason {
+    TEST_ENCOUNTERED_RETURN_STATEMENT,
+    TEST_THREW_EXCEPTION,
+    TEST_DID_NOT_DIE
+  };
 
-            private:
-                DeathTest *const test_;
-                GTEST_DISALLOW_COPY_AND_ASSIGN_(ReturnSentinel);
-            } GTEST_ATTRIBUTE_UNUSED_;
+  // Assumes one of the above roles.
+  virtual TestRole AssumeRole() = 0;
 
-            // An enumeration of possible roles that may be taken when a death
-            // test is encountered.  EXECUTE means that the death test logic should
-            // be executed immediately.  OVERSEE means that the program should prepare
-            // the appropriate environment for a child process to execute the death
-            // test, then wait for it to complete.
-            enum TestRole {
-                OVERSEE_TEST, EXECUTE_TEST
-            };
+  // Waits for the death test to finish and returns its status.
+  virtual int Wait() = 0;
 
-            // An enumeration of the three reasons that a test might be aborted.
-            enum AbortReason {
-                TEST_ENCOUNTERED_RETURN_STATEMENT,
-                TEST_THREW_EXCEPTION,
-                TEST_DID_NOT_DIE
-            };
+  // Returns true if the death test passed; that is, the test process
+  // exited during the test, its exit status matches a user-supplied
+  // predicate, and its stderr output matches a user-supplied regular
+  // expression.
+  // The user-supplied predicate may be a macro expression rather
+  // than a function pointer or functor, or else Wait and Passed could
+  // be combined.
+  virtual bool Passed(bool exit_status_ok) = 0;
 
-            // Assumes one of the above roles.
-            virtual TestRole AssumeRole() = 0;
+  // Signals that the death test did not die as expected.
+  virtual void Abort(AbortReason reason) = 0;
 
-            // Waits for the death test to finish and returns its status.
-            virtual int Wait() = 0;
+  // Returns a human-readable outcome message regarding the outcome of
+  // the last death test.
+  static const char* LastMessage();
 
-            // Returns true if the death test passed; that is, the test process
-            // exited during the test, its exit status matches a user-supplied
-            // predicate, and its stderr output matches a user-supplied regular
-            // expression.
-            // The user-supplied predicate may be a macro expression rather
-            // than a function pointer or functor, or else Wait and Passed could
-            // be combined.
-            virtual bool Passed(bool exit_status_ok) = 0;
+  static void set_last_death_test_message(const std::string& message);
 
-            // Signals that the death test did not die as expected.
-            virtual void Abort(AbortReason reason) = 0;
+ private:
+  // A string containing a description of the outcome of the last death test.
+  static std::string last_death_test_message_;
 
-            // Returns a human-readable outcome message regarding the outcome of
-            // the last death test.
-            static const char *LastMessage();
+  DeathTest(const DeathTest&) = delete;
+  DeathTest& operator=(const DeathTest&) = delete;
+};
 
-            static void set_last_death_test_message(const std::string &message);
-
-        private:
-            // A string containing a description of the outcome of the last death test.
-            static std::string last_death_test_message_;
-
-            GTEST_DISALLOW_COPY_AND_ASSIGN_(DeathTest);
-        };
-
-        GTEST_DISABLE_MSC_WARNINGS_POP_()  //  4251
+GTEST_DISABLE_MSC_WARNINGS_POP_()  //  4251
 
 // Factory interface for death tests.  May be mocked out for testing.
-        class DeathTestFactory {
-        public:
-            virtual ~DeathTestFactory() {}
-
-            virtual bool Create(const char *statement,
-                                Matcher<const std::string &> matcher, const char *file,
-                                int line, DeathTest **test) = 0;
-        };
+class DeathTestFactory {
+ public:
+  virtual ~DeathTestFactory() {}
+  virtual bool Create(const char* statement,
+                      Matcher<const std::string&> matcher, const char* file,
+                      int line, DeathTest** test) = 0;
+};
 
 // A concrete DeathTestFactory implementation for normal use.
-        class DefaultDeathTestFactory : public DeathTestFactory {
-        public:
-            bool Create(const char *statement, Matcher<const std::string &> matcher,
-                        const char *file, int line, DeathTest **test) override;
-        };
+class DefaultDeathTestFactory : public DeathTestFactory {
+ public:
+  bool Create(const char* statement, Matcher<const std::string&> matcher,
+              const char* file, int line, DeathTest** test) override;
+};
 
 // Returns true if exit_status describes a process that was terminated
 // by a signal, or exited normally with a nonzero exit code.
-        GTEST_API_ bool ExitedUnsuccessfully(int exit_status);
+GTEST_API_ bool ExitedUnsuccessfully(int exit_status);
 
 // A string passed to EXPECT_DEATH (etc.) is caught by one of these overloads
 // and interpreted as a regex (rather than an Eq matcher) for legacy
 // compatibility.
-        inline Matcher<const ::std::string &> MakeDeathTestMatcher(
-                ::testing::internal::RE regex) {
-            return ContainsRegex(regex.pattern());
-        }
-
-        inline Matcher<const ::std::string &> MakeDeathTestMatcher(const char *regex) {
-            return ContainsRegex(regex);
-        }
-
-        inline Matcher<const ::std::string &> MakeDeathTestMatcher(
-                const ::std::string &regex) {
-            return ContainsRegex(regex);
-        }
+inline Matcher<const ::std::string&> MakeDeathTestMatcher(
+    ::testing::internal::RE regex) {
+  return ContainsRegex(regex.pattern());
+}
+inline Matcher<const ::std::string&> MakeDeathTestMatcher(const char* regex) {
+  return ContainsRegex(regex);
+}
+inline Matcher<const ::std::string&> MakeDeathTestMatcher(
+    const ::std::string& regex) {
+  return ContainsRegex(regex);
+}
 
 // If a Matcher<const ::std::string&> is passed to EXPECT_DEATH (etc.), it's
 // used directly.
-        inline Matcher<const ::std::string &> MakeDeathTestMatcher(
-                Matcher<const ::std::string &> matcher) {
-            return matcher;
-        }
+inline Matcher<const ::std::string&> MakeDeathTestMatcher(
+    Matcher<const ::std::string&> matcher) {
+  return matcher;
+}
 
 // Traps C++ exceptions escaping statement and reports them as test
 // failures. Note that trapping SEH exceptions is not implemented here.
@@ -274,41 +268,39 @@ namespace testing {
 // A class representing the parsed contents of the
 // --gtest_internal_run_death_test flag, as it existed when
 // RUN_ALL_TESTS was called.
-        class InternalRunDeathTestFlag {
-        public:
-            InternalRunDeathTestFlag(const std::string &a_file, int a_line, int an_index,
-                                     int a_write_fd)
-                    : file_(a_file), line_(a_line), index_(an_index), write_fd_(a_write_fd) {}
+class InternalRunDeathTestFlag {
+ public:
+  InternalRunDeathTestFlag(const std::string& a_file, int a_line, int an_index,
+                           int a_write_fd)
+      : file_(a_file), line_(a_line), index_(an_index), write_fd_(a_write_fd) {}
 
-            ~InternalRunDeathTestFlag() {
-                if (write_fd_ >= 0) posix::Close(write_fd_);
-            }
+  ~InternalRunDeathTestFlag() {
+    if (write_fd_ >= 0) posix::Close(write_fd_);
+  }
 
-            const std::string &file() const { return file_; }
+  const std::string& file() const { return file_; }
+  int line() const { return line_; }
+  int index() const { return index_; }
+  int write_fd() const { return write_fd_; }
 
-            int line() const { return line_; }
+ private:
+  std::string file_;
+  int line_;
+  int index_;
+  int write_fd_;
 
-            int index() const { return index_; }
-
-            int write_fd() const { return write_fd_; }
-
-        private:
-            std::string file_;
-            int line_;
-            int index_;
-            int write_fd_;
-
-            GTEST_DISALLOW_COPY_AND_ASSIGN_(InternalRunDeathTestFlag);
-        };
+  InternalRunDeathTestFlag(const InternalRunDeathTestFlag&) = delete;
+  InternalRunDeathTestFlag& operator=(const InternalRunDeathTestFlag&) = delete;
+};
 
 // Returns a newly created InternalRunDeathTestFlag object with fields
 // initialized from the GTEST_FLAG(internal_run_death_test) flag if
 // the flag is specified; otherwise returns NULL.
-        InternalRunDeathTestFlag *ParseInternalRunDeathTestFlag();
+InternalRunDeathTestFlag* ParseInternalRunDeathTestFlag();
 
 #endif  // GTEST_HAS_DEATH_TEST
 
-    }  // namespace internal
+}  // namespace internal
 }  // namespace testing
 
 #endif  // GOOGLETEST_INCLUDE_GTEST_INTERNAL_GTEST_DEATH_TEST_INTERNAL_H_

@@ -165,7 +165,7 @@
 // define one per possible macro that relies on this behavior. Note "_Args" must
 // be parenthesized.
 #define GMOCK_PP_INTERNAL_INTERNAL_16TH(_1, _2, _3, _4, _5, _6, _7, _8, _9, \
-                                        _10, _11, _12, _13, _14, _15, _16, \
+                                        _10, _11, _12, _13, _14, _15, _16,  \
                                         ...)                                \
   _16
 #define GMOCK_PP_INTERNAL_16TH(_Args) \

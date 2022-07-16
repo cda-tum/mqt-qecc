@@ -45,10 +45,10 @@ OUTPUT = gtest_test_utils.Subprocess([EXE_PATH]).output
 # Test.
 class SkipEntireEnvironmentTest(gtest_test_utils.TestCase):
 
-    def testSkipEntireEnvironmentTest(self):
-        self.assertIn('Skipping the entire environment', OUTPUT)
-        self.assertNotIn('FAILED', OUTPUT)
+  def testSkipEntireEnvironmentTest(self):
+    self.assertIn('Skipping the entire environment', OUTPUT)
+    self.assertNotIn('FAILED', OUTPUT)
 
 
 if __name__ == '__main__':
-    gtest_test_utils.Main()
+  gtest_test_utils.Main()

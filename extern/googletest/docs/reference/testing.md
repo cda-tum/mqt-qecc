@@ -2,8 +2,8 @@
 
 <!--* toc_depth: 3 *-->
 
-This page lists the facilities provided by GoogleTest for writing test programs. To use them, include the
-header `gtest/gtest.h`.
+This page lists the facilities provided by GoogleTest for writing test programs.
+To use them, include the header `gtest/gtest.h`.
 
 ## Macros
 
@@ -20,11 +20,13 @@ TEST(<em>TestSuiteName</em>, <em>TestName</em>) {
 Defines an individual test named *`TestName`* in the test suite
 *`TestSuiteName`*, consisting of the given statements.
 
-Both arguments *`TestSuiteName`* and *`TestName`* must be valid C++ identifiers and must not contain underscores (`_`).
-Tests in different test suites can have the same individual name.
+Both arguments *`TestSuiteName`* and *`TestName`* must be valid C++ identifiers
+and must not contain underscores (`_`). Tests in different test suites can have
+the same individual name.
 
 The statements within the test body can be any code under test.
-[Assertions](assertions.md) used within the test body determine the outcome of the test.
+[Assertions](assertions.md) used within the test body determine the outcome of
+the test.
 
 ### TEST_F {#TEST_F}
 
@@ -37,12 +39,14 @@ TEST_F(<em>TestFixtureName</em>, <em>TestName</em>) {
 Defines an individual test named *`TestName`* that uses the test fixture class
 *`TestFixtureName`*. The test suite name is *`TestFixtureName`*.
 
-Both arguments *`TestFixtureName`* and *`TestName`* must be valid C++ identifiers and must not contain underscores (`_`)
-. *`TestFixtureName`* must be the name of a test fixture class—see
+Both arguments *`TestFixtureName`* and *`TestName`* must be valid C++
+identifiers and must not contain underscores (`_`). *`TestFixtureName`* must be
+the name of a test fixture class—see
 [Test Fixtures](../primer.md#same-data-multiple-tests).
 
 The statements within the test body can be any code under test.
-[Assertions](assertions.md) used within the test body determine the outcome of the test.
+[Assertions](assertions.md) used within the test body determine the outcome of
+the test.
 
 ### TEST_P {#TEST_P}
 
@@ -52,16 +56,17 @@ TEST_P(<em>TestFixtureName</em>, <em>TestName</em>) {
 }
 </pre>
 
-Defines an individual value-parameterized test named *`TestName`* that uses the test fixture class *`TestFixtureName`*.
-The test suite name is
+Defines an individual value-parameterized test named *`TestName`* that uses the
+test fixture class *`TestFixtureName`*. The test suite name is
 *`TestFixtureName`*.
 
-Both arguments *`TestFixtureName`* and *`TestName`* must be valid C++ identifiers and must not contain underscores (`_`)
-. *`TestFixtureName`* must be the name of a value-parameterized test fixture class—see
+Both arguments *`TestFixtureName`* and *`TestName`* must be valid C++
+identifiers and must not contain underscores (`_`). *`TestFixtureName`* must be
+the name of a value-parameterized test fixture class—see
 [Value-Parameterized Tests](../advanced.md#value-parameterized-tests).
 
-The statements within the test body can be any code under test. Within the test body, the test parameter can be accessed
-with the `GetParam()` function (see
+The statements within the test body can be any code under test. Within the test
+body, the test parameter can be accessed with the `GetParam()` function (see
 [`WithParamInterface`](#WithParamInterface)). For example:
 
 ```cpp
@@ -72,7 +77,8 @@ TEST_P(MyTestSuite, DoesSomething) {
 }
 ```
 
-[Assertions](assertions.md) used within the test body determine the outcome of the test.
+[Assertions](assertions.md) used within the test body determine the outcome of
+the test.
 
 See also [`INSTANTIATE_TEST_SUITE_P`](#INSTANTIATE_TEST_SUITE_P).
 
@@ -85,12 +91,13 @@ See also [`INSTANTIATE_TEST_SUITE_P`](#INSTANTIATE_TEST_SUITE_P).
 Instantiates the value-parameterized test suite *`TestSuiteName`* (defined with
 [`TEST_P`](#TEST_P)).
 
-The argument *`InstantiationName`* is a unique name for the instantiation of the test suite, to distinguish between
-multiple instantiations. In test output, the instantiation name is added as a prefix to the test suite name
+The argument *`InstantiationName`* is a unique name for the instantiation of the
+test suite, to distinguish between multiple instantiations. In test output, the
+instantiation name is added as a prefix to the test suite name
 *`TestSuiteName`*.
 
-The argument *`param_generator`* is one of the following GoogleTest-provided functions that generate the test
-parameters, all defined in the `::testing`
+The argument *`param_generator`* is one of the following GoogleTest-provided
+functions that generate the test parameters, all defined in the `::testing`
 namespace:
 
 <span id="param-generators"></span>
@@ -101,15 +108,14 @@ namespace:
 | `Values(v1, v2, ..., vN)`    | Yields values `{v1, v2, ..., vN}`.          |
 | `ValuesIn(container)` or `ValuesIn(begin,end)` | Yields values from a C-style array, an STL-style container, or an iterator range `[begin, end)`. |
 | `Bool()`                     | Yields sequence `{false, true}`.            |
-| `Combine(g1, g2, ..., gN)`   | Yields as `std::tuple` *
+| `Combine(g1, g2, ..., gN)`   | Yields as `std::tuple` *n*-tuples all combinations (Cartesian product) of the values generated by the given *n* generators `g1`, `g2`, ..., `gN`. |
 
-n*-tuples all combinations (Cartesian product) of the values generated by the given *
-n* generators `g1`, `g2`, ..., `gN`. |
-
-The optional last argument *`name_generator`* is a function or functor that generates custom test name suffixes based on
-the test parameters. The function must accept an argument of type
-[`TestParamInfo<class ParamType>`](#TestParamInfo) and return a `std::string`. The test name suffix can only contain
-alphanumeric characters and underscores. GoogleTest provides [`PrintToStringParamName`](#PrintToStringParamName), or a
+The optional last argument *`name_generator`* is a function or functor that
+generates custom test name suffixes based on the test parameters. The function
+must accept an argument of type
+[`TestParamInfo<class ParamType>`](#TestParamInfo) and return a `std::string`.
+The test name suffix can only contain alphanumeric characters and underscores.
+GoogleTest provides [`PrintToStringParamName`](#PrintToStringParamName), or a
 custom function can be used for more control:
 
 ```cpp
@@ -133,9 +139,11 @@ See also
 
 `TYPED_TEST_SUITE(`*`TestFixtureName`*`,`*`Types`*`)`
 
-Defines a typed test suite based on the test fixture *`TestFixtureName`*. The test suite name is *`TestFixtureName`*.
+Defines a typed test suite based on the test fixture *`TestFixtureName`*. The
+test suite name is *`TestFixtureName`*.
 
-The argument *`TestFixtureName`* is a fixture class template, parameterized by a type, for example:
+The argument *`TestFixtureName`* is a fixture class template, parameterized by a
+type, for example:
 
 ```cpp
 template <typename T>
@@ -148,7 +156,8 @@ class MyFixture : public ::testing::Test {
 };
 ```
 
-The argument *`Types`* is a [`Types`](#Types) object representing the list of types to run the tests on, for example:
+The argument *`Types`* is a [`Types`](#Types) object representing the list of
+types to run the tests on, for example:
 
 ```cpp
 using MyTypes = ::testing::Types<char, int, unsigned int>;
@@ -173,8 +182,8 @@ Defines an individual typed test named *`TestName`* in the typed test suite
 *`TestSuiteName`*. The test suite must be defined with
 [`TYPED_TEST_SUITE`](#TYPED_TEST_SUITE).
 
-Within the test body, the special name `TypeParam` refers to the type parameter, and `TestFixture` refers to the fixture
-class. See the following example:
+Within the test body, the special name `TypeParam` refers to the type parameter,
+and `TestFixture` refers to the fixture class. See the following example:
 
 ```cpp
 TYPED_TEST(MyFixture, Example) {
@@ -205,11 +214,12 @@ For more information, see [Typed Tests](../advanced.md#typed-tests).
 Defines a type-parameterized test suite based on the test fixture
 *`TestFixtureName`*. The test suite name is *`TestFixtureName`*.
 
-The argument *`TestFixtureName`* is a fixture class template, parameterized by a type.
-See [`TYPED_TEST_SUITE`](#TYPED_TEST_SUITE) for an example.
+The argument *`TestFixtureName`* is a fixture class template, parameterized by a
+type. See [`TYPED_TEST_SUITE`](#TYPED_TEST_SUITE) for an example.
 
 See also [`TYPED_TEST_P`](#TYPED_TEST_P) and
-[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more information.
+[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more
+information.
 
 ### TYPED_TEST_P {#TYPED_TEST_P}
 
@@ -219,15 +229,17 @@ TYPED_TEST_P(<em>TestSuiteName</em>, <em>TestName</em>) {
 }
 </pre>
 
-Defines an individual type-parameterized test named *`TestName`* in the type-parameterized test suite *`TestSuiteName`*.
-The test suite must be defined with [`TYPED_TEST_SUITE_P`](#TYPED_TEST_SUITE_P).
+Defines an individual type-parameterized test named *`TestName`* in the
+type-parameterized test suite *`TestSuiteName`*. The test suite must be defined
+with [`TYPED_TEST_SUITE_P`](#TYPED_TEST_SUITE_P).
 
-Within the test body, the special name `TypeParam` refers to the type parameter, and `TestFixture` refers to the fixture
-class. See [`TYPED_TEST`](#TYPED_TEST)
+Within the test body, the special name `TypeParam` refers to the type parameter,
+and `TestFixture` refers to the fixture class. See [`TYPED_TEST`](#TYPED_TEST)
 for an example.
 
 See also [`REGISTER_TYPED_TEST_SUITE_P`](#REGISTER_TYPED_TEST_SUITE_P) and
-[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more information.
+[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more
+information.
 
 ### REGISTER_TYPED_TEST_SUITE_P {#REGISTER_TYPED_TEST_SUITE_P}
 
@@ -250,20 +262,24 @@ REGISTER_TYPED_TEST_SUITE_P(MyFixture, HasPropertyA, HasPropertyB);
 ```
 
 See also [`INSTANTIATE_TYPED_TEST_SUITE_P`](#INSTANTIATE_TYPED_TEST_SUITE_P) and
-[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more information.
+[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more
+information.
 
 ### INSTANTIATE_TYPED_TEST_SUITE_P {#INSTANTIATE_TYPED_TEST_SUITE_P}
 
 `INSTANTIATE_TYPED_TEST_SUITE_P(`*`InstantiationName`*`,`*`TestSuiteName`*`,`*`Types`*`)`
 
-Instantiates the type-parameterized test suite *`TestSuiteName`*. The test suite must be registered with
+Instantiates the type-parameterized test suite *`TestSuiteName`*. The test suite
+must be registered with
 [`REGISTER_TYPED_TEST_SUITE_P`](#REGISTER_TYPED_TEST_SUITE_P).
 
-The argument *`InstantiationName`* is a unique name for the instantiation of the test suite, to distinguish between
-multiple instantiations. In test output, the instantiation name is added as a prefix to the test suite name
+The argument *`InstantiationName`* is a unique name for the instantiation of the
+test suite, to distinguish between multiple instantiations. In test output, the
+instantiation name is added as a prefix to the test suite name
 *`TestSuiteName`*.
 
-The argument *`Types`* is a [`Types`](#Types) object representing the list of types to run the tests on, for example:
+The argument *`Types`* is a [`Types`](#Types) object representing the list of
+types to run the tests on, for example:
 
 ```cpp
 using MyTypes = ::testing::Types<char, int, unsigned int>;
@@ -280,11 +296,12 @@ For more information, see
 
 `FRIEND_TEST(`*`TestSuiteName`*`,`*`TestName`*`)`
 
-Within a class body, declares an individual test as a friend of the class, enabling the test to access private class
-members.
+Within a class body, declares an individual test as a friend of the class,
+enabling the test to access private class members.
 
-If the class is defined in a namespace, then in order to be friends of the class, test fixtures and tests must be
-defined in the exact same namespace, without inline or anonymous namespaces.
+If the class is defined in a namespace, then in order to be friends of the
+class, test fixtures and tests must be defined in the exact same namespace,
+without inline or anonymous namespaces.
 
 For example, if the class definition looks like the following:
 
@@ -316,14 +333,16 @@ TEST_F(MyClassTest, HasPropertyB) { ... }
 }  // namespace my_namespace
 ```
 
-See [Testing Private Code](../advanced.md#testing-private-code) for more information.
+See [Testing Private Code](../advanced.md#testing-private-code) for more
+information.
 
 ### SCOPED_TRACE {#SCOPED_TRACE}
 
 `SCOPED_TRACE(`*`message`*`)`
 
-Causes the current file name, line number, and the given message *`message`* to be added to the failure message for each
-assertion failure that occurs in the scope.
+Causes the current file name, line number, and the given message *`message`* to
+be added to the failure message for each assertion failure that occurs in the
+scope.
 
 For more information, see
 [Adding Traces to Assertions](../advanced.md#adding-traces-to-assertions).
@@ -336,26 +355,30 @@ See also the [`ScopedTrace` class](#ScopedTrace).
 
 Prevents further test execution at runtime.
 
-Can be used in individual test cases or in the `SetUp()` methods of test environments or test fixtures (classes derived
-from the
-[`Environment`](#Environment) or [`Test`](#Test) classes). If used in a global test environment `SetUp()` method, it
-skips all tests in the test program. If used in a test fixture `SetUp()` method, it skips all tests in the corresponding
+Can be used in individual test cases or in the `SetUp()` methods of test
+environments or test fixtures (classes derived from the
+[`Environment`](#Environment) or [`Test`](#Test) classes). If used in a global
+test environment `SetUp()` method, it skips all tests in the test program. If
+used in a test fixture `SetUp()` method, it skips all tests in the corresponding
 test suite.
 
 Similar to assertions, `GTEST_SKIP` allows streaming a custom message into it.
 
-See [Skipping Test Execution](../advanced.md#skipping-test-execution) for more information.
+See [Skipping Test Execution](../advanced.md#skipping-test-execution) for more
+information.
 
 ### GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST {#GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST}
 
 `GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(`*`TestSuiteName`*`)`
 
-Allows the value-parameterized test suite *`TestSuiteName`* to be uninstantiated.
+Allows the value-parameterized test suite *`TestSuiteName`* to be
+uninstantiated.
 
 By default, every [`TEST_P`](#TEST_P) call without a corresponding
-[`INSTANTIATE_TEST_SUITE_P`](#INSTANTIATE_TEST_SUITE_P) call causes a failing test in the test
-suite `GoogleTestVerification`.
-`GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST` suppresses this failure for the given test suite.
+[`INSTANTIATE_TEST_SUITE_P`](#INSTANTIATE_TEST_SUITE_P) call causes a failing
+test in the test suite `GoogleTestVerification`.
+`GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST` suppresses this failure for the
+given test suite.
 
 ## Classes and types
 
@@ -367,8 +390,8 @@ GoogleTest defines the following classes and types to help with writing tests.
 
 A class for indicating whether an assertion was successful.
 
-When the assertion wasn't successful, the `AssertionResult` object stores a non-empty failure message that can be
-retrieved with the object's `message()`
+When the assertion wasn't successful, the `AssertionResult` object stores a
+non-empty failure message that can be retrieved with the object's `message()`
 method.
 
 To create an instance of this class, use one of the factory functions
@@ -387,8 +410,8 @@ Exception which can be thrown from
 `::testing::EmptyTestEventListener`
 
 Provides an empty implementation of all methods in the
-[`TestEventListener`](#TestEventListener) interface, such that a subclass only needs to override the methods it cares
-about.
+[`TestEventListener`](#TestEventListener) interface, such that a subclass only
+needs to override the methods it cares about.
 
 ### Environment {#Environment}
 
@@ -415,8 +438,8 @@ Override this to define how to tear down the environment.
 
 `::testing::ScopedTrace`
 
-An instance of this class causes a trace to be included in every test failure message generated by code in the scope of
-the lifetime of the `ScopedTrace`
+An instance of this class causes a trace to be included in every test failure
+message generated by code in the scope of the lifetime of the `ScopedTrace`
 instance. The effect is undone with the destruction of the instance.
 
 The `ScopedTrace` constructor has the following form:
@@ -432,8 +455,8 @@ Example usage:
 ::testing::ScopedTrace trace("file.cc", 123, "message");
 ```
 
-The resulting trace includes the given source file path and line number, and the given message. The `message` argument
-can be anything streamable to
+The resulting trace includes the given source file path and line number, and the
+given message. The `message` argument can be anything streamable to
 `std::ostream`.
 
 See also [`SCOPED_TRACE`](#SCOPED_TRACE).
@@ -476,7 +499,8 @@ Returns true if and only if the current test has a nonfatal failure.
 
 `static bool Test::HasFailure()`
 
-Returns true if and only if the current test has any failure, either fatal or nonfatal.
+Returns true if and only if the current test has any failure, either fatal or
+nonfatal.
 
 ##### IsSkipped {#Test::IsSkipped}
 
@@ -486,23 +510,28 @@ Returns true if and only if the current test was skipped.
 
 ##### RecordProperty {#Test::RecordProperty}
 
-`static void Test::RecordProperty(const std::string& key, const std::string& value)` \
+`static void Test::RecordProperty(const std::string& key, const std::string&
+value)` \
 `static void Test::RecordProperty(const std::string& key, int value)`
 
-Logs a property for the current test, test suite, or entire invocation of the test program. Only the last value for a
-given key is logged.
+Logs a property for the current test, test suite, or entire invocation of the
+test program. Only the last value for a given key is logged.
 
-The key must be a valid XML attribute name, and cannot conflict with the ones already used by GoogleTest (`name`, `file`
-, `line`, `status`, `time`,
+The key must be a valid XML attribute name, and cannot conflict with the ones
+already used by GoogleTest (`name`, `file`, `line`, `status`, `time`,
 `classname`, `type_param`, and `value_param`).
 
-`RecordProperty` is `public static` so it can be called from utility functions that are not members of the test fixture.
+`RecordProperty` is `public static` so it can be called from utility functions
+that are not members of the test fixture.
 
-Calls to `RecordProperty` made during the lifespan of the test (from the moment its constructor starts to the moment its
-destructor finishes) are output in XML as attributes of the `<testcase>` element. Properties recorded from a fixture's
-`SetUpTestSuite` or `TearDownTestSuite` methods are logged as attributes of the corresponding `<testsuite>` element.
-Calls to `RecordProperty` made in the global context (before or after invocation of `RUN_ALL_TESTS` or from the
-`SetUp`/`TearDown` methods of registered `Environment` objects) are output as attributes of the `<testsuites>` element.
+Calls to `RecordProperty` made during the lifespan of the test (from the moment
+its constructor starts to the moment its destructor finishes) are output in XML
+as attributes of the `<testcase>` element. Properties recorded from a fixture's
+`SetUpTestSuite` or `TearDownTestSuite` methods are logged as attributes of the
+corresponding `<testsuite>` element. Calls to `RecordProperty` made in the
+global context (before or after invocation of `RUN_ALL_TESTS` or from the
+`SetUp`/`TearDown` methods of registered `Environment` objects) are output as
+attributes of the `<testsuites>` element.
 
 #### Protected Methods {#Test-protected}
 
@@ -510,7 +539,8 @@ Calls to `RecordProperty` made in the global context (before or after invocation
 
 `virtual void Test::SetUp()`
 
-Override this to perform test fixture setup. GoogleTest calls `SetUp()` before running each individual test.
+Override this to perform test fixture setup. GoogleTest calls `SetUp()` before
+running each individual test.
 
 ##### TearDown {#Test::TearDown}
 
@@ -542,8 +572,8 @@ Gets the name of the test suite.
 
 `const char* TestSuite::type_param() const`
 
-Returns the name of the parameter type, or `NULL` if this is not a typed or type-parameterized test suite.
-See [Typed Tests](../advanced.md#typed-tests) and
+Returns the name of the parameter type, or `NULL` if this is not a typed or
+type-parameterized test suite. See [Typed Tests](../advanced.md#typed-tests) and
 [Type-Parameterized Tests](../advanced.md#type-parameterized-tests).
 
 ##### should_run {#TestSuite::should_run}
@@ -629,14 +659,15 @@ Gets the time of the test suite start, in ms from the start of the UNIX epoch.
 `const TestInfo* TestSuite::GetTestInfo(int i) const`
 
 Returns the [`TestInfo`](#TestInfo) for the `i`-th test among all the tests. `i`
-can range from 0 to `total_test_count() - 1`. If `i` is not in that range, returns `NULL`.
+can range from 0 to `total_test_count() - 1`. If `i` is not in that range,
+returns `NULL`.
 
 ##### ad_hoc_test_result {#TestSuite::ad_hoc_test_result}
 
 `const TestResult& TestSuite::ad_hoc_test_result() const`
 
-Returns the [`TestResult`](#TestResult) that holds test properties recorded during execution of `SetUpTestSuite`
-and `TearDownTestSuite`.
+Returns the [`TestResult`](#TestResult) that holds test properties recorded
+during execution of `SetUpTestSuite` and `TearDownTestSuite`.
 
 ### TestInfo {#TestInfo}
 
@@ -662,15 +693,16 @@ Returns the test name.
 
 `const char* TestInfo::type_param() const`
 
-Returns the name of the parameter type, or `NULL` if this is not a typed or type-parameterized test.
-See [Typed Tests](../advanced.md#typed-tests) and
+Returns the name of the parameter type, or `NULL` if this is not a typed or
+type-parameterized test. See [Typed Tests](../advanced.md#typed-tests) and
 [Type-Parameterized Tests](../advanced.md#type-parameterized-tests).
 
 ##### value_param {#TestInfo::value_param}
 
 `const char* TestInfo::value_param() const`
 
-Returns the text representation of the value parameter, or `NULL` if this is not a value-parameterized test. See
+Returns the text representation of the value parameter, or `NULL` if this is not
+a value-parameterized test. See
 [Value-Parameterized Tests](../advanced.md#value-parameterized-tests).
 
 ##### file {#TestInfo::file}
@@ -695,10 +727,12 @@ Returns true if this test should not be run because it's in another shard.
 
 `bool TestInfo::should_run() const`
 
-Returns true if this test should run, that is if the test is not disabled (or it is disabled but
-the `also_run_disabled_tests` flag has been specified) and its full name matches the user-specified filter.
+Returns true if this test should run, that is if the test is not disabled (or it
+is disabled but the `also_run_disabled_tests` flag has been specified) and its
+full name matches the user-specified filter.
 
-GoogleTest allows the user to filter the tests by their full names. Only the tests that match the filter will run. See
+GoogleTest allows the user to filter the tests by their full names. Only the
+tests that match the filter will run. See
 [Running a Subset of the Tests](../advanced.md#running-a-subset-of-the-tests)
 for more information.
 
@@ -718,9 +752,11 @@ Returns the result of the test. See [`TestResult`](#TestResult).
 
 `::testing::TestParamInfo<T>`
 
-Describes a parameter to a value-parameterized test. The type `T` is the type of the parameter.
+Describes a parameter to a value-parameterized test. The type `T` is the type of
+the parameter.
 
-Contains the fields `param` and `index` which hold the value of the parameter and its integer index respectively.
+Contains the fields `param` and `index` which hold the value of the parameter
+and its integer index respectively.
 
 ### UnitTest {#UnitTest}
 
@@ -740,7 +776,8 @@ This class contains information about the test program.
 `static UnitTest* UnitTest::GetInstance()`
 
 Gets the singleton `UnitTest` object. The first time this method is called, a
-`UnitTest` object is constructed and returned. Consecutive calls will return the same object.
+`UnitTest` object is constructed and returned. Consecutive calls will return the
+same object.
 
 ##### original_working_dir {#UnitTest::original_working_dir}
 
@@ -753,13 +790,15 @@ Returns the working directory when the first [`TEST()`](#TEST) or
 
 `const TestSuite* UnitTest::current_test_suite() const`
 
-Returns the [`TestSuite`](#TestSuite) object for the test that's currently running, or `NULL` if no test is running.
+Returns the [`TestSuite`](#TestSuite) object for the test that's currently
+running, or `NULL` if no test is running.
 
 ##### current_test_info {#UnitTest::current_test_info}
 
 `const TestInfo* UnitTest::current_test_info() const`
 
-Returns the [`TestInfo`](#TestInfo) object for the test that's currently running, or `NULL` if no test is running.
+Returns the [`TestInfo`](#TestInfo) object for the test that's currently
+running, or `NULL` if no test is running.
 
 ##### random_seed {#UnitTest::random_seed}
 
@@ -789,7 +828,8 @@ Gets the number of all test suites.
 
 `int UnitTest::test_suite_to_run_count() const`
 
-Gets the number of all test suites that contain at least one test that should run.
+Gets the number of all test suites that contain at least one test that should
+run.
 
 ##### successful_test_count {#UnitTest::successful_test_count}
 
@@ -861,36 +901,37 @@ Returns true if and only if the unit test passed (i.e. all test suites passed).
 
 `bool UnitTest::Failed() const`
 
-Returns true if and only if the unit test failed (i.e. some test suite failed or something outside of all tests failed).
+Returns true if and only if the unit test failed (i.e. some test suite failed or
+something outside of all tests failed).
 
 ##### GetTestSuite {#UnitTest::GetTestSuite}
 
 `const TestSuite* UnitTest::GetTestSuite(int i) const`
 
-Gets the [`TestSuite`](#TestSuite) object for the `i`-th test suite among all the test suites. `i` can range from 0
-to `total_test_suite_count() - 1`. If `i`
+Gets the [`TestSuite`](#TestSuite) object for the `i`-th test suite among all
+the test suites. `i` can range from 0 to `total_test_suite_count() - 1`. If `i`
 is not in that range, returns `NULL`.
 
 ##### ad_hoc_test_result {#UnitTest::ad_hoc_test_result}
 
 `const TestResult& UnitTest::ad_hoc_test_result() const`
 
-Returns the [`TestResult`](#TestResult) containing information on test failures and properties logged outside of
-individual test suites.
+Returns the [`TestResult`](#TestResult) containing information on test failures
+and properties logged outside of individual test suites.
 
 ##### listeners {#UnitTest::listeners}
 
 `TestEventListeners& UnitTest::listeners()`
 
-Returns the list of event listeners that can be used to track events inside GoogleTest.
-See [`TestEventListeners`](#TestEventListeners).
+Returns the list of event listeners that can be used to track events inside
+GoogleTest. See [`TestEventListeners`](#TestEventListeners).
 
 ### TestEventListener {#TestEventListener}
 
 `::testing::TestEventListener`
 
-The interface for tracing execution of tests. The methods below are listed in the order the corresponding events are
-fired.
+The interface for tracing execution of tests. The methods below are listed in
+the order the corresponding events are fired.
 
 #### Public Methods {#TestEventListener-public}
 
@@ -902,20 +943,24 @@ Fired before any test activity starts.
 
 ##### OnTestIterationStart {#TestEventListener::OnTestIterationStart}
 
-`virtual void TestEventListener::OnTestIterationStart(const UnitTest& unit_test, int iteration)`
+`virtual void TestEventListener::OnTestIterationStart(const UnitTest& unit_test,
+int iteration)`
 
-Fired before each iteration of tests starts. There may be more than one iteration if `GTEST_FLAG(repeat)` is
-set. `iteration` is the iteration index, starting from 0.
+Fired before each iteration of tests starts. There may be more than one
+iteration if `GTEST_FLAG(repeat)` is set. `iteration` is the iteration index,
+starting from 0.
 
 ##### OnEnvironmentsSetUpStart {#TestEventListener::OnEnvironmentsSetUpStart}
 
-`virtual void TestEventListener::OnEnvironmentsSetUpStart(const UnitTest& unit_test)`
+`virtual void TestEventListener::OnEnvironmentsSetUpStart(const UnitTest&
+unit_test)`
 
 Fired before environment set-up for each iteration of tests starts.
 
 ##### OnEnvironmentsSetUpEnd {#TestEventListener::OnEnvironmentsSetUpEnd}
 
-`virtual void TestEventListener::OnEnvironmentsSetUpEnd(const UnitTest& unit_test)`
+`virtual void TestEventListener::OnEnvironmentsSetUpEnd(const UnitTest&
+unit_test)`
 
 Fired after environment set-up for each iteration of tests ends.
 
@@ -933,10 +978,11 @@ Fired before the test starts.
 
 ##### OnTestPartResult {#TestEventListener::OnTestPartResult}
 
-`virtual void TestEventListener::OnTestPartResult(const TestPartResult& test_part_result)`
+`virtual void TestEventListener::OnTestPartResult(const TestPartResult&
+test_part_result)`
 
-Fired after a failed assertion or a `SUCCEED()` invocation. If you want to throw an exception from this function to skip
-to the next test, it must be an
+Fired after a failed assertion or a `SUCCEED()` invocation. If you want to throw
+an exception from this function to skip to the next test, it must be an
 [`AssertionException`](#AssertionException) or inherited from it.
 
 ##### OnTestEnd {#TestEventListener::OnTestEnd}
@@ -953,19 +999,22 @@ Fired after the test suite ends.
 
 ##### OnEnvironmentsTearDownStart {#TestEventListener::OnEnvironmentsTearDownStart}
 
-`virtual void TestEventListener::OnEnvironmentsTearDownStart(const UnitTest& unit_test)`
+`virtual void TestEventListener::OnEnvironmentsTearDownStart(const UnitTest&
+unit_test)`
 
 Fired before environment tear-down for each iteration of tests starts.
 
 ##### OnEnvironmentsTearDownEnd {#TestEventListener::OnEnvironmentsTearDownEnd}
 
-`virtual void TestEventListener::OnEnvironmentsTearDownEnd(const UnitTest& unit_test)`
+`virtual void TestEventListener::OnEnvironmentsTearDownEnd(const UnitTest&
+unit_test)`
 
 Fired after environment tear-down for each iteration of tests ends.
 
 ##### OnTestIterationEnd {#TestEventListener::OnTestIterationEnd}
 
-`virtual void TestEventListener::OnTestIterationEnd(const UnitTest& unit_test, int iteration)`
+`virtual void TestEventListener::OnTestIterationEnd(const UnitTest& unit_test,
+int iteration)`
 
 Fired after each iteration of tests finishes.
 
@@ -987,41 +1036,45 @@ Lets users add listeners to track events in GoogleTest.
 
 `void TestEventListeners::Append(TestEventListener* listener)`
 
-Appends an event listener to the end of the list. GoogleTest assumes ownership of the listener (i.e. it will delete the
-listener when the test program finishes).
+Appends an event listener to the end of the list. GoogleTest assumes ownership
+of the listener (i.e. it will delete the listener when the test program
+finishes).
 
 ##### Release {#TestEventListeners::Release}
 
 `TestEventListener* TestEventListeners::Release(TestEventListener* listener)`
 
-Removes the given event listener from the list and returns it. It then becomes the caller's responsibility to delete the
-listener. Returns `NULL` if the listener is not found in the list.
+Removes the given event listener from the list and returns it. It then becomes
+the caller's responsibility to delete the listener. Returns `NULL` if the
+listener is not found in the list.
 
 ##### default_result_printer {#TestEventListeners::default_result_printer}
 
 `TestEventListener* TestEventListeners::default_result_printer() const`
 
-Returns the standard listener responsible for the default console output. Can be removed from the listeners list to shut
-down default console output. Note that removing this object from the listener list with
-[`Release()`](#TestEventListeners::Release) transfers its ownership to the caller and makes this function return `NULL`
-the next time.
+Returns the standard listener responsible for the default console output. Can be
+removed from the listeners list to shut down default console output. Note that
+removing this object from the listener list with
+[`Release()`](#TestEventListeners::Release) transfers its ownership to the
+caller and makes this function return `NULL` the next time.
 
 ##### default_xml_generator {#TestEventListeners::default_xml_generator}
 
 `TestEventListener* TestEventListeners::default_xml_generator() const`
 
-Returns the standard listener responsible for the default XML output controlled by the `--gtest_output=xml` flag. Can be
-removed from the listeners list by users who want to shut down the default XML output controlled by this flag and
-substitute it with custom one. Note that removing this object from the listener list
-with [`Release()`](#TestEventListeners::Release) transfers its ownership to the caller and makes this function
-return `NULL` the next time.
+Returns the standard listener responsible for the default XML output controlled
+by the `--gtest_output=xml` flag. Can be removed from the listeners list by
+users who want to shut down the default XML output controlled by this flag and
+substitute it with custom one. Note that removing this object from the listener
+list with [`Release()`](#TestEventListeners::Release) transfers its ownership to
+the caller and makes this function return `NULL` the next time.
 
 ### TestPartResult {#TestPartResult}
 
 `::testing::TestPartResult`
 
-A copyable object representing the result of a test part (i.e. an assertion or an explicit `FAIL()`, `ADD_FAILURE()`,
-or `SUCCESS()`).
+A copyable object representing the result of a test part (i.e. an assertion or
+an explicit `FAIL()`, `ADD_FAILURE()`, or `SUCCESS()`).
 
 #### Public Methods {#TestPartResult-public}
 
@@ -1046,13 +1099,15 @@ enum Type {
 
 `const char* TestPartResult::file_name() const`
 
-Gets the name of the source file where the test part took place, or `NULL` if it's unknown.
+Gets the name of the source file where the test part took place, or `NULL` if
+it's unknown.
 
 ##### line_number {#TestPartResult::line_number}
 
 `int TestPartResult::line_number() const`
 
-Gets the line in the source file where the test part took place, or `-1` if it's unknown.
+Gets the line in the source file where the test part took place, or `-1` if it's
+unknown.
 
 ##### summary {#TestPartResult::summary}
 
@@ -1100,7 +1155,8 @@ Returns true if and only if the test part failed.
 
 `::testing::TestProperty`
 
-A copyable object representing a user-specified test property which can be output as a key/value string pair.
+A copyable object representing a user-specified test property which can be
+output as a key/value string pair.
 
 #### Public Methods {#TestProperty-public}
 
@@ -1136,8 +1192,8 @@ Contains information about the result of a single test.
 
 `int TestResult::total_part_count() const`
 
-Gets the number of all test parts. This is the sum of the number of successful test parts and the number of failed test
-parts.
+Gets the number of all test parts. This is the sum of the number of successful
+test parts and the number of failed test parts.
 
 ##### test_property_count {#TestResult::test_property_count}
 
@@ -1191,8 +1247,8 @@ Gets the time of the test case start, in ms from the start of the UNIX epoch.
 
 `const TestPartResult& TestResult::GetTestPartResult(int i) const`
 
-Returns the [`TestPartResult`](#TestPartResult) for the `i`-th test part result among all the results. `i` can range
-from 0 to `total_part_count() - 1`. If `i`
+Returns the [`TestPartResult`](#TestPartResult) for the `i`-th test part result
+among all the results. `i` can range from 0 to `total_part_count() - 1`. If `i`
 is not in that range, aborts the program.
 
 ##### GetTestProperty {#TestResult::GetTestProperty}
@@ -1200,7 +1256,8 @@ is not in that range, aborts the program.
 `const TestProperty& TestResult::GetTestProperty(int i) const`
 
 Returns the [`TestProperty`](#TestProperty) object for the `i`-th test property.
-`i` can range from 0 to `test_property_count() - 1`. If `i` is not in that range, aborts the program.
+`i` can range from 0 to `test_property_count() - 1`. If `i` is not in that
+range, aborts the program.
 
 ### TimeInMillis {#TimeInMillis}
 
@@ -1221,7 +1278,8 @@ The template argument `T...` can be any number of types, for example:
 ```
 
 See [Typed Tests](../advanced.md#typed-tests) and
-[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more information.
+[Type-Parameterized Tests](../advanced.md#type-parameterized-tests) for more
+information.
 
 ### WithParamInterface {#WithParamInterface}
 
@@ -1231,11 +1289,11 @@ The pure interface class that all value-parameterized tests inherit from.
 
 A value-parameterized test fixture class must inherit from both [`Test`](#Test)
 and `WithParamInterface`. In most cases that just means inheriting from
-[`TestWithParam`](#TestWithParam), but more complicated test hierarchies may need to inherit from `Test`
-and `WithParamInterface` at different levels.
+[`TestWithParam`](#TestWithParam), but more complicated test hierarchies may
+need to inherit from `Test` and `WithParamInterface` at different levels.
 
-This interface defines the type alias `ParamType` for the parameter type `T` and has support for accessing the test
-parameter value via the `GetParam()` method:
+This interface defines the type alias `ParamType` for the parameter type `T` and
+has support for accessing the test parameter value via the `GetParam()` method:
 
 ```
 static const ParamType& GetParam()
@@ -1246,7 +1304,8 @@ For more information, see
 
 ## Functions
 
-GoogleTest defines the following functions to help with writing and running tests.
+GoogleTest defines the following functions to help with writing and running
+tests.
 
 ### InitGoogleTest {#InitGoogleTest}
 
@@ -1255,14 +1314,17 @@ GoogleTest defines the following functions to help with writing and running test
 `void ::testing::InitGoogleTest()`
 
 Initializes GoogleTest. This must be called before calling
-[`RUN_ALL_TESTS()`](#RUN_ALL_TESTS). In particular, it parses the command line for the flags that GoogleTest recognizes.
-Whenever a GoogleTest flag is seen, it is removed from `argv`, and `*argc` is decremented.
+[`RUN_ALL_TESTS()`](#RUN_ALL_TESTS). In particular, it parses the command line
+for the flags that GoogleTest recognizes. Whenever a GoogleTest flag is seen, it
+is removed from `argv`, and `*argc` is decremented.
 
 No value is returned. Instead, the GoogleTest flag variables are updated.
 
-The `InitGoogleTest(int* argc, wchar_t** argv)` overload can be used in Windows programs compiled in `UNICODE` mode.
+The `InitGoogleTest(int* argc, wchar_t** argv)` overload can be used in Windows
+programs compiled in `UNICODE` mode.
 
-The argument-less `InitGoogleTest()` overload can be used on Arduino/embedded platforms where there is no `argc`/`argv`.
+The argument-less `InitGoogleTest()` overload can be used on Arduino/embedded
+platforms where there is no `argc`/`argv`.
 
 ### AddGlobalTestEnvironment {#AddGlobalTestEnvironment}
 
@@ -1270,7 +1332,8 @@ The argument-less `InitGoogleTest()` overload can be used on Arduino/embedded pl
 
 Adds a test environment to the test program. Must be called before
 [`RUN_ALL_TESTS()`](#RUN_ALL_TESTS) is called. See
-[Global Set-Up and Tear-Down](../advanced.md#global-set-up-and-tear-down) for more information.
+[Global Set-Up and Tear-Down](../advanced.md#global-set-up-and-tear-down) for
+more information.
 
 See also [`Environment`](#Environment).
 
@@ -1285,15 +1348,18 @@ TestInfo* ::testing::RegisterTest(const char* test_suite_name, const char* test_
 
 Dynamically registers a test with the framework.
 
-The `factory` argument is a factory callable (move-constructible) object or function pointer that creates a new instance
-of the `Test` object. It handles ownership to the caller. The signature of the callable is `Fixture*()`, where
-`Fixture` is the test fixture class for the test. All tests registered with the same `test_suite_name` must return the
-same fixture type. This is checked at runtime.
+The `factory` argument is a factory callable (move-constructible) object or
+function pointer that creates a new instance of the `Test` object. It handles
+ownership to the caller. The signature of the callable is `Fixture*()`, where
+`Fixture` is the test fixture class for the test. All tests registered with the
+same `test_suite_name` must return the same fixture type. This is checked at
+runtime.
 
 The framework will infer the fixture class from the factory and will call the
 `SetUpTestSuite` and `TearDownTestSuite` methods for it.
 
-Must be called before [`RUN_ALL_TESTS()`](#RUN_ALL_TESTS) is invoked, otherwise behavior is undefined.
+Must be called before [`RUN_ALL_TESTS()`](#RUN_ALL_TESTS) is invoked, otherwise
+behavior is undefined.
 
 See
 [Registering tests programmatically](../advanced.md#registering-tests-programmatically)
@@ -1303,12 +1369,14 @@ for more information.
 
 `int RUN_ALL_TESTS()`
 
-Use this function in `main()` to run all tests. It returns `0` if all tests are successful, or `1` otherwise.
+Use this function in `main()` to run all tests. It returns `0` if all tests are
+successful, or `1` otherwise.
 
 `RUN_ALL_TESTS()` should be invoked after the command line has been parsed by
 [`InitGoogleTest()`](#InitGoogleTest).
 
-This function was formerly a macro; thus, it is in the global namespace and has an all-caps name.
+This function was formerly a macro; thus, it is in the global namespace and has
+an all-caps name.
 
 ### AssertionSuccess {#AssertionSuccess}
 
@@ -1321,7 +1389,8 @@ Creates a successful assertion result. See
 
 `AssertionResult ::testing::AssertionFailure()`
 
-Creates a failed assertion result. Use the `<<` operator to store a failure message:
+Creates a failed assertion result. Use the `<<` operator to store a failure
+message:
 
 ```cpp
 ::testing::AssertionFailure() << "My failure message";
@@ -1353,8 +1422,8 @@ for more information.
 `std::string ::testing::PrintToStringParamName(TestParamInfo<T>& info)`
 
 A built-in parameterized test name generator which returns the result of
-[`PrintToString`](#PrintToString) called on `info.param`. Does not work when the test parameter is a `std::string` or C
-string. See
+[`PrintToString`](#PrintToString) called on `info.param`. Does not work when the
+test parameter is a `std::string` or C string. See
 [Specifying Names for Value-Parameterized Test Parameters](../advanced.md#specifying-names-for-value-parameterized-test-parameters)
 for more information.
 

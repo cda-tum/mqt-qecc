@@ -64,91 +64,129 @@
 #include "gtest/gtest.h"
 
 namespace testing {
-    namespace gmock_matchers_test {
+namespace gmock_matchers_test {
 
-        using std::greater;
-        using std::less;
-        using std::list;
-        using std::make_pair;
-        using std::map;
-        using std::multimap;
-        using std::multiset;
-        using std::ostream;
-        using std::pair;
-        using std::set;
-        using std::stringstream;
-        using std::vector;
-        using testing::internal::DummyMatchResultListener;
-        using testing::internal::ElementMatcherPair;
-        using testing::internal::ElementMatcherPairs;
-        using testing::internal::ElementsAreArrayMatcher;
-        using testing::internal::ExplainMatchFailureTupleTo;
-        using testing::internal::FloatingEqMatcher;
-        using testing::internal::FormatMatcherDescription;
-        using testing::internal::IsReadableTypeName;
-        using testing::internal::MatchMatrix;
-        using testing::internal::PredicateFormatterFromMatcher;
-        using testing::internal::RE;
-        using testing::internal::StreamMatchResultListener;
-        using testing::internal::Strings;
+using std::greater;
+using std::less;
+using std::list;
+using std::make_pair;
+using std::map;
+using std::multimap;
+using std::multiset;
+using std::ostream;
+using std::pair;
+using std::set;
+using std::stringstream;
+using std::vector;
+using testing::internal::DummyMatchResultListener;
+using testing::internal::ElementMatcherPair;
+using testing::internal::ElementMatcherPairs;
+using testing::internal::ElementsAreArrayMatcher;
+using testing::internal::ExplainMatchFailureTupleTo;
+using testing::internal::FloatingEqMatcher;
+using testing::internal::FormatMatcherDescription;
+using testing::internal::IsReadableTypeName;
+using testing::internal::MatchMatrix;
+using testing::internal::PredicateFormatterFromMatcher;
+using testing::internal::RE;
+using testing::internal::StreamMatchResultListener;
+using testing::internal::Strings;
 
 // Helper for testing container-valued matchers in mock method context. It is
 // important to test matchers in this context, since it requires additional type
 // deduction beyond what EXPECT_THAT does, thus making it more restrictive.
-        struct ContainerHelper {
-            MOCK_METHOD1(Call, void(std::vector<std::unique_ptr<int>>));
-        };
+struct ContainerHelper {
+  MOCK_METHOD1(Call, void(std::vector<std::unique_ptr<int>>));
+};
 
 // For testing ExplainMatchResultTo().
-        template<typename T = int>
-        class GreaterThanMatcher : public MatcherInterface<T> {
-        public:
-            explicit GreaterThanMatcher(T rhs) : rhs_(rhs) {}
+template <typename T>
+struct GtestGreaterThanMatcher {
+  using is_gtest_matcher = void;
 
-            void DescribeTo(ostream *os) const override { *os << "is > " << rhs_; }
+  void DescribeTo(ostream* os) const { *os << "is > " << rhs; }
+  void DescribeNegationTo(ostream* os) const { *os << "is <= " << rhs; }
 
-            bool MatchAndExplain(T lhs, MatchResultListener *listener) const override {
-                if (lhs > rhs_) {
-                    *listener << "which is " << (lhs - rhs_) << " more than " << rhs_;
-                } else if (lhs == rhs_) {
-                    *listener << "which is the same as " << rhs_;
-                } else {
-                    *listener << "which is " << (rhs_ - lhs) << " less than " << rhs_;
-                }
+  bool MatchAndExplain(T lhs, MatchResultListener* listener) const {
+    if (lhs > rhs) {
+      *listener << "which is " << (lhs - rhs) << " more than " << rhs;
+    } else if (lhs == rhs) {
+      *listener << "which is the same as " << rhs;
+    } else {
+      *listener << "which is " << (rhs - lhs) << " less than " << rhs;
+    }
 
-                return lhs > rhs_;
-            }
+    return lhs > rhs;
+  }
 
-        private:
-            const T rhs_;
-        };
+  T rhs;
+};
 
-        template<typename T>
-        Matcher<T> GreaterThan(T n) {
-            return MakeMatcher(new GreaterThanMatcher<T>(n));
-        }
+template <typename T>
+GtestGreaterThanMatcher<typename std::decay<T>::type> GtestGreaterThan(
+    T&& rhs) {
+  return {rhs};
+}
+
+// As the matcher above, but using the base class with virtual functions.
+template <typename T>
+class GreaterThanMatcher : public MatcherInterface<T> {
+ public:
+  explicit GreaterThanMatcher(T rhs) : impl_{rhs} {}
+
+  void DescribeTo(ostream* os) const override { impl_.DescribeTo(os); }
+  void DescribeNegationTo(ostream* os) const override {
+    impl_.DescribeNegationTo(os);
+  }
+
+  bool MatchAndExplain(T lhs, MatchResultListener* listener) const override {
+    return impl_.MatchAndExplain(lhs, listener);
+  }
+
+ private:
+  const GtestGreaterThanMatcher<T> impl_;
+};
+
+// Names and instantiates a new instance of GTestMatcherTestP.
+#define INSTANTIATE_GTEST_MATCHER_TEST_P(TestSuite)                         \
+  using TestSuite##P = GTestMatcherTestP;                                   \
+  INSTANTIATE_TEST_SUITE_P(MatcherInterface, TestSuite##P, Values(false));  \
+  INSTANTIATE_TEST_SUITE_P(GtestMatcher, TestSuite##P, Values(true))
+
+class GTestMatcherTestP : public testing::TestWithParam<bool> {
+ public:
+  template <typename T>
+  Matcher<T> GreaterThan(T n) {
+    if (use_gtest_matcher_) {
+      return GtestGreaterThan(n);
+    } else {
+      return MakeMatcher(new GreaterThanMatcher<T>(n));
+    }
+  }
+  const bool use_gtest_matcher_ = GetParam();
+};
 
 // Returns the description of the given matcher.
-        template<typename T>
-        std::string Describe(const Matcher<T> &m) {
-            return DescribeMatcher<T>(m);
-        }
+template <typename T>
+std::string Describe(const Matcher<T>& m) {
+  return DescribeMatcher<T>(m);
+}
 
 // Returns the description of the negation of the given matcher.
-        template<typename T>
-        std::string DescribeNegation(const Matcher<T> &m) {
-            return DescribeMatcher<T>(m, true);
-        }
+template <typename T>
+std::string DescribeNegation(const Matcher<T>& m) {
+  return DescribeMatcher<T>(m, true);
+}
 
 // Returns the reason why x matches, or doesn't match, m.
-        template<typename MatcherType, typename Value>
-        std::string Explain(const MatcherType &m, const Value &x) {
-            StringMatchResultListener listener;
-            ExplainMatchResult(m, x, &listener);
-            return listener.str();
-        }
+template <typename MatcherType, typename Value>
+std::string Explain(const MatcherType& m, const Value& x) {
+  StringMatchResultListener listener;
+  ExplainMatchResult(m, x, &listener);
+  return listener.str();
+}
 
-    }  // namespace gmock_matchers_test
+}  // namespace gmock_matchers_test
 }  // namespace testing
 
 #endif  // GOOGLEMOCK_TEST_GMOCK_MATCHERS_TEST_H_

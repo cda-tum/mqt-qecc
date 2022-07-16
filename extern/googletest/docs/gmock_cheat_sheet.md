@@ -31,8 +31,9 @@ class MockFoo : public Foo {
 };
 ```
 
-To create a "nice" mock, which ignores all uninteresting calls, a "naggy" mock, which warns on all uninteresting calls,
-or a "strict" mock, which treats them as failures:
+To create a "nice" mock, which ignores all uninteresting calls, a "naggy" mock,
+which warns on all uninteresting calls, or a "strict" mock, which treats them as
+failures:
 
 ```cpp
 using ::testing::NiceMock;
@@ -45,7 +46,8 @@ StrictMock<MockFoo> strict_foo;  // The type is a subclass of MockFoo.
 ```
 
 {: .callout .note}
-**Note:** A mock object is currently naggy by default. We may make it nice by default in the future.
+**Note:** A mock object is currently naggy by default. We may make it nice by
+default in the future.
 
 ### Mocking a Class Template {#MockTemplate}
 
@@ -77,8 +79,9 @@ class MockStack : public StackInterface<Elem> {
 
 ### Specifying Calling Conventions for Mock Functions
 
-If your mock function doesn't use the default calling convention, you can specify it by adding `Calltype(convention)`
-to `MOCK_METHOD`'s 4th parameter. For example,
+If your mock function doesn't use the default calling convention, you can
+specify it by adding `Calltype(convention)` to `MOCK_METHOD`'s 4th parameter.
+For example,
 
 ```cpp
   MOCK_METHOD(bool, Foo, (int n), (Calltype(STDMETHODCALLTYPE)));
@@ -92,13 +95,16 @@ where `STDMETHODCALLTYPE` is defined by `<objbase.h>` on Windows.
 
 The typical work flow is:
 
-1. Import the gMock names you need to use. All gMock symbols are in the
-   `testing` namespace unless they are macros or otherwise noted.
-2. Create the mock objects.
-3. Optionally, set the default actions of the mock objects.
-4. Set your expectations on the mock objects (How will they be called? What will they do?).
-5. Exercise code that uses the mock objects; if necessary, check the result using googletest assertions.
-6. When a mock object is destructed, gMock automatically verifies that all expectations on it have been satisfied.
+1.  Import the gMock names you need to use. All gMock symbols are in the
+    `testing` namespace unless they are macros or otherwise noted.
+2.  Create the mock objects.
+3.  Optionally, set the default actions of the mock objects.
+4.  Set your expectations on the mock objects (How will they be called? What
+    will they do?).
+5.  Exercise code that uses the mock objects; if necessary, check the result
+    using googletest assertions.
+6.  When a mock object is destructed, gMock automatically verifies that all
+    expectations on it have been satisfied.
 
 Here's an example:
 
@@ -124,8 +130,8 @@ TEST(BarTest, DoesThis) {
 ## Setting Default Actions {#OnCall}
 
 gMock has a **built-in default action** for any function that returns `void`,
-`bool`, a numeric value, or a pointer. In C++11, it will additionally returns the default-constructed value, if one
-exists for the given type.
+`bool`, a numeric value, or a pointer. In C++11, it will additionally returns
+the default-constructed value, if one exists for the given type.
 
 To customize the default action for functions with return type `T`, use
 [`DefaultValue<T>`](reference/mocking.md#DefaultValue). For example:
@@ -151,10 +157,12 @@ To customize the default action for functions with return type `T`, use
   DefaultValue<std::unique_ptr<Buzz>>::Clear();
 ```
 
-To customize the default action for a particular method of a specific mock object,
-use [`ON_CALL`](reference/mocking.md#ON_CALL). `ON_CALL` has a similar syntax to `EXPECT_CALL`, but it is used for
-setting default behaviors when you do not require that the mock method is called. See
-[Knowing When to Expect](gmock_cook_book.md#UseOnCall) for a more detailed discussion.
+To customize the default action for a particular method of a specific mock
+object, use [`ON_CALL`](reference/mocking.md#ON_CALL). `ON_CALL` has a similar
+syntax to `EXPECT_CALL`, but it is used for setting default behaviors when you
+do not require that the mock method is called. See
+[Knowing When to Expect](gmock_cook_book.md#UseOnCall) for a more detailed
+discussion.
 
 ## Setting Expectations {#ExpectCall}
 
@@ -175,15 +183,16 @@ See the [`Times` clause](reference/mocking.md#EXPECT_CALL.Times) of
 
 ## Expectation Order
 
-By default, expectations can be matched in *any* order. If some or all expectations must be matched in a given order,
-you can use the
+By default, expectations can be matched in *any* order. If some or all
+expectations must be matched in a given order, you can use the
 [`After` clause](reference/mocking.md#EXPECT_CALL.After) or
 [`InSequence` clause](reference/mocking.md#EXPECT_CALL.InSequence) of
 `EXPECT_CALL`, or use an [`InSequence` object](reference/mocking.md#InSequence).
 
 ## Verifying and Resetting a Mock
 
-gMock will verify the expectations on a mock object when it is destructed, or you can do it earlier:
+gMock will verify the expectations on a mock object when it is destructed, or
+you can do it earlier:
 
 ```cpp
 using ::testing::Mock;
@@ -198,11 +207,13 @@ Mock::VerifyAndClearExpectations(&mock_obj);
 Mock::VerifyAndClear(&mock_obj);
 ```
 
-Do not set new expectations after verifying and clearing a mock after its use. Setting expectations after code that
-exercises the mock has undefined behavior. See [Using Mocks in Tests](gmock_for_dummies.md#using-mocks-in-tests) for
-more information.
+Do not set new expectations after verifying and clearing a mock after its use.
+Setting expectations after code that exercises the mock has undefined behavior.
+See [Using Mocks in Tests](gmock_for_dummies.md#using-mocks-in-tests) for more
+information.
 
-You can also tell gMock that a mock object can be leaked and doesn't need to be verified:
+You can also tell gMock that a mock object can be leaked and doesn't need to be
+verified:
 
 ```cpp
 Mock::AllowLeak(&mock_obj);
@@ -219,7 +230,8 @@ class MockFunction<R(A1, ..., An)> {
 };
 ```
 
-See this [recipe](gmock_cook_book.md#UsingCheckPoints) for one application of it.
+See this [recipe](gmock_cook_book.md#UsingCheckPoints) for one application of
+it.
 
 ## Flags
 

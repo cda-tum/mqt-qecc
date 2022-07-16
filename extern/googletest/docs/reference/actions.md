@@ -1,7 +1,8 @@
 # Actions Reference
 
-[**Actions**](../gmock_for_dummies.md#actions-what-should-it-do) specify what a mock function should do when invoked.
-This page lists the built-in actions provided by GoogleTest. All actions are defined in the `::testing` namespace.
+[**Actions**](../gmock_for_dummies.md#actions-what-should-it-do) specify what a
+mock function should do when invoked. This page lists the built-in actions
+provided by GoogleTest. All actions are defined in the `::testing` namespace.
 
 ## Returning a Value
 
@@ -34,7 +35,8 @@ This page lists the built-in actions provided by GoogleTest. All actions are def
 
 ## Using a Function, Functor, or Lambda as an Action
 
-In the following, by "callable" we mean a free function, `std::function`, functor, or lambda.
+In the following, by "callable" we mean a free function, `std::function`,
+functor, or lambda.
 
 | Action                              | Description                            |
 | :---------------------------------- | :------------------------------------- |
@@ -45,9 +47,11 @@ In the following, by "callable" we mean a free function, `std::function`, functo
 | `InvokeWithoutArgs(object_pointer, &class::method)` | Invoke the method on the object, which takes no arguments. |
 | `InvokeArgument<N>(arg1, arg2, ..., argk)` | Invoke the mock function's `N`-th (0-based) argument, which must be a function or a functor, with the `k` arguments. |
 
-The return value of the invoked function is used as the return value of the action.
+The return value of the invoked function is used as the return value of the
+action.
 
-When defining a callable to be used with `Invoke*()`, you can declare any unused parameters as `Unused`:
+When defining a callable to be used with `Invoke*()`, you can declare any unused
+parameters as `Unused`:
 
 ```cpp
 using ::testing::Invoke;
@@ -57,7 +61,8 @@ EXPECT_CALL(mock, Foo("Hi", _, _)).WillOnce(Invoke(Distance));
 ```
 
 `Invoke(callback)` and `InvokeWithoutArgs(callback)` take ownership of
-`callback`, which must be permanent. The type of `callback` must be a base callback type instead of a derived one, e.g.
+`callback`, which must be permanent. The type of `callback` must be a base
+callback type instead of a derived one, e.g.
 
 ```cpp
   BlockingClosure* done = new BlockingClosure;
@@ -67,7 +72,8 @@ EXPECT_CALL(mock, Foo("Hi", _, _)).WillOnce(Invoke(Distance));
   ... Invoke(done2) ...;  // This works.
 ```
 
-In `InvokeArgument<N>(...)`, if an argument needs to be passed by reference, wrap it inside `std::ref()`. For example,
+In `InvokeArgument<N>(...)`, if an argument needs to be passed by reference,
+wrap it inside `std::ref()`. For example,
 
 ```cpp
 using ::testing::InvokeArgument;
@@ -75,7 +81,8 @@ using ::testing::InvokeArgument;
 InvokeArgument<2>(5, string("Hi"), std::ref(foo))
 ```
 
-calls the mock function's #2 argument, passing to it `5` and `string("Hi")` by value, and `foo` by reference.
+calls the mock function's #2 argument, passing to it `5` and `string("Hi")` by
+value, and `foo` by reference.
 
 ## Default Action
 
@@ -84,8 +91,8 @@ calls the mock function's #2 argument, passing to it `5` and `string("Hi")` by v
 | `DoDefault()` | Do the default action (specified by `ON_CALL()` or the built-in one). |
 
 {: .callout .note}
-**Note:** due to technical reasons, `DoDefault()` cannot be used inside a composite action - trying to do so will result
-in a run-time error.
+**Note:** due to technical reasons, `DoDefault()` cannot be used inside a
+composite action - trying to do so will result in a run-time error.
 
 ## Composite Actions
 

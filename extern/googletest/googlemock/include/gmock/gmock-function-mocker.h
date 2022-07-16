@@ -45,67 +45,67 @@
 #include "gmock/internal/gmock-pp.h"
 
 namespace testing {
-    namespace internal {
-        template<typename T>
-        using identity_t = T;
+namespace internal {
+template <typename T>
+using identity_t = T;
 
-        template<typename Pattern>
-        struct ThisRefAdjuster {
-            template<typename T>
-            using AdjustT = typename std::conditional<
-                    std::is_const<typename std::remove_reference<Pattern>::type>::value,
-                    typename std::conditional<std::is_lvalue_reference<Pattern>::value,
-                            const T &, const T &&>::type,
-                    typename std::conditional<std::is_lvalue_reference<Pattern>::value, T &,
-                            T &&>::type>::type;
+template <typename Pattern>
+struct ThisRefAdjuster {
+  template <typename T>
+  using AdjustT = typename std::conditional<
+      std::is_const<typename std::remove_reference<Pattern>::type>::value,
+      typename std::conditional<std::is_lvalue_reference<Pattern>::value,
+                                const T&, const T&&>::type,
+      typename std::conditional<std::is_lvalue_reference<Pattern>::value, T&,
+                                T&&>::type>::type;
 
-            template<typename MockType>
-            static AdjustT<MockType> Adjust(const MockType &mock) {
-                return static_cast<AdjustT<MockType>>(const_cast<MockType &>(mock));
-            }
-        };
+  template <typename MockType>
+  static AdjustT<MockType> Adjust(const MockType& mock) {
+    return static_cast<AdjustT<MockType>>(const_cast<MockType&>(mock));
+  }
+};
 
-        constexpr bool PrefixOf(const char *a, const char *b) {
-            return *a == 0 || (*a == *b && internal::PrefixOf(a + 1, b + 1));
-        }
+constexpr bool PrefixOf(const char* a, const char* b) {
+  return *a == 0 || (*a == *b && internal::PrefixOf(a + 1, b + 1));
+}
 
-        template<int N, int M>
-        constexpr bool StartsWith(const char (&prefix)[N], const char (&str)[M]) {
-            return N <= M && internal::PrefixOf(prefix, str);
-        }
+template <int N, int M>
+constexpr bool StartsWith(const char (&prefix)[N], const char (&str)[M]) {
+  return N <= M && internal::PrefixOf(prefix, str);
+}
 
-        template<int N, int M>
-        constexpr bool EndsWith(const char (&suffix)[N], const char (&str)[M]) {
-            return N <= M && internal::PrefixOf(suffix, str + M - N);
-        }
+template <int N, int M>
+constexpr bool EndsWith(const char (&suffix)[N], const char (&str)[M]) {
+  return N <= M && internal::PrefixOf(suffix, str + M - N);
+}
 
-        template<int N, int M>
-        constexpr bool Equals(const char (&a)[N], const char (&b)[M]) {
-            return N == M && internal::PrefixOf(a, b);
-        }
+template <int N, int M>
+constexpr bool Equals(const char (&a)[N], const char (&b)[M]) {
+  return N == M && internal::PrefixOf(a, b);
+}
 
-        template<int N>
-        constexpr bool ValidateSpec(const char (&spec)[N]) {
-            return internal::Equals("const", spec) ||
-                   internal::Equals("override", spec) ||
-                   internal::Equals("final", spec) ||
-                   internal::Equals("noexcept", spec) ||
-                   (internal::StartsWith("noexcept(", spec) &&
-                    internal::EndsWith(")", spec)) ||
-                   internal::Equals("ref(&)", spec) ||
-                   internal::Equals("ref(&&)", spec) ||
-                   (internal::StartsWith("Calltype(", spec) &&
-                    internal::EndsWith(")", spec));
-        }
+template <int N>
+constexpr bool ValidateSpec(const char (&spec)[N]) {
+  return internal::Equals("const", spec) ||
+         internal::Equals("override", spec) ||
+         internal::Equals("final", spec) ||
+         internal::Equals("noexcept", spec) ||
+         (internal::StartsWith("noexcept(", spec) &&
+          internal::EndsWith(")", spec)) ||
+         internal::Equals("ref(&)", spec) ||
+         internal::Equals("ref(&&)", spec) ||
+         (internal::StartsWith("Calltype(", spec) &&
+          internal::EndsWith(")", spec));
+}
 
-    }  // namespace internal
+}  // namespace internal
 
 // The style guide prohibits "using" statements in a namespace scope
 // inside a header file.  However, the FunctionMocker class template
 // is meant to be defined in the ::testing namespace.  The following
 // line is just a trick for working around a bug in MSVC 8.0, which
 // cannot handle it if we define FunctionMocker in ::testing.
-    using internal::FunctionMocker;
+using internal::FunctionMocker;
 }  // namespace testing
 
 #define MOCK_METHOD(...) \
@@ -170,8 +170,8 @@ namespace testing {
 #define GMOCK_INTERNAL_ASSERT_VALID_SPEC(_Spec) \
   GMOCK_PP_FOR_EACH(GMOCK_INTERNAL_ASSERT_VALID_SPEC_ELEMENT, ~, _Spec)
 
-#define GMOCK_INTERNAL_MOCK_METHOD_IMPL(_N, _MethodName, _Constness, \
-                                        _Override, _Final, _NoexceptSpec, \
+#define GMOCK_INTERNAL_MOCK_METHOD_IMPL(_N, _MethodName, _Constness,           \
+                                        _Override, _Final, _NoexceptSpec,      \
                                         _CallType, _RefSpec, _Signature)       \
   typename ::testing::internal::Function<GMOCK_PP_REMOVE_PARENS(               \
       _Signature)>::Result                                                     \

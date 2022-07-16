@@ -42,6 +42,7 @@ import re
 import sys
 from googletest.test import gtest_test_utils
 
+
 IS_LINUX = os.name == 'posix' and os.uname()[0] == 'Linux'
 IS_GNUHURD = os.name == 'posix' and os.uname()[0] == 'GNU'
 IS_GNUKFREEBSD = os.name == 'posix' and os.uname()[0] == 'GNU/kFreeBSD'
@@ -80,109 +81,109 @@ HELP_REGEX = re.compile(
 
 
 def RunWithFlag(flag):
-    """Runs gtest_help_test_ with the given flag.
+  """Runs gtest_help_test_ with the given flag.
 
-    Returns:
-      the exit code and the text output as a tuple.
-    Args:
-      flag: the command-line flag to pass to gtest_help_test_, or None.
-    """
+  Returns:
+    the exit code and the text output as a tuple.
+  Args:
+    flag: the command-line flag to pass to gtest_help_test_, or None.
+  """
 
-    if flag is None:
-        command = [PROGRAM_PATH]
-    else:
-        command = [PROGRAM_PATH, flag]
-    child = gtest_test_utils.Subprocess(command)
-    return child.exit_code, child.output
+  if flag is None:
+    command = [PROGRAM_PATH]
+  else:
+    command = [PROGRAM_PATH, flag]
+  child = gtest_test_utils.Subprocess(command)
+  return child.exit_code, child.output
 
 
 class GTestHelpTest(gtest_test_utils.TestCase):
-    """Tests the --help flag and its equivalent forms."""
+  """Tests the --help flag and its equivalent forms."""
 
-    def TestHelpFlag(self, flag):
-        """Verifies correct behavior when help flag is specified.
+  def TestHelpFlag(self, flag):
+    """Verifies correct behavior when help flag is specified.
 
-        The right message must be printed and the tests must
-        skipped when the given flag is specified.
+    The right message must be printed and the tests must
+    skipped when the given flag is specified.
 
-        Args:
-          flag:  A flag to pass to the binary or None.
-        """
+    Args:
+      flag:  A flag to pass to the binary or None.
+    """
 
-        exit_code, output = RunWithFlag(flag)
-        if HAS_ABSL_FLAGS:
-            # The Abseil flags library prints the ProgramUsageMessage() with
-            # --help and returns 1.
-            self.assertEqual(1, exit_code)
-        else:
-            self.assertEqual(0, exit_code)
+    exit_code, output = RunWithFlag(flag)
+    if HAS_ABSL_FLAGS:
+      # The Abseil flags library prints the ProgramUsageMessage() with
+      # --help and returns 1.
+      self.assertEqual(1, exit_code)
+    else:
+      self.assertEqual(0, exit_code)
 
-        self.assertTrue(HELP_REGEX.search(output), output)
+    self.assertTrue(HELP_REGEX.search(output), output)
 
-        if IS_LINUX or IS_GNUHURD or IS_GNUKFREEBSD or IS_OPENBSD:
-            self.assertIn(STREAM_RESULT_TO_FLAG, output)
-        else:
-            self.assertNotIn(STREAM_RESULT_TO_FLAG, output)
+    if IS_LINUX or IS_GNUHURD or IS_GNUKFREEBSD or IS_OPENBSD:
+      self.assertIn(STREAM_RESULT_TO_FLAG, output)
+    else:
+      self.assertNotIn(STREAM_RESULT_TO_FLAG, output)
 
-        if SUPPORTS_DEATH_TESTS and not IS_WINDOWS:
-            self.assertIn(DEATH_TEST_STYLE_FLAG, output)
-        else:
-            self.assertNotIn(DEATH_TEST_STYLE_FLAG, output)
+    if SUPPORTS_DEATH_TESTS and not IS_WINDOWS:
+      self.assertIn(DEATH_TEST_STYLE_FLAG, output)
+    else:
+      self.assertNotIn(DEATH_TEST_STYLE_FLAG, output)
 
-    def TestUnknownFlagWithAbseil(self, flag):
-        """Verifies correct behavior when an unknown flag is specified.
+  def TestUnknownFlagWithAbseil(self, flag):
+    """Verifies correct behavior when an unknown flag is specified.
 
-        The right message must be printed and the tests must
-        skipped when the given flag is specified.
+    The right message must be printed and the tests must
+    skipped when the given flag is specified.
 
-        Args:
-          flag:  A flag to pass to the binary or None.
-        """
-        exit_code, output = RunWithFlag(flag)
-        self.assertEqual(1, exit_code)
-        self.assertIn('ERROR: Unknown command line flag', output)
+    Args:
+      flag:  A flag to pass to the binary or None.
+    """
+    exit_code, output = RunWithFlag(flag)
+    self.assertEqual(1, exit_code)
+    self.assertIn('ERROR: Unknown command line flag', output)
 
-    def TestNonHelpFlag(self, flag):
-        """Verifies correct behavior when no help flag is specified.
+  def TestNonHelpFlag(self, flag):
+    """Verifies correct behavior when no help flag is specified.
 
-        Verifies that when no help flag is specified, the tests are run
-        and the help message is not printed.
+    Verifies that when no help flag is specified, the tests are run
+    and the help message is not printed.
 
-        Args:
-          flag:  A flag to pass to the binary or None.
-        """
+    Args:
+      flag:  A flag to pass to the binary or None.
+    """
 
-        exit_code, output = RunWithFlag(flag)
-        self.assertNotEqual(exit_code, 0)
-        self.assertFalse(HELP_REGEX.search(output), output)
+    exit_code, output = RunWithFlag(flag)
+    self.assertNotEqual(exit_code, 0)
+    self.assertFalse(HELP_REGEX.search(output), output)
 
-    def testPrintsHelpWithFullFlag(self):
-        self.TestHelpFlag('--help')
+  def testPrintsHelpWithFullFlag(self):
+    self.TestHelpFlag('--help')
 
-    def testPrintsHelpWithUnrecognizedGoogleTestFlag(self):
-        # The behavior is slightly different when Abseil flags is
-        # used. Abseil flags rejects all unknown flags, while the builtin
-        # GTest flags implementation interprets an unknown flag with a
-        # '--gtest_' prefix as a request for help.
-        if HAS_ABSL_FLAGS:
-            self.TestUnknownFlagWithAbseil(UNKNOWN_GTEST_PREFIXED_FLAG)
-        else:
-            self.TestHelpFlag(UNKNOWN_GTEST_PREFIXED_FLAG)
+  def testPrintsHelpWithUnrecognizedGoogleTestFlag(self):
+    # The behavior is slightly different when Abseil flags is
+    # used. Abseil flags rejects all unknown flags, while the builtin
+    # GTest flags implementation interprets an unknown flag with a
+    # '--gtest_' prefix as a request for help.
+    if HAS_ABSL_FLAGS:
+      self.TestUnknownFlagWithAbseil(UNKNOWN_GTEST_PREFIXED_FLAG)
+    else:
+      self.TestHelpFlag(UNKNOWN_GTEST_PREFIXED_FLAG)
 
-    def testRunsTestsWithoutHelpFlag(self):
-        """Verifies that when no help flag is specified, the tests are run
-        and the help message is not printed."""
+  def testRunsTestsWithoutHelpFlag(self):
+    """Verifies that when no help flag is specified, the tests are run
+    and the help message is not printed."""
 
-        self.TestNonHelpFlag(None)
+    self.TestNonHelpFlag(None)
 
-    def testRunsTestsWithGtestInternalFlag(self):
-        """Verifies that the tests are run and no help message is printed when
-        a flag starting with Google Test prefix and 'internal_' is supplied."""
+  def testRunsTestsWithGtestInternalFlag(self):
+    """Verifies that the tests are run and no help message is printed when
+    a flag starting with Google Test prefix and 'internal_' is supplied."""
 
-        self.TestNonHelpFlag(INTERNAL_FLAG_FOR_TESTING)
+    self.TestNonHelpFlag(INTERNAL_FLAG_FOR_TESTING)
 
 
 if __name__ == '__main__':
-    if '--has_absl_flags' in sys.argv:
-        sys.argv.remove('--has_absl_flags')
-    gtest_test_utils.Main()
+  if '--has_absl_flags' in sys.argv:
+    sys.argv.remove('--has_absl_flags')
+  gtest_test_utils.Main()

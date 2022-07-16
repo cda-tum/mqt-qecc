@@ -225,16 +225,16 @@ namespace testing {
 //   * Condition start < end must be satisfied in order for resulting sequences
 //     to contain any elements.
 //
-    template<typename T, typename IncrementT>
-    internal::ParamGenerator<T> Range(T start, T end, IncrementT step) {
-        return internal::ParamGenerator<T>(
-                new internal::RangeGenerator<T, IncrementT>(start, end, step));
-    }
+template <typename T, typename IncrementT>
+internal::ParamGenerator<T> Range(T start, T end, IncrementT step) {
+  return internal::ParamGenerator<T>(
+      new internal::RangeGenerator<T, IncrementT>(start, end, step));
+}
 
-    template<typename T>
-    internal::ParamGenerator<T> Range(T start, T end) {
-        return Range(start, end, 1);
-    }
+template <typename T>
+internal::ParamGenerator<T> Range(T start, T end) {
+  return Range(start, end, 1);
+}
 
 // ValuesIn() function allows generation of tests with parameters coming from
 // a container.
@@ -291,25 +291,25 @@ namespace testing {
 //                          CharTest,
 //                          ValuesIn(l.begin(), l.end()));
 //
-    template<typename ForwardIterator>
-    internal::ParamGenerator<
-            typename std::iterator_traits<ForwardIterator>::value_type>
-    ValuesIn(ForwardIterator begin, ForwardIterator end) {
-        typedef typename std::iterator_traits<ForwardIterator>::value_type ParamType;
-        return internal::ParamGenerator<ParamType>(
-                new internal::ValuesInIteratorRangeGenerator<ParamType>(begin, end));
-    }
+template <typename ForwardIterator>
+internal::ParamGenerator<
+    typename std::iterator_traits<ForwardIterator>::value_type>
+ValuesIn(ForwardIterator begin, ForwardIterator end) {
+  typedef typename std::iterator_traits<ForwardIterator>::value_type ParamType;
+  return internal::ParamGenerator<ParamType>(
+      new internal::ValuesInIteratorRangeGenerator<ParamType>(begin, end));
+}
 
-    template<typename T, size_t N>
-    internal::ParamGenerator<T> ValuesIn(const T (&array)[N]) {
-        return ValuesIn(array, array + N);
-    }
+template <typename T, size_t N>
+internal::ParamGenerator<T> ValuesIn(const T (&array)[N]) {
+  return ValuesIn(array, array + N);
+}
 
-    template<class Container>
-    internal::ParamGenerator<typename Container::value_type> ValuesIn(
-            const Container &container) {
-        return ValuesIn(container.begin(), container.end());
-    }
+template <class Container>
+internal::ParamGenerator<typename Container::value_type> ValuesIn(
+    const Container& container) {
+  return ValuesIn(container.begin(), container.end());
+}
 
 // Values() allows generating tests from explicitly specified list of
 // parameters.
@@ -331,10 +331,10 @@ namespace testing {
 // INSTANTIATE_TEST_SUITE_P(FloatingNumbers, BazTest, Values(1, 2, 3.5));
 //
 //
-    template<typename... T>
-    internal::ValueArray<T...> Values(T... v) {
-        return internal::ValueArray<T...>(std::move(v)...);
-    }
+template <typename... T>
+internal::ValueArray<T...> Values(T... v) {
+  return internal::ValueArray<T...>(std::move(v)...);
+}
 
 // Bool() allows generating tests with parameters in a set of (false, true).
 //
@@ -356,7 +356,7 @@ namespace testing {
 // }
 // INSTANTIATE_TEST_SUITE_P(BoolSequence, FlagDependentTest, Bool());
 //
-    inline internal::ParamGenerator<bool> Bool() { return Values(false, true); }
+inline internal::ParamGenerator<bool> Bool() { return Values(false, true); }
 
 // Combine() allows the user to combine two or more sequences to produce
 // values of a Cartesian product of those sequences' elements.
@@ -402,10 +402,10 @@ namespace testing {
 // INSTANTIATE_TEST_SUITE_P(TwoBoolSequence, FlagDependentTest,
 //                          Combine(Bool(), Bool()));
 //
-    template<typename... Generator>
-    internal::CartesianProductHolder<Generator...> Combine(const Generator &... g) {
-        return internal::CartesianProductHolder<Generator...>(g...);
-    }
+template <typename... Generator>
+internal::CartesianProductHolder<Generator...> Combine(const Generator&... g) {
+  return internal::CartesianProductHolder<Generator...>(g...);
+}
 
 #define TEST_P(test_suite_name, test_name)                                     \
   class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                     \
@@ -429,8 +429,11 @@ namespace testing {
       return 0;                                                                \
     }                                                                          \
     static int gtest_registering_dummy_ GTEST_ATTRIBUTE_UNUSED_;               \
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(GTEST_TEST_CLASS_NAME_(test_suite_name,    \
-                                                           test_name));        \
+    GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                         \
+    (const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;     \
+    GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) & operator=(            \
+        const GTEST_TEST_CLASS_NAME_(test_suite_name,                          \
+                                     test_name) &) = delete; /* NOLINT */      \
   };                                                                           \
   int GTEST_TEST_CLASS_NAME_(test_suite_name,                                  \
                              test_name)::gtest_registering_dummy_ =            \

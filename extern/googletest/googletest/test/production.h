@@ -36,21 +36,20 @@
 #include "gtest/gtest_prod.h"
 
 class PrivateCode {
-public:
-    // Declares a friend test that does not use a fixture.
-    FRIEND_TEST(PrivateCodeTest, CanAccessPrivateMembers);
+ public:
+  // Declares a friend test that does not use a fixture.
+  FRIEND_TEST(PrivateCodeTest, CanAccessPrivateMembers);
 
-    // Declares a friend test that uses a fixture.
-    FRIEND_TEST(PrivateCodeFixtureTest, CanAccessPrivateMembers);
+  // Declares a friend test that uses a fixture.
+  FRIEND_TEST(PrivateCodeFixtureTest, CanAccessPrivateMembers);
 
-    PrivateCode();
+  PrivateCode();
 
-    int x() const { return x_; }
+  int x() const { return x_; }
 
-private:
-    void set_x(int an_x) { x_ = an_x; }
-
-    int x_;
+ private:
+  void set_x(int an_x) { x_ = an_x; }
+  int x_;
 };
 
 #endif  // GOOGLETEST_TEST_PRODUCTION_H_

@@ -1,31 +1,36 @@
 # Quickstart: Building with Bazel
 
-This tutorial aims to get you up and running with GoogleTest using the Bazel build system. If you're using GoogleTest
-for the first time or need a refresher, we recommend this tutorial as a starting point.
+This tutorial aims to get you up and running with GoogleTest using the Bazel
+build system. If you're using GoogleTest for the first time or need a refresher,
+we recommend this tutorial as a starting point.
 
 ## Prerequisites
 
 To complete this tutorial, you'll need:
 
-* A compatible operating system (e.g. Linux, macOS, Windows).
-* A compatible C++ compiler that supports at least C++11.
-* [Bazel](https://bazel.build/), the preferred build system used by the GoogleTest team.
+*   A compatible operating system (e.g. Linux, macOS, Windows).
+*   A compatible C++ compiler that supports at least C++14.
+*   [Bazel](https://bazel.build/), the preferred build system used by the
+    GoogleTest team.
 
-See [Supported Platforms](platforms.md) for more information about platforms compatible with GoogleTest.
+See [Supported Platforms](platforms.md) for more information about platforms
+compatible with GoogleTest.
 
 If you don't already have Bazel installed, see the
 [Bazel installation guide](https://docs.bazel.build/versions/main/install.html).
 
-{: .callout .note} Note: The terminal commands in this tutorial show a Unix shell prompt, but the commands work on the
-Windows command line as well.
+{: .callout .note}
+Note: The terminal commands in this tutorial show a Unix shell prompt, but the
+commands work on the Windows command line as well.
 
 ## Set up a Bazel workspace
 
 A
 [Bazel workspace](https://docs.bazel.build/versions/main/build-ref.html#workspace)
-is a directory on your filesystem that you use to manage source files for the software you want to build. Each workspace
-directory has a text file named
-`WORKSPACE` which may be empty, or may contain references to external dependencies required to build the outputs.
+is a directory on your filesystem that you use to manage source files for the
+software you want to build. Each workspace directory has a text file named
+`WORKSPACE` which may be empty, or may contain references to external
+dependencies required to build the outputs.
 
 First, create a directory for your workspace:
 
@@ -33,12 +38,13 @@ First, create a directory for your workspace:
 $ mkdir my_workspace && cd my_workspace
 ```
 
-Next, you’ll create the `WORKSPACE` file to specify dependencies. A common and recommended way to depend on GoogleTest
-is to use a
+Next, you’ll create the `WORKSPACE` file to specify dependencies. A common and
+recommended way to depend on GoogleTest is to use a
 [Bazel external dependency](https://docs.bazel.build/versions/main/external.html)
 via the
-[`http_archive` rule](https://docs.bazel.build/versions/main/repo/http.html#http_archive). To do this, in the root
-directory of your workspace (`my_workspace/`), create a file named `WORKSPACE` with the following contents:
+[`http_archive` rule](https://docs.bazel.build/versions/main/repo/http.html#http_archive).
+To do this, in the root directory of your workspace (`my_workspace/`), create a
+file named `WORKSPACE` with the following contents:
 
 ```
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -50,16 +56,18 @@ http_archive(
 )
 ```
 
-The above configuration declares a dependency on GoogleTest which is downloaded as a ZIP archive from GitHub. In the
-above example,
-`609281088cfefc76f9d0ce82e1ff6c30cc3591e5` is the Git commit hash of the GoogleTest version to use; we recommend
-updating the hash often to point to the latest version.
+The above configuration declares a dependency on GoogleTest which is downloaded
+as a ZIP archive from GitHub. In the above example,
+`609281088cfefc76f9d0ce82e1ff6c30cc3591e5` is the Git commit hash of the
+GoogleTest version to use; we recommend updating the hash often to point to the
+latest version.
 
 Now you're ready to build C++ code that uses GoogleTest.
 
 ## Create and run a binary
 
-With your Bazel workspace set up, you can now use GoogleTest code within your own project.
+With your Bazel workspace set up, you can now use GoogleTest code within your
+own project.
 
 As an example, create a file named `hello_test.cc` in your `my_workspace`
 directory with the following contents:
@@ -76,10 +84,12 @@ TEST(HelloTest, BasicAssertions) {
 }
 ```
 
-GoogleTest provides [assertions](primer.md#assertions) that you use to test the behavior of your code. The above sample
-includes the main GoogleTest header file and demonstrates some basic assertions.
+GoogleTest provides [assertions](primer.md#assertions) that you use to test the
+behavior of your code. The above sample includes the main GoogleTest header file
+and demonstrates some basic assertions.
 
-To build the code, create a file named `BUILD` in the same directory with the following contents:
+To build the code, create a file named `BUILD` in the same directory with the
+following contents:
 
 ```
 cc_test(
@@ -90,9 +100,10 @@ cc_test(
 )
 ```
 
-This `cc_test` rule declares the C++ test binary you want to build, and links to GoogleTest (`//:gtest_main`) using the
-prefix you specified in the `WORKSPACE`
-file (`@com_google_googletest`). For more information about Bazel `BUILD` files, see the
+This `cc_test` rule declares the C++ test binary you want to build, and links to
+GoogleTest (`//:gtest_main`) using the prefix you specified in the `WORKSPACE`
+file (`@com_google_googletest`). For more information about Bazel `BUILD` files,
+see the
 [Bazel C++ Tutorial](https://docs.bazel.build/versions/main/tutorial/cpp.html).
 
 Now you can build and run your test:
@@ -125,9 +136,12 @@ INFO: Build completed successfully, 27 total actions
 INFO: Build completed successfully, 27 total actions
 </pre>
 
-Congratulations! You've successfully built and run a test binary using GoogleTest.
+Congratulations! You've successfully built and run a test binary using
+GoogleTest.
 
 ## Next steps
 
-* [Check out the Primer](primer.md) to start learning how to write simple tests.
-* [See the code samples](samples.md) for more examples showing how to use a variety of GoogleTest features.
+*   [Check out the Primer](primer.md) to start learning how to write simple
+    tests.
+*   [See the code samples](samples.md) for more examples showing how to use a
+    variety of GoogleTest features.

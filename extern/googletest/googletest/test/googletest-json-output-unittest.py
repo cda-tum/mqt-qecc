@@ -52,9 +52,9 @@ NO_STACKTRACE_SUPPORT_FLAG = '--no_stacktrace_support'
 SUPPORTS_STACK_TRACES = NO_STACKTRACE_SUPPORT_FLAG not in sys.argv
 
 if SUPPORTS_STACK_TRACES:
-    STACK_TRACE_TEMPLATE = '\nStack trace:\n*'
+  STACK_TRACE_TEMPLATE = '\nStack trace:\n*'
 else:
-    STACK_TRACE_TEMPLATE = ''
+  STACK_TRACE_TEMPLATE = ''
 
 EXPECTED_NON_EMPTY = {
     u'tests':
@@ -738,174 +738,175 @@ SUPPORTS_TYPED_TESTS = 'TypedTest' in gtest_test_utils.Subprocess(
 
 
 class GTestJsonOutputUnitTest(gtest_test_utils.TestCase):
-    """Unit test for Google Test's JSON output functionality.
+  """Unit test for Google Test's JSON output functionality.
+  """
+
+  # This test currently breaks on platforms that do not support typed and
+  # type-parameterized tests, so we don't run it under them.
+  if SUPPORTS_TYPED_TESTS:
+
+    def testNonEmptyJsonOutput(self):
+      """Verifies JSON output for a Google Test binary with non-empty output.
+
+      Runs a test program that generates a non-empty JSON output, and
+      tests that the JSON output is expected.
+      """
+      self._TestJsonOutput(GTEST_PROGRAM_NAME, EXPECTED_NON_EMPTY, 1)
+
+  def testNoTestJsonOutput(self):
+    """Verifies JSON output for a Google Test binary without actual tests.
+
+    Runs a test program that generates an JSON output for a binary with no
+    tests, and tests that the JSON output is expected.
     """
 
-    # This test currently breaks on platforms that do not support typed and
-    # type-parameterized tests, so we don't run it under them.
-    if SUPPORTS_TYPED_TESTS:
-        def testNonEmptyJsonOutput(self):
-            """Verifies JSON output for a Google Test binary with non-empty output.
+    self._TestJsonOutput('gtest_no_test_unittest', EXPECTED_NO_TEST, 0)
 
-            Runs a test program that generates a non-empty JSON output, and
-            tests that the JSON output is expected.
-            """
-            self._TestJsonOutput(GTEST_PROGRAM_NAME, EXPECTED_NON_EMPTY, 1)
+  def testTimestampValue(self):
+    """Checks whether the timestamp attribute in the JSON output is valid.
 
-    def testNoTestJsonOutput(self):
-        """Verifies JSON output for a Google Test binary without actual tests.
+    Runs a test program that generates an empty JSON output, and checks if
+    the timestamp attribute in the testsuites tag is valid.
+    """
+    actual = self._GetJsonOutput('gtest_no_test_unittest', [], 0)
+    date_time_str = actual['timestamp']
+    # datetime.strptime() is only available in Python 2.5+ so we have to
+    # parse the expected datetime manually.
+    match = re.match(r'(\d+)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)', date_time_str)
+    self.assertTrue(
+        re.match,
+        'JSON datettime string %s has incorrect format' % date_time_str)
+    date_time_from_json = datetime.datetime(
+        year=int(match.group(1)), month=int(match.group(2)),
+        day=int(match.group(3)), hour=int(match.group(4)),
+        minute=int(match.group(5)), second=int(match.group(6)))
 
-        Runs a test program that generates an JSON output for a binary with no
-        tests, and tests that the JSON output is expected.
-        """
+    time_delta = abs(datetime.datetime.now() - date_time_from_json)
+    # timestamp value should be near the current local time
+    self.assertTrue(time_delta < datetime.timedelta(seconds=600),
+                    'time_delta is %s' % time_delta)
 
-        self._TestJsonOutput('gtest_no_test_unittest', EXPECTED_NO_TEST, 0)
+  def testDefaultOutputFile(self):
+    """Verifies the default output file name.
 
-    def testTimestampValue(self):
-        """Checks whether the timestamp attribute in the JSON output is valid.
+    Confirms that Google Test produces an JSON output file with the expected
+    default name if no name is explicitly specified.
+    """
+    output_file = os.path.join(gtest_test_utils.GetTempDir(),
+                               GTEST_DEFAULT_OUTPUT_FILE)
+    gtest_prog_path = gtest_test_utils.GetTestExecutablePath(
+        'gtest_no_test_unittest')
+    try:
+      os.remove(output_file)
+    except OSError:
+      e = sys.exc_info()[1]
+      if e.errno != errno.ENOENT:
+        raise
 
-        Runs a test program that generates an empty JSON output, and checks if
-        the timestamp attribute in the testsuites tag is valid.
-        """
-        actual = self._GetJsonOutput('gtest_no_test_unittest', [], 0)
-        date_time_str = actual['timestamp']
-        # datetime.strptime() is only available in Python 2.5+ so we have to
-        # parse the expected datetime manually.
-        match = re.match(r'(\d+)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)', date_time_str)
-        self.assertTrue(
-            re.match,
-            'JSON datettime string %s has incorrect format' % date_time_str)
-        date_time_from_json = datetime.datetime(
-            year=int(match.group(1)), month=int(match.group(2)),
-            day=int(match.group(3)), hour=int(match.group(4)),
-            minute=int(match.group(5)), second=int(match.group(6)))
+    p = gtest_test_utils.Subprocess(
+        [gtest_prog_path, '%s=json' % GTEST_OUTPUT_FLAG],
+        working_dir=gtest_test_utils.GetTempDir())
+    self.assert_(p.exited)
+    self.assertEquals(0, p.exit_code)
+    self.assert_(os.path.isfile(output_file))
 
-        time_delta = abs(datetime.datetime.now() - date_time_from_json)
-        # timestamp value should be near the current local time
-        self.assertTrue(time_delta < datetime.timedelta(seconds=600),
-                        'time_delta is %s' % time_delta)
+  def testSuppressedJsonOutput(self):
+    """Verifies that no JSON output is generated.
 
-    def testDefaultOutputFile(self):
-        """Verifies the default output file name.
+    Tests that no JSON file is generated if the default JSON listener is
+    shut down before RUN_ALL_TESTS is invoked.
+    """
 
-        Confirms that Google Test produces an JSON output file with the expected
-        default name if no name is explicitly specified.
-        """
-        output_file = os.path.join(gtest_test_utils.GetTempDir(),
-                                   GTEST_DEFAULT_OUTPUT_FILE)
-        gtest_prog_path = gtest_test_utils.GetTestExecutablePath(
-            'gtest_no_test_unittest')
-        try:
-            os.remove(output_file)
-        except OSError:
-            e = sys.exc_info()[1]
-            if e.errno != errno.ENOENT:
-                raise
+    json_path = os.path.join(gtest_test_utils.GetTempDir(),
+                             GTEST_PROGRAM_NAME + 'out.json')
+    if os.path.isfile(json_path):
+      os.remove(json_path)
 
-        p = gtest_test_utils.Subprocess(
-            [gtest_prog_path, '%s=json' % GTEST_OUTPUT_FLAG],
-            working_dir=gtest_test_utils.GetTempDir())
-        self.assert_(p.exited)
-        self.assertEquals(0, p.exit_code)
-        self.assert_(os.path.isfile(output_file))
+    command = [GTEST_PROGRAM_PATH,
+               '%s=json:%s' % (GTEST_OUTPUT_FLAG, json_path),
+               '--shut_down_xml']
+    p = gtest_test_utils.Subprocess(command)
+    if p.terminated_by_signal:
+      # p.signal is available only if p.terminated_by_signal is True.
+      self.assertFalse(
+          p.terminated_by_signal,
+          '%s was killed by signal %d' % (GTEST_PROGRAM_NAME, p.signal))
+    else:
+      self.assert_(p.exited)
+      self.assertEquals(1, p.exit_code,
+                        "'%s' exited with code %s, which doesn't match "
+                        'the expected exit code %s.'
+                        % (command, p.exit_code, 1))
 
-    def testSuppressedJsonOutput(self):
-        """Verifies that no JSON output is generated.
+    self.assert_(not os.path.isfile(json_path))
 
-        Tests that no JSON file is generated if the default JSON listener is
-        shut down before RUN_ALL_TESTS is invoked.
-        """
+  def testFilteredTestJsonOutput(self):
+    """Verifies JSON output when a filter is applied.
 
-        json_path = os.path.join(gtest_test_utils.GetTempDir(),
-                                 GTEST_PROGRAM_NAME + 'out.json')
-        if os.path.isfile(json_path):
-            os.remove(json_path)
+    Runs a test program that executes only some tests and verifies that
+    non-selected tests do not show up in the JSON output.
+    """
 
-        command = [GTEST_PROGRAM_PATH,
-                   '%s=json:%s' % (GTEST_OUTPUT_FLAG, json_path),
-                   '--shut_down_xml']
-        p = gtest_test_utils.Subprocess(command)
-        if p.terminated_by_signal:
-            # p.signal is available only if p.terminated_by_signal is True.
-            self.assertFalse(
-                p.terminated_by_signal,
-                '%s was killed by signal %d' % (GTEST_PROGRAM_NAME, p.signal))
-        else:
-            self.assert_(p.exited)
-            self.assertEquals(1, p.exit_code,
-                              "'%s' exited with code %s, which doesn't match "
-                              'the expected exit code %s.'
-                              % (command, p.exit_code, 1))
+    self._TestJsonOutput(GTEST_PROGRAM_NAME, EXPECTED_FILTERED, 0,
+                         extra_args=['%s=SuccessfulTest.*' % GTEST_FILTER_FLAG])
 
-        self.assert_(not os.path.isfile(json_path))
+  def _GetJsonOutput(self, gtest_prog_name, extra_args, expected_exit_code):
+    """Returns the JSON output generated by running the program gtest_prog_name.
 
-    def testFilteredTestJsonOutput(self):
-        """Verifies JSON output when a filter is applied.
+    Furthermore, the program's exit code must be expected_exit_code.
 
-        Runs a test program that executes only some tests and verifies that
-        non-selected tests do not show up in the JSON output.
-        """
+    Args:
+      gtest_prog_name: Google Test binary name.
+      extra_args: extra arguments to binary invocation.
+      expected_exit_code: program's exit code.
+    """
+    json_path = os.path.join(gtest_test_utils.GetTempDir(),
+                             gtest_prog_name + 'out.json')
+    gtest_prog_path = gtest_test_utils.GetTestExecutablePath(gtest_prog_name)
 
-        self._TestJsonOutput(GTEST_PROGRAM_NAME, EXPECTED_FILTERED, 0,
-                             extra_args=['%s=SuccessfulTest.*' % GTEST_FILTER_FLAG])
+    command = (
+        [gtest_prog_path, '%s=json:%s' % (GTEST_OUTPUT_FLAG, json_path)] +
+        extra_args
+    )
+    p = gtest_test_utils.Subprocess(command)
+    if p.terminated_by_signal:
+      self.assert_(False,
+                   '%s was killed by signal %d' % (gtest_prog_name, p.signal))
+    else:
+      self.assert_(p.exited)
+      self.assertEquals(expected_exit_code, p.exit_code,
+                        "'%s' exited with code %s, which doesn't match "
+                        'the expected exit code %s.'
+                        % (command, p.exit_code, expected_exit_code))
+    with open(json_path) as f:
+      actual = json.load(f)
+    return actual
 
-    def _GetJsonOutput(self, gtest_prog_name, extra_args, expected_exit_code):
-        """Returns the JSON output generated by running the program gtest_prog_name.
+  def _TestJsonOutput(self, gtest_prog_name, expected,
+                      expected_exit_code, extra_args=None):
+    """Checks the JSON output generated by the Google Test binary.
 
-        Furthermore, the program's exit code must be expected_exit_code.
+    Asserts that the JSON document generated by running the program
+    gtest_prog_name matches expected_json, a string containing another
+    JSON document.  Furthermore, the program's exit code must be
+    expected_exit_code.
 
-        Args:
-          gtest_prog_name: Google Test binary name.
-          extra_args: extra arguments to binary invocation.
-          expected_exit_code: program's exit code.
-        """
-        json_path = os.path.join(gtest_test_utils.GetTempDir(),
-                                 gtest_prog_name + 'out.json')
-        gtest_prog_path = gtest_test_utils.GetTestExecutablePath(gtest_prog_name)
+    Args:
+      gtest_prog_name: Google Test binary name.
+      expected: expected output.
+      expected_exit_code: program's exit code.
+      extra_args: extra arguments to binary invocation.
+    """
 
-        command = (
-                [gtest_prog_path, '%s=json:%s' % (GTEST_OUTPUT_FLAG, json_path)] +
-                extra_args
-        )
-        p = gtest_test_utils.Subprocess(command)
-        if p.terminated_by_signal:
-            self.assert_(False,
-                         '%s was killed by signal %d' % (gtest_prog_name, p.signal))
-        else:
-            self.assert_(p.exited)
-            self.assertEquals(expected_exit_code, p.exit_code,
-                              "'%s' exited with code %s, which doesn't match "
-                              'the expected exit code %s.'
-                              % (command, p.exit_code, expected_exit_code))
-        with open(json_path) as f:
-            actual = json.load(f)
-        return actual
-
-    def _TestJsonOutput(self, gtest_prog_name, expected,
-                        expected_exit_code, extra_args=None):
-        """Checks the JSON output generated by the Google Test binary.
-
-        Asserts that the JSON document generated by running the program
-        gtest_prog_name matches expected_json, a string containing another
-        JSON document.  Furthermore, the program's exit code must be
-        expected_exit_code.
-
-        Args:
-          gtest_prog_name: Google Test binary name.
-          expected: expected output.
-          expected_exit_code: program's exit code.
-          extra_args: extra arguments to binary invocation.
-        """
-
-        actual = self._GetJsonOutput(gtest_prog_name, extra_args or [],
-                                     expected_exit_code)
-        self.assertEqual(expected, gtest_json_test_utils.normalize(actual))
+    actual = self._GetJsonOutput(gtest_prog_name, extra_args or [],
+                                 expected_exit_code)
+    self.assertEqual(expected, gtest_json_test_utils.normalize(actual))
 
 
 if __name__ == '__main__':
-    if NO_STACKTRACE_SUPPORT_FLAG in sys.argv:
-        # unittest.main() can't handle unknown flags
-        sys.argv.remove(NO_STACKTRACE_SUPPORT_FLAG)
+  if NO_STACKTRACE_SUPPORT_FLAG in sys.argv:
+    # unittest.main() can't handle unknown flags
+    sys.argv.remove(NO_STACKTRACE_SUPPORT_FLAG)
 
-    os.environ['GTEST_STACK_TRACE_DEPTH'] = '1'
-    gtest_test_utils.Main()
+  os.environ['GTEST_STACK_TRACE_DEPTH'] = '1'
+  gtest_test_utils.Main()

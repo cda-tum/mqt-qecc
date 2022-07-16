@@ -1,6 +1,9 @@
 ---
-name: Feature request about: Propose a new feature title: ''
-labels: 'enhancement' assignees: ''
+name: Feature request
+about: Propose a new feature
+title: ''
+labels: 'enhancement'
+assignees: ''
 ---
 
 **Does the feature exist in the most recent commit?**

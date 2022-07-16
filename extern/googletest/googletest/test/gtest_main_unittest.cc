@@ -34,7 +34,7 @@
 
 namespace {
 
-    TEST(GTestMainTest, ShouldSucceed) {}
+TEST(GTestMainTest, ShouldSucceed) {}
 
 }  // namespace
 
