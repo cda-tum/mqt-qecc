@@ -345,3 +345,8 @@ std::shared_ptr<TreeNode> ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
         return res;
     }
 }
+
+void ImprovedUFD::reset() {
+    this->nodeMap.clear();
+    this->result = {};
+}
