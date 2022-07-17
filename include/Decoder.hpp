@@ -40,12 +40,17 @@ struct DecodingResult {
     }
 };
 class Decoder {
+private:
+    std::unique_ptr<Code> code;
+
 public:
     DecodingResult result{};
     GrowthVariant  growth = GrowthVariant::ALL_COMPONENTS; // standard
-    explicit Decoder(Code& code): code(std::make_unique<Code>(code)){}
-    virtual void decode(std::vector<bool>&) {};
 
+    explicit Decoder(Code& c):
+        code(std::make_unique<Code>(c)) {}
+    Decoder() = default;
+    virtual void decode(std::vector<bool>&){};
     virtual ~Decoder() = default;
 
     [[nodiscard]] const std::unique_ptr<Code>& getCode() const {
@@ -57,10 +62,9 @@ public:
     void setGrowth(GrowthVariant g) {
         Decoder::growth = g;
     }
-    virtual void reset() {
-        result = DecodingResult{};
+    void setCode(Code& c) {
+        this->code = std::make_unique<Code>(c);
     }
-private:
-    std::unique_ptr<Code> code;
+    virtual void reset(){};
 };
 #endif //QUNIONFIND_DECODER_HPP

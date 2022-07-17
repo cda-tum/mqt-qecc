@@ -159,11 +159,11 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      */
     //**** server:
     //const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
-    const std::string outPath = "/home/berent/ufpaper/simulations/montecarlo/final/out/";
-    const std::string inPath  = "/home/berent/ufpaper/simulations/montecarlo/final/in/toricCodes/";
+    //const std::string outPath = "/home/berent/ufpaper/simulations/montecarlo/final-ref-reset/out/";
+    //const std::string inPath  = "/home/berent/ufpaper/simulations/montecarlo/final-ref-reset/in/toricCodes/";
     //**** local:
-    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
-    //const std::string inPath = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
+    const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
+    const std::string inPath = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
 
     const std::string outFile         = outPath + "results_";
@@ -189,7 +189,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     //const double      physErrRates[] = {0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
     const std::size_t nrOfTrials = 10'000;
     //****tests:
-    const double physErrRate = 0.02;
+    const double physErrRate = 0.05;
     //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
@@ -200,10 +200,10 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     std::vector<std::string>                                                       codePaths;
     std::cout << "reading codes " << std::endl;
     std::map<std::string, std::size_t, std::less<>> avgSampleRuns;
+    DecodingRunInformation info;
     for (const auto& file: std::filesystem::directory_iterator(inPath)) {
         codePaths.emplace_back(file.path());
     }
-    //codePaths.emplace_back("/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/toric_(nan,nan)-[[6962,2,59]]_hx.txt");
     std::map<std::string, double, std::less<>> avgTimePerSizeData;
     std::cout << "Simulating physical err rate " << physErrRate << std::endl;
     try {
@@ -212,11 +212,12 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
             avgDecodingTimeAcc = 0U;
             auto       code    = Code(currPath); // construct new for each trial
             const auto codeN   = code.getN();
+            auto decoder = ImprovedUFD();
             for (std::size_t j = 0; j < 5; j++) {              // 5 runs to compute average
-                for (std::size_t i = 0; i < nrOfTrials; i++) { // nr of monte carlo samples
+                for (std::size_t i = 0; i < nrOfTrials; i++) {// nr of monte carlo samples
+                    decoder.setCode(code);
                     std::cout << "run nr " << i << std::endl;
                     std::cout << "making decoder" << std::endl;
-                    ImprovedUFD decoder(code);
                     std::cout << "sampling error" << std::endl;
                     auto error = Utils::sampleErrorIidPauliNoise(codeN, physErrRate);
                     std::cout << "computing syndrome" << std::endl;
@@ -225,18 +226,21 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
                     decoder.decode(syndrome);
                     std::cout << "decoding done " << std::endl;
                     auto const&            decodingResult = decoder.result;
-                    DecodingRunInformation info;
                     info.result       = decodingResult;
                     info.physicalErrR = physErrRate;
                     info.codeSize     = codeN;
-                    //std::cout << "deleting code" << std::endl;
                     info.syndrome       = syndrome;
                     info.error          = error;
+                    std::cout << "summing times" << std::endl;
                     avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
+                    if(avgDecodingTimeAcc > std::numeric_limits<std::size_t>::max()){throw QeccException("Accumulator too large");}
                     nlohmann::json json = info.to_json();
                     dataOutStream << json.dump(2U);
                     dataOutStream << ",";
                     dataOutStream.flush();
+                    json = {};
+                    info = {};
+                    decoder.reset();
                 }
                 avgSampleRuns.try_emplace(std::to_string(j), avgDecodingTimeAcc);
                 std::cout << currPath << " \"run\": " << j << ", \"time\":" << avgDecodingTimeAcc << std::endl;
@@ -253,6 +257,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     } catch (std::exception& e) {
         std::cerr << "Exception occurred " << e.what() << std::endl;
     }
+    flint_cleanup();
     finalRawOut.close();
     intermediateRawOut.close();
     dataOutStream.close();

@@ -144,3 +144,7 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(const std::set<std::s
 
     return res;
 }
+void OriginalUFD::reset() {
+    this->result = {};
+    this->growth = GrowthVariant::ALL_COMPONENTS;
+}
