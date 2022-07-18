@@ -131,6 +131,15 @@ public:
         N = Hz.pcm.front().size();
     }
 
+    /*
+     * ParityCheckMatrix Hx;
+    explicit Code(ParityCheckMatrix hz, ParityCheckMatrix hx){
+        this->Hz= hz;
+        this->Hx = hx;
+        // check css condition here
+        N = Hz.pcm.front().size();
+    }*/
+
     explicit Code(const std::string& pathToPcm):
         Hz(pathToPcm) {
         std::cout << "[Code::ctor] - initializing Code object" << std::endl;
@@ -160,7 +169,7 @@ public:
         if (!res.empty()) {
             gf2Vec rres(Hz.pcm.size());
             for (size_t i = 0; i < rres.size(); i++) {
-                rres.at(i) = res.at(i).at(0); // transpose back
+                rres.at(i) = res.at(i).front(); // transpose back
             }
             return rres;
         } else {

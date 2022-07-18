@@ -20,24 +20,24 @@ public:
     HGPcode(const std::string& inFile, const std::size_t K):
         Code(inFile) { this->K = K; };
     HGPcode():
-        Code("/home/luca/Documents/codeRepos/qecc/examples/hgp_(4,7)-[[900,36,10]]_hx.txt") { K = 36; }
+        Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hx.txt") { K = 36; }
 };
 
 class ToricCode_8: public Code {
 public:
     ToricCode_8():
-        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qecc/examples/test/toric_(nan,nan)-[[8,2,2]]_hx.txt"))) { K = 2; }
+        Code("./resources/codes/toric_(nan,nan)-[[8,2,2]]_hx.txt") { K = 2; }
 };
 
 class ToricCode_18: public Code {
 public:
     ToricCode_18():
-        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qecc/examples/test/toric_(nan,nan)-[[18,2,3]]_hx.txt"))) { K = 2; }
+        Code("./resources/codes/toric_(nan,nan)-[[18,2,3]]_hx.txt") { K = 2; }
 };
 
 class ToricCode_32: public Code {
 public:
     ToricCode_32():
-        Code(ParityCheckMatrix(Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qecc/examples/test/toric_(nan,nan)-[[32,2,4]]_hx.txt"))) { K = 2; }
+        Code("./resources/codes/toric_(nan,nan)-[[32,2,4]]_hx.txt") { K = 2; }
 };
 #endif //QUNIONFIND_CODES_HPP

@@ -195,6 +195,26 @@ TEST(UtilsTest, ImportCode) {
                      {0, 1, 0, 1, 1, 0, 1},
                      {0, 0, 1, 0, 1, 1, 1}};
 
-    auto res = Utils::importGf2MatrixFromFile("/home/luca/Documents/codeRepos/qunionfind/examples/testCode.txt");
+    auto res = Utils::importGf2MatrixFromFile("./resources/codes/testCode.txt");
     EXPECT_TRUE(res == matrix);
+}
+TEST(UtilsTest, Multiply) {
+    gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
+                     {0, 1, 0, 1, 1, 0, 1},
+                     {0, 0, 1, 0, 1, 1, 1}};
+
+    gf2Mat matrix2 = {{1, 0, 0, 1, 0, 1, 1},
+                     {0, 1, 0, 1, 1, 0, 1},
+                     {0, 0, 1, 0, 1, 1, 1}};
+
+    matrix2 = Utils::getTranspose(matrix2);
+    auto res = Utils::rectMatrixMultiply(matrix, matrix2);
+
+}
+TEST(UtilsTest, GetFlintMatrix) {
+    gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
+                     {0, 1, 0, 1, 1, 0, 1},
+                     {0, 0, 1, 0, 1, 1, 1}};
+    auto s = Utils::getFlintMatrix(matrix);
+    print_pretty(s);
 }

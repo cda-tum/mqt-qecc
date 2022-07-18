@@ -40,7 +40,7 @@ public:
 private:
     // do not call.at only getNodeFromIdx()
     std::unordered_map<std::size_t, std::shared_ptr<TreeNode>> nodeMap{};
-    std::weak_ptr<TreeNode>                                  getNodeFromIdx(std::size_t idx);
+    std::weak_ptr<TreeNode>                                    getNodeFromIdx(std::size_t idx);
     void                                                       standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                                               std::map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components);
     void                                                       singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,

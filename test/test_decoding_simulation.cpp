@@ -159,11 +159,11 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      */
     //**** server:
     //const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
-    //const std::string outPath = "/home/berent/ufpaper/simulations/montecarlo/final-ref-reset/out/";
-    //const std::string inPath  = "/home/berent/ufpaper/simulations/montecarlo/final-ref-reset/in/toricCodes/";
+    const std::string outPath = "/home/berent/ufpaper/simulations/montecarlo/noflint/out/";
+    const std::string inPath  = "/home/berent/ufpaper/simulations/montecarlo/noflint/in/toricCodes/";
     //**** local:
-    const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
-    const std::string inPath = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
+    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
+    //const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
 
     const std::string outFile         = outPath + "results_";
@@ -200,7 +200,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     std::vector<std::string>                                                       codePaths;
     std::cout << "reading codes " << std::endl;
     std::map<std::string, std::size_t, std::less<>> avgSampleRuns;
-    DecodingRunInformation info;
+    DecodingRunInformation                          info;
     for (const auto& file: std::filesystem::directory_iterator(inPath)) {
         codePaths.emplace_back(file.path());
     }
@@ -212,9 +212,9 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
             avgDecodingTimeAcc = 0U;
             auto       code    = Code(currPath); // construct new for each trial
             const auto codeN   = code.getN();
-            auto decoder = ImprovedUFD();
+            auto       decoder = ImprovedUFD();
             for (std::size_t j = 0; j < 5; j++) {              // 5 runs to compute average
-                for (std::size_t i = 0; i < nrOfTrials; i++) {// nr of monte carlo samples
+                for (std::size_t i = 0; i < nrOfTrials; i++) { // nr of monte carlo samples
                     decoder.setCode(code);
                     std::cout << "run nr " << i << std::endl;
                     std::cout << "making decoder" << std::endl;
@@ -225,15 +225,17 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
                     std::cout << "starting decoding" << std::endl;
                     decoder.decode(syndrome);
                     std::cout << "decoding done " << std::endl;
-                    auto const&            decodingResult = decoder.result;
-                    info.result       = decodingResult;
-                    info.physicalErrR = physErrRate;
-                    info.codeSize     = codeN;
-                    info.syndrome       = syndrome;
-                    info.error          = error;
+                    auto const& decodingResult = decoder.result;
+                    info.result                = decodingResult;
+                    info.physicalErrR          = physErrRate;
+                    info.codeSize              = codeN;
+                    info.syndrome              = syndrome;
+                    info.error                 = error;
                     std::cout << "summing times" << std::endl;
-                    avgDecodingTimeAcc  = avgDecodingTimeAcc + decodingResult.decodingTime;
-                    if(avgDecodingTimeAcc > std::numeric_limits<std::size_t>::max()){throw QeccException("Accumulator too large");}
+                    avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
+                    if (avgDecodingTimeAcc > std::numeric_limits<std::size_t>::max()) {
+                        throw QeccException("Accumulator too large");
+                    }
                     nlohmann::json json = info.to_json();
                     dataOutStream << json.dump(2U);
                     dataOutStream << ",";

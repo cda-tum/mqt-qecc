@@ -92,14 +92,19 @@ public:
 
     static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
-        auto ctxx   = flint::nmodxx_ctx(2);
-        auto result = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
-        for (size_t i = 0; i < matrix.size(); i++) {
-            for (size_t j = 0; j < matrix.at(0).size(); j++) {
+        slong      rows = matrix.size();
+        slong      cols = matrix.front().size();
+        const mp_limb_t modul = 2;
+        auto ctxx   = flint::nmodxx_ctx(modul);
+        auto result = flint::nmod_matxx(matrix.size(), matrix.front().size(), modul);
+        for (slong i = 0; i < rows; i++) {
+            for (slong j = 0; j < cols; j++) {
                 if (matrix.at(i).at(j)) {
-                    result.at(i, j) = flint::nmodxx::red(1, ctxx);
+                    const mp_limb_t one = 1U;
+                    result.at(i, j) = flint::nmodxx::red(one, ctxx);
                 } else {
-                    result.at(i, j) = flint::nmodxx::red(0, ctxx);
+                    const mp_limb_t zero = 0;
+                    result.at(i, j) = flint::nmodxx::red(zero, ctxx);
                 }
             }
         }
@@ -211,7 +216,6 @@ public:
     static gf2Mat rectMatrixMultiply(const gf2Mat& m1, const gf2Mat& m2) {
         assertMatrixPresent(m1);
         assertMatrixPresent(m2);
-
         auto mat1   = getFlintMatrix(m1);
         auto mat2   = getFlintMatrix(m2);
         auto result = flint::nmod_matxx(mat1.rows(), mat2.cols(), 2);
