@@ -24,7 +24,8 @@ TEST(UnionFindSimulation, TestSimulator) {
     std::size_t runsPerRate = 2, runsPerCode = 2;
     auto        code = SteaneXCode();
     try {
-        ImprovedUFD decoder(code);
+        ImprovedUFD decoder;
+        decoder.setCode(code);
         DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
         std::vector<double> erRates = {minErate, maxErate};
         DecodingSimulator::simulateRuntime(rawOut, testOut, erRates, runsPerCode, decoder);
@@ -99,7 +100,8 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
             std::cout << "run nr " << j << std::endl;
 
-            ImprovedUFD decoder(code);
+            ImprovedUFD decoder;
+            decoder.setCode(code);
             auto        error    = Utils::sampleErrorIidPauliNoise(N, physicalErrRate);
             auto        syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);

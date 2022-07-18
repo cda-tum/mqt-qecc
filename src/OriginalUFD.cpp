@@ -36,7 +36,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
 
             while (currCompIt != components.end()) {
                 for (auto node: *currCompIt) {
-                    const auto nbrs = getCode()->Hz.getNbrs(node);
+                    const auto nbrs = getCode()->Hz->getNbrs(node);
                     compNbrs.insert(nbrs.begin(), nbrs.end());
                 }
                 neibrsToAdd.emplace_back(compNbrs);
@@ -100,7 +100,7 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(const std::set<std
     std::vector<std::size_t> res;
 
     for (const auto idx: component) {
-        const auto& nbrs = getCode()->Hz.getNbrs(idx);
+        const auto& nbrs = getCode()->Hz->getNbrs(idx);
         if (std::includes(component.begin(), component.end(), nbrs.begin(), nbrs.end()) && idx < getCode()->getN()) {
             res.emplace_back(idx);
         }
@@ -120,7 +120,7 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(const std::set<std::s
     if (intNodes.empty()) {
         return std::set<std::size_t>{};
     }
-    auto   tmp = Utils::getTranspose(getCode()->Hz.pcm);
+    auto   tmp = Utils::getTranspose(*getCode()->Hz->pcm);
     gf2Mat reduced;
     for (unsigned long idx: intNodes) {
         reduced.emplace_back(tmp.at(idx));
@@ -128,7 +128,7 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(const std::set<std::s
     // TODO: this is not used at all. why is this computed?
     reduced = Utils::getTranspose(reduced);
 
-    if (auto estim = Utils::solveSystem(getCode()->Hz.pcm, syndrome); estim.empty()) {
+    if (auto estim = Utils::solveSystem(*getCode()->Hz->pcm, syndrome); estim.empty()) {
         return res;
     } else {
         std::set<std::size_t> estIdx;

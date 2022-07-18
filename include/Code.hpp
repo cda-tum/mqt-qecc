@@ -20,8 +20,11 @@ struct CodeProperties {
 };
 
 struct ParityCheckMatrix {
-    explicit ParityCheckMatrix(gf2Mat pcm):
-        pcm(std::move(pcm)) {}
+    std::unique_ptr<gf2Mat> pcm;
+    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache{};
+
+    explicit ParityCheckMatrix(gf2Mat& pcm):
+        pcm(std::make_unique<gf2Mat>(pcm)) {}
 
     explicit ParityCheckMatrix(const std::string& filePath) {
         if (filePath.empty()) {
@@ -31,7 +34,6 @@ struct ParityCheckMatrix {
         int           word;
         std::ifstream inFile;
         gf2Mat        result;
-        pcm = {};
         std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
         try {
             inFile.open(filePath);
@@ -41,8 +43,9 @@ struct ParityCheckMatrix {
                 while (instream >> word) {
                     tempVec.push_back(word);
                 }
-                pcm.emplace_back(tempVec);
+                result.emplace_back(tempVec);
             }
+            pcm = std::make_unique<gf2Mat>(result);
         } catch (const std::exception& e) {
             std::cerr << "[PCM::ctor] - error opening file " << filePath << std::endl;
             throw QeccException(e.what());
@@ -51,9 +54,6 @@ struct ParityCheckMatrix {
         std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
     }
 
-    gf2Mat pcm{};
-
-    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
 
     /**
      * If H is nxm we have n checks and m bit nodes.
@@ -61,26 +61,26 @@ struct ParityCheckMatrix {
      * @param nodeIdx
      * @return a list of node indices of adjacent nodes
      */
-    std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
+    std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) const {
         /*if (nbrCache.contains(nodeIdx)) {
             return nbrCache.at(nodeIdx);
         } else {*/
-        if (pcm.empty() || pcm.front().empty()) {
+        if (pcm->empty() || pcm->front().empty()) {
             std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
             throw QeccException("Cannot return neighbours, pcm empty");
         }
-        auto                     nrChecks = pcm.size();
-        auto                     nrBits   = pcm.front().size();
-        std::vector<std::size_t> res;
+        auto                     nrChecks = pcm->size();
+        auto                     nrBits   = pcm->front().size();
+        std::vector<std::size_t> res{};
         if (nodeIdx < nrBits) {
             for (std::size_t i = 0; i < nrChecks; i++) {
-                if (pcm.at(i).at(nodeIdx)) {
+                if (pcm->at(i).at(nodeIdx)) {
                     res.emplace_back(nrBits + i);
                 }
             }
         } else {
             for (std::size_t i = 0; i < nrBits; i++) {
-                if (pcm.at(nodeIdx - nrBits).at(i)) {
+                if (pcm->at(nodeIdx - nrBits).at(i)) {
                     res.emplace_back(i);
                 }
             }
@@ -90,35 +90,14 @@ struct ParityCheckMatrix {
         //}
     }
 };
-/**
- * A graph representation for convenience using adjacency lists
- */
-struct TannerGraph {
-    std::vector<std::vector<std::size_t>> adjList;
 
-    std::vector<std::size_t> getNeighbours(const std::size_t& node) {
-        return adjList.at(node);
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const TannerGraph& c) {
-        for (const auto& i: c.adjList) {
-            os << ": | ";
-            for (auto j: i) {
-                os << j << " ";
-            }
-            os << "|";
-            os << std::endl;
-        }
-        return os;
-    }
-};
 /**
  * Considers X errors with Z checks only.
  * Z errors are corrected completely analogously in a symmetric way for Z and X.
  */
 class Code {
 public:
-    ParityCheckMatrix Hz;
+    std::unique_ptr<ParityCheckMatrix> Hz;
     std::size_t       K = 0U;
     std::size_t       N = 0U;
 
@@ -126,9 +105,9 @@ public:
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
      * Convention: Rows in first dim, columns in second
      */
-    explicit Code(ParityCheckMatrix hz):
-        Hz(std::move(hz)) {
-        N = Hz.pcm.front().size();
+    explicit Code(std::vector<std::vector<bool>>& hz):
+        Hz(std::make_unique<ParityCheckMatrix>(hz)) {
+        N = Hz->pcm->front().size();
     }
 
     /*
@@ -141,12 +120,12 @@ public:
     }*/
 
     explicit Code(const std::string& pathToPcm):
-        Hz(pathToPcm) {
+        Hz(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
         std::cout << "[Code::ctor] - initializing Code object" << std::endl;
-        if (Hz.pcm.empty() || Hz.pcm.front().empty()) {
+        if (Hz->pcm->empty() || Hz->pcm->front().empty()) {
             throw QeccException("[Code::ctor] - Cannot construct Code, Hz empty");
         }
-        N = Hz.pcm.front().size();
+        N = Hz->pcm->front().size();
     }
 
     [[nodiscard]] std::size_t getN() const {
@@ -165,9 +144,9 @@ public:
         for (size_t i = 0; i < err.size(); i++) {
             errMat.at(i) = gf2Vec{err.at(i)}; //transpose
         }
-        auto res = Utils::rectMatrixMultiply(Hz.pcm, errMat);
+        auto res = Utils::rectMatrixMultiply(*Hz->pcm, errMat);
         if (!res.empty()) {
-            gf2Vec rres(Hz.pcm.size());
+            gf2Vec rres(Hz->pcm->size());
             for (size_t i = 0; i < rres.size(); i++) {
                 rres.at(i) = res.at(i).front(); // transpose back
             }
@@ -178,7 +157,7 @@ public:
     }
 
     [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {
-        return Utils::isVectorInRowspace(Hz.pcm, est);
+        return Utils::isVectorInRowspace(*Hz->pcm, est);
     }
 
     [[nodiscard]] CodeProperties getProperties() const {
@@ -188,8 +167,8 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Code& c) {
-        auto   nrChecks = c.Hz.pcm.size();
-        auto   nrData   = c.Hz.pcm.front().size();
+        auto   nrChecks = c.Hz->pcm->size();
+        auto   nrData   = c.Hz->pcm->front().size();
         auto   dim      = nrChecks + nrData;
         gf2Mat res(dim);
 
@@ -197,11 +176,11 @@ public:
             gf2Vec row(dim);
             if (i < dim - nrChecks) {
                 for (size_t j = 0; j < nrChecks; j++) {
-                    row.at(nrData + j) = c.Hz.pcm.at(j).at(i);
+                    row.at(nrData + j) = c.Hz->pcm->at(j).at(i);
                 }
             } else {
                 for (size_t j = 0; j < nrData; j++) {
-                    row.at(j) = c.Hz.pcm.at(i - nrData).at(j);
+                    row.at(j) = c.Hz->pcm->at(i - nrData).at(j);
                 }
             }
             res.at(i) = row;

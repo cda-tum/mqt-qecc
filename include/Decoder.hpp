@@ -47,8 +47,6 @@ public:
     DecodingResult result{};
     GrowthVariant  growth = GrowthVariant::ALL_COMPONENTS; // standard
 
-    explicit Decoder(Code& c):
-        code(std::make_unique<Code>(c)) {}
     Decoder() = default;
     virtual void decode(std::vector<bool>&){};
     virtual ~Decoder() = default;
@@ -63,7 +61,7 @@ public:
         Decoder::growth = g;
     }
     void setCode(Code& c) {
-        this->code = std::make_unique<Code>(c);
+        this->code = std::make_unique<Code>(*c.Hz->pcm);
     }
     virtual void reset(){};
 };

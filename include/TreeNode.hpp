@@ -29,7 +29,7 @@ public:
     bool                  deleted = false;
 
     TreeNode():
-        TreeNode(std::numeric_limits<decltype(vertexIdx)>::max()) {}
+        TreeNode(-1) {}
 
     explicit TreeNode(const std::size_t vertexIdx):
         vertexIdx(vertexIdx) {

@@ -36,7 +36,8 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest_
  */
 TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     auto code = SteaneXCode();
-    OriginalUFD decoder(code);
+    OriginalUFD decoder;
+    decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -72,7 +73,8 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  */
 TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     auto code = SteaneXCode();
-    OriginalUFD decoder{code};
+    OriginalUFD decoder;
+    decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -93,7 +95,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
         residualErr.at(i) = (err[i] != estim[i]);
     }
 
-    EXPECT_FALSE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_FALSE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
 }
 
 /**
@@ -101,7 +103,8 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  */
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     auto code = SteaneXCode();
-    OriginalUFD decoder{code};
+    OriginalUFD decoder;
+    decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -128,6 +131,6 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
         residualErr2.at(i) = (err[i] != estim2[i]);
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr2));
 }

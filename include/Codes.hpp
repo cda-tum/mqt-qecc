@@ -11,9 +11,7 @@
 class SteaneXCode: public Code {
 public:
     SteaneXCode():
-        Code(ParityCheckMatrix({{1, 0, 0, 1, 0, 1, 1},
-                                {0, 1, 0, 1, 1, 0, 1},
-                                {0, 0, 1, 0, 1, 1, 1}})) { K = 3; }
+        Code("./resources/codes/testCode.txt") { K = 3; }
 };
 class HGPcode: public Code {
 public:

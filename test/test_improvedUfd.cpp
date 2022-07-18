@@ -63,7 +63,8 @@ INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, CorrectableLargeToric,
  */
 TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     auto        code = SteaneXCode();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -95,7 +96,8 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
  */
 TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     auto        code = SteaneXCode();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err   = GetParam();
@@ -116,7 +118,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
         residualErr.at(i) = (err[i] != estim[i]);
     }
 
-    EXPECT_FALSE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_FALSE(Utils::isVectorInRowspace(*(code.Hz->pcm), residualErr));
 }
 
 /**
@@ -124,7 +126,8 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
  */
 TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     auto        code = SteaneXCode();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -155,8 +158,8 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     }
     std::cout << "estim: " << Utils::getStringFrom(estim) << std::endl;
     std::cout << "resid: " << Utils::getStringFrom(residualErr) << std::endl;
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr2));
 }
 
 /**
@@ -164,7 +167,8 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
  */
 TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
     auto        code = ToricCode_8();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -199,7 +203,8 @@ TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
  */
 TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
     auto        code = ToricCode_8();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << code << std::endl;
     std::vector<bool> err = GetParam();
@@ -230,7 +235,7 @@ TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
     std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
     std::cout << "Estim from Idx: " << Utils::getStringFrom(estim2) << std::endl;
     std::cout << "Sol: " << Utils::getStringFrom(sol) << std::endl;
-    EXPECT_FALSE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
+    EXPECT_FALSE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
 }
 
 /**
@@ -238,9 +243,10 @@ TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
  */
 TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     auto        code = ToricCode_32();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
-              << Utils::getStringFrom(code.Hz.pcm) << std::endl;
+              << Utils::getStringFrom(*code.Hz->pcm) << std::endl;
     const std::vector<bool> err = {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
     std::cout << "error: ";
     Utils::printGF2vector(err);
@@ -274,9 +280,10 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
  */
 TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     auto        code = ToricCode_32();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
-              << Utils::getStringFrom(code.Hz.pcm) << std::endl;
+              << Utils::getStringFrom(*code.Hz->pcm) << std::endl;
     std::vector<bool> err = GetParam();
     std::cout << "error: ";
     Utils::printGF2vector(err);
@@ -309,7 +316,8 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
  */
 TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     auto        code = HGPcode();
-    ImprovedUFD decoder(code);
+    ImprovedUFD decoder;
+    decoder.setCode(code);
     auto        err = gf2Vec(code.N);
     err.at(0)       = 1;
 
@@ -336,6 +344,6 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
         residualErr2.at(i) = (err[i] != estim2[i]);
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(code.Hz.pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr2));
 }
