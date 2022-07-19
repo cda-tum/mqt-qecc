@@ -38,7 +38,7 @@ TEST(DecodingSimulatorTest, TestRuntimeSim) {
 TEST(DecodingSimulatorTest, TestPerformanceSim) {
     std::string rawOut = "./testRawFile", testOut = "./testStatFile";
     double      minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
-    std::size_t runsPerRate = 2, runsPerCode = 2;
+    std::size_t runsPerRate = 2;
     auto        code = SteaneXCode();
     try {
         ImprovedUFD decoder;

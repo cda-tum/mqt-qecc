@@ -99,6 +99,7 @@ public:
     std::unique_ptr<ParityCheckMatrix> Hz;
     std::size_t                        K = 0U;
     std::size_t                        N = 0U;
+    std::size_t                        D = 0U;
 
     /*
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
@@ -160,8 +161,7 @@ public:
     }
 
     [[nodiscard]] CodeProperties getProperties() const {
-        CodeProperties res{.n = N, .k = getK()};
-        //todo res.d
+        CodeProperties res{.n = N, .k = getK(),.d=D};
         return res;
     }
 
