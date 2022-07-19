@@ -39,18 +39,24 @@ public:
     /*
  * Recursive find using path compression
  */
-    static std::shared_ptr<TreeNode> Find(const std::shared_ptr<TreeNode>& node) {
-        if (node->parent == nullptr) {
+    static std::shared_ptr<TreeNode> Find(std::shared_ptr<TreeNode>& node) {
+        std::cout << "in find" << std::endl;
+        while(node->parent != nullptr && node->parent->parent != nullptr){
+            auto parent = node->parent;
+            node->parent = node->parent->parent;
+            node = parent;
+        }
+        if(node->parent == nullptr){
             return node;
-        } else {
-            node->parent = Find(node->parent);
+        }else{
             return node->parent;
         }
     }
     /*
      * Merge two trees with given roots
      */
-    static void Union(const std::shared_ptr<TreeNode>& tree1, const std::shared_ptr<TreeNode>& tree2) {
+    static void Union(std::shared_ptr<TreeNode>& tree1, std::shared_ptr<TreeNode>& tree2) {
+        std::cout << "in union " << std::endl;
         auto root1 = Find(tree1);
         auto root2 = Find(tree2);
 
@@ -66,6 +72,7 @@ public:
     }
 
     static void addFirstToSecondTree(std::shared_ptr<TreeNode>& first, const std::shared_ptr<TreeNode>& second) {
+        std::cout << "first to 2" << std::endl;
         first->parent = second;
         second->children.emplace_back(first);
         second->clusterSize += first->clusterSize;
@@ -76,6 +83,7 @@ public:
         if (first->isCheck) {
             first->checkVertices.emplace(first->vertexIdx);
         }
+        std::cout << "end 1 to 2" << std::endl;
     }
 
     bool operator==(const TreeNode& other) const {

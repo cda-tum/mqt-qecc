@@ -28,6 +28,7 @@ std::unordered_set<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2
             result.emplace(syndrNode->vertexIdx);
         }
     }
+    std::cout << "computed inits" << std::endl;
     return result;
 }
 
@@ -40,6 +41,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
         auto                                   invalidComponents = syndrComponents;
         std::vector<std::size_t> erasure;
         while (!invalidComponents.empty()) {
+            std::cout << "growing " << std::endl;
             for (size_t i = 0; i < invalidComponents.size(); i++) {
                 // Step 1 growth
                 std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
@@ -61,34 +63,44 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                 // Fuse clusters that grew together
                 auto eIt = fusionEdges.begin();
                 while (eIt != fusionEdges.end()) {
-                    const auto& n1    = getNodeFromIdx(eIt->first).lock();
-                    const auto& n2    = getNodeFromIdx(eIt->second).lock();
+                    std::cout << "getting nodes" << std::endl;
+                    auto n1    = getNodeFromIdx(eIt->first).lock();
+                    auto n2    = getNodeFromIdx(eIt->second).lock();
+                    std::cout << "before find n1" << std::endl;
                     auto        root1 = TreeNode::Find(n1);
+                    std::cout << "before find n2" << std::endl;
                     auto        root2 = TreeNode::Find(n2);
-
+                    std::cout << "after finds" << std::endl;
                     //compares vertexIdx only
                     if (*root1 == *root2) {
+                        std::cout << "before er" << std::endl;
                         eIt = fusionEdges.erase(eIt); // passes eIt to erase
+                        std::cout << "after er" << std::endl;
                     } else {
                         const std::size_t root1Size = root1->clusterSize;
                         const std::size_t root2Size = root2->clusterSize;
                         TreeNode::Union(root1, root2);
+
+                        std::cout << "step 3" << std::endl;
 
                         if (root1Size <= root2Size) { // Step 3 fusion of boundary lists
                             for (const auto& boundaryVertex: root1->boundaryVertices) {
                                 root2->boundaryVertices.insert(boundaryVertex);
                             }
                             root1->boundaryVertices.clear();
+                            std::cout << "after step 3 clear" << std::endl;
                         } else {
                             for (const auto& boundaryVertex: root2->boundaryVertices) {
                                 root1->boundaryVertices.insert(boundaryVertex);
                             }
                             root2->boundaryVertices.clear();
+                            std::cout << "after r2 clear" << std::endl;
                         }
                         ++eIt;
+                        std::cout << "after eit update" << std::endl;
                     }
                 }
-
+                std::cout << "replacement" << std::endl;
                 // Replace nodes in list by their roots avoiding duplicates
                 auto idxIt = invalidComponents.begin();
                 while (idxIt != invalidComponents.end()) {
@@ -103,6 +115,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                         invalidComponents.emplace(root->vertexIdx);
                     }
                 }
+                std::cout << "updateing bdry" << std::endl;
 
                 // Update Boundary Lists: remove vertices that are not in boundary anymore
                 for (auto& compId: invalidComponents) {
@@ -110,10 +123,10 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                     auto iter = compNode->boundaryVertices.begin();
                     while (iter != compNode->boundaryVertices.end()) {
                         const auto nbrs     = getCode()->Hz->getNbrs(*iter);
-                        const auto currNode = getNodeFromIdx(*iter).lock();
+                        auto currNode = getNodeFromIdx(*iter).lock();
                         const auto currRoot = TreeNode::Find(currNode);
                         for (const auto& nbr: nbrs) {
-                            const auto node = getNodeFromIdx(nbr).lock();
+                            auto node = getNodeFromIdx(nbr).lock();
                             if (const auto nbrRoot = TreeNode::Find(node); currRoot->vertexIdx != nbrRoot->vertexIdx) {
                                 // if we find one neighbour that is not in the same component the currNode is in the boundary
                                 iter++;
@@ -128,9 +141,11 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                         }
                     }
                 }
+                std::cout << "extracting" << std::endl;
                 extractValidComponents(invalidComponents, erasure);
             }
         }
+        std::cout << "erasure" << std::endl;
         res = erasureDecoder(erasure, syndrComponents);
     }
     auto decodingTimeEnd   = std::chrono::high_resolution_clock::now();
@@ -313,6 +328,7 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
 void ImprovedUFD::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents) {
+    std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
         if (isValidComponent(*it)) {
@@ -358,6 +374,7 @@ std::weak_ptr<TreeNode> ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
 }
 
 void ImprovedUFD::reset() {
+    std::cout << "reset" << std::endl;
     this->nodeMap.clear();
     this->result = {};
 }

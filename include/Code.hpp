@@ -20,8 +20,8 @@ struct CodeProperties {
 };
 
 struct ParityCheckMatrix {
-    std::unique_ptr<gf2Mat> pcm;
-    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache{};
+    std::unique_ptr<gf2Mat>                                   pcm;
+    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
 
     explicit ParityCheckMatrix(gf2Mat& pcm):
         pcm(std::make_unique<gf2Mat>(pcm)) {}
@@ -54,40 +54,39 @@ struct ParityCheckMatrix {
         std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
     }
 
-
     /**
      * If H is nxm we have n checks and m bit nodes.
      * Indices of bit nodes range from 0 to m-1, and indices of check nodes from m to n-1
      * @param nodeIdx
      * @return a list of node indices of adjacent nodes
      */
-    std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) const {
-        /*if (nbrCache.contains(nodeIdx)) {
+    std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
+        if (nbrCache.contains(nodeIdx)) {
             return nbrCache.at(nodeIdx);
-        } else {*/
-        if (pcm->empty() || pcm->front().empty()) {
-            std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
-            throw QeccException("Cannot return neighbours, pcm empty");
-        }
-        auto                     nrChecks = pcm->size();
-        auto                     nrBits   = pcm->front().size();
-        std::vector<std::size_t> res{};
-        if (nodeIdx < nrBits) {
-            for (std::size_t i = 0; i < nrChecks; i++) {
-                if (pcm->at(i).at(nodeIdx)) {
-                    res.emplace_back(nrBits + i);
-                }
-            }
         } else {
-            for (std::size_t i = 0; i < nrBits; i++) {
-                if (pcm->at(nodeIdx - nrBits).at(i)) {
-                    res.emplace_back(i);
+            if (pcm->empty() || pcm->front().empty()) {
+                std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
+                throw QeccException("Cannot return neighbours, pcm empty");
+            }
+            auto                     nrChecks = pcm->size();
+            auto                     nrBits   = pcm->front().size();
+            std::vector<std::size_t> res;
+            if (nodeIdx < nrBits) {
+                for (std::size_t i = 0; i < nrChecks; i++) {
+                    if (pcm->at(i).at(nodeIdx)) {
+                        res.emplace_back(nrBits + i);
+                    }
+                }
+            } else {
+                for (std::size_t i = 0; i < nrBits; i++) {
+                    if (pcm->at(nodeIdx - nrBits).at(i)) {
+                        res.emplace_back(i);
+                    }
                 }
             }
+            nbrCache.insert(std::make_pair(nodeIdx, res));
+            return res;
         }
-        //nbrCache.insert(std::make_pair(nodeIdx, res));
-        return res;
-        //}
     }
 };
 
@@ -98,8 +97,8 @@ struct ParityCheckMatrix {
 class Code {
 public:
     std::unique_ptr<ParityCheckMatrix> Hz;
-    std::size_t       K = 0U;
-    std::size_t       N = 0U;
+    std::size_t                        K = 0U;
+    std::size_t                        N = 0U;
 
     /*
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
