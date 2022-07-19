@@ -113,10 +113,10 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                     while (iter != compNode->boundaryVertices.end()) {
                         const auto nbrs     = getCode()->Hz->getNbrs(*iter);
                         auto currNode = getNodeFromIdx(*iter);
-                        const auto currRoot = TreeNode::Find(currNode);
+                        const auto currRoot = TreeNode::Find(currNode).lock();
                         for (const auto& nbr: nbrs) {
                             auto node = getNodeFromIdx(nbr);
-                            if (const auto nbrRoot = TreeNode::Find(node); currRoot.lock()->vertexIdx != nbrRoot.lock()->vertexIdx) {
+                            if (const auto nbrRoot = TreeNode::Find(node).lock(); currRoot->vertexIdx != nbrRoot->vertexIdx) {
                                 // if we find one neighbour that is not in the same component the currNode is in the boundary
                                 iter++;
                                 break;
@@ -153,7 +153,6 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
     for (const auto& compId: components) {
         auto compNode = getNodeFromIdx(compId).lock();
         presentMap.try_emplace(compNode->vertexIdx, true);
-        assert(compNode->parent.lock() == nullptr); // at this point we can assume that component represents root of the component
         const auto& bndryNodes = compNode->boundaryVertices;
 
         for (const auto& bndryNode: bndryNodes) {
@@ -175,9 +174,9 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
             smallestComponent = comp;
         }
     }
-    presentMap.try_emplace(smallestComponent.lock()->vertexIdx, true);
-    assert(smallestComponent.lock()->parent.lock() == nullptr);
-    const auto& bndryNodes = smallestComponent.lock()->boundaryVertices;
+    auto smallestC = smallestComponent.lock();
+    presentMap.try_emplace(smallestC->vertexIdx, true);
+    const auto& bndryNodes = smallestC->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
         const auto nbrs = getCode()->Hz->getNbrs(bndryNode);
@@ -185,7 +184,6 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
             fusionEdges.emplace_back(bndryNode, nbr);
         }
     }
-    smallestComponent = {};
 }
 
 void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
@@ -206,7 +204,6 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     auto chosenNode = getNodeFromIdx(chosenComponent).lock();
 
     presentMap.try_emplace(chosenNode->vertexIdx, true);
-    assert(chosenNode->parent.lock() == nullptr);
     const auto& bndryNodes = chosenNode->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
@@ -234,22 +231,21 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
         if (currCompRoot.lock()->parent.lock() != nullptr) {
             currCompRoot = TreeNode::Find(currCompRoot);
         }
-        assert(currCompRoot.lock()->parent.lock() == nullptr); // should be due to steps above otherwise we can just call Find here
         std::queue<std::weak_ptr<TreeNode>> queue;
 
         // start traversal at component root
         queue.push(currCompRoot);
 
         while (!queue.empty()) {
-            auto currV = queue.front();
+            auto currV = queue.front().lock();
             queue.pop();
-            if ((!currV.lock()->marked && !currCompRoot.lock()->boundaryVertices.contains(currV.lock()->vertexIdx)) || currV.lock()->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
+            if ((!currV->marked && !currCompRoot.lock()->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                 // add to interior by adding it to the list and marking it
-                currV.lock()->marked = true;
-                compErasure.insert(currV.lock()->vertexIdx);
+                currV->marked = true;
+                compErasure.insert(currV->vertexIdx);
             }
             std::vector<std::weak_ptr<TreeNode>> chldrn;
-            for (auto& i: currV.lock()->children) {
+            for (auto& i: currV->children) {
                 chldrn.emplace_back(i);
             }
             for (const auto& node: chldrn) {
