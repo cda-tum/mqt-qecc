@@ -60,13 +60,13 @@ public:
             nmod_mat_set_entry(b, i, bColIdx, vec.at(i) ? 1U : 0U);
         }
         int sol = nmod_mat_can_solve(x, mat, b);
-        std::cout << "mat: " << std::endl;
+        //std::cout << "mat: " << std::endl;
         nmod_mat_print_pretty(mat);
-        std::cout << "b: " << std::endl;
+        //std::cout << "b: " << std::endl;
         nmod_mat_print_pretty(b);
 
         if (sol == 1) {
-            std::cout << "solution exists:" << std::endl;
+            //std::cout << "solution exists:" << std::endl;
             nmod_mat_print_pretty(x);
             result       = gf2Vec(nmod_mat_nrows(x));
             auto xColIdx = nmod_mat_ncols(x) - 1;
@@ -74,7 +74,7 @@ public:
                 result.at(i) = nmod_mat_get_entry(x, i, xColIdx);
             }
         } else {
-            std::cout << "no sol" << std::endl;
+            //std::cout << "no sol" << std::endl;
         }
         nmod_mat_clear(mat);
         nmod_mat_clear(x);
@@ -120,9 +120,9 @@ public:
             result.at(i) = gf2Vec(matrix.cols());
             for (slong j = 0; j < matrix.cols(); j++) {
                 if (matrix.at(i, j) == a) {
-                    result[i][j] = true;
+                    result.at(i).at(j) = true;
                 } else {
-                    result[i][j] = false;
+                    result.at(i).at(j) = false;
                 }
             }
         }

@@ -44,8 +44,8 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
      * ***************** Comment out accordingly *****************
      */
     //****server
-    const std::string outpath    = "/home/berent/ufpaper/simulations/decodingPerfSim/run6/out/";
-    const std::string inCodePath = "/home/berent/ufpaper/simulations/decodingPerfSim/run6/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
+    const std::string outpath    = "/home/berent/ufpaper/simulations/decodingPerfSim/final/out/";
+    const std::string inCodePath = "/home/berent/ufpaper/simulations/decodingPerfSim/final/source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
     const std::size_t code_K     = 18;
     //**** local
     //    const std::string outpath            = "/home/luca/Documents/uf-simulations/testrun/";
@@ -93,14 +93,12 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
     auto       code = HGPcode(inCodePath, code_K);
     const auto K    = code.getK();
     const auto N    = code.getN();
+    ImprovedUFD decoder;
     for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhysicalErrRate; i++) {
         std::size_t nrOfFailedRuns = 0U;
         decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
-
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
             std::cout << "run nr " << j << std::endl;
-
-            ImprovedUFD decoder;
             decoder.setCode(code);
             auto        error    = Utils::sampleErrorIidPauliNoise(N, physicalErrRate);
             auto        syndrome = code.getSyndrome(error);
@@ -126,6 +124,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecodingPerformance) {
             if (j != nrOfRunsPerRate - 1) {
                 decodingResOutput << ", ";
             }
+            decoder.reset();
         }
         std::cout << "computing wer " << std::endl;
         //compute word error rate WER
@@ -161,10 +160,10 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
      */
     //**** server:
     //const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
-    const std::string outPath = "/home/berent/ufpaper/simulations/montecarlo/noflint/out/";
-    const std::string inPath  = "/home/berent/ufpaper/simulations/montecarlo/noflint/in/toricCodes/";
+    const std::string outPath = "/home/berent/ufpaper/simulations/montecarlo/final/out/";
+    const std::string inPath  = "/home/berent/ufpaper/simulations/montecarlo/final/in/toricCodes/";
     //**** local:
-    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
+   // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
     //const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
 
@@ -189,9 +188,9 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
     // Basic Parameter setup
     //**** paper eval:
     //const double      physErrRates[] = {0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05};
-    const std::size_t nrOfTrials = 10'000;
+    const std::size_t nrOfTrials = 100'000;
     //****tests:
-    const double physErrRate = 0.05;
+    const double physErrRate = 0.02;
     //const std::size_t nrOfTrials     = 1'0;
     // ***************** configure end *****************
 
@@ -215,12 +214,10 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
             auto       code    = Code(currPath); // construct new for each trial
             const auto codeN   = code.getN();
             auto       decoder = ImprovedUFD();
-            for (std::size_t j = 0; j < 5; j++) {              // 5 runs to compute average
+            for (std::size_t j = 0; j < 10; j++) {              // 5 runs to compute average
                 for (std::size_t i = 0; i < nrOfTrials; i++) { // nr of monte carlo samples
                     decoder.setCode(code);
                     std::cout << "run nr " << i << std::endl;
-                    std::cout << "making decoder" << std::endl;
-                    std::cout << "sampling error" << std::endl;
                     auto error = Utils::sampleErrorIidPauliNoise(codeN, physErrRate);
                     std::cout << "computing syndrome" << std::endl;
                     auto syndrome = code.getSyndrome(error);
@@ -239,8 +236,7 @@ TEST(UnionFindSimulation, EmpiricalEvaluationDecoderRuntime) {
                         throw QeccException("Accumulator too large");
                     }
                     nlohmann::json json = info.to_json();
-                    dataOutStream << json.dump(2U);
-                    dataOutStream << ",";
+                    dataOutStream << json.dump(2U) << ",";
                     dataOutStream.flush();
                     json = {};
                     info = {};

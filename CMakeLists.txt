@@ -12,10 +12,10 @@ set(CMAKE_CXX_STANDARD 20)
 #add_compile_options(-fsanitize=undefined)
 #add_link_options(-fsanitize=undefined)
 # enable organization of targets into folders
-add_compile_options(-fno-omit-frame-pointer)
-add_link_options(-fno-omit-frame-pointer)
-add_compile_options(-mno-omit-leaf-frame-pointer)
-add_link_options(-mno-omit-leaf-frame-pointer)
+#add_compile_options(-fno-omit-frame-pointer)
+#add_link_options(-fno-omit-frame-pointer)
+#add_compile_options(-mno-omit-leaf-frame-pointer)
+#add_link_options(-mno-omit-leaf-frame-pointer)
 
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -79,6 +79,5 @@ endif()
 # files containing codes for tests
 FILE(COPY examples/test/ DESTINATION "${CMAKE_BINARY_DIR}/test/resources/codes/" PATTERN "*")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
