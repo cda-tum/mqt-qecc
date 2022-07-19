@@ -40,16 +40,17 @@ public:
      * computes the average runtime (in ms) per code. For this to reflect runtime scaling reasonably
      * the codes should be from the same family (e.g. toric codes) with increasing size.
      * @param rawDataOutputFilepath
-     * @param decodingStatisticsOutputFilepath
+     * @param decodingInfoOutfilePath
      * @param physicalErrRates
      * @param nrRuns
      * @param codes
      */
-    static void simulateRuntime(const std::string&         rawDataOutputFilepath,
-                                const std::string&         decodingStatisticsOutputFilepath,
-                                const std::vector<double>& physicalErrRates,
-                                std::size_t                nrRuns,
-                                Decoder&                   decoder);
+    static void simulateAverageRuntime(const std::string& rawDataOutputFilepath,
+                                       const std::string& decodingInfoOutfilePath,
+                                       const double&      physicalErrRate,
+                                       std::size_t        nrRuns,
+                                       const std::string& codesPath,
+                                       std::size_t        nrSamples);
 
 private:
     static std::string generateOutFileName(const std::string& filepath);

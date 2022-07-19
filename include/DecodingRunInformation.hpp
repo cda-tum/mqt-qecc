@@ -50,5 +50,9 @@ struct DecodingRunInformation {
         std::stringstream ss{};
         return this->to_json().dump(2U);
     }
+    void print(){
+        nlohmann::json json = this->to_json();
+        std::cout << json.dump(2U);
+    }
 };
 #endif //QUNIONFIND_DECODINGRUNINFORMATION_HPP

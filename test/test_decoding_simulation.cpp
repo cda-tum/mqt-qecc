@@ -18,23 +18,6 @@ using json = nlohmann::json;
 class UnionFindSimulation: public testing::TestWithParam<std::string> {
 };
 
-TEST(UnionFindSimulation, TestSimulator) {
-    std::string rawOut = "./testRawFile", testOut = "./testStatFile";
-    double      minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
-    std::size_t runsPerRate = 2, runsPerCode = 2;
-    auto        code = SteaneXCode();
-    try {
-        ImprovedUFD decoder;
-        decoder.setCode(code);
-        DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
-        std::vector<double> erRates = {minErate, maxErate};
-        DecodingSimulator::simulateRuntime(rawOut, testOut, erRates, runsPerCode, decoder);
-    } catch (QeccException& e) {
-        std::cerr << "Exception caught " << e.getMessage();
-    }
-    EXPECT_TRUE(true);
-}
-
 /**
  * Simulate WER for growing number of physical err rate
  * Can also be used for threshold simulations

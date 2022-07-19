@@ -30,6 +30,7 @@ package_add_test(${PROJECT_NAME}_test
         ${CMAKE_CURRENT_SOURCE_DIR}/test_improvedUfd.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_originalUfd.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_simulator.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_treenode.cpp)
 
 add_custom_command(TARGET ${PROJECT_NAME}_test
