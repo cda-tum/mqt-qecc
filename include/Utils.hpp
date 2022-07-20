@@ -92,10 +92,10 @@ public:
 
     static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
-        slong      rows = matrix.size();
-        slong      cols = matrix.front().size();
+        const slong      rows = static_cast<slong>(matrix.size());
+        const slong      cols = static_cast<slong>(matrix.front().size());
         const mp_limb_t modul = 2;
-        auto ctxx   = flint::nmodxx_ctx(modul);
+        const auto& ctxx   = flint::nmodxx_ctx(modul);
         auto result = flint::nmod_matxx(matrix.size(), matrix.front().size(), modul);
         for (slong i = 0; i < rows; i++) {
             for (slong j = 0; j < cols; j++) {
@@ -112,9 +112,9 @@ public:
     }
 
     static gf2Mat getMatrixFromFlint(const flint::nmod_matxx& matrix) {
-        auto   ctxx = flint::nmodxx_ctx(2);
+        const auto&   ctxx = flint::nmodxx_ctx(2);
         gf2Mat result(matrix.rows());
-        auto   a = flint::nmodxx::red(1, ctxx);
+        const auto&   a = flint::nmodxx::red(1, ctxx);
 
         for (slong i = 0; i < matrix.rows(); i++) {
             result.at(i) = gf2Vec(matrix.cols());
@@ -147,17 +147,17 @@ public:
         } else {
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
-        auto augm = getAugmentedMatrix(matrix, vec);
+        const auto& augm = getAugmentedMatrix(matrix, vec);
         matrix    = gauss(augm);
         gf2Vec vector(vec.size());
 
-        for (size_t i = 0; i < matrix.size(); i++) {
+        for (std::size_t i = 0; i < matrix.size(); i++) {
             vector.at(i) = matrix[i][matrix.at(i).size() - 1];
         }
         // check consistency
-        for (size_t i = 0; i < vector.size(); i++) {
+        for (std::size_t i = 0; i < vector.size(); i++) {
             if (vector[i]) {
-                for (size_t j = 0; j < matrix.at(i).size(); j++) {
+                for (std::size_t j = 0; j < matrix.at(i).size(); j++) {
                     if (std::none_of(matrix.at(i).begin(), matrix.at(i).end() - 1, [](const bool val) { return val; })) {
                         return false;
                     }
@@ -178,7 +178,7 @@ public:
         assertVectorPresent(vector);
         gf2Mat result(matrix.size());
 
-        for (size_t i = 0; i < matrix.size(); i++) {
+        for (std::size_t i = 0; i < matrix.size(); i++) {
             result.at(i) = gf2Vec(matrix.at(i).size() + 1);
             for (std::size_t j = 0; j < matrix.at(0).size(); j++) {
                 result.at(i).at(j) = matrix.at(i).at(j);
@@ -199,8 +199,8 @@ public:
         for (auto& i: transp) {
             i = gf2Vec(matrix.size());
         }
-        for (size_t i = 0; i < matrix.size(); i++) {
-            for (size_t j = 0; j < matrix.at(i).size(); j++) {
+        for (std::size_t i = 0; i < matrix.size(); i++) {
+            for (std::size_t j = 0; j < matrix.at(i).size(); j++) {
                 transp.at(j).at(i) = matrix.at(i).at(j);
             }
         }
@@ -216,8 +216,8 @@ public:
     static gf2Mat rectMatrixMultiply(const gf2Mat& m1, const gf2Mat& m2) {
         assertMatrixPresent(m1);
         assertMatrixPresent(m2);
-        auto mat1   = getFlintMatrix(m1);
-        auto mat2   = getFlintMatrix(m2);
+        const auto& mat1   = getFlintMatrix(m1);
+        const auto& mat2   = getFlintMatrix(m2);
         auto result = flint::nmod_matxx(mat1.rows(), mat2.cols(), 2);
         result      = mat1.mul_classical(mat2);
         return getMatrixFromFlint(result);
@@ -253,8 +253,8 @@ public:
         if (matrix.empty()) {
             return "[]";
         }
-        auto              nrows = matrix.size();
-        auto              ncols = matrix.at(0).size();
+        const auto&              nrows = matrix.size();
+        const auto&              ncols = matrix.at(0).size();
         std::stringstream s;
         s << nrows << "x" << ncols << "matrix [" << std::endl;
         for (std::size_t i = 0; i < nrows; i++) {
@@ -279,7 +279,7 @@ public:
         if (vector.empty()) {
             return "[]";
         }
-        auto              nelems = vector.size();
+        const auto&              nelems = vector.size();
         std::stringstream s;
         s << "[";
         for (std::size_t j = 0; j < nelems; j++) {

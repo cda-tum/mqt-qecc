@@ -336,12 +336,12 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     }
     std::cout << std::endl;
     std::vector<bool> residualErr(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = (err[i] != estim[i]);
+    for (std::size_t i = 0; i < err.size(); i++) {
+        residualErr.at(i) = (err.at(i) != estim.at(i));
     }
     std::vector<bool> residualErr2(err.size());
-    for (size_t i = 0; i < err.size(); i++) {
-        residualErr2.at(i) = (err[i] != estim2[i]);
+    for (std::size_t i = 0; i < err.size(); i++) {
+        residualErr2.at(i) = (err.at(i) != estim2.at(i));
     }
 
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));

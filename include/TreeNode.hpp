@@ -8,7 +8,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <set>
+#include <unordered_set>
 #include <vector>
 
 /**
@@ -16,22 +16,22 @@
  */
 class TreeNode {
 public:
-    std::size_t                          vertexIdx = 0U;
-    bool                                 isCheck   = false;
-    std::weak_ptr<TreeNode>              parent;
-    std::vector<std::weak_ptr<TreeNode>> children{};
-    size_t                               clusterSize = 1U;
-    std::set<std::size_t>                boundaryVertices{};
-    std::set<std::size_t>                checkVertices{};
+    std::size_t                     vertexIdx = 0U;
+    bool                            isCheck   = false;
+    TreeNode*                       parent    = nullptr;
+    std::vector<TreeNode*>          children{};
+    size_t                          clusterSize = 1U;
+    std::unordered_set<std::size_t> boundaryVertices{};
+    std::unordered_set<std::size_t> checkVertices{};
     // for interior calculation
-    std::set<std::size_t> markedNeighbours{};
-    bool                  marked  = false;
-    bool                  deleted = false;
+    std::unordered_set<std::size_t> markedNeighbours{};
+    bool                            marked  = false;
+    bool                            deleted = false;
 
     TreeNode():
         TreeNode(-1) {}
 
-    explicit TreeNode(const std::size_t vertexIdx):
+    explicit TreeNode(const std::size_t& vertexIdx):
         vertexIdx(vertexIdx) {
         boundaryVertices.emplace(vertexIdx);
     }
@@ -39,16 +39,15 @@ public:
     /*
  * Recursive find using path compression
  */
-    static std::weak_ptr<TreeNode> Find(std::weak_ptr<TreeNode>& node) {
+    static TreeNode* Find(TreeNode* node) {
         //std::cout << "in find" << std::endl;
-        std::shared_ptr<TreeNode> n = node.lock();
-        std::shared_ptr<TreeNode> parent = node.lock()->parent.lock();
-        while(parent != nullptr && parent->parent.lock() != nullptr){
-            auto p = parent;
-            parent = parent->parent.lock();
-            node         = p;
+        auto parent = node->parent;
+        while (parent != nullptr && parent->parent != nullptr) {
+            const auto& p = parent;
+            parent        = parent->parent;
+            node          = p;
         }
-        if(parent == nullptr){
+        if (parent == nullptr) {
             return node;
         } else {
             return parent;
@@ -57,11 +56,11 @@ public:
     /*
      * Merge two trees with given roots
      */
-    static void Union(std::weak_ptr<TreeNode>& tree1, std::weak_ptr<TreeNode>& tree2) {
-        auto root1 = Find(tree1);
-        auto root2 = Find(tree2);
-        auto r1 = root1.lock();
-        auto r2 = root2.lock();
+    static void Union(TreeNode* tree1, TreeNode* tree2) {
+        auto        root1 = Find(tree1);
+        auto        root2 = Find(tree2);
+        const auto& r1    = root1;
+        const auto& r2    = root2;
 
         if (*r1 == *r2) {
             return;
@@ -74,10 +73,10 @@ public:
         }
     }
 
-    static void addFirstToSecondTree(std::weak_ptr<TreeNode>& first, const std::weak_ptr<TreeNode>& second) {
-        auto f = first.lock();
-        auto s = second.lock();
-        f->parent = s;
+    static void addFirstToSecondTree(TreeNode* first, TreeNode* second) {
+        const auto& f = first;
+        const auto& s = second;
+        f->parent     = s;
         s->children.emplace_back(first);
         s->clusterSize += f->clusterSize;
         for (const auto& cv: f->checkVertices) {
@@ -97,10 +96,10 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, const TreeNode& v) {
-        return os << "idx: " << v.vertexIdx << "parentIx: " << v.parent.lock()->vertexIdx << "check: " << v.isCheck << "children: " << v.children.size();
+        return os << "idx: " << v.vertexIdx << "parentIx: " << v.parent->vertexIdx << "check: " << v.isCheck << "children: " << v.children.size();
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const std::set<TreeNode>& v) {
+    friend std::ostream& operator<<(std::ostream& os, const std::unordered_set<TreeNode>& v) {
         if (v.empty()) {
             os << "[]";
             return os;
@@ -142,7 +141,7 @@ public:
         os << "]";
         return os;
     }
-    friend std::ostream& operator<<(std::ostream& os, const std::set<std::shared_ptr<TreeNode>>& v) {
+    friend std::ostream& operator<<(std::ostream& os, const std::unordered_set<std::shared_ptr<TreeNode>>& v) {
         if (v.empty()) {
             os << "[]";
             return os;
