@@ -2,6 +2,8 @@
 * Simulate average runtime for codes with growing nr of N for several physical err rates (err rates should only increase slope of curve)
 */
 
+using namespace std;
+
 int main() {
     //**** server:
     //const std::string codeN   = "toric_(nan,nan)-[[1058,2,23]]_hx.txt";
