@@ -5,6 +5,7 @@
 #define QUNIONFIND_UTILS_HPP
 
 #include "TreeNode.hpp"
+#include "nlohmann/json.hpp"
 
 #include <cassert>
 #include <flint/nmod_matxx.h>
@@ -344,6 +345,16 @@ public:
 
         inFile.close();
         return result;
+    }
+    static void printTimePerSampleRun(const std::map<std::string, std::size_t, std::less<>>& avgSampleRuns){
+        nlohmann::json avgData = avgSampleRuns;
+        std::cout << "trial:timesum = " << avgData.dump(2U) << std::endl;
+    }
+
+    static void readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths){
+        for (const auto& file: std::filesystem::directory_iterator(inPath)) {
+            codePaths.emplace_back(file.path());
+        }
     }
 };
 #endif //QUNIONFIND_UTILS_HPP

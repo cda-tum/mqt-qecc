@@ -34,7 +34,7 @@ struct ParityCheckMatrix {
         int           word;
         std::ifstream inFile;
         gf2Mat        result;
-        std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
+        //std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
         try {
             inFile.open(filePath);
             while (getline(inFile, line, '\n')) {
@@ -51,7 +51,7 @@ struct ParityCheckMatrix {
             throw QeccException(e.what());
         }
         inFile.close();
-        std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
+        //std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
     }
 
     /**
@@ -121,7 +121,7 @@ public:
 
     explicit Code(const std::string& pathToPcm):
         Hz(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
-        std::cout << "[Code::ctor] - initializing Code object" << std::endl;
+        //std::cout << "[Code::ctor] - initializing Code object" << std::endl;
         if (Hz->pcm->empty() || Hz->pcm->front().empty()) {
             throw QeccException("[Code::ctor] - Cannot construct Code, Hz empty");
         }

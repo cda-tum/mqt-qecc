@@ -22,6 +22,22 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"},
  * result contains information obtained from the decoder
  */
 struct DecodingRunInformation {
+    DecodingRunInformation(double                physicalErrR,
+                           size_t                codeSize,
+                           gf2Vec          error,
+                           gf2Vec          syndrome,
+                           DecodingResultStatus  status,
+                           DecodingResult  result):
+        physicalErrR(physicalErrR),
+        codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), status(status), result(std::move(result)) {}
+    DecodingRunInformation(double physicalErrR,
+                           size_t codeSize,
+                           gf2Vec  error,
+                           gf2Vec  syndrome,
+                           DecodingResult  result):
+        physicalErrR(physicalErrR), codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), result(std::move(result)) {}
+    DecodingRunInformation() = default;;
+
     double               physicalErrR = 0.0;
     std::size_t          codeSize     = 0U;
     gf2Vec               error        = {};
@@ -50,7 +66,7 @@ struct DecodingRunInformation {
         std::stringstream ss{};
         return this->to_json().dump(2U);
     }
-    void print(){
+    void print() const {
         nlohmann::json json = this->to_json();
         std::cout << json.dump(2U);
     }
