@@ -224,30 +224,31 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
     for (auto& currCompRootId: erasure) {
         std::unordered_set<std::size_t> compErasure;
         const auto&                            currCompRoot = getNodeFromIdx(currCompRootId);
-        std::queue<TreeNode*>         queue;
+        std::queue<std::size_t>         queue;
 
         // start traversal at component root
-        queue.push(currCompRoot);
+        queue.push(currCompRoot->vertexIdx);
 
         while (!queue.empty()) {
-            const auto& currV = queue.front();
+            const auto& currV = getNodeFromIdx(queue.front());
             queue.pop();
             if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                 // add to interior by adding it to the list and marking it
                 currV->marked = true;
                 compErasure.insert(currV->vertexIdx);
             }
-            std::vector<TreeNode*> chldrn;
+            std::vector<std::size_t> chldrn;
             for (const auto& i: currV->children) {
-                chldrn.emplace_back(i);
+                chldrn.emplace_back(i->vertexIdx);
             }
-            for (const auto& node: chldrn) {
+            for (const auto& nIdx: chldrn) {
+                const auto& node = getNodeFromIdx(nIdx);
                 if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
                     compErasure.insert(node->vertexIdx);
                 }
-                queue.push(node); // step into depth
+                queue.push(nIdx); // step into depth
             }
             chldrn.clear();
         }
@@ -351,6 +352,11 @@ TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
 }
 
 void ImprovedUFD::reset() {
+    for (auto& n: nodeMap) {
+        n.second->children.clear();
+        n.second->parent = nullptr;
+        n.second.reset();
+    }
     nodeMap.clear();
     this->result = {};
 }

@@ -41,16 +41,15 @@ public:
  */
     static TreeNode* Find(TreeNode* node) {
         //std::cout << "in find" << std::endl;
-        auto parent = node->parent;
-        while (parent != nullptr && parent->parent != nullptr) {
-            const auto& p = parent;
-            parent        = parent->parent;
+        while (node->parent != nullptr && node->parent->parent != nullptr) {
+            const auto& p = node->parent;
+            node->parent        = node->parent->parent;
             node          = p;
         }
-        if (parent == nullptr) {
+        if (node->parent == nullptr) {
             return node;
         } else {
-            return parent;
+            return node->parent;
         }
     }
     /*
@@ -59,14 +58,11 @@ public:
     static void Union(TreeNode* tree1, TreeNode* tree2) {
         auto        root1 = Find(tree1);
         auto        root2 = Find(tree2);
-        const auto& r1    = root1;
-        const auto& r2    = root2;
 
-        if (*r1 == *r2) {
+        if (root1->vertexIdx == root2->vertexIdx) {
             return;
         }
-
-        if (r1->clusterSize <= r2->clusterSize) {
+        if (root1->clusterSize <= root2->clusterSize) {
             addFirstToSecondTree(root1, root2);
         } else {
             addFirstToSecondTree(root2, root1);
@@ -74,17 +70,15 @@ public:
     }
 
     static void addFirstToSecondTree(TreeNode* first, TreeNode* second) {
-        const auto& f = first;
-        const auto& s = second;
-        f->parent     = s;
-        s->children.emplace_back(first);
-        s->clusterSize += f->clusterSize;
-        for (const auto& cv: f->checkVertices) {
-            s->checkVertices.insert(cv);
+        first->parent     = second;
+        second->children.emplace_back(first);
+        second->clusterSize += first->clusterSize;
+        for (const auto& cv: first->checkVertices) {
+            second->checkVertices.insert(cv);
         }
-        f->checkVertices.clear();
-        if (f->isCheck) {
-            f->checkVertices.emplace(f->vertexIdx);
+        first->checkVertices.clear();
+        if (first->isCheck) {
+            first->checkVertices.emplace(first->vertexIdx);
         }
     }
 

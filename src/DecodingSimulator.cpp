@@ -108,7 +108,6 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
     finalRawOut.rdbuf()->pubsetbuf(0, 0);
 
     std::size_t                                                                    avgDecodingTimeAcc = 0U;
-    double                                                                         avgDecTime         = 0.0;
     std::map<std::string, std::map<std::string, double, std::less<>>, std::less<>> dataPerRate;
     std::map<std::string, double, std::less<>>                                     tmp;
     std::vector<std::string>                                                       codePaths{};
