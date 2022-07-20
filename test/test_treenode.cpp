@@ -7,11 +7,7 @@
 
 #include <gtest/gtest.h>
 
-class TreeNodeTest: public testing::TestWithParam<std::string> {
-protected:
-    void setUp() {
-    }
-};
+class TreeNodeTest: public testing::TestWithParam<std::string> {};
 
 TEST(TreeNodeTest, TestFindDisjoint) {
     auto n1 = std::make_unique<TreeNode>(0);
@@ -105,8 +101,6 @@ TEST(TreeNodeTest, TestFindFourNodesCheckSecondChildGrandchild) {
     n4->parent = n3.get();
     n3->parent = n2.get();
     n2->parent = n1.get();
-    auto n1w = n1.get();
-    auto n2w = n2.get();
     auto n3w = n3.get();
     auto n4w = n4.get();
 
@@ -131,8 +125,6 @@ TEST(TreeNodeTest, TestFindMultiBranchCheckChildGrandchild) {
     n4->parent = n2.get();
     n3->parent = n2.get();
     n2->parent = n1.get();
-    auto n1w = n1.get();
-    auto n2w = n2.get();
     auto n3w = n3.get();
     auto n4w = n4.get();
 
@@ -156,8 +148,6 @@ TEST(TreeNodeTest, TestUnionThreeNodes) {
     auto n2 = std::make_unique<TreeNode>(1);
     auto n3 = std::make_unique<TreeNode>(2);
     auto n4 = std::make_unique<TreeNode>(3);
-    auto n1w = n1.get();
-    auto n2w = n2.get();
     auto n3w = n3.get();
     auto n4w = n4.get();
     n3->parent = n2.get();

@@ -323,7 +323,7 @@ void ImprovedUFD::extractValidComponents(std::unordered_set<std::size_t>& invali
 bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
     const auto& compNode = getNodeFromIdx(compId);
     gf2Vec      valid(compNode->checkVertices.size());
-    std::size_t i = 0;
+    std::size_t i = 0U;
     for (const auto& checkVertex: compNode->checkVertices) {
         for (const auto nbrs = getCode()->Hz->getNbrs(checkVertex); const auto& nbr: nbrs) {
             if (!compNode->boundaryVertices.contains(nbr)) {
