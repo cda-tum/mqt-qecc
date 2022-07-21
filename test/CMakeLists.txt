@@ -15,6 +15,7 @@ if (NOT TARGET gtest OR NOT TARGET gmock)
     endif ()
 endif ()
 
+# create executable for /test/app.cpp
 add_executable(${PROJECT_NAME}_app ${CMAKE_CURRENT_SOURCE_DIR}/app.cpp)
 target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME}_lib)
 set_target_properties(${PROJECT_NAME}_app PROPERTIES FOLDER tests CMAKE_CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
@@ -35,7 +36,6 @@ macro(package_add_test TESTNAME)
 endmacro()
 
 package_add_test(${PROJECT_NAME}_test
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_decoding_simulation.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_improvedUfd.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_originalUfd.cpp
