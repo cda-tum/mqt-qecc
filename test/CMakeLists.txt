@@ -16,9 +16,13 @@ if (NOT TARGET gtest OR NOT TARGET gmock)
 endif ()
 
 add_executable(${PROJECT_NAME}_app ${CMAKE_CURRENT_SOURCE_DIR}/app.cpp)
-target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME}_lib)
 set_target_properties(${PROJECT_NAME}_app PROPERTIES FOLDER tests CMAKE_CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
-enable_lto(${PROJECT_NAME}_main)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if (ipo_supported)
+    set_target_properties(${PROJECT_NAME}_lib PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
 
 macro(package_add_test TESTNAME)
     # create an exectuable in which the tests will be stored
