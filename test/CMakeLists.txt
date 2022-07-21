@@ -18,7 +18,7 @@ endif ()
 add_executable(${PROJECT_NAME}_app ${CMAKE_CURRENT_SOURCE_DIR}/app.cpp)
 target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME}_app PROPERTIES FOLDER tests CMAKE_CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
-#enable_lto(${PROJECT_NAME}_main)
+enable_lto(${PROJECT_NAME}_main)
 
 macro(package_add_test TESTNAME)
     # create an exectuable in which the tests will be stored

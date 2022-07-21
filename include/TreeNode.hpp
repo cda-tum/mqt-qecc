@@ -41,15 +41,16 @@ public:
  */
     static TreeNode* Find(TreeNode* node) {
         //std::cout << "in find" << std::endl;
-        while (node->parent != nullptr && node->parent->parent != nullptr) {
-            const auto& p = node->parent;
-            node->parent        = node->parent->parent;
+        auto parent = node->parent;
+        while (parent != nullptr && parent->parent != nullptr) {
+            const auto& p = parent;
+            parent        = parent->parent;
             node          = p;
         }
-        if (node->parent == nullptr) {
+        if (parent == nullptr) {
             return node;
         } else {
-            return node->parent;
+            return parent;
         }
     }
     /*

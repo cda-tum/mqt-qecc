@@ -353,10 +353,14 @@ TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
 
 void ImprovedUFD::reset() {
     for (auto& n: nodeMap) {
+        for(auto&c : n.second->children){
+            c = nullptr;
+        }
         n.second->children.clear();
         n.second->parent = nullptr;
-        n.second.reset();
     }
     nodeMap.clear();
     this->result = {};
+    this->growth = GrowthVariant::ALL_COMPONENTS;
+    this->getCode()->Hz->nbrCache.clear();
 }
