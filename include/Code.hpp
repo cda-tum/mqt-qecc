@@ -61,15 +61,15 @@ struct ParityCheckMatrix {
      * @return a list of node indices of adjacent nodes
      */
     std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
-        if (nbrCache.contains(nodeIdx)) {
-            return nbrCache.at(nodeIdx);
+        if (auto it = nbrCache.find(nodeIdx); it != nbrCache.end()) {
+            return it->second;
         } else {
             if (pcm->empty() || pcm->front().empty()) {
                 std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
                 throw QeccException("Cannot return neighbours, pcm empty");
             }
-            auto                     nrChecks = pcm->size();
-            auto                     nrBits   = pcm->front().size();
+            const auto                     nrChecks = pcm->size();
+            const auto                     nrBits   = pcm->front().size();
             std::vector<std::size_t> res;
             if (nodeIdx < nrBits) {
                 for (std::size_t i = 0; i < nrChecks; i++) {
@@ -84,8 +84,8 @@ struct ParityCheckMatrix {
                     }
                 }
             }
-            nbrCache.insert(std::make_pair(nodeIdx, res));
-            return res;
+            const auto [nbrIt, inserted] = nbrCache.try_emplace(nodeIdx, res);
+            return nbrIt->second;
         }
     }
 };

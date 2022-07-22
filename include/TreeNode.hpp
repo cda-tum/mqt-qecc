@@ -22,7 +22,7 @@ public:
     std::vector<TreeNode*>          children{};
     size_t                          clusterSize = 1U;
     std::unordered_set<std::size_t> boundaryVertices{};
-    std::unordered_set<std::size_t> checkVertices{};
+    std::vector<std::size_t> checkVertices{};
     // for interior calculation
     std::unordered_set<std::size_t> markedNeighbours{};
     bool                            marked  = false;
@@ -74,12 +74,11 @@ public:
         first->parent     = second;
         second->children.emplace_back(first);
         second->clusterSize += first->clusterSize;
-        for (const auto& cv: first->checkVertices) {
-            second->checkVertices.insert(cv);
-        }
+        std::move(first->checkVertices.begin(), first->checkVertices.end(), std::back_inserter(second->checkVertices));
+
         first->checkVertices.clear();
         if (first->isCheck) {
-            first->checkVertices.emplace(first->vertexIdx);
+            first->checkVertices.emplace_back(first->vertexIdx);
         }
     }
 

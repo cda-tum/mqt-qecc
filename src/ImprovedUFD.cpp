@@ -24,9 +24,9 @@ std::unordered_set<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2
             const auto idx = i + getCode()->getN();
             auto syndrNode = std::make_unique<TreeNode>(idx);
             syndrNode->isCheck    = true;
-            syndrNode->checkVertices.emplace(syndrNode->vertexIdx);
+            syndrNode->checkVertices.emplace_back(syndrNode->vertexIdx);
             nodeMap.try_emplace(syndrNode->vertexIdx, std::move(syndrNode));
-            result.insert(nodeMap.at(idx)->vertexIdx);
+            result.insert(idx);
         }
     }
     //std::cout << "computed inits" << std::endl;
@@ -108,7 +108,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
                     const auto& compNode = getNodeFromIdx(compId);
                     auto        iter     = compNode->boundaryVertices.begin();
                     while (iter != compNode->boundaryVertices.end()) {
-                        const auto  nbrs     = getCode()->Hz->getNbrs(*iter);
+                        const auto&  nbrs     = getCode()->Hz->getNbrs(*iter);
                         auto        currNode = getNodeFromIdx(*iter);
                         const auto& currRoot = TreeNode::Find(currNode);
                         for (const auto& nbr: nbrs) {
@@ -153,7 +153,7 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
         const auto& bndryNodes = compNode->boundaryVertices;
 
         for (const auto& bndryNode: bndryNodes) {
-            const auto nbrs = getCode()->Hz->getNbrs(bndryNode);
+            const auto& nbrs = getCode()->Hz->getNbrs(bndryNode);
             for (const auto& nbr: nbrs) {
                 fusionEdges.emplace_back(bndryNode, nbr);
             }
@@ -176,7 +176,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     const auto& bndryNodes = smallestC->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        const auto nbrs = getCode()->Hz->getNbrs(bndryNode);
+        const auto& nbrs = getCode()->Hz->getNbrs(bndryNode);
         for (const auto& nbr: nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
@@ -204,7 +204,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     const auto& bndryNodes = chosenNode->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        const auto nbrs = getCode()->Hz->getNbrs(bndryNode);
+        const auto& nbrs = getCode()->Hz->getNbrs(bndryNode);
         for (const auto& nbr: nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
@@ -237,20 +237,15 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
                 currV->marked = true;
                 compErasure.insert(currV->vertexIdx);
             }
-            std::vector<std::size_t> chldrn;
-            for (const auto& i: currV->children) {
-                chldrn.emplace_back(i->vertexIdx);
-            }
-            for (const auto& nIdx: chldrn) {
-                const auto& node = getNodeFromIdx(nIdx);
+
+            for (const auto& node: currV->children) {
                 if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
                     compErasure.insert(node->vertexIdx);
                 }
-                queue.push(nIdx); // step into depth
+                queue.push(node->vertexIdx); // step into depth
             }
-            chldrn.clear();
         }
         erasureSet.emplace_back(compErasure);
         erasureSetIdx++;
@@ -270,7 +265,7 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
                 for (const auto& adjCheck: getCode()->Hz->getNbrs(currN->vertexIdx)) {
                     const auto& adjCheckNode = getNodeFromIdx(adjCheck);
                     if (adjCheckNode->marked && !adjCheckNode->deleted) {
-                        auto nNbrs = getCode()->Hz->getNbrs(adjCheck);
+                        const auto& nNbrs = getCode()->Hz->getNbrs(adjCheck);
                         auto nnbr  = nNbrs.begin();
                         // remove bit nodes adjacent to neighbour check
                         while (nnbr != nNbrs.end()) {
@@ -325,7 +320,7 @@ bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
     gf2Vec      valid(compNode->checkVertices.size());
     std::size_t i = 0U;
     for (const auto& checkVertex: compNode->checkVertices) {
-        for (const auto nbrs = getCode()->Hz->getNbrs(checkVertex); const auto& nbr: nbrs) {
+        for (const auto& nbrs = getCode()->Hz->getNbrs(checkVertex); const auto& nbr: nbrs) {
             if (!compNode->boundaryVertices.contains(nbr)) {
                 valid.at(i) = true;
                 break;
@@ -337,17 +332,17 @@ bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
 }
 // return weak_ptr to leave ownership in list
 TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
-    if (nodeMap.contains(idx)) {
-        return nodeMap.at(idx).get();
+    if (auto nodeIt = nodeMap.find(idx); nodeIt != nodeMap.end()) {
+        return nodeIt->second.get();
     } else {
         auto res = std::make_unique<TreeNode>(idx);
         // determine if idx is a check
         if (idx >= getCode()->getN()) {
             res->isCheck = true;
-            res->checkVertices.emplace(res->vertexIdx);
+            res->checkVertices.emplace_back(res->vertexIdx);
         }
-        nodeMap.try_emplace(res->vertexIdx, std::move(res));
-        return nodeMap.at(idx).get();
+        const auto [it, inserted] = nodeMap.try_emplace(idx, std::move(res));
+        return it->second.get();
     }
 }
 
@@ -363,5 +358,4 @@ void ImprovedUFD::reset() {
     nodeMap.clear();
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;
-    this->getCode()->Hz->nbrCache.clear();
 }

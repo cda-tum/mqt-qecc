@@ -68,11 +68,7 @@ TEST(UtilsTest, TestReduce) {
                {0, 1, 1, 0, 0, 1, 0},
                {0, 0, 0, 1, 1, 1, 1}};
     auto res = Utils::gauss(matrix);
-    std::cout << "res:" << std::endl;
-    Utils::printGF2matrix(res);
-    std::cout << "sol" << std::endl;
-    Utils::printGF2matrix(sol);
-    EXPECT_TRUE(sol == res);
+    EXPECT_TRUE(Utils::getFlintMatrix(sol) == res);
 }
 
 TEST(UtilsTest, TestTranspose) {

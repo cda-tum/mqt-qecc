@@ -83,12 +83,11 @@ public:
         return result;
     }
 
-    static gf2Mat gauss(const gf2Mat& matrix) {
+    static flint::nmod_matxx gauss(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
-        gf2Mat result(matrix.at(0).size());
-        auto   mat = getFlintMatrix(matrix);
-        mat.set_rref(); // reduced row echelon form
-        return getMatrixFromFlint(mat);
+        auto res = getFlintMatrix(matrix);
+        res.set_rref(); // reduced row echelon form
+        return res;
     }
 
     static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
@@ -148,20 +147,27 @@ public:
         } else {
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
-        const auto& augm = getAugmentedMatrix(matrix, vec);
-        matrix           = gauss(augm);
-        gf2Vec vector(vec.size());
 
         for (std::size_t i = 0; i < matrix.size(); i++) {
-            vector.at(i) = matrix[i][matrix.at(i).size() - 1];
+            matrix.at(i).emplace_back(vec.at(i));
         }
-        // check consistency
-        for (std::size_t i = 0; i < vector.size(); i++) {
-            if (vector[i]) {
-                for (std::size_t j = 0; j < matrix.at(i).size(); j++) {
-                    if (std::none_of(matrix.at(i).begin(), matrix.at(i).end() - 1, [](const bool val) { return val; })) {
-                        return false;
+        auto reduced = gauss(matrix);
+        flint::print_pretty(reduced);
+        // check consistency, inconsistent <=> vec not in rowspace
+        for (slong i = 0; i < reduced.rows(); i++) {
+            std::cout << i << std::endl;
+            if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
+                bool inconsistent = true;
+                std::cout << "1 det" << std::endl;
+                for (slong k = 0; k < (reduced.cols() - 1); k++) {
+                    std::cout << "checking " << i << "," << k << std::endl;
+                    if (reduced.at(i, k)._limb() == 1) {
+                        inconsistent = false;
+                        std::cout << "also 1" << std::endl;
                     }
+                }
+                if (inconsistent) {
+                    return false;
                 }
             }
         }
@@ -169,32 +175,12 @@ public:
     }
 
     /**
-     * Computes and returns the matrix obtained by appending the column vector to the input matrix, result = (matrix|vector)
-     * @param matrix
-     * @param vector
-     * @return
-     */
-    static gf2Mat getAugmentedMatrix(const gf2Mat& matrix, const gf2Vec& vector) {
-        assertMatrixPresent(matrix);
-        assertVectorPresent(vector);
-        gf2Mat result(matrix.size());
-
-        for (std::size_t i = 0; i < matrix.size(); i++) {
-            result.at(i) = gf2Vec(matrix.at(i).size() + 1);
-            for (std::size_t j = 0; j < matrix.at(0).size(); j++) {
-                result.at(i).at(j) = matrix.at(i).at(j);
-            }
-            result.at(i).at(matrix.at(0).size()) = vector.at(i);
-        }
-        return result;
-    }
-
-    /**
      * Computes the transpose of the given matrix
      * @param matrix
      * @return
      */
-    static gf2Mat getTranspose(const gf2Mat& matrix) {
+    static gf2Mat
+    getTranspose(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
         gf2Mat transp(matrix.at(0).size());
         for (auto& i: transp) {
@@ -217,8 +203,9 @@ public:
     static gf2Vec rectMatrixMultiply(const gf2Mat& m1, const gf2Vec& vec) {
         gf2Vec result(m1.size());
         for (std::size_t i = 0; i < m1.size(); i++) {
+            const auto& row = m1[i];
             for (std::size_t k = 0; k < vec.size(); k++) {
-                result[i] = result[i] ^ (m1[i][k] && vec[k]);
+                result[i] = result[i] ^ (row[k] && vec[k]);
             }
         }
         return result;
@@ -302,11 +289,11 @@ public:
      */
     static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
         std::random_device rd;
-        std::mt19937       gen(rd());
-        gf2Vec             result;
+        std::mt19937_64    gen(rd());
+        gf2Vec             result(n);
 
         // Set up the weights, iid noise for each bit
-        std::discrete_distribution d({1 - physicalErrRate, physicalErrRate});
+        std::bernoulli_distribution d(physicalErrRate);
         for (std::size_t i = 0; i < n; i++) {
             result.emplace_back(d(gen));
         }

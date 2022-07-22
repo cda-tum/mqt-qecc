@@ -36,7 +36,7 @@ void OriginalUFD::decode(std::vector<bool>& syndrome) {
 
             while (currCompIt != components.end()) {
                 for (auto node: *currCompIt) {
-                    const auto nbrs = getCode()->Hz->getNbrs(node);
+                    const auto& nbrs = getCode()->Hz->getNbrs(node);
                     compNbrs.insert(nbrs.begin(), nbrs.end());
                 }
                 neibrsToAdd.emplace_back(compNbrs);

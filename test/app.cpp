@@ -75,10 +75,10 @@ void runtime(){
                 sumAllSamples      = 0U;
                 auto       code    = Code(currPath);
                 const auto codeN   = code.getN();
+                std::cout << "set code" << std::endl;
+                decoder.setCode(code);
                 for (std::size_t j = 0; j < nrSamples; j++) {            // #sample runs to compute average
                     for (std::size_t i = 0; i < nrOfDecodingRuns; i++) { // nr of monte carlo samples
-                        std::cout << "set code" << std::endl;
-                        decoder.setCode(code);
                         std::cout << "sample err" << std::endl;
                         auto error    = Utils::sampleErrorIidPauliNoise(codeN, currRate);
                         std::cout << "getting syndr" << std::endl;
@@ -86,7 +86,7 @@ void runtime(){
                         std::cout << "decoding" << std::endl;
                         decoder.decode(syndrome);
                         auto const& decodingResult = decoder.result;
-                        trialsTimeSum              = trialsTimeSum + decodingResult.decodingTime;
+                        trialsTimeSum              += decodingResult.decodingTime;
                         nlohmann::json json        = DecodingRunInformation(
                                                              currRate,
                                                              codeN,
@@ -182,11 +182,11 @@ void decodingPerformance(){
     const auto  K    = code.getK();
     const auto  N    = code.getN();
     ImprovedUFD decoder;
+    decoder.setCode(code);
     for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhysicalErrRate; i++) {
         std::size_t nrOfFailedRuns = 0U;
         decodingResOutput << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
         for (size_t j = 0; j < nrOfRunsPerRate; j++) {
-            decoder.setCode(code);
             auto error    = Utils::sampleErrorIidPauliNoise(N, physicalErrRate);
             auto syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);
