@@ -358,6 +358,7 @@ void ImprovedUFD::reset() {
         }
         n.second->children.clear();
         n.second->parent = nullptr;
+        n.second.reset();
     }
     nodeMap.clear();
     this->result = {};

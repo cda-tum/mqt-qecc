@@ -198,23 +198,29 @@ TEST(UtilsTest, ImportCode) {
     auto res = Utils::importGf2MatrixFromFile("./resources/codes/testCode.txt");
     EXPECT_TRUE(res == matrix);
 }
-TEST(UtilsTest, Multiply) {
-    gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
-                     {0, 1, 0, 1, 1, 0, 1},
-                     {0, 0, 1, 0, 1, 1, 1}};
 
-    gf2Mat matrix2 = {{1, 0, 0, 1, 0, 1, 1},
-                     {0, 1, 0, 1, 1, 0, 1},
-                     {0, 0, 1, 0, 1, 1, 1}};
-
-    matrix2 = Utils::getTranspose(matrix2);
-    auto res = Utils::rectMatrixMultiply(matrix, matrix2);
-
-}
 TEST(UtilsTest, GetFlintMatrix) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                      {0, 1, 0, 1, 1, 0, 1},
                      {0, 0, 1, 0, 1, 1, 1}};
     auto s = Utils::getFlintMatrix(matrix);
     print_pretty(s);
+}
+
+TEST(UtilsTest, MatrixMultiply) {
+    gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
+                     {0, 1, 0, 1, 1, 0, 1},
+                     {0, 0, 1, 0, 1, 1, 1}};
+    gf2Vec vec = {1,0,0,0,0,0,0};
+    gf2Vec sol = {1,0,0};
+    EXPECT_TRUE(Utils::rectMatrixMultiply(matrix,vec) == sol);
+}
+
+TEST(UtilsTest, MatrixMultiply2) {
+    gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
+                     {0, 1, 0, 1, 1, 0, 1},
+                     {0, 0, 1, 0, 1, 1, 1}};
+    gf2Vec vec = {1,1,0,0,0,0,0};
+    gf2Vec sol = {1,1,0};
+    EXPECT_TRUE(Utils::rectMatrixMultiply(matrix,vec) == sol);
 }

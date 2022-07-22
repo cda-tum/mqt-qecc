@@ -21,12 +21,12 @@ void runtime(){
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    //const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
-    //const std::string outPath  = rootPath + "out/";
-    //const std::string inPath   = rootPath + "in/toricCodes/";
+    const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
+    const std::string outPath  = rootPath + "out/";
+    const std::string inPath   = rootPath + "in/toricCodes/";
     //**** local:
-    const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
-    const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
+    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/repaired/";
+    //const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes/";
     // ***************** config end *****************
 
     const std::string outFile         = outPath + "info_";
@@ -48,13 +48,13 @@ void runtime(){
      * ***************** Basic parameters, comment out accordingly *****************
      */
     //**** paper eval:
-    const std::size_t         nrOfDecodingRuns = 50;
-    const std::size_t         nrSamples        = 3;
-    const std::vector<double> physErrRates     = {0.03};
+    //const std::size_t         nrOfDecodingRuns = 100'00;
+    //const std::size_t         nrSamples        = 5;
+    //const std::vector<double> physErrRates     = {0.03};
     //**** tests:
-    //const std::size_t         nrOfDecodingRuns = 5;
-    //const std::size_t nrSamples  = 3;
-    //const std::vector<double> physErrRates = {0.03, 0.06};
+    const std::size_t         nrOfDecodingRuns = 10000;
+    const std::size_t nrSamples  = 5;
+    const std::vector<double> physErrRates = {0.03};
     // ***************** configure end *****************
 
     std::size_t                                                                    trialsTimeSum = 0U;
@@ -239,5 +239,6 @@ void decodingPerformance(){
 }
 
 int main() {
-    runtime();
+    //runtime();
+    decodingPerformance();
 }

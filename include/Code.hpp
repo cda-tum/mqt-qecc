@@ -140,21 +140,8 @@ public:
         if (err.empty()) {
             throw QeccException("Cannot compute syndrome, err empy");
         }
-        gf2Mat errMat(err.size());
-        for (std::size_t i = 0; i < err.size(); i++) {
-            errMat.at(0).reserve(1);
-            errMat.at(i) = gf2Vec{err.at(i)}; //transpose
-        }
-        auto res = Utils::rectMatrixMultiply(*Hz->pcm, errMat);
-        if (!res.empty()) {
-            gf2Vec rres(Hz->pcm->size());
-            for (std::size_t i = 0; i < rres.size(); i++) {
-                rres.at(i) = res.at(i).front(); // transpose back
-            }
-            return rres;
-        } else {
-            return gf2Vec{};
-        }
+
+       return Utils::rectMatrixMultiply(*Hz->pcm, err);
     }
 
     [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {
