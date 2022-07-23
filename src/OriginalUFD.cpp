@@ -17,7 +17,7 @@
  * Original implementation of the generalized UF decoder for QLDPC codes using Gaussian elimination
  * @param syndrome
  */
-void OriginalUFD::decode(std::vector<bool>& syndrome) {
+void OriginalUFD::decode(const std::vector<bool>& syndrome) {
     const auto                         decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::vector<std::set<std::size_t>> components;
     if (!syndrome.empty()) {

@@ -121,7 +121,6 @@ public:
 
     explicit Code(const std::string& pathToPcm):
         Hz(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
-        //std::cout << "[Code::ctor] - initializing Code object" << std::endl;
         if (Hz->pcm->empty() || Hz->pcm->front().empty()) {
             throw QeccException("[Code::ctor] - Cannot construct Code, Hz empty");
         }
@@ -140,8 +139,9 @@ public:
         if (err.empty()) {
             throw QeccException("Cannot compute syndrome, err empy");
         }
-
-       return Utils::rectMatrixMultiply(*Hz->pcm, err);
+       gf2Vec syndr(Hz->pcm->size());
+       Utils::rectMatrixMultiply(*Hz->pcm, err, syndr);
+       return syndr;
     }
 
     [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {

@@ -23,7 +23,7 @@ namespace std {
 class ImprovedUFD: public Decoder {
 public:
     using Decoder::Decoder;
-    void decode(std::vector<bool>& syndrome) override;
+    void decode(const gf2Vec & syndrome) override;
     void reset() override;
 
 private:
@@ -31,14 +31,14 @@ private:
     std::unordered_map<std::size_t, std::unique_ptr<TreeNode>> nodeMap{};
     TreeNode*                                    getNodeFromIdx(std::size_t idx);
     void                                                       standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components);
+                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::vector<std::size_t>& components);
     void                                                       singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components);
+                                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::vector<std::size_t>& components);
     void                                                       singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                                                std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components);
+                                                                                                std::unordered_map<std::size_t, bool>& presentMap, const std::vector<std::size_t>& components);
     bool                                                       isValidComponent(const std::size_t& compId);
-    std::unordered_set<std::size_t>                            erasureDecoder(std::vector<std::size_t>& erasure, std::unordered_set<std::size_t>& syndrome);
-    void                                                       extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::vector<std::size_t>& erasure);
-    std::unordered_set<std::size_t>                            computeInitTreeComponents(const gf2Vec& syndrome);
+    std::vector<std::size_t>                            erasureDecoder(std::vector<std::size_t>& erasure, std::vector<std::size_t>& syndrome);
+    void                                                       extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& erasure);
+    std::vector<std::size_t>                            computeInitTreeComponents(const gf2Vec& syndrome);
 };
 #endif //QUNIONFIND_IMPROVEDUFD_HPP

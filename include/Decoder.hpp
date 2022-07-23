@@ -48,7 +48,7 @@ public:
     GrowthVariant  growth = GrowthVariant::ALL_COMPONENTS; // standard
 
     Decoder() = default;
-    virtual void decode(std::vector<bool>&){};
+    virtual void decode(const std::vector<bool>&){};
     virtual ~Decoder() = default;
 
     [[nodiscard]] const std::unique_ptr<Code>& getCode() const {

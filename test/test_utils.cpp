@@ -209,7 +209,9 @@ TEST(UtilsTest, MatrixMultiply) {
                      {0, 0, 1, 0, 1, 1, 1}};
     gf2Vec vec = {1,0,0,0,0,0,0};
     gf2Vec sol = {1,0,0};
-    EXPECT_TRUE(Utils::rectMatrixMultiply(matrix,vec) == sol);
+    gf2Vec syndr(matrix.size());
+    Utils::rectMatrixMultiply(matrix,vec, syndr);
+    EXPECT_TRUE(syndr == sol);
 }
 
 TEST(UtilsTest, MatrixMultiply2) {
@@ -218,5 +220,8 @@ TEST(UtilsTest, MatrixMultiply2) {
                      {0, 0, 1, 0, 1, 1, 1}};
     gf2Vec vec = {1,1,0,0,0,0,0};
     gf2Vec sol = {1,1,0};
-    EXPECT_TRUE(Utils::rectMatrixMultiply(matrix,vec) == sol);
+    gf2Vec comp(matrix.size());
+    Utils::rectMatrixMultiply(matrix,vec, comp);
+
+    EXPECT_TRUE(comp == sol);
 }

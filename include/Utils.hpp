@@ -155,15 +155,11 @@ public:
         flint::print_pretty(reduced);
         // check consistency, inconsistent <=> vec not in rowspace
         for (slong i = 0; i < reduced.rows(); i++) {
-            std::cout << i << std::endl;
             if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
                 bool inconsistent = true;
-                std::cout << "1 det" << std::endl;
                 for (slong k = 0; k < (reduced.cols() - 1); k++) {
-                    std::cout << "checking " << i << "," << k << std::endl;
                     if (reduced.at(i, k)._limb() == 1) {
                         inconsistent = false;
-                        std::cout << "also 1" << std::endl;
                     }
                 }
                 if (inconsistent) {
@@ -195,20 +191,18 @@ public:
     }
 
     /**
-     * Standard matrix multiplication
+     * Computes matrix vector product and stores it in result vector
      * @param m1
-     * @param m2
-     * @return
+     * @param vec
+     * @param result
      */
-    static gf2Vec rectMatrixMultiply(const gf2Mat& m1, const gf2Vec& vec) {
-        gf2Vec result(m1.size());
+    static void rectMatrixMultiply(const gf2Mat& m1, const gf2Vec& vec, gf2Vec& result) {
         for (std::size_t i = 0; i < m1.size(); i++) {
-            const auto& row = m1[i];
+            const auto& row = m1.at(i);
             for (std::size_t k = 0; k < vec.size(); k++) {
-                result[i] = result[i] ^ (row[k] && vec[k]);
+                result.at(i) = result.at(i) ^ (row.at(k) && vec.at(k));
             }
         }
-        return result;
     }
 
     static void assertMatrixPresent(const gf2Mat& matrix) {
@@ -290,7 +284,8 @@ public:
     static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
         std::random_device rd;
         std::mt19937_64    gen(rd());
-        gf2Vec             result(n);
+        gf2Vec             result;
+        result.reserve(n);
 
         // Set up the weights, iid noise for each bit
         std::bernoulli_distribution d(physicalErrRate);

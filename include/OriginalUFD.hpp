@@ -8,7 +8,7 @@
 class OriginalUFD: public Decoder {
 public:
     using Decoder::Decoder;
-    void decode(std::vector<bool>& syndrome) override;
+    void decode(const std::vector<bool>& syndrome) override;
     void reset() override;
 private:
     bool                     isValidComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;

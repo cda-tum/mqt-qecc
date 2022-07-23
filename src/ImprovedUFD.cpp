@@ -17,119 +17,124 @@
      * @param syndrome
      * @return
     */
-std::unordered_set<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2Vec& syndrome) {
-    std::unordered_set<std::size_t> result{};
+std::vector<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2Vec& syndrome) {
+    std::vector<std::size_t> result{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
-            const auto idx = i + getCode()->getN();
-            auto syndrNode = std::make_unique<TreeNode>(idx);
-            syndrNode->isCheck    = true;
+            const auto idx       = i + getCode()->getN();
+            auto       syndrNode = std::make_unique<TreeNode>(idx);
+            syndrNode->isCheck   = true;
             syndrNode->checkVertices.emplace_back(syndrNode->vertexIdx);
             nodeMap.try_emplace(syndrNode->vertexIdx, std::move(syndrNode));
-            result.insert(idx);
+            result.emplace_back(idx);
         }
     }
     //std::cout << "computed inits" << std::endl;
     return result;
 }
 
-void ImprovedUFD::decode(gf2Vec& syndrome) {
-    auto                            decodingTimeBegin = std::chrono::high_resolution_clock::now();
-    std::unordered_set<std::size_t> res;
-
+void ImprovedUFD::decode(const gf2Vec& syndrome) {
+    auto                     decodingTimeBegin = std::chrono::high_resolution_clock::now();
+    std::vector<std::size_t> res;
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
         auto                     syndrComponents   = computeInitTreeComponents(syndrome);
         auto                     invalidComponents = syndrComponents;
         std::vector<std::size_t> erasure;
         while (!invalidComponents.empty()) {
-            for (size_t i = 0; i < invalidComponents.size(); i++) {
-                // Step 1 growth
-                std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
-                std::unordered_map<std::size_t, bool>            presentMap{}; // for step 4
+            //std::cout <<"growing" << std::endl;
+            // Step 1 growth
+            std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
+            std::unordered_map<std::size_t, bool>            presentMap; // for step 4
 
-                if (this->growth == GrowthVariant::ALL_COMPONENTS) {
-                    // to grow all components (including valid ones)
-                    invalidComponents.insert(erasure.begin(), erasure.end());
-                    standardGrowth(fusionEdges, presentMap, invalidComponents);
-                } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
-                    standardGrowth(fusionEdges, presentMap, invalidComponents);
-                } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
-                    singleClusterSmallestFirstGrowth(fusionEdges, presentMap, invalidComponents);
-                } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
-                    singleClusterRandomFirstGrowth(fusionEdges, presentMap, invalidComponents);
-                } else {
-                    throw std::invalid_argument("Unsupported growth variant");
-                }
-                // Fuse clusters that grew together
-                auto eIt = fusionEdges.begin();
-                while (eIt != fusionEdges.end()) {
-                    auto n1    = getNodeFromIdx(eIt->first);
-                    auto n2    = getNodeFromIdx(eIt->second);
-                    auto root1 = TreeNode::Find(n1);
-                    auto root2 = TreeNode::Find(n2);
-                    //compares vertexIdx only
-                    if (root1->vertexIdx == root2->vertexIdx) {
-                        eIt = fusionEdges.erase(eIt); // passes eIt to erase
-                    } else {
-                        TreeNode::Union(root1, root2);
-
-                        if (root1->clusterSize <= root2->clusterSize) { // Step 3 fusion of boundary lists
-                            for (const auto& boundaryVertex: root1->boundaryVertices) {
-                                root2->boundaryVertices.insert(boundaryVertex);
-                            }
-                            root1->boundaryVertices.clear();
-                        } else {
-                            for (const auto& boundaryVertex: root2->boundaryVertices) {
-                                root1->boundaryVertices.insert(boundaryVertex);
-                            }
-                            root2->boundaryVertices.clear();
-                        }
-                        ++eIt;
-                    }
-                }
-                // Replace nodes in list by their roots avoiding duplicates
-                auto idxIt = invalidComponents.begin();
-                while (idxIt != invalidComponents.end()) {
-                    auto        elem = getNodeFromIdx(*idxIt);
-                    const auto& root = TreeNode::Find(elem);
-                    if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
-                        // root already in component list, no replacement necessary
-                        idxIt = invalidComponents.erase(idxIt);
-                    } else {
-                        // root of component not yet in list, replace node by its root in components;
-                        idxIt = invalidComponents.erase(idxIt);
-                        invalidComponents.emplace(root->vertexIdx);
-                    }
-                }
-                //std::cout << "updateing bdry" << std::endl;
-
-                // Update Boundary Lists: remove vertices that are not in boundary anymore
-                for (auto& compId: invalidComponents) {
-                    const auto& compNode = getNodeFromIdx(compId);
-                    auto        iter     = compNode->boundaryVertices.begin();
-                    while (iter != compNode->boundaryVertices.end()) {
-                        const auto&  nbrs     = getCode()->Hz->getNbrs(*iter);
-                        auto        currNode = getNodeFromIdx(*iter);
-                        const auto& currRoot = TreeNode::Find(currNode);
-                        for (const auto& nbr: nbrs) {
-                            auto node = getNodeFromIdx(nbr);
-                            if (const auto nbrRoot = TreeNode::Find(node); currRoot->vertexIdx != nbrRoot->vertexIdx) {
-                                // if we find one neighbour that is not in the same component the currNode is in the boundary
-                                iter++;
-                                break;
-                            }
-                            if (nbr == nbrs.back()) {
-                                // if we have checked all neighbours and found none in another component remove from boundary list
-                                //toRemoveList.emplace_back(*iter);
-                                iter = compNode->boundaryVertices.erase(iter);
-                                break;
-                            }
-                        }
-                    }
-                }
-                //std::cout << "extracting" << std::endl;
-                extractValidComponents(invalidComponents, erasure);
+            if (this->growth == GrowthVariant::ALL_COMPONENTS) {
+                // to grow all components (including valid ones)
+                std::move(erasure.begin(), erasure.end(), std::back_inserter(invalidComponents));
+                standardGrowth(fusionEdges, presentMap, invalidComponents);
+            } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
+                standardGrowth(fusionEdges, presentMap, invalidComponents);
+            } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
+                singleClusterSmallestFirstGrowth(fusionEdges, presentMap, invalidComponents);
+            } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
+                singleClusterRandomFirstGrowth(fusionEdges, presentMap, invalidComponents);
+            } else {
+                throw std::invalid_argument("Unsupported growth variant");
             }
+            // Fuse clusters that grew together
+            auto eIt = fusionEdges.begin();
+            while (eIt != fusionEdges.end()) {
+                //std::cout << "fusion" << std::endl;
+                auto n1    = getNodeFromIdx(eIt->first);
+                auto n2    = getNodeFromIdx(eIt->second);
+                auto root1 = TreeNode::Find(n1);
+                auto root2 = TreeNode::Find(n2);
+                //compares vertexIdx only
+                if (root1->vertexIdx == root2->vertexIdx) {
+                    eIt = fusionEdges.erase(eIt); // passes eIt to erase
+                } else {
+                    auto s1 = root1->clusterSize; // sizes before union needed
+                    auto s2 = root2->clusterSize;
+                    TreeNode::Union(root1, root2);
+
+                    if (s1 <= s2) { // Step 3 fusion of boundary lists
+                        for (const auto& boundaryVertex: root1->boundaryVertices) {
+                            root2->boundaryVertices.insert(boundaryVertex);
+                        }
+                        root1->boundaryVertices.clear();
+                    } else {
+                        for (const auto& boundaryVertex: root2->boundaryVertices) {
+                            root1->boundaryVertices.insert(boundaryVertex);
+                        }
+                        root2->boundaryVertices.clear();
+                    }
+                    ++eIt;
+                }
+            }
+            // Replace nodes in list by their roots avoiding duplicates
+            std::vector<std::size_t> toAdd;
+            auto                     idxIt = invalidComponents.begin();
+            while (idxIt != invalidComponents.end()) {
+                //std::cout << "root replacement" << std::endl;
+                auto        elem = getNodeFromIdx(*idxIt);
+                const auto& root = TreeNode::Find(elem);
+                if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
+                    // root already in component list, no replacement necessary
+                    idxIt = invalidComponents.erase(idxIt);
+                } else {
+                    // root of component not yet in list, replace node by its root in components;
+                    idxIt = invalidComponents.erase(idxIt);
+                    toAdd.emplace_back(root->vertexIdx);
+                }
+            }
+            std::move(toAdd.begin(), toAdd.end(), std::back_inserter(invalidComponents));
+            //std::cout << "updateing bdry" << std::endl;
+
+            // Update Boundary Lists: remove vertices that are not in boundary anymore
+            for (auto& compId: invalidComponents) {
+                //std::cout << "update bdries" << std::endl;
+                const auto& compNode = getNodeFromIdx(compId);
+                auto        iter     = compNode->boundaryVertices.begin();
+                while (iter != compNode->boundaryVertices.end()) {
+                    const auto& nbrs     = getCode()->Hz->getNbrs(*iter);
+                    auto        currNode = getNodeFromIdx(*iter);
+                    const auto& currRoot = TreeNode::Find(currNode);
+                    for (const auto& nbr: nbrs) {
+                        auto node = getNodeFromIdx(nbr);
+                        if (const auto nbrRoot = TreeNode::Find(node); currRoot->vertexIdx != nbrRoot->vertexIdx) {
+                            // if we find one neighbour that is not in the same component the currNode is in the boundary
+                            iter++;
+                            break;
+                        }
+                        if (nbr == nbrs.back()) {
+                            // if we have checked all neighbours and found none in another component remove from boundary list
+                            //toRemoveList.emplace_back(*iter);
+                            iter = compNode->boundaryVertices.erase(iter);
+                            break;
+                        }
+                    }
+                }
+            }
+            //std::cout << "extracting" << std::endl;
+            extractValidComponents(invalidComponents, erasure);
         }
         //std::cout << "erasure" << std::endl;
         res = erasureDecoder(erasure, syndrComponents);
@@ -146,7 +151,7 @@ void ImprovedUFD::decode(gf2Vec& syndrome) {
 
 void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                  std::unordered_map<std::size_t, bool>&            presentMap,
-                                 const std::unordered_set<std::size_t>&            components) {
+                                 const std::vector<std::size_t>&                   components) {
     for (const auto& compId: components) {
         const auto& compNode = getNodeFromIdx(compId);
         presentMap.try_emplace(compNode->vertexIdx, true);
@@ -162,7 +167,7 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
 }
 
 void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                   std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components) {
+                                                   std::unordered_map<std::size_t, bool>& presentMap, const std::vector<std::size_t>& components) {
     std::size_t smallestComponent;
     std::size_t smallestSize = SIZE_MAX;
     for (const auto& cId: components) {
@@ -185,7 +190,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
 
 void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                  std::unordered_map<std::size_t, bool>&            presentMap,
-                                                 const std::unordered_set<std::size_t>&            components) {
+                                                 const std::vector<std::size_t>&                   components) {
     std::size_t        chosenComponent;
     std::random_device rd;
     std::mt19937       gen(rd());
@@ -217,14 +222,15 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @param syndrome
  * @return
  */
-std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::size_t>& erasure, std::unordered_set<std::size_t>& syndrome) {
-    std::vector<std::unordered_set<std::size_t>> erasureSet{};
-    std::size_t                                  erasureSetIdx = 0;
+std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::size_t>& erasure, std::vector<std::size_t>& syndr) {
+    std::unordered_set<std::size_t>       syndrome(syndr.begin(), syndr.end());
+    std::vector<std::vector<std::size_t>> erasureSet{};
+    std::size_t                           erasureSetIdx = 0;
     // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
     for (auto& currCompRootId: erasure) {
-        std::unordered_set<std::size_t> compErasure;
-        const auto&                            currCompRoot = getNodeFromIdx(currCompRootId);
-        std::queue<std::size_t>         queue;
+        std::vector<std::size_t> compErasure;
+        const auto&              currCompRoot = getNodeFromIdx(currCompRootId);
+        std::queue<std::size_t>  queue;
 
         // start traversal at component root
         queue.push(currCompRoot->vertexIdx);
@@ -235,14 +241,14 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
             if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                 // add to interior by adding it to the list and marking it
                 currV->marked = true;
-                compErasure.insert(currV->vertexIdx);
+                compErasure.emplace_back(currV->vertexIdx);
             }
 
             for (const auto& node: currV->children) {
                 if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
-                    compErasure.insert(node->vertexIdx);
+                    compErasure.emplace_back(node->vertexIdx);
                 }
                 queue.push(node->vertexIdx); // step into depth
             }
@@ -251,22 +257,21 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
         erasureSetIdx++;
     }
 
-    std::vector<std::unordered_set<std::size_t>> resList;
+    std::vector<std::size_t> resList;
     // go through nodes in erasure
     // if current node v is a bit node in Int, remove adjacent check nodes c_i and B(c_i,1)
     for (auto& component: erasureSet) {
-        std::unordered_set<std::size_t> xi;
-        auto                            compNodeIt = component.begin();
+        auto compNodeIt = component.begin();
         while (compNodeIt != component.end() && !syndrome.empty()) {
             const auto& currN = getNodeFromIdx(*compNodeIt++);
             if (!currN->isCheck && !currN->deleted) {
-                xi.insert(currN->vertexIdx); // add bit node to estimate
+                resList.emplace_back(currN->vertexIdx); // add bit node to estimate
                 // if we add a bit node we have to delete adjacent check nodes and their neighbours
                 for (const auto& adjCheck: getCode()->Hz->getNbrs(currN->vertexIdx)) {
                     const auto& adjCheckNode = getNodeFromIdx(adjCheck);
                     if (adjCheckNode->marked && !adjCheckNode->deleted) {
                         const auto& nNbrs = getCode()->Hz->getNbrs(adjCheck);
-                        auto nnbr  = nNbrs.begin();
+                        auto        nnbr  = nNbrs.begin();
                         // remove bit nodes adjacent to neighbour check
                         while (nnbr != nNbrs.end()) {
                             const auto& nnbrNode = getNodeFromIdx(*nnbr++);
@@ -283,16 +288,9 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
                 currN->deleted = true;
             }
         }
-        resList.emplace_back(xi);
     }
 
-    std::unordered_set<std::size_t> res;
-    for (const auto& i: resList) {
-        for (auto& n: i) {
-            res.insert(n);
-        }
-    }
-    return res;
+    return resList;
 }
 
 /**
@@ -300,7 +298,7 @@ std::unordered_set<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::siz
  * @param invalidComponents containts components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void ImprovedUFD::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents) {
+void ImprovedUFD::extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents) {
     //std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
@@ -330,7 +328,8 @@ bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
     }
     return std::all_of(valid.begin(), valid.end(), [](bool i) { return i; });
 }
-// return weak_ptr to leave ownership in list
+
+// return raw ptr to leave ownership in list
 TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
     if (auto nodeIt = nodeMap.find(idx); nodeIt != nodeMap.end()) {
         return nodeIt->second.get();
@@ -348,7 +347,7 @@ TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
 
 void ImprovedUFD::reset() {
     for (auto& n: nodeMap) {
-        for(auto&c : n.second->children){
+        for (auto& c: n.second->children) {
             c = nullptr;
         }
         n.second->children.clear();

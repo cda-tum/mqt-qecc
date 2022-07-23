@@ -23,8 +23,6 @@ public:
     size_t                          clusterSize = 1U;
     std::unordered_set<std::size_t> boundaryVertices{};
     std::vector<std::size_t> checkVertices{};
-    // for interior calculation
-    std::unordered_set<std::size_t> markedNeighbours{};
     bool                            marked  = false;
     bool                            deleted = false;
 
@@ -37,15 +35,14 @@ public:
     }
 
     /*
- * Recursive find using path compression
+ * find using path compression
  */
     static TreeNode* Find(TreeNode* node) {
         //std::cout << "in find" << std::endl;
         auto parent = node->parent;
         while (parent != nullptr && parent->parent != nullptr) {
-            const auto& p = parent;
-            parent        = parent->parent;
-            node          = p;
+            node = parent;
+            parent = parent->parent;
         }
         if (parent == nullptr) {
             return node;
