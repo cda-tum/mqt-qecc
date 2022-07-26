@@ -5,7 +5,6 @@
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
-#include "ImprovedUFD.hpp"
 #include "OriginalUFD.hpp"
 
 #include <bitset>
@@ -21,11 +20,11 @@ class DecodingSimulatorTest: public testing::TestWithParam<std::string> {
 TEST(DecodingSimulatorTest, TestRuntimeSim) {
     std::string rawOut = "./testRawFile", testOut = "./testStatFile";
     const double physicalErrRate = 0.01;
-    std::size_t nrRuns = 2, nrSamples=2;
+    std::size_t nrRuns = 1, nrSamples=1;
     const std::string codePath = "./resources/codes/inCodes";
     auto        code = SteaneXCode();
     try {
-        ImprovedUFD decoder;
+        OriginalUFD decoder;
         decoder.setCode(code);
         DecodingSimulator::simulateAverageRuntime(rawOut, testOut, physicalErrRate, nrRuns, codePath, nrSamples);
     } catch (QeccException& e) {
@@ -41,7 +40,7 @@ TEST(DecodingSimulatorTest, TestPerformanceSim) {
     std::size_t runsPerRate = 2;
     auto        code = SteaneXCode();
     try {
-        ImprovedUFD decoder;
+        OriginalUFD decoder;
         decoder.setCode(code);
         DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
     } catch (QeccException& e) {

@@ -1,6 +1,7 @@
 #include "DecodingSimulator.hpp"
 
 #include "DecodingRunInformation.hpp"
+#include "OriginalUFD.hpp"
 //
 // Created by lucas on 21/06/22.
 //
@@ -114,7 +115,7 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
     std::cout << "reading codes " << std::endl;
     std::map<std::string, std::size_t, std::less<>>                        avgSampleRuns;
     std::map<std::string, std::map<std::string, std::size_t, std::less<>>> avgSampleRunsPerCode;
-    auto                                                                   decoder = ImprovedUFD();
+    auto                                                                   decoder = OriginalUFD();
     DecodingRunInformation                                                 info;
     for (const auto& file: std::filesystem::directory_iterator(codesPath)) {
         codePaths.emplace_back(file.path());

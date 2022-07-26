@@ -5,7 +5,6 @@
 #include "OriginalUFD.hpp"
 
 #include "Decoder.hpp"
-#include "TreeNode.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -20,6 +19,7 @@
 void OriginalUFD::decode(const std::vector<bool>& syndrome) {
     const auto                         decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::vector<std::set<std::size_t>> components;
+    std::vector<std::set<std::size_t>> invalidComponents;
     if (!syndrome.empty()) {
         // Init a single component for each syndrome vertex
         for (std::size_t i = 0U; i < syndrome.size(); i++) {
@@ -29,19 +29,22 @@ void OriginalUFD::decode(const std::vector<bool>& syndrome) {
         }
 
         // grow all components (including valid ones) by 1
-        while (containsInvalidComponents(components, syndrome)) {
-            auto                               currCompIt = components.begin();
+        while (containsInvalidComponents(components, syndrome, invalidComponents)) {
             std::vector<std::set<std::size_t>> neibrsToAdd{};
-            std::set<std::size_t>              compNbrs;
-
-            while (currCompIt != components.end()) {
-                for (auto node: *currCompIt) {
-                    const auto& nbrs = getCode()->Hz->getNbrs(node);
-                    compNbrs.insert(nbrs.begin(), nbrs.end());
-                }
-                neibrsToAdd.emplace_back(compNbrs);
-                currCompIt++;
+            if (this->growth == GrowthVariant::ALL_COMPONENTS) {
+                // to grow all components (including valid ones)
+                standardGrowth(components, neibrsToAdd);
+            } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
+                standardGrowth(invalidComponents, neibrsToAdd);
+            } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
+                singleClusterSmallestFirstGrowth(components, neibrsToAdd);
+            } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
+                singleClusterRandomFirstGrowth(components, neibrsToAdd);
+            } else {
+                throw std::invalid_argument("Unsupported growth variant");
             }
+
+
             for (std::size_t i = 0; i < components.size(); i++) {
                 const auto& nbrs = neibrsToAdd.at(i);
                 components.at(i).insert(nbrs.begin(), nbrs.end());
@@ -65,7 +68,7 @@ void OriginalUFD::decode(const std::vector<bool>& syndrome) {
     for (unsigned long re: res) {
         result.estimBoolVector.at(re) = true;
     }
-    result.estimNodeIdxVector  = std::move(res);
+    result.estimNodeIdxVector = std::move(res);
 }
 
 /**
@@ -74,9 +77,14 @@ void OriginalUFD::decode(const std::vector<bool>& syndrome) {
  * @param syndrome
  * @return
  */
-bool OriginalUFD::containsInvalidComponents(const std::vector<std::set<std::size_t>>& components, const std::vector<bool>& syndrome) const {
+bool OriginalUFD::containsInvalidComponents(const std::vector<std::set<std::size_t>>& components, const std::vector<bool>& syndrome,
+                                            std::vector<std::set<std::size_t>>& invalidComps) const {
     return std::any_of(components.begin(), components.end(), [&](const auto& comp) {
-        return !isValidComponent(comp, syndrome);
+        auto res = isValidComponent(comp, syndrome);
+        if(!res){
+            invalidComps.emplace_back(comp.begin(), comp.end());
+        }
+        return !res;
     });
 }
 
@@ -120,14 +128,6 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(const std::set<std::s
     if (intNodes.empty()) {
         return std::set<std::size_t>{};
     }
-    auto   tmp = Utils::getTranspose(*getCode()->Hz->pcm);
-    gf2Mat reduced;
-    for (unsigned long idx: intNodes) {
-        reduced.emplace_back(tmp.at(idx));
-    }
-    // TODO: this is not used at all. why is this computed?
-    reduced = Utils::getTranspose(reduced);
-
     if (auto estim = Utils::solveSystem(*getCode()->Hz->pcm, syndrome); estim.empty()) {
         return res;
     } else {
@@ -144,6 +144,56 @@ std::set<std::size_t> OriginalUFD::getEstimateForComponent(const std::set<std::s
 
     return res;
 }
+
+void OriginalUFD::standardGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd) {
+    std::set<std::size_t> compNbrs;
+
+    auto currCompIt = comps.begin();
+    while (currCompIt != comps.end()) {
+        for (auto node: *currCompIt) {
+            const auto& nbrs = getCode()->Hz->getNbrs(node);
+            compNbrs.insert(nbrs.begin(), nbrs.end());
+        }
+        neibrsToAdd.emplace_back(compNbrs);
+        currCompIt++;
+    }
+}
+
+void OriginalUFD::singleClusterSmallestFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd) {
+    std::set<std::size_t> compNbrs;
+    std::set<std::size_t> smallestComponent;
+    std::size_t           smallestSize = SIZE_MAX;
+    for (const auto& cId: comps) {
+        if (cId.size() < smallestSize) {
+            smallestComponent = cId;
+        }
+    }
+
+    for (auto node: smallestComponent) {
+        const auto& nbrs = getCode()->Hz->getNbrs(node);
+        compNbrs.insert(nbrs.begin(), nbrs.end());
+    }
+    neibrsToAdd.emplace_back(compNbrs);
+}
+
+void OriginalUFD::singleClusterRandomFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd) {
+    std::set<std::size_t>         compNbrs;
+    std::set<std::size_t>         chosenComponent;
+    std::random_device            rd;
+    std::mt19937                  gen(rd());
+    std::uniform_int_distribution d(static_cast<std::size_t>(0U), comps.size());
+    std::size_t                   chosenIdx = d(gen);
+    auto                          it        = comps.begin();
+    std::advance(it, chosenIdx);
+    chosenComponent = *it;
+
+    for (auto node: chosenComponent) {
+        const auto& nbrs = getCode()->Hz->getNbrs(node);
+        compNbrs.insert(nbrs.begin(), nbrs.end());
+    }
+    neibrsToAdd.emplace_back(compNbrs);
+}
+
 void OriginalUFD::reset() {
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;

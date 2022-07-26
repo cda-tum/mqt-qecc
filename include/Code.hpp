@@ -139,7 +139,7 @@ public:
         if (err.empty()) {
             throw QeccException("Cannot compute syndrome, err empy");
         }
-       gf2Vec syndr(Hz->pcm->size());
+       gf2Vec syndr((*Hz->pcm).size(), false);
        Utils::rectMatrixMultiply(*Hz->pcm, err, syndr);
        return syndr;
     }

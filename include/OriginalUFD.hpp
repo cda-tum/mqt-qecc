@@ -11,9 +11,14 @@ public:
     void decode(const std::vector<bool>& syndrome) override;
     void reset() override;
 private:
-    bool                     isValidComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;
-    bool                     containsInvalidComponents(const std::vector<std::set<std::size_t>>& components, const std::vector<bool>& syndrome) const;
-    std::vector<std::size_t> computeInteriorBitNodes(const std::set<std::size_t>& component) const;
-    std::set<std::size_t>    getEstimateForComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;
+    [[nodiscard]] bool                     isValidComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;
+    bool                     containsInvalidComponents(const std::vector<std::set<std::size_t>>& components, const std::vector<bool>& syndrome,
+                                                       std::vector<std::set<std::size_t>>& invalidComps) const;
+    [[nodiscard]] std::vector<std::size_t> computeInteriorBitNodes(const std::set<std::size_t>& component) const;
+    [[nodiscard]] std::set<std::size_t>    getEstimateForComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;
+    void standardGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
+    void singleClusterSmallestFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
+    void singleClusterRandomFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
+
 };
 #endif //QUNIONFIND_IMPROVEDUF_HPP

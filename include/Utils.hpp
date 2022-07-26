@@ -62,13 +62,13 @@ public:
         }
         int sol = nmod_mat_can_solve(x, mat, b);
         //std::cout << "mat: " << std::endl;
-        nmod_mat_print_pretty(mat);
+        //nmod_mat_print_pretty(mat);
         //std::cout << "b: " << std::endl;
-        nmod_mat_print_pretty(b);
+       // nmod_mat_print_pretty(b);
 
         if (sol == 1) {
             //std::cout << "solution exists:" << std::endl;
-            nmod_mat_print_pretty(x);
+            //nmod_mat_print_pretty(x);
             result       = gf2Vec(nmod_mat_nrows(x));
             auto xColIdx = nmod_mat_ncols(x) - 1;
             for (long i = 0; i < nmod_mat_nrows(x); i++) {
@@ -152,7 +152,7 @@ public:
             matrix.at(i).emplace_back(vec.at(i));
         }
         auto reduced = gauss(matrix);
-        flint::print_pretty(reduced);
+        //flint::print_pretty(reduced);
         // check consistency, inconsistent <=> vec not in rowspace
         for (slong i = 0; i < reduced.rows(); i++) {
             if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
@@ -197,22 +197,32 @@ public:
      * @param result
      */
     static void rectMatrixMultiply(const gf2Mat& m1, const gf2Vec& vec, gf2Vec& result) {
+        assertMatrixPresent(m1);
+        assertVectorPresent(vec);
+        if(m1.front().size() != vec.size() || m1.size() > result.capacity()){
+            std::cerr << "Cannot multiply" << std::endl;
+            throw QeccException("Cannot multiply, dimensions wrong");
+        }
+        //std::cout << "starting mult" << std::endl;
         for (std::size_t i = 0; i < m1.size(); i++) {
             const auto& row = m1.at(i);
             for (std::size_t k = 0; k < vec.size(); k++) {
                 result.at(i) = result.at(i) ^ (row.at(k) && vec.at(k));
             }
         }
+        //std::cout << "rect mult done" << std::endl;
     }
 
     static void assertMatrixPresent(const gf2Mat& matrix) {
         if (matrix.empty() || matrix.at(0).empty()) {
+            std::cerr << "matrix empty" << std::endl;
             throw QeccException("Matrix is empty");
         }
     }
 
     static void assertVectorPresent(const gf2Vec& vector) {
         if (vector.empty()) {
+            std::cerr << "vector empty" << std::endl;
             throw QeccException("Vector is empty");
         }
     }

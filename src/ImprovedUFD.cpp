@@ -41,7 +41,6 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
         auto                     invalidComponents = syndrComponents;
         std::vector<std::size_t> erasure;
         while (!invalidComponents.empty()) {
-            //std::cout <<"growing" << std::endl;
             // Step 1 growth
             std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
             std::unordered_map<std::size_t, bool>            presentMap; // for step 4
@@ -62,7 +61,6 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
             // Fuse clusters that grew together
             auto eIt = fusionEdges.begin();
             while (eIt != fusionEdges.end()) {
-                //std::cout << "fusion" << std::endl;
                 auto n1    = getNodeFromIdx(eIt->first);
                 auto n2    = getNodeFromIdx(eIt->second);
                 auto root1 = TreeNode::Find(n1);
@@ -93,7 +91,6 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
             std::vector<std::size_t> toAdd;
             auto                     idxIt = invalidComponents.begin();
             while (idxIt != invalidComponents.end()) {
-                //std::cout << "root replacement" << std::endl;
                 auto        elem = getNodeFromIdx(*idxIt);
                 const auto& root = TreeNode::Find(elem);
                 if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
@@ -106,11 +103,9 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
                 }
             }
             std::move(toAdd.begin(), toAdd.end(), std::back_inserter(invalidComponents));
-            //std::cout << "updateing bdry" << std::endl;
 
             // Update Boundary Lists: remove vertices that are not in boundary anymore
             for (auto& compId: invalidComponents) {
-                //std::cout << "update bdries" << std::endl;
                 const auto& compNode = getNodeFromIdx(compId);
                 auto        iter     = compNode->boundaryVertices.begin();
                 while (iter != compNode->boundaryVertices.end()) {
@@ -133,10 +128,8 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
                     }
                 }
             }
-            //std::cout << "extracting" << std::endl;
             extractValidComponents(invalidComponents, erasure);
         }
-        //std::cout << "erasure" << std::endl;
         res = erasureDecoder(erasure, syndrComponents);
     }
     auto decodingTimeEnd   = std::chrono::high_resolution_clock::now();
@@ -357,4 +350,5 @@ void ImprovedUFD::reset() {
     nodeMap.clear();
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;
+    this->getCode()->Hz->nbrCache.clear();
 }
