@@ -143,7 +143,7 @@ void decodingPerformance(const double per) {
     //const std::size_t code_K     = 18;
     //**** local
     const std::string outpath    = "/home/luca/Documents/uf-simulations/final/"; //TODO adapt
-    const std::string inCodePath = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[416,18,nan]]_hx.txt"; // TODO adapt
+    const std::string inCodePath = "/home/luca/Documents/codeRepos/qecc/examples/hgp_(4,8)-[[5408,18,26]]_hx.txt"; // TODO adapt
     const std::size_t code_K     = 18;
     // ***************** configure end *****************
 
@@ -170,7 +170,7 @@ void decodingPerformance(const double per) {
     //const double      stepSize           = 0.00002;
     //const double      maxPhysicalErrRate = 0.1;
     //const std::size_t nrOfRuns           = std::floor(maxPhysicalErrRate / physicalErrRate);
-    const std::size_t nrOfRunsPerRate = 10'000;
+    const std::size_t nrOfRunsPerRate = 1'000'000;
     //**** tests
     // double            physicalErrRate    = 0.06;
     // double            stepSize           = 0.02;
