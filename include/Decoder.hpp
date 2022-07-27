@@ -18,11 +18,13 @@ enum class GrowthVariant {
     ALL_COMPONENTS, // standard growth
     INVALID_COMPONENTS,
     SINGLE_SMALLEST,
-    SINGLE_RANDOM
+    SINGLE_RANDOM,
+    SINGLE_QUBIT_RANDOM
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::ALL_COMPONENTS, "all components"},
                                              {GrowthVariant::INVALID_COMPONENTS, "invalid components"},
                                              {GrowthVariant::SINGLE_SMALLEST, "smallest component only"},
+                                             {GrowthVariant::SINGLE_QUBIT_RANDOM, "single random qubit only"},
                                              {GrowthVariant::SINGLE_RANDOM, "single random component"}})
 struct DecodingResult {
     std::size_t              decodingTime       = 0U; // in ms

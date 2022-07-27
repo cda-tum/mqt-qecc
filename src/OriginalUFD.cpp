@@ -40,17 +40,20 @@ void OriginalUFD::decode(const std::vector<bool>& syndrome) {
                 singleClusterSmallestFirstGrowth(components, neibrsToAdd);
             } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
                 singleClusterRandomFirstGrowth(components, neibrsToAdd);
+            } else if (this->growth == GrowthVariant::SINGLE_QUBIT_RANDOM) {
+                singleQubitRandomFirstGrowth(components, neibrsToAdd);
             } else {
                 throw std::invalid_argument("Unsupported growth variant");
             }
-
 
             for (std::size_t i = 0; i < components.size(); i++) {
                 const auto& nbrs = neibrsToAdd.at(i);
                 components.at(i).insert(nbrs.begin(), nbrs.end());
             }
+            neibrsToAdd.clear();
         }
     }
+
     std::vector<std::set<std::size_t>> corrEstimates;
     for (const auto& comp: components) {
         std::set<std::size_t> compEstimate = getEstimateForComponent(comp, syndrome);
@@ -81,7 +84,7 @@ bool OriginalUFD::containsInvalidComponents(const std::vector<std::set<std::size
                                             std::vector<std::set<std::size_t>>& invalidComps) const {
     return std::any_of(components.begin(), components.end(), [&](const auto& comp) {
         auto res = isValidComponent(comp, syndrome);
-        if(!res){
+        if (!res) {
             invalidComps.emplace_back(comp.begin(), comp.end());
         }
         return !res;
@@ -197,4 +200,20 @@ void OriginalUFD::singleClusterRandomFirstGrowth(const std::vector<std::set<std:
 void OriginalUFD::reset() {
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;
+}
+void OriginalUFD::singleQubitRandomFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd) {
+    std::set<std::size_t>         compNbrs;
+    std::set<std::size_t>         chosenComponent;
+    std::random_device            rd;
+    std::mt19937                  gen(rd());
+    std::uniform_int_distribution d(static_cast<std::size_t>(0U), comps.size());
+    std::size_t                   chosenIdx = d(gen);
+    auto                          it        = comps.begin();
+    std::advance(it, chosenIdx);
+    chosenComponent = *it;
+
+    const auto& nbrs = getCode()->Hz->getNbrs(*chosenComponent.begin());
+    compNbrs.insert(nbrs.begin(), nbrs.end());
+
+    neibrsToAdd.emplace_back(compNbrs);
 }

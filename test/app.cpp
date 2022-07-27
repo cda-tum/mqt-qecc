@@ -23,12 +23,12 @@ void runtime(const std::string& codeName) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    //const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
-    //const std::string outPath  = rootPath + "out/";
-    //const std::string inPath   = rootPath + "in/toricCodes/";
+    const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
+    const std::string outPath  = rootPath + "out/";
+    const std::string inPath   = rootPath + "in/toricCodes/";
     //**** local:
-    const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
-    const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes/";
+   // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
+   // const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes/";
     // ***************** config end *****************
 
     const std::string outFile         = outPath + "info_" + codeName;
@@ -50,9 +50,9 @@ void runtime(const std::string& codeName) {
      * ***************** Basic parameters, comment out accordingly *****************
      */
     //**** paper eval:
-    const std::size_t         nrOfDecodingRuns = 10'000;
-    const std::size_t         nrSamples        = 50;
-    const std::vector<double> physErrRates     = {0.02};
+    const std::size_t         nrOfDecodingRuns = 50;
+    const std::size_t         nrSamples        = 2;
+    const std::vector<double> physErrRates     = {0.05};
     //**** tests:
     //const std::size_t         nrOfDecodingRuns = 100;
     //const std::size_t nrSamples  = 5;
@@ -143,7 +143,7 @@ void decodingPerformance(const double per) {
     //const std::size_t code_K     = 18;
     //**** local
     const std::string outpath    = "/home/luca/Documents/uf-simulations/final/"; //TODO adapt
-    const std::string inCodePath = "/home/luca/Documents/codeRepos/qecc/examples/test/hgp_(4,8)-[[5408,18,26]]_hx.txt"; // TODO adapt
+    const std::string inCodePath = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[416,18,nan]]_hx.txt"; // TODO adapt
     const std::size_t code_K     = 18;
     // ***************** configure end *****************
 
@@ -170,7 +170,7 @@ void decodingPerformance(const double per) {
     //const double      stepSize           = 0.00002;
     //const double      maxPhysicalErrRate = 0.1;
     //const std::size_t nrOfRuns           = std::floor(maxPhysicalErrRate / physicalErrRate);
-    const std::size_t nrOfRunsPerRate = 4000;
+    const std::size_t nrOfRunsPerRate = 10'000;
     //**** tests
     // double            physicalErrRate    = 0.06;
     // double            stepSize           = 0.02;
@@ -186,7 +186,7 @@ void decodingPerformance(const double per) {
     auto        code = HGPcode(inCodePath, code_K);
     const auto  K    = code.getK();
     const auto  N    = code.getN();
-    OriginalUFD decoder;
+    ImprovedUFD decoder;
     decoder.setCode(code);
     // for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhysicalErrRate; i++) {
     std::size_t nrOfFailedRuns = 0U;
@@ -246,8 +246,9 @@ void decodingPerformance(const double per) {
 }
 
 int main(int argc, char* argv[]) {
-    //std::string codeFileName = argv[1];
+    std::string codeFileName = argv[1];
     //runtime("/home/luca/Documents/codeRepos/qecc/examples/toricCodes/" + codeFileName);
+    //runtime("/home/berent/ufpaper/simulations/montecarlo/final/in/toricCodes/" + codeFileName);
     double per = std::stod(argv[1]);
     decodingPerformance(per);
 }
