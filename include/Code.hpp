@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+using json = nlohmann::json;
 
 struct CodeProperties {
     std::size_t n;
@@ -68,8 +69,8 @@ struct ParityCheckMatrix {
                 std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
                 throw QeccException("Cannot return neighbours, pcm empty");
             }
-            const auto                     nrChecks = pcm->size();
-            const auto                     nrBits   = pcm->front().size();
+            const auto               nrChecks = pcm->size();
+            const auto               nrBits   = pcm->front().size();
             std::vector<std::size_t> res;
             if (nodeIdx < nrBits) {
                 for (std::size_t i = 0; i < nrChecks; i++) {
@@ -87,6 +88,19 @@ struct ParityCheckMatrix {
             const auto [nbrIt, inserted] = nbrCache.try_emplace(nodeIdx, res);
             return nbrIt->second;
         }
+    }
+    [[nodiscard]] json to_json() const {
+        return json{
+                {"pcm", pcm}};
+    }
+
+    void from_json(const json& j) {
+        j.at("pcm").get_to(std::make_unique<ParityCheckMatrix>(pcm));
+    }
+
+    [[nodiscard]] std::string toString() const {
+        std::stringstream ss{};
+        return this->to_json().dump(2U);
     }
 };
 
@@ -139,9 +153,9 @@ public:
         if (err.empty()) {
             throw QeccException("Cannot compute syndrome, err empy");
         }
-       gf2Vec syndr((*Hz->pcm).size(), false);
-       Utils::rectMatrixMultiply(*Hz->pcm, err, syndr);
-       return syndr;
+        gf2Vec syndr((*Hz->pcm).size(), false);
+        Utils::rectMatrixMultiply(*Hz->pcm, err, syndr);
+        return syndr;
     }
 
     [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {
@@ -149,7 +163,7 @@ public:
     }
 
     [[nodiscard]] CodeProperties getProperties() const {
-        CodeProperties res{.n = N, .k = getK(),.d=D};
+        CodeProperties res{.n = N, .k = getK(), .d = D};
         return res;
     }
 
@@ -173,6 +187,25 @@ public:
             res.at(i) = row;
         }
         return os << Utils::getStringFrom(res);
+    }
+    [[nodiscard]] json to_json() const {
+        return json{
+                {"Hz", Hz->to_json()},
+                {"N", N},
+                {"K", K},
+                {"D", D}};
+    }
+
+    void from_json(const json& j) {
+        j.at("Hz").get_to(std::make_unique<ParityCheckMatrix>(Hz));
+        j.at("N").get_to(N);
+        j.at("K").get_to(K);
+        j.at("D").get_to(D);
+    }
+
+    [[nodiscard]] std::string toString() const {
+        std::stringstream ss{};
+        return this->to_json().dump(2U);
     }
 };
 #endif //QUNIONFIND_CODE_HPP

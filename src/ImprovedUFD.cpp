@@ -33,6 +33,10 @@ std::vector<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2Vec& sy
     return result;
 }
 
+/**
+ * Main part of the heuristic. Uses Union-Find datastructure for efficient cluster growth and validtiy check
+ * @param syndrome
+ */
 void ImprovedUFD::decode(const gf2Vec& syndrome) {
     auto                     decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::vector<std::size_t> res;
