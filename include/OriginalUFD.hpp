@@ -11,14 +11,15 @@ public:
     void decode(const std::vector<bool>& syndrome) override;
     void reset() override;
 private:
-    [[nodiscard]] bool                     isValidComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;
-    bool                     containsInvalidComponents(const std::vector<std::set<std::size_t>>& components, const std::vector<bool>& syndrome,
-                                                       std::vector<std::set<std::size_t>>& invalidComps) const;
-    [[nodiscard]] std::vector<std::size_t> computeInteriorBitNodes(const std::set<std::size_t>& component) const;
-    [[nodiscard]] std::set<std::size_t>    getEstimateForComponent(const std::set<std::size_t>& component, const std::vector<bool>& syndrome) const;
-    void standardGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
-    void singleClusterSmallestFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
-    void singleClusterRandomFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
-    void singleQubitRandomFirstGrowth(const std::vector<std::set<std::size_t>>& comps, std::vector<std::set<std::size_t>>& neibrsToAdd);
+    [[nodiscard]] bool                     isValidComponent(const std::unordered_set<std::size_t>& component, const std::unordered_set<std::size_t>& syndrome) const;
+    bool                     containsInvalidComponents(const std::unordered_set<std::size_t>& components, const std::unordered_set<std::size_t>& syndrome,
+                                                       std::vector<std::unordered_set<std::size_t>>& invalidComps) const;
+    [[nodiscard]] std::vector<std::size_t> computeInteriorBitNodes(const std::unordered_set<std::size_t>& component) const;
+    [[nodiscard]] std::unordered_set<std::size_t>    getEstimateForComponent(const std::unordered_set<std::size_t>& component, const std::unordered_set<std::size_t>& syndrome) const;
+    void standardGrowth( std::unordered_set<std::size_t>& comps);
+    void singleClusterSmallestFirstGrowth( std::unordered_set<std::size_t>& comps);
+    void singleClusterRandomFirstGrowth( std::unordered_set<std::size_t>& comps);
+    void singleQubitRandomFirstGrowth( std::unordered_set<std::size_t>& comps);
+    [[nodiscard]] std::vector<std::unordered_set<std::size_t>>     getConnectedComps(const std::unordered_set<std::size_t>& nodes) const;
 };
 #endif //QUNIONFIND_IMPROVEDUF_HPP

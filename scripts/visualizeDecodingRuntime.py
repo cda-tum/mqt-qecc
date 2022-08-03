@@ -20,7 +20,7 @@ def PowThreeFun(x, a, b):
 
 def runtime():
     plt.rcParams.update({'font.size': 15})
-    inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/in.json'
+    inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/subm/rt/rt-original.json'
     colors = mcolors.BASE_COLORS
     xData = []
     yData = []
@@ -35,10 +35,8 @@ def runtime():
         perYData = []
 
         for c in data[per]:
-            avgRuntime = float(data[per][c])
-            if avgRuntime != 0.0:  # skip 0 runtime
-                perXData.append(float(c))
-                perYData.append(avgRuntime)
+            perXData.append(float(c))
+            perYData.append(float(data[per][c])/1000)
         pers.append(float(per))
         xData.append(perXData)
         yData.append(perYData)
@@ -57,17 +55,18 @@ def runtime():
         orders.append(np.argsort(xData[i]))
         xData[i] = np.array(xData[i])[orders[i]]
         yData[i] = np.array(yData[i])[orders[i]]
-        plt.plot(xData[i], yData[i], 'o', label='PER=' + label, color='b')
-        optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i], yData[i])
-        optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, xData[i], yData[i])
-        plt.plot(xData[i], LinFun(xData[i], *optimizedParameters), color='b', label='O(n)')
-        plt.plot(xData[i], QuadFun(xData[i], *optimizedParameters2), color='r', label='O(n^2)')
-        print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
-        xfinal.append(np.array(xData[i])[np.argsort(xData[i])])
-        yfinal.append(np.array(yData[i])[np.argsort(xData[i])])
+        plt.plot(xData[i], yData[i], 'o', label='p=' + label, color=col)
+        #optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i][15:], yData[i][15:])
+        optimizedParameters2, pcov2 = opt.curve_fit(PowThreeFun, xData[i][17:], yData[i][17:])
+        #plt.plot(xData[i][17:], LinFun(xData[i][17:], *optimizedParameters), color='b', label='O(n)')
+        plt.plot(xData[i][17:], PowThreeFun(xData[i][17:], *optimizedParameters2), '--',color=col, label='O(n^3)')
+        #print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
 
 
     plt.legend()
+    plt.ylabel("avg runtime (s) to decode 50 samples")
+    plt.xlabel("code length n")
     plt.grid()
     plt.show()
+
 runtime()

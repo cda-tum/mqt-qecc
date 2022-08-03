@@ -17,7 +17,8 @@ INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest_or
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0},
-                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0}));
+                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0}
+                                 ));
 
 INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, InCorrectableErrTest_original,
                          testing::Values(
@@ -109,6 +110,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     auto code = SteaneXCode();
     OriginalUFD decoder;
+    //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -142,13 +144,18 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
 TEST_F(OriginalUFDtest, LargeCodeTest) {
     auto        code = HGPcode();
     OriginalUFD decoder;
+    //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
-    auto err  = gf2Vec(code.N);
+    auto err  = gf2Vec(code.getN());
     err.at(0) = 1;
 
     std::cout << "err :" << std::endl;
     Utils::printGF2vector(err);
+    std::cout << std::endl;
     auto syndr = code.getSyndrome(err);
+    std::cout << "syndrome" << std::endl;
+    Utils::printGF2vector(syndr);
+    std::cout << std::endl;
     decoder.decode(syndr);
     const auto& decodingResult = decoder.result;
     const auto& estim          = decodingResult.estimBoolVector;
