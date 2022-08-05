@@ -4,7 +4,7 @@
  */
 
 #include "Decoder.hpp"
-#include "DecodingSimulator.hpp"
+#include "DecodingRunInformation.hpp"
 #include "ImprovedUFD.hpp"
 #include "OriginalUFD.hpp"
 #include "nlohmann/json.hpp"
@@ -35,6 +35,15 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("json", &Code::to_json)
             .def("__repr__", &Code::toString);
 
+    py::enum_<GrowthVariant>(m, "Growth variants")
+            .value("ALL_COMPONENTS", GrowthVariant::ALL_COMPONENTS)
+            .value("INVALID_COMPONENTS", GrowthVariant::INVALID_COMPONENTS)
+            .value("SINGLE_SMALLEST", GrowthVariant::SINGLE_SMALLEST)
+            .value("SINGLE_RANDOM", GrowthVariant::SINGLE_RANDOM)
+            .value("SINGLE_QUBIT_RANDOM", GrowthVariant::SINGLE_QUBIT_RANDOM)
+            .export_values()
+            .def(py::init([](const std::string& str) -> GrowthVariant { return growthVariantFromString(str); }));
+
     py::class_<DecodingResult>(m, "DecodingResult", "A decoding run result object")
             .def(py::init<>())
             .def_readwrite("decoding_time", &DecodingResult::decodingTime)
@@ -42,6 +51,7 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("estimate", &DecodingResult::estimBoolVector)
             .def("json", &DecodingResult::to_json)
             .def("__repr__", &DecodingResult::toString);
+
     py::class_<Decoder>(m, "Decoder", "Decoder object")
             .def(py::init<>())
             .def_readwrite("result", &Decoder::result)
@@ -60,4 +70,22 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("growth", &OriginalUFD::growth)
             .def("decode", &OriginalUFD::decode);
 
+    py::enum_<DecodingResultStatus>(m, "Growth variants")
+            .value("ALL_COMPONENTS", DecodingResultStatus::SUCCESS)
+            .value("INVALID_COMPONENTS", DecodingResultStatus::FAILURE)
+            .export_values()
+            .def(py::init([](const std::string& str) -> DecodingResultStatus { return decodingResultStatusFromString(str); }));
+
+    py::class_<DecodingRunInformation>(m, "Object containing information for one decoding run")
+            .def(py::init<>())
+            .def(py::init<double, std::size_t, std::vector<bool>, std::vector<bool>, DecodingResultStatus, DecodingResult>())
+            .def(py::init<double, std::size_t, std::vector<bool>, std::vector<bool>, DecodingResult>())
+            .def_readwrite("physicalErrR", &DecodingRunInformation::physicalErrR)
+            .def_readwrite("codeSize", &DecodingRunInformation::codeSize)
+            .def_readwrite("error", &DecodingRunInformation::error)
+            .def_readwrite("syndrome", &DecodingRunInformation::syndrome)
+            .def_readwrite("status", &DecodingRunInformation::status)
+            .def_readwrite("result", &DecodingRunInformation::result)
+            .def("json", &DecodingRunInformation::to_json)
+            .def("__repr__", &DecodingRunInformation::toString);
 }

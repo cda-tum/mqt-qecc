@@ -2,7 +2,6 @@
 add_library(${PROJECT_NAME}_lib
         ${CMAKE_CURRENT_SOURCE_DIR}/ImprovedUFD.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/OriginalUFD.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/DecodingSimulator.cpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/TreeNode.hpp
@@ -10,7 +9,6 @@ add_library(${PROJECT_NAME}_lib
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUFD.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/OriginalUFD.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingSimulator.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/QeccException.hpp)
 

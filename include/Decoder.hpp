@@ -21,6 +21,23 @@ enum class GrowthVariant {
     SINGLE_RANDOM,
     SINGLE_QUBIT_RANDOM
 };
+
+[[maybe_unused]] static GrowthVariant growthVariantFromString(const std::string& architecture) {
+    if (architecture == "ALL_COMPONENTS" || architecture == "0") {
+        return GrowthVariant::ALL_COMPONENTS;
+    } else if (architecture == "INVALID_COMPONENTS" || architecture == "1") {
+        return GrowthVariant::INVALID_COMPONENTS;
+    } else if (architecture == "SINGLE_SMALLEST" || architecture == "2") {
+        return GrowthVariant::SINGLE_SMALLEST;
+    } else if (architecture == "SINGLE_RANDOM" || architecture == "3") {
+        return GrowthVariant::SINGLE_RANDOM;
+    } else if (architecture == "SINGLE_QUBIT_RANDOM" || architecture == "4") {
+        return GrowthVariant::SINGLE_QUBIT_RANDOM;
+    } else {
+        throw std::invalid_argument("Invalid growth variant: " + architecture);
+    }
+}
+
 NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::ALL_COMPONENTS, "all components"},
                                              {GrowthVariant::INVALID_COMPONENTS, "invalid components"},
                                              {GrowthVariant::SINGLE_SMALLEST, "smallest component only"},

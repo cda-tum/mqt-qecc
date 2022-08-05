@@ -14,6 +14,17 @@ enum DecodingResultStatus {
     FAILURE  // logical operator introduced
     //FLAGGED_ERROR // not implemented
 };
+
+[[maybe_unused]] static DecodingResultStatus decodingResultStatusFromString(const std::string& status) {
+    if (status == "SUCCESS" || status == "0") {
+        return DecodingResultStatus::SUCCESS;
+    } else if (status == "FAILURE" || status == "1") {
+        return DecodingResultStatus::FAILURE;
+    } else {
+        throw std::invalid_argument("Invalid decoding result status: " + status);
+    }
+}
+
 NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"},
                                                     {FAILURE, "failure"}})
 /**
@@ -23,7 +34,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"},
  */
 struct DecodingRunInformation {
     DecodingRunInformation(double                physicalErrR,
-                           size_t                codeSize,
+                           std::size_t                codeSize,
                            gf2Vec          error,
                            gf2Vec          syndrome,
                            DecodingResultStatus  status,
@@ -31,7 +42,7 @@ struct DecodingRunInformation {
         physicalErrR(physicalErrR),
         codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), status(status), result(std::move(result)) {}
     DecodingRunInformation(double physicalErrR,
-                           size_t codeSize,
+                           std::size_t codeSize,
                            gf2Vec  error,
                            gf2Vec  syndrome,
                            DecodingResult  result):

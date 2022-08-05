@@ -3,4 +3,4 @@
 # See file README.md or go to TODO for more information.
 #
 
-from .compile import compile
+from mqt.qecc import *

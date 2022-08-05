@@ -48,7 +48,7 @@ void decodingPerformance(const double per) {
     //****server
     const std::string rootPath   = "/home/berent/ufpaper/simulations/decodingPerfSim/final/";
     const std::string outpath    = rootPath + "out/";
-    const std::string inCodePath = rootPath + "source/code/lp_(4,8)-[[416,18,nan]]_hx.txt";
+    const std::string inCodePath = rootPath + "source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
     const std::size_t code_K     = 18;
     //**** local
     //const std::string outpath    = "/home/luca/Documents/uf-simulations/final/"; //TODO adapt
