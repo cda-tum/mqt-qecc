@@ -10,18 +10,19 @@
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 namespace nl = nlohmann;
 using namespace pybind11::literals;
 
-Code import_code_from_file(const std::string& filepath){
-    return Code(filepath);
+std::vector<bool> sample_iid_pauli_err(const std::size_t length, const double physicalErrRate){
+    return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
 PYBIND11_MODULE(pyqecc, m) {
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";
-    m.def("import_code_from_file", &import_code_from_file, "import a css code object from a file containing the parity-check matrix");
+    m.def("sample_iid_pauli_err", &sample_iid_pauli_err, "sample a iid pauli error represented as binary string");
 
     py::class_<Code>(m, "Code", "CSS code object")
             .def(py::init<>())
@@ -33,9 +34,10 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("K", &Code::K)
             .def_readwrite("D", &Code::D)
             .def("json", &Code::to_json)
+            .def("get_syndrome", &Code::getSyndrome)
             .def("__repr__", &Code::toString);
 
-    py::enum_<GrowthVariant>(m, "Growth variants")
+    py::enum_<GrowthVariant>(m, "GrowthVariant")
             .value("ALL_COMPONENTS", GrowthVariant::ALL_COMPONENTS)
             .value("INVALID_COMPONENTS", GrowthVariant::INVALID_COMPONENTS)
             .value("SINGLE_SMALLEST", GrowthVariant::SINGLE_SMALLEST)
@@ -56,6 +58,8 @@ PYBIND11_MODULE(pyqecc, m) {
             .def(py::init<>())
             .def_readwrite("result", &Decoder::result)
             .def_readwrite("growth", &Decoder::growth)
+            .def("set_code", &Decoder::setCode)
+            .def("set_growth", &Decoder::setGrowth)
             .def("decode", &Decoder::decode);
 
     py::class_<ImprovedUFD, Decoder>(m, "ImprovedUFD", "ImprovedUFD object")
@@ -70,13 +74,13 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("growth", &OriginalUFD::growth)
             .def("decode", &OriginalUFD::decode);
 
-    py::enum_<DecodingResultStatus>(m, "Growth variants")
+    py::enum_<DecodingResultStatus>(m, "DecodingResultStatus")
             .value("ALL_COMPONENTS", DecodingResultStatus::SUCCESS)
             .value("INVALID_COMPONENTS", DecodingResultStatus::FAILURE)
             .export_values()
             .def(py::init([](const std::string& str) -> DecodingResultStatus { return decodingResultStatusFromString(str); }));
 
-    py::class_<DecodingRunInformation>(m, "Object containing information for one decoding run")
+    py::class_<DecodingRunInformation>(m, "DecodingRunInformation")
             .def(py::init<>())
             .def(py::init<double, std::size_t, std::vector<bool>, std::vector<bool>, DecodingResultStatus, DecodingResult>())
             .def(py::init<double, std::size_t, std::vector<bool>, std::vector<bool>, DecodingResult>())
@@ -88,4 +92,9 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("result", &DecodingRunInformation::result)
             .def("json", &DecodingRunInformation::to_json)
             .def("__repr__", &DecodingRunInformation::toString);
+#ifdef VERSION_INFO
+    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+#else
+    m.attr("__version__") = "dev";
+#endif
 }

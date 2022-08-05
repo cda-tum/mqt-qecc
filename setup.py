@@ -34,7 +34,8 @@ class CMakeBuild(build_ext):
             "-DPYTHON_EXECUTABLE={}".format(sys.executable),
             "-DQECC_VERSION_INFO={}".format(version),
             "-DCMAKE_BUILD_TYPE={}".format(cfg),
-            "-DBINDINGS=ON"
+            "-DBINDINGS=ON",
+            "-DCMAKE_CXX_COMPILER=/usr/bin/g++-11"
         ]
         build_args = []
 
@@ -104,7 +105,7 @@ setup(
     zip_safe=False,
     packages=find_namespace_packages(include=['mqt.*']),
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 0.0.1 - Alpha',
         "Programming Language :: Python :: 3",
         "Programming Language :: C++",
         "License :: OSI Approved :: MIT License",
