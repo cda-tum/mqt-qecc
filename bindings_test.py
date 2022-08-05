@@ -8,3 +8,4 @@ decoder.set_code(code)
 
 decoder.decode(syndrome)
 print(decoder.result)
+print(code.is_stabilizer(decoder.result.estimate))

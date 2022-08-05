@@ -35,6 +35,7 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("D", &Code::D)
             .def("json", &Code::to_json)
             .def("get_syndrome", &Code::getSyndrome)
+            .def("is_stabilizer", &Code::isVectorStabilizer)
             .def("__repr__", &Code::toString);
 
     py::enum_<GrowthVariant>(m, "GrowthVariant")
