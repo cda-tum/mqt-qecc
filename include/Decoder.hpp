@@ -40,6 +40,9 @@ struct DecodingResult {
         j.at("estimate").get_to(estimBoolVector);
         j.at("estimatedNodes").get_to(estimNodeIdxVector);
     }
+    [[nodiscard]] std::string toString() const{
+        return this->to_json().dump(2U);
+    }
 };
 class Decoder {
 private:
@@ -63,7 +66,7 @@ public:
         Decoder::growth = g;
     }
     void setCode(Code& c) {
-        this->code = std::make_unique<Code>(*c.Hz->pcm);
+        this->code = std::make_unique<Code>(*c.getHz()->pcm);
     }
     virtual void reset(){};
 };

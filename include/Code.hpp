@@ -24,6 +24,9 @@ struct ParityCheckMatrix {
     std::unique_ptr<gf2Mat>                                   pcm;
     std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
 
+    ParityCheckMatrix(const ParityCheckMatrix &m) = delete;
+    ParityCheckMatrix & operator= (const ParityCheckMatrix &) = delete;
+
     explicit ParityCheckMatrix(gf2Mat& pcm):
         pcm(std::make_unique<gf2Mat>(pcm)) {}
 
@@ -91,15 +94,15 @@ struct ParityCheckMatrix {
     }
     [[nodiscard]] json to_json() const {
         return json{
-                {"pcm", pcm}};
+                {"pcm", *this->pcm}};
     }
 
     void from_json(const json& j) {
-        j.at("pcm").get_to(std::make_unique<ParityCheckMatrix>(pcm));
+
     }
 
+
     [[nodiscard]] std::string toString() const {
-        std::stringstream ss{};
         return this->to_json().dump(2U);
     }
 };
@@ -109,12 +112,26 @@ struct ParityCheckMatrix {
  * Z errors are corrected completely analogously in a symmetric way for Z and X.
  */
 class Code {
-public:
+private:
     std::unique_ptr<ParityCheckMatrix> Hz;
+public:
     std::size_t                        K = 0U;
     std::size_t                        N = 0U;
     std::size_t                        D = 0U;
 
+    Code() = default;;
+
+    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& getHz() const {
+        return Hz;
+    }
+
+    gf2Mat getHzMat() {
+        return *this->Hz->pcm;
+    }
+
+    void setHz(std::vector<std::vector<bool>>& hz) {
+        Hz = std::make_unique<ParityCheckMatrix>(hz);
+    }
     /*
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
      * Convention: Rows in first dim, columns in second
@@ -197,15 +214,13 @@ public:
     }
 
     void from_json(const json& j) {
-        j.at("Hz").get_to(std::make_unique<ParityCheckMatrix>(Hz));
         j.at("N").get_to(N);
         j.at("K").get_to(K);
         j.at("D").get_to(D);
     }
 
     [[nodiscard]] std::string toString() const {
-        std::stringstream ss{};
-        return this->to_json().dump(2U);
+            return this->to_json().dump(2U);
     }
 };
 #endif //QUNIONFIND_CODE_HPP

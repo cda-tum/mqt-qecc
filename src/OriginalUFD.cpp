@@ -34,7 +34,7 @@ void OriginalUFD::decode(const std::vector<bool>& syndrome) {
         }
 
 
-        while (containsInvalidComponents(components, syndr, invalidComponents) && components.size() < (this->getCode()->Hz->pcm->size()+getCode()->Hz->pcm->front().size())) {
+        while (containsInvalidComponents(components, syndr, invalidComponents) && components.size() < (this->getCode()->getHz()->pcm->size()+getCode()->getHz()->pcm->front().size())) {
             if (this->growth == GrowthVariant::ALL_COMPONENTS) {
                 // // grow all components (including valid ones) by 1
                 standardGrowth(components);
@@ -114,7 +114,7 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(const std::unorder
     std::vector<std::size_t> res;
 
     for (const auto idx: nodeSet) {
-        const auto& nbrs = getCode()->Hz->getNbrs(idx);
+        const auto& nbrs = getCode()->getHz()->getNbrs(idx);
         if (std::includes(nodeSet.begin(), nodeSet.end(), nbrs.begin(), nbrs.end()) && idx < getCode()->getN()) {
             res.emplace_back(idx);
         }
@@ -142,12 +142,12 @@ std::unordered_set<std::size_t> OriginalUFD::getEstimateForComponent(const std::
     gf2Mat            redHz;
     std::size_t       idxCnt = 0;
     gf2Vec            redSyndr(idxCnt);
-    std::vector<bool> used(this->getCode()->Hz->pcm->size());
+    std::vector<bool> used(this->getCode()->getHz()->pcm->size());
 
     for (const auto it: nodeSet) {
         if (it >= getCode()->getN()) { // is a check node
             if (!used.at(it - getCode()->getN())) {
-                redHz.emplace_back(this->getCode()->Hz->pcm->at(it - getCode()->getN()));
+                redHz.emplace_back(this->getCode()->getHz()->pcm->at(it - getCode()->getN()));
                 used.at(it - getCode()->getN()) = true;
                 if (syndrome.contains(it - getCode()->getN())) {
                     redSyndr.emplace_back(1); // If the check node is in the syndrome we need to satisfy check=1
@@ -156,10 +156,10 @@ std::unordered_set<std::size_t> OriginalUFD::getEstimateForComponent(const std::
                 }
             }
         } else { // is a bit node
-            const auto nbrs = this->getCode()->Hz->getNbrs(it);
+            const auto nbrs = this->getCode()->getHz()->getNbrs(it);
             for (auto n: nbrs) { // add neighbouring checks (these are maybe not in the interior but to stay consistent with the syndrome we need to include these in the check)
                 if (!used.at(n - getCode()->getN())) {
-                    redHz.emplace_back(this->getCode()->Hz->pcm->at(n - getCode()->getN()));
+                    redHz.emplace_back(this->getCode()->getHz()->pcm->at(n - getCode()->getN()));
                     if (syndrome.contains(n)) {
                         redSyndr.emplace_back(1);
                     } else {
@@ -186,7 +186,7 @@ std::unordered_set<std::size_t> OriginalUFD::getEstimateForComponent(const std::
  */
 void OriginalUFD::standardGrowth(std::unordered_set<std::size_t>& comps) {
     for (auto currCompIt = comps.begin(); currCompIt != comps.end(); currCompIt++) {
-        const auto nbrs = getCode()->Hz->getNbrs(*currCompIt);
+        const auto nbrs = getCode()->getHz()->getNbrs(*currCompIt);
         for (auto n: nbrs) {
             comps.insert(n);
         }
@@ -209,7 +209,7 @@ void OriginalUFD::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_
     }
 
     for (auto node: smallestComponent) {
-        const auto& nbrs = getCode()->Hz->getNbrs(node);
+        const auto& nbrs = getCode()->getHz()->getNbrs(node);
         nodeSet.insert(nbrs.begin(), nbrs.end());
     }
 }
@@ -230,7 +230,7 @@ void OriginalUFD::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>
     chosenComponent = *it;
 
     for (auto node: chosenComponent) {
-        const auto& nbrs = getCode()->Hz->getNbrs(node);
+        const auto& nbrs = getCode()->getHz()->getNbrs(node);
         nodeSet.insert(nbrs.begin(), nbrs.end());
     }
 }
@@ -259,7 +259,7 @@ void OriginalUFD::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& 
     std::advance(it, chosenIdx);
     chosenComponent = *it;
 
-    const auto& nbrs = getCode()->Hz->getNbrs(*chosenComponent.begin());
+    const auto& nbrs = getCode()->getHz()->getNbrs(*chosenComponent.begin());
     comps.insert(nbrs.begin(), nbrs.end());
 }
 /**
@@ -283,7 +283,7 @@ std::vector<std::unordered_set<std::size_t>> OriginalUFD::getConnectedComps(cons
                 stack.pop();
                 if (!ccomp.contains(curr)) {
                     ccomp.insert(curr);
-                    auto nbrs = getCode()->Hz->getNbrs(curr);
+                    auto nbrs = getCode()->getHz()->getNbrs(curr);
                     for (auto n: nbrs) {
                         if (!ccomp.contains(n) && nodes.contains(n)) {
                             stack.push(n);

@@ -113,7 +113,7 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
                 const auto& compNode = getNodeFromIdx(compId);
                 auto        iter     = compNode->boundaryVertices.begin();
                 while (iter != compNode->boundaryVertices.end()) {
-                    const auto& nbrs     = getCode()->Hz->getNbrs(*iter);
+                    const auto& nbrs     = getCode()->getHz()->getNbrs(*iter);
                     auto        currNode = getNodeFromIdx(*iter);
                     const auto& currRoot = TreeNode::Find(currNode);
                     for (const auto& nbr: nbrs) {
@@ -155,7 +155,7 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
         const auto& bndryNodes = compNode->boundaryVertices;
 
         for (const auto& bndryNode: bndryNodes) {
-            const auto& nbrs = getCode()->Hz->getNbrs(bndryNode);
+            const auto& nbrs = getCode()->getHz()->getNbrs(bndryNode);
             for (const auto& nbr: nbrs) {
                 fusionEdges.emplace_back(bndryNode, nbr);
             }
@@ -178,7 +178,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     const auto& bndryNodes = smallestC->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        const auto& nbrs = getCode()->Hz->getNbrs(bndryNode);
+        const auto& nbrs = getCode()->getHz()->getNbrs(bndryNode);
         for (const auto& nbr: nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
@@ -206,7 +206,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     const auto& bndryNodes = chosenNode->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        const auto& nbrs = getCode()->Hz->getNbrs(bndryNode);
+        const auto& nbrs = getCode()->getHz()->getNbrs(bndryNode);
         for (const auto& nbr: nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
@@ -264,10 +264,10 @@ std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::size_t>& e
             if (!currN->isCheck && !currN->deleted) {
                 resList.emplace_back(currN->vertexIdx); // add bit node to estimate
                 // if we add a bit node we have to delete adjacent check nodes and their neighbours
-                for (const auto& adjCheck: getCode()->Hz->getNbrs(currN->vertexIdx)) {
+                for (const auto& adjCheck: getCode()->getHz()->getNbrs(currN->vertexIdx)) {
                     const auto& adjCheckNode = getNodeFromIdx(adjCheck);
                     if (adjCheckNode->marked && !adjCheckNode->deleted) {
-                        const auto& nNbrs = getCode()->Hz->getNbrs(adjCheck);
+                        const auto& nNbrs = getCode()->getHz()->getNbrs(adjCheck);
                         auto        nnbr  = nNbrs.begin();
                         // remove bit nodes adjacent to neighbour check
                         while (nnbr != nNbrs.end()) {
@@ -315,7 +315,7 @@ bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
     gf2Vec      valid(compNode->checkVertices.size());
     std::size_t i = 0U;
     for (const auto& checkVertex: compNode->checkVertices) {
-        for (const auto& nbrs = getCode()->Hz->getNbrs(checkVertex); const auto& nbr: nbrs) {
+        for (const auto& nbrs = getCode()->getHz()->getNbrs(checkVertex); const auto& nbr: nbrs) {
             if (!compNode->boundaryVertices.contains(nbr)) {
                 valid.at(i) = true;
                 break;
@@ -354,5 +354,5 @@ void ImprovedUFD::reset() {
     nodeMap.clear();
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;
-    this->getCode()->Hz->nbrCache.clear();
+    this->getCode()->getHz()->nbrCache.clear();
 }

@@ -10,79 +10,31 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
                                     const double       minPhysicalErrRate,
                                     const double       maxPhysicalErrRate,
                                     const double       physErrRateStepSize,
-                                    const size_t       nrOfRunsPerErrRate,
+                                    const size_t       nrRunsPerRate,
                                     Decoder&           decoder) {
-    auto          jsonFileName = generateOutFileName(statsOutputFilepath);
-    auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
-    std::ofstream statisticsOutstr(jsonFileName);
-    std::ofstream rawDataOutput(dataFileName);
 
-    std::cout << "Writing stats output to " << jsonFileName << std::endl;
-    std::cout << "Writing raw data to " << dataFileName << std::endl;
 
     // Basic Parameter setup
-    double       physicalErrRate = minPhysicalErrRate;
-    double       stepSize        = physErrRateStepSize;
-    const double maxPhErrRate    = maxPhysicalErrRate;
-    const auto   nrOfRuns        = static_cast<std::size_t>(std::floor(maxPhErrRate / minPhysicalErrRate));
-    std::size_t  nrRunsPerRate   = nrOfRunsPerErrRate;
+    double              physicalErrRate = minPhysicalErrRate;
+    double              stepSize        = physErrRateStepSize;
+    const double        maxPhErrRate    = maxPhysicalErrRate;
+    const auto          nrOfRuns        = static_cast<std::size_t>(std::floor(maxPhErrRate / minPhysicalErrRate));
+    std::vector<double> pers(nrRunsPerRate + 1);
+    double              perCnt = minPhysicalErrRate;
 
-    std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
-    statisticsOutstr << "{ \"runs\" : [ ";
+    for (size_t i = 0; i <= nrRunsPerRate; i++) {
+        pers.emplace_back(perCnt);
+        perCnt += stepSize;
+    }
+
 
     const auto& code = decoder.getCode();
     const auto  K    = code->getK();
     const auto  N    = code->getN();
 
-    for (std::size_t i = 0; i < nrOfRuns && physicalErrRate <= maxPhErrRate; i++) {
-        auto nrOfFailedRuns = 0U;
-        statisticsOutstr << R"({ "run": { "physicalErrRate":)" << physicalErrRate << ", \"data\": [ ";
-
-        for (size_t j = 0; j < nrRunsPerRate; j++) {
-            // reset decoder results
-            decoder.reset();
-            const auto error    = Utils::sampleErrorIidPauliNoise(N, physicalErrRate);
-            auto       syndrome = code->getSyndrome(error);
-            decoder.decode(syndrome);
-            auto const&       decodingResult = decoder.result;
-            std::vector<bool> residualErr    = decodingResult.estimBoolVector;
-            Utils::computeResidualErr(error, residualErr);
-            const auto success = code->isVectorStabilizer(residualErr);
-
-            DecodingRunInformation stats;
-            stats.result = decoder.result;
-            if (success) {
-                stats.status = SUCCESS;
-                Utils::printGF2vector(residualErr);
-            } else {
-                stats.status = FAILURE;
-                nrOfFailedRuns++;
-            }
-            statisticsOutstr << stats.to_json().dump(2U);
-            if (j != nrRunsPerRate - 1) {
-                statisticsOutstr << ", ";
-            }
-        }
-        //compute word error rate WER
-        const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(nrRunsPerRate);
-        const auto wordErrRate  = blockErrRate / static_cast<double>(K);                         // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
-        wordErrRatePerPhysicalErrRate.try_emplace(std::to_string(physicalErrRate), wordErrRate); // to string for json parsing
-        // only for json output
-        if (i != nrOfRuns - 1) {
-            statisticsOutstr << "]}},";
-        } else {
-            statisticsOutstr << "]}}";
-        }
-        physicalErrRate += stepSize;
-    }
-    statisticsOutstr << "}";
-    json dataj = wordErrRatePerPhysicalErrRate;
-    rawDataOutput << dataj.dump(2U);
-    statisticsOutstr.close();
-    rawDataOutput.close();
 }
 
-std::string DecodingSimulator::generateOutFileName(const std::string& filepath) {
+std::string generateOutFileName(const std::string& filepath) {
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t);
     std::ostringstream oss;
@@ -90,6 +42,63 @@ std::string DecodingSimulator::generateOutFileName(const std::string& filepath) 
     auto timestamp = oss.str();
     return filepath + "-" + timestamp + ".json";
 }
+
+
+void simulatePer(const Decoder& decoder, const double per,const std::string& rawDataOutputFilepath,
+                 const std::string& statsOutputFilepath){
+
+   /* auto          jsonFileName = generateOutFileName(statsOutputFilepath);
+    auto          dataFileName = generateOutFileName(rawDataOutputFilepath);
+    std::ofstream statisticsOutstr(jsonFileName);
+    std::ofstream rawDataOutput(dataFileName);
+
+    std::cout << "Writing stats output to " << jsonFileName << std::endl;
+    std::cout << "Writing raw data to " << dataFileName << std::endl;
+
+    std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
+    statisticsOutstr << "{ \"runs\" : [ ";
+    statisticsOutstr << R"({ "run": { "physicalErrRate":)" << currPer << ", \"data\": [ ";
+
+    auto nrOfFailedRuns = 0U;
+
+    for (size_t j = 0; j < nrRunsPerRate; j++) {
+        // reset decoder results
+        decoder.reset();
+        const auto error    = Utils::sampleErrorIidPauliNoise(N, currPer);
+        auto       syndrome = code->getSyndrome(error);
+        decoder.decode(syndrome);
+        auto const&       decodingResult = decoder.result;
+        std::vector<bool> residualErr    = decodingResult.estimBoolVector;
+        Utils::computeResidualErr(error, residualErr);
+        const auto success = code->isVectorStabilizer(residualErr);
+
+        DecodingRunInformation stats;
+        stats.result = decoder.result;
+        if (success) {
+            stats.status = SUCCESS;
+            Utils::printGF2vector(residualErr);
+        } else {
+            stats.status = FAILURE;
+            nrOfFailedRuns++;
+        }
+        statisticsOutstr << stats.to_json().dump(2U);
+        if (j != nrRunsPerRate - 1) {
+            statisticsOutstr << ", ";
+        }
+    }
+    //compute word error rate WER
+    const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(nrRunsPerRate);
+    const auto wordErrRate  = blockErrRate / static_cast<double>(K);                         // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
+    wordErrRatePerPhysicalErrRate.try_emplace(std::to_string(physicalErrRate), wordErrRate); // to string for json parsing
+    physicalErrRate += stepSize;
+
+    statisticsOutstr << "}";
+    json dataj = wordErrRatePerPhysicalErrRate;
+    rawDataOutput << dataj.dump(2U);
+    statisticsOutstr.close();
+    rawDataOutput.close();*/
+}
+
 
 void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputFilepath,
                                                const std::string& decodingInfoOutfilePath,

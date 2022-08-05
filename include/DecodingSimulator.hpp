@@ -24,7 +24,7 @@ public:
      * @param minPhysicalErrRate starting physical error rate
      * @param maxPhysicalErrRate maximum physical error rate
      * @param physErrRateStepSize stepsize between error rates
-     * @param nrOfRunsPerErrRate number of runs to average WER over
+     * @param nrRunsPerRate number of runs to average WER over
      * @param decoder
      */
     static void simulateWER(const std::string& rawDataOutputFilepath,
@@ -32,7 +32,7 @@ public:
                             double             minPhysicalErrRate,
                             double             maxPhysicalErrRate,
                             double             physErrRateStepSize,
-                            std::size_t        nrOfRunsPerErrRate,
+                            std::size_t        nrRunsPerRate,
                             Decoder&           decoder); // code is field of decoder
 
     /**
@@ -53,7 +53,7 @@ public:
                                        std::size_t        nrSamples);
 
 private:
-    static std::string generateOutFileName(const std::string& filepath);
+    //static std::string generateOutFileName(const std::string& filepath);
 };
 
 #endif //QUNIONFIND_DECODINGSIMULATOR_HPP

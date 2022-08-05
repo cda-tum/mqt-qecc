@@ -101,7 +101,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
         residualErr.at(i) = (err[i] != estim[i]);
     }
 
-    EXPECT_FALSE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
+    EXPECT_FALSE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
 }
 
 /**
@@ -138,8 +138,8 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
         residualErr2.at(i) = (err[i] != estim2[i]);
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
 }
 TEST_F(OriginalUFDtest, LargeCodeTest) {
     auto        code = HGPcode();
@@ -176,6 +176,6 @@ TEST_F(OriginalUFDtest, LargeCodeTest) {
         residualErr2.at(i) = (err.at(i) != estim2.at(i));
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.Hz->pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
 }
