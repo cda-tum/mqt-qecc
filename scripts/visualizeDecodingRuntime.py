@@ -20,7 +20,7 @@ def PowThreeFun(x, a, b):
 
 def runtime():
     plt.rcParams.update({'font.size': 15})
-    inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/final/rt-impr-100k-stdGrowth.json'
+    inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/final/impr-01-scg-100k.json'
     colors = mcolors.BASE_COLORS
     xData = []
     yData = []
@@ -31,16 +31,15 @@ def runtime():
         data = json.load(data_file)
 
     for per in data:
-        if(float(per) == 0.001):
-            perXData = []
-            perYData = []
+        perXData = []
+        perYData = []
 
-            for c in data[per]:
-                perXData.append(float(c))
-                perYData.append(float(data[per][c]) / 1000)
-            pers.append(float(per))
-            xData.append(perXData)
-            yData.append(perYData)
+        for c in data[per]:
+            perXData.append(float(c))
+            perYData.append(float(data[per][c]) / 1000)
+        pers.append(float(per))
+        xData.append(perXData)
+        yData.append(perYData)
 
     xfinal = []
     yfinal = []
@@ -57,11 +56,12 @@ def runtime():
         xfinal.append(np.array(xData[i])[orders[i]])
         yfinal.append( np.array(yData[i])[orders[i]])
         plt.plot(xfinal[i], yfinal[i], 'o', label='p=' + label, color=col)
-        #optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i], yData[i][15:])
-        #optimizedParameters2, pcov2 = opt.curve_fit(PowThreeFun, xData[i][17:], yData[i][17:])
-        #plt.plot(xData[i][15:], LinFun(xData[i][15:], *optimizedParameters), color='b', label='O(n)')
-        #plt.plot(xData[i][17:], PowThreeFun(xData[i][17:], *optimizedParameters2), '--',color=col, label='O(n^3)')
-        #print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
+        optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i], yData[i][15:])
+        optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, xData[i][17:], yData[i][17:])
+        optimizedParameters2, pcov2 = opt.curve_fit(PowThreeFun, xData[i][17:], yData[i][17:])
+        plt.plot(xData[i][15:], LinFun(xData[i][15:], *optimizedParameters), color='b', label='O(n)')
+        plt.plot(xData[i][17:], PowThreeFun(xData[i][17:], *optimizedParameters2), '--',color=col, label='O(n^3)')
+        print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
 
 
     plt.legend()

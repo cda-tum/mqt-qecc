@@ -5,11 +5,13 @@
 
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
+#include "DecodingSimulator.hpp"
 #include "ImprovedUFD.hpp"
 #include "OriginalUFD.hpp"
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
+
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
@@ -67,6 +69,7 @@ PYBIND11_MODULE(pyqecc, m) {
             .def(py::init<>())
             .def_readwrite("result", &ImprovedUFD::result)
             .def_readwrite("growth", &ImprovedUFD::growth)
+            .def("reset", &ImprovedUFD::reset)
             .def("decode", &ImprovedUFD::decode);
 
     py::class_<OriginalUFD, Decoder>(m, "OriginalUFD", "OriginalUFD object")
@@ -93,6 +96,18 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("result", &DecodingRunInformation::result)
             .def("json", &DecodingRunInformation::to_json)
             .def("__repr__", &DecodingRunInformation::toString);
+
+    py::class_<DecodingSimulator>(m, "DecodingSimulator")
+            .def(py::init<>())
+            .def("simulate_wer", &DecodingSimulator::simulateWER)
+            .def("simulate_avg_runtime", &DecodingSimulator::simulateAverageRuntime);
+
+      py::enum_<DecoderType>(m, "DecoderType")
+            .value("UF_HEURISTIC", DecoderType::UF_HEURISTIC)
+            .value("ORIGINAL_UF", DecoderType::ORIGINAL_UF)
+            .export_values()
+            .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
+
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else

@@ -16,28 +16,42 @@
 
 using namespace std;
 
-void runtime(const std::string& outpath, const std::string& codePath, const double per) {
-    auto conden = codePath.substr(codePath.find("[[")+2, codePath.find("]]"));
-    conden = conden.substr(0, conden.find(','));
-    const std::string                               finalDataFile = outpath+conden+".txt";
+void runtime(const std::string& codeName) {
+    /**
+     * ***************** Comment out accordingly *****************
+     */
+    //**** server:
+    const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
+    const std::string inPath   = rootPath + "in/toricCodes2/";
+    //**** local:
+    // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
+    // const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes/";
+    // ***************** config end *****************
+    const std::size_t nrRuns = 100000;
+    const std::size_t nrSamples = 3;
+    const double      per    = 0.05;
+    auto       code    = Code(inPath + codeName);
+    const auto codeN   = code.getN();
 
-    auto decoder = ImprovedUFD();
-    auto       code  = Code(codePath);
-    const auto codeN = code.getN();
-    decoder.setCode(code);
-    auto error    = Utils::sampleErrorIidPauliNoise(codeN, per);
-    auto syndrome = code.getSyndrome(error);
-    decoder.decode(syndrome);
-    auto const& decodingResult = decoder.result;
+    std::size_t runsSum = 0;
+    std::size_t samplesSum = 0;
 
-    std::cout << codeN << ":" << decodingResult.decodingTime << std::endl;
-    std::ofstream outfile;
-    outfile.open(finalDataFile, std::ios_base::app);
-    std::cout << "writing to " << finalDataFile << std::endl;
-    outfile << decodingResult.decodingTime << std::endl;
-    decoder.reset();
-    outfile.flush();
-    outfile.close();
+    for (size_t i = 0; i < nrSamples; i++) {
+        runsSum = 0;
+        for (std::size_t j = 0; j < nrRuns; j++) {
+            auto       decoder = ImprovedUFD();
+            decoder.setCode(code);
+            auto error    = Utils::sampleErrorIidPauliNoise(codeN, per);
+            auto syndrome = code.getSyndrome(error);
+            decoder.decode(syndrome);
+            runsSum += decoder.result.decodingTime;
+            decoder.reset();
+        }
+        std::cout << runsSum << std::endl;
+        samplesSum += runsSum;
+    }
+    std::cout << codeName << ":" << samplesSum/nrSamples  << std::endl;
+    flint_cleanup();
 }
 
 void decodingPerformance(const double per) {
@@ -155,10 +169,10 @@ void decodingPerformance(const double per) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string codeFileName = argv[3];
-    std::string outpath      = argv[2];
-    double      per          = std::stod(argv[1]);
-    runtime(outpath, codeFileName, per);
+    std::string codeName = argv[1];
+    //std::string outpath      = argv[2];
+    //double      per          = std::stod(argv[1]);
+    runtime(codeName);
     //double per = std::stod(argv[1]);
     //decodingPerformance(per);
 }
