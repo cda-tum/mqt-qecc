@@ -26,7 +26,7 @@ TEST(DecodingSimulatorTest, TestRuntimeSim) {
     try {
         OriginalUFD decoder;
         decoder.setCode(code);
-        DecodingSimulator::simulateAverageRuntime(rawOut, testOut, physicalErrRate, nrRuns, codePath, nrSamples);
+        DecodingSimulator::simulateAverageRuntime(rawOut, testOut, physicalErrRate, nrRuns, codePath, nrSamples, DecoderType::UF_HEURISTIC);
     } catch (QeccException& e) {
         std::cerr << "Exception caught " << e.getMessage();
         EXPECT_TRUE(false);
@@ -40,9 +40,7 @@ TEST(DecodingSimulatorTest, TestPerformanceSim) {
     std::size_t runsPerRate = 2;
     auto        code = SteaneXCode();
     try {
-        OriginalUFD decoder;
-        decoder.setCode(code);
-        DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, stepSize, runsPerRate, decoder);
+        DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate,runsPerRate,code , stepSize, DecoderType::ORIGINAL_UF);
     } catch (QeccException& e) {
         std::cerr << "Exception caught " << e.getMessage();
         EXPECT_TRUE(false);
