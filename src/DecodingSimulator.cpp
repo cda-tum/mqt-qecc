@@ -4,7 +4,7 @@
 #include "DecodingSimulator.hpp"
 
 #include "DecodingRunInformation.hpp"
-#include "OriginalUFD.hpp"
+#include "UFDecoder.hpp"
 
 std::string generateOutFileName(const std::string& filepath) {
     auto               t  = std::time(nullptr);
@@ -49,10 +49,10 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
         nrOfFailedRuns = 0;
         for (std::size_t j = 0; j < nrRunsPerRate; j++) {
             Decoder* decoder;
-            if (decoderType == DecoderType::ORIGINAL_UF) {
-                decoder = new OriginalUFD();
+            if (decoderType == DecoderType::UF_DECODER) {
+                decoder = new UFDecoder();
             } else if (decoderType == DecoderType::UF_HEURISTIC) {
-                decoder = new ImprovedUFD();
+                decoder = new UFHeuristic();
             } else {
                 throw QeccException("Invalid DecoderType, cannot simulate");
             }
@@ -140,10 +140,10 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
             for (std::size_t j = 0; j < nrRuns; j++) {
                 for (std::size_t i = 0; i < nrSamples; i++) {
                     Decoder* decoder;
-                    if (decoderType == DecoderType::ORIGINAL_UF) {
-                        decoder = new OriginalUFD();
+                    if (decoderType == DecoderType::UF_DECODER) {
+                        decoder = new UFDecoder();
                     } else if (decoderType == DecoderType::UF_HEURISTIC) {
-                        decoder = new ImprovedUFD();
+                        decoder = new UFHeuristic();
                     } else {
                         throw QeccException("Invalid DecoderType, cannot simulate");
                     }

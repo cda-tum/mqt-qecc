@@ -5,7 +5,7 @@
 #ifndef QUNIONFIND_IMPROVEDUF_HPP
 #define QUNIONFIND_IMPROVEDUF_HPP
 #include "Decoder.hpp"
-class OriginalUFD: public Decoder {
+class UFDecoder: public Decoder {
 public:
     using Decoder::Decoder;
     void decode(const std::vector<bool>& syndrome) override;

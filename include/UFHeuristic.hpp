@@ -20,7 +20,7 @@ namespace std {
 
 } // namespace std
 
-class ImprovedUFD: public Decoder {
+class UFHeuristic: public Decoder {
 public:
     using Decoder::Decoder;
     void decode(const gf2Vec & syndrome) override;

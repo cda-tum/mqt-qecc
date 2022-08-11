@@ -5,7 +5,7 @@
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
-#include "OriginalUFD.hpp"
+#include "UFDecoder.hpp"
 
 #include <bitset>
 #include <filesystem>
@@ -24,7 +24,7 @@ TEST(DecodingSimulatorTest, TestRuntimeSim) {
     const std::string codePath = "./resources/codes/inCodes";
     auto        code = SteaneXCode();
     try {
-        OriginalUFD decoder;
+        UFDecoder decoder;
         decoder.setCode(code);
         DecodingSimulator::simulateAverageRuntime(rawOut, testOut, physicalErrRate, nrRuns, codePath, nrSamples, DecoderType::UF_HEURISTIC);
     } catch (QeccException& e) {
@@ -40,7 +40,7 @@ TEST(DecodingSimulatorTest, TestPerformanceSim) {
     std::size_t runsPerRate = 2;
     auto        code = SteaneXCode();
     try {
-        DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate,runsPerRate,code , stepSize, DecoderType::ORIGINAL_UF);
+        DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate,runsPerRate,code , stepSize, DecoderType::UF_DECODER);
     } catch (QeccException& e) {
         std::cerr << "Exception caught " << e.getMessage();
         EXPECT_TRUE(false);

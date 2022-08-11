@@ -2,10 +2,9 @@
 // Created by lucas on 21/04/2022.
 //
 
-#include "ImprovedUFD.hpp"
-
 #include "Decoder.hpp"
 #include "TreeNode.hpp"
+#include "UFHeuristic.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -17,7 +16,7 @@
      * @param syndrome
      * @return
     */
-std::vector<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2Vec& syndrome) {
+std::vector<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& syndrome) {
     std::vector<std::size_t> result{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
@@ -37,7 +36,7 @@ std::vector<std::size_t> ImprovedUFD::computeInitTreeComponents(const gf2Vec& sy
  * Main part of the heuristic. Uses Union-Find datastructure for efficient cluster growth and validtiy check
  * @param syndrome
  */
-void ImprovedUFD::decode(const gf2Vec& syndrome) {
+void UFHeuristic::decode(const gf2Vec& syndrome) {
     auto                     decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::vector<std::size_t> res;
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
@@ -146,7 +145,7 @@ void ImprovedUFD::decode(const gf2Vec& syndrome) {
     }
 }
 
-void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                  std::unordered_map<std::size_t, bool>&            presentMap,
                                  const std::vector<std::size_t>&                   components) {
     for (const auto& compId: components) {
@@ -163,7 +162,7 @@ void ImprovedUFD::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
     }
 }
 
-void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                    std::unordered_map<std::size_t, bool>& presentMap, const std::vector<std::size_t>& components) {
     std::size_t smallestComponent;
     std::size_t smallestSize = SIZE_MAX;
@@ -185,7 +184,7 @@ void ImprovedUFD::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     }
 }
 
-void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
+void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                  std::unordered_map<std::size_t, bool>&            presentMap,
                                                  const std::vector<std::size_t>&                   components) {
     std::size_t        chosenComponent;
@@ -219,7 +218,7 @@ void ImprovedUFD::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @param syndrome
  * @return
  */
-std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::size_t>& erasure, std::vector<std::size_t>& syndr) {
+std::vector<std::size_t> UFHeuristic::erasureDecoder(std::vector<std::size_t>& erasure, std::vector<std::size_t>& syndr) {
     std::unordered_set<std::size_t>       syndrome(syndr.begin(), syndr.end());
     std::vector<std::vector<std::size_t>> erasureSet{};
     std::size_t                           erasureSetIdx = 0;
@@ -295,7 +294,7 @@ std::vector<std::size_t> ImprovedUFD::erasureDecoder(std::vector<std::size_t>& e
  * @param invalidComponents containts components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void ImprovedUFD::extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents) {
+void UFHeuristic::extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents) {
     //std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
@@ -310,7 +309,7 @@ void ImprovedUFD::extractValidComponents(std::vector<std::size_t>& invalidCompon
 
 // for each check node verify that there is no neighbour that is in the boundary of the component
 // if there is no neighbour in the boundary for each check vertex the check is covered by a node in Int TODO prove this in paper
-bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
+bool UFHeuristic::isValidComponent(const std::size_t& compId) {
     const auto& compNode = getNodeFromIdx(compId);
     gf2Vec      valid(compNode->checkVertices.size());
     std::size_t i = 0U;
@@ -327,7 +326,7 @@ bool ImprovedUFD::isValidComponent(const std::size_t& compId) {
 }
 
 // return raw ptr to leave ownership in list
-TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
+TreeNode* UFHeuristic::getNodeFromIdx(const std::size_t idx) {
     if (auto nodeIt = nodeMap.find(idx); nodeIt != nodeMap.end()) {
         return nodeIt->second.get();
     } else {
@@ -342,7 +341,7 @@ TreeNode* ImprovedUFD::getNodeFromIdx(const std::size_t idx) {
     }
 }
 
-void ImprovedUFD::reset() {
+void UFHeuristic::reset() {
     for (auto& n: nodeMap) {
         for (auto& c: n.second->children) {
             c = nullptr;

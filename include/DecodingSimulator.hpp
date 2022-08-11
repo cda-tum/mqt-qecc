@@ -6,7 +6,7 @@
 #define QECC_DECODINGSIMULATOR_HPP
 
 #include "Decoder.hpp"
-#include "ImprovedUFD.hpp"
+#include "UFHeuristic.hpp"
 
 #include <string>
 #include <utility>
@@ -14,19 +14,19 @@ using json = nlohmann::json;
 
 enum DecoderType {
     UF_HEURISTIC,
-    ORIGINAL_UF
+    UF_DECODER
 };
 [[maybe_unused]] static DecoderType decoderTypeFromString(const std::string& status) {
     if (status == "UF_HEURISTIC" || status == "0") {
         return DecoderType::UF_HEURISTIC;
     } else if (status == "ORIGINAL_UF" || status == "1") {
-        return DecoderType::ORIGINAL_UF;
+        return DecoderType::UF_DECODER;
     } else {
         throw std::invalid_argument("Invalid decodinger type: " + status);
     }
 }
 NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UF_HEURISTIC, "UF_HEURISTIC"},
-                                                    {ORIGINAL_UF, "ORIGINAL_UF"}})
+                                                    {UF_DECODER, "UF_DECODER"}})
 
 class DecodingSimulator {
 public:

@@ -36,7 +36,7 @@ def runtime():
 
         for c in data[per]:
             perXData.append(float(c))
-            perYData.append(float(data[per][c]) / 1000)
+            perYData.append(float(data[per][c]) / 1000.0)
         pers.append(float(per))
         xData.append(perXData)
         yData.append(perYData)
@@ -56,12 +56,14 @@ def runtime():
         xfinal.append(np.array(xData[i])[orders[i]])
         yfinal.append( np.array(yData[i])[orders[i]])
         plt.plot(xfinal[i], yfinal[i], 'o', label='p=' + label, color=col)
-        optimizedParameters, pcov = opt.curve_fit(LinFun, xData[i], yData[i][15:])
-        optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, xData[i][17:], yData[i][17:])
-        optimizedParameters2, pcov2 = opt.curve_fit(PowThreeFun, xData[i][17:], yData[i][17:])
-        plt.plot(xData[i][15:], LinFun(xData[i][15:], *optimizedParameters), color='b', label='O(n)')
-        plt.plot(xData[i][17:], PowThreeFun(xData[i][17:], *optimizedParameters2), '--',color=col, label='O(n^3)')
-        print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
+        optimizedParameters, pcov = opt.curve_fit(LinFun, xfinal[i], yfinal[i])
+        #optimizedParameters2, pcov2 = opt.curve_fit(QuadFun, xData[i][17:], yData[i][17:])
+        #optimizedParameters2, pcov2 = opt.curve_fit(PowThreeFun, xData[i][17:], yData[i][17:])
+        plt.plot(xfinal[i][10:], LinFun(xfinal[i][10:], *optimizedParameters),'--', color=col, label='O(n)')
+        #plt.plot(xData[i][17:], PowThreeFun(xData[i][17:], *optimizedParameters2), '--',color=col, label='O(n^3)')
+        #print(str(optimizedParameters[0]) + 'x+' + str(optimizedParameters[1]))
+        print(xfinal)
+        print(yfinal)
 
 
     plt.legend()

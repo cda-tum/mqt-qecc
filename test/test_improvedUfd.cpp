@@ -3,7 +3,7 @@
 //
 
 #include "Codes.hpp"
-#include "ImprovedUFD.hpp"
+#include "UFHeuristic.hpp"
 
 #include <gtest/gtest.h>
 class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {};
@@ -63,7 +63,7 @@ INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, CorrectableLargeToric,
  */
 TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     auto        code = SteaneXCode();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -96,7 +96,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
  */
 TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     auto        code = SteaneXCode();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -126,7 +126,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
  */
 TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     auto        code = SteaneXCode();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -167,7 +167,7 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
  */
 TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
     auto        code = ToricCode_8();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << code << std::endl;
@@ -203,7 +203,7 @@ TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
  */
 TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
     auto        code = ToricCode_8();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << code << std::endl;
@@ -243,7 +243,7 @@ TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
  */
 TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     auto        code = ToricCode_32();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << Utils::getStringFrom(*code.getHz()->pcm) << std::endl;
@@ -280,7 +280,7 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
  */
 TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     auto        code = ToricCode_32();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << Utils::getStringFrom(*code.getHz()->pcm) << std::endl;
@@ -316,7 +316,7 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
  */
 TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     auto        code = HGPcode();
-    ImprovedUFD decoder;
+    UFHeuristic decoder;
     decoder.setCode(code);
     auto        err = gf2Vec(code.N);
     err.at(0)       = 1;

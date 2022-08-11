@@ -2,9 +2,8 @@
 // Created by lucas on 21/04/2022.
 //
 
-#include "OriginalUFD.hpp"
-
 #include "Decoder.hpp"
+#include "UFDecoder.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -16,7 +15,7 @@
  * Original implementation of the generalized decoder for QLDPC codes using Gaussian elimination
  * @param syndrome
  */
-void OriginalUFD::decode(const std::vector<bool>& syndrome) {
+void UFDecoder::decode(const std::vector<bool>& syndrome) {
     const auto                                   decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::unordered_set<std::size_t>              components; // used to store vertex indices in E set
     std::vector<std::unordered_set<std::size_t>> invalidComponents;
@@ -82,7 +81,7 @@ void OriginalUFD::decode(const std::vector<bool>& syndrome) {
  * @param syndrome
  * @return
  */
-bool OriginalUFD::containsInvalidComponents(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome,
+bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome,
                                             std::vector<std::unordered_set<std::size_t>>& invalidComps) const {
     auto ccomps = getConnectedComps(nodeSet);
     return std::any_of(ccomps.begin(), ccomps.end(), [&](const auto& comp) {
@@ -101,7 +100,7 @@ bool OriginalUFD::containsInvalidComponents(const std::unordered_set<std::size_t
  * @param syndrome
  * @return
  */
-bool OriginalUFD::isValidComponent(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome) const {
+bool UFDecoder::isValidComponent(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome) const {
     return !getEstimateForComponent(nodeSet, syndrome).empty();
 }
 
@@ -110,7 +109,7 @@ bool OriginalUFD::isValidComponent(const std::unordered_set<std::size_t>& nodeSe
  * @param nodeSet
  * @return
  */
-std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(const std::unordered_set<std::size_t>& nodeSet) const {
+std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered_set<std::size_t>& nodeSet) const {
     std::vector<std::size_t> res;
 
     for (const auto idx: nodeSet) {
@@ -131,7 +130,7 @@ std::vector<std::size_t> OriginalUFD::computeInteriorBitNodes(const std::unorder
  * @param syndrome
  * @return
  */
-std::unordered_set<std::size_t> OriginalUFD::getEstimateForComponent(const std::unordered_set<std::size_t>& nodeSet,
+std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::unordered_set<std::size_t>& nodeSet,
                                                                      const std::unordered_set<std::size_t>& syndrome) const {
     std::unordered_set<std::size_t> res{};
 
@@ -184,7 +183,7 @@ std::unordered_set<std::size_t> OriginalUFD::getEstimateForComponent(const std::
  * Grows the node set by the neighbours of ALL clusters
  * @param comps
  */
-void OriginalUFD::standardGrowth(std::unordered_set<std::size_t>& comps) {
+void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
     for (auto currCompIt = comps.begin(); currCompIt != comps.end(); currCompIt++) {
         const auto nbrs = getCode()->getHz()->getNbrs(*currCompIt);
         for (auto n: nbrs) {
@@ -196,7 +195,7 @@ void OriginalUFD::standardGrowth(std::unordered_set<std::size_t>& comps) {
  * Grows the node set by the neighbours of the single smallest cluster
  * @param nodeSet
  */
-void OriginalUFD::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
+void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
     auto                            ccomps = getConnectedComps(nodeSet);
     std::unordered_set<std::size_t> compNbrs;
     std::unordered_set<std::size_t> smallestComponent;
@@ -218,7 +217,7 @@ void OriginalUFD::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_
  * Grows the node set by the neighbours of a single random cluster
  * @param nodeSet
  */
-void OriginalUFD::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
+void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
     auto                            ccomps = getConnectedComps(nodeSet);
     std::unordered_set<std::size_t> chosenComponent;
     std::random_device              rd;
@@ -238,7 +237,7 @@ void OriginalUFD::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>
 /**
  * Reset temporaily computed data
  */
-void OriginalUFD::reset() {
+void UFDecoder::reset() {
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;
 }
@@ -247,7 +246,7 @@ void OriginalUFD::reset() {
  * Grows the node set by the neighbours of a single random qubit
  * @param comps
  */
-void OriginalUFD::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& comps) {
+void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& comps) {
     auto                            ccomps = getConnectedComps(comps);
     std::unordered_set<std::size_t> compNbrs;
     std::unordered_set<std::size_t> chosenComponent;
@@ -267,7 +266,7 @@ void OriginalUFD::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& 
  * @param nodes
  * @return
  */
-std::vector<std::unordered_set<std::size_t>> OriginalUFD::getConnectedComps(const std::unordered_set<std::size_t>& nodes) const {
+std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const std::unordered_set<std::size_t>& nodes) const {
     std::unordered_set<std::size_t>              visited;
     std::vector<std::unordered_set<std::size_t>> result;
 
