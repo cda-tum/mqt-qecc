@@ -20,7 +20,7 @@ def PowThreeFun(x, a, b):
 
 def runtime():
     plt.rcParams.update({'font.size': 15})
-    inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/final/impr-01-scg-100k.json'
+    inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/heuristic_growth-all_runs-100k.json'
     colors = mcolors.BASE_COLORS
     xData = []
     yData = []

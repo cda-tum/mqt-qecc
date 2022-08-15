@@ -8,7 +8,6 @@
 #include "Utils.hpp"
 
 #include <ctime>
-#include <iomanip>
 #include <iostream>
 #include <map>
 #include <string>
@@ -25,11 +24,11 @@ void runtime(const std::string& codeName) {
     //const std::string inPath   = rootPath + "in/toricCodes2/";
     //**** local:
     const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
-    const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes/";
+    const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
-    const std::size_t nrRuns = 100000;
-    const std::size_t nrSamples = 50;
-    const double      per    = 0.05;
+    const std::size_t nrRuns = 100'000;
+    const std::size_t nrSamples = 3;
+    const double      per    = 0.02;
     auto       code    = Code(inPath + codeName);
     const auto codeN   = code.getN();
 
@@ -39,7 +38,7 @@ void runtime(const std::string& codeName) {
     for (std::size_t i = 0; i < nrSamples; i++) {
         runsSum = 0;
         for (std::size_t j = 0; j < nrRuns; j++) {
-            auto       decoder = UFHeuristic();
+            auto       decoder = UFDecoder();
             decoder.setCode(code);
             auto error    = Utils::sampleErrorIidPauliNoise(codeN, per);
             auto syndrome = code.getSyndrome(error);
@@ -55,12 +54,12 @@ void runtime(const std::string& codeName) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string rootPath   = "/home/berent/ufpaper/simulations/decodingPerfSim/final/";
+    const std::string rootPath   = "/home/berent/ufpaper/simulations/decodingPerfSim/final/"; // TODO adapt
     const std::string outpath    = rootPath + "out/";
-    const std::string inCodePath = rootPath + "source/code/hgp_(4,8)-[[5408,18,26]]_hx.txt";
+    const std::string inCodePath = rootPath + "source/code/hgp_(4,8)-[[3200,18,20]]_hx.txt";
     const std::size_t code_K     = 18;
 
-    const std::size_t nrOfRunsPerRate    = 1000000;
+    const std::size_t nrOfRunsPerRate    = 1'000'000;
 
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     //    decodingResOutput << "{ \"runs\" : [ ";
@@ -72,7 +71,7 @@ void decodingPerformance(const double per) {
 
     std::size_t nrOfFailedRuns = 0U;
     for (std::size_t j = 0; j < nrOfRunsPerRate; j++) {
-        auto* decoder = new UFHeuristic();
+        auto* decoder = new UFDecoder();
         decoder->setCode(code);
         decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
         auto error    = Utils::sampleErrorIidPauliNoise(N, per);
@@ -97,7 +96,7 @@ void decodingPerformance(const double per) {
 }
 
 int main(int argc, char* argv[]) {
-    //std::string codeName = argv[1];
+    std::string codeName = argv[1];
     //std::string outpath      = argv[2];
     double      per          = std::stod(argv[1]);
     //runtime(codeName);
