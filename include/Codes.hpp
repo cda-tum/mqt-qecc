@@ -16,15 +16,27 @@ public:
         N = 7;
     }
 };
+
+class SteaneCode: public Code {
+public:
+    SteaneCode():
+    Code("./resources/codes/testCode.txt","./resources/codes/testCode.txt"){
+        K = 3;
+        N = 7;
+    }
+};
+
 class HGPcode: public Code {
 public:
     HGPcode(const std::string& inFile, const std::size_t K):
         Code(inFile) { this->K = K; };
     HGPcode():
-        Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hx.txt") {
+        Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hz.txt") {
         K = 36;
         N = 900;
     }
+    HGPcode(const std::string& hxIn,const std::string& hzIn, const std::size_t K):
+        Code(hxIn, hzIn) { this->K = K; };
 };
 
 class ToricCode_8: public Code {

@@ -83,7 +83,7 @@ public:
         Decoder::growth = g;
     }
     void setCode(Code& c) {
-        this->code = std::make_unique<Code>(*c.getHz()->pcm);
+        this->code = std::make_unique<Code>(*c.getHz()->pcm, *c.getHx()->pcm);
     }
     virtual void reset(){};
 };
