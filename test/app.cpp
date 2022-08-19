@@ -56,10 +56,10 @@ void runtime(const std::string& codeName) {
 void decodingPerformance(const double per) {
     const std::string rootPath   = "/home/berent/ufpaper/simulations/decodingPerfSim/final/"; // TODO adapt
     const std::string outpath    = rootPath + "out/";
-    const std::string inCodePath = rootPath + "source/code/hgp_(4,8)-[[3200,18,20]]_hx.txt";
+    const std::string inCodePath = rootPath + "source/code/lp_(4,8)-[[1024,18,nan]]_hz.txt";
     const std::size_t code_K     = 18;
 
-    const std::size_t nrOfRunsPerRate    = 1'000'000;
+    const std::size_t nrOfRunsPerRate    = 100'000;
 
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     //    decodingResOutput << "{ \"runs\" : [ ";
@@ -97,7 +97,6 @@ void decodingPerformance(const double per) {
 
 int main(int argc, char* argv[]) {
     std::string codeName = argv[1];
-    //std::string outpath      = argv[2];
     double      per          = std::stod(argv[1]);
     //runtime(codeName);
     decodingPerformance(per);
