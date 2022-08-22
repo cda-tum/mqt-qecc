@@ -21,7 +21,7 @@ public:
     HGPcode(const std::string& inFile, const std::size_t K):
         Code(inFile) { this->K = K; };
     HGPcode():
-        Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hx.txt") {
+        Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hz.txt") {
         K = 36;
         N = 900;
     }
