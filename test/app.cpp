@@ -95,8 +95,8 @@ void decodingPerformance(const double per) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string codeName = argv[1];
-    //double      per          = std::stod(argv[1]);
-    runtime(codeName);
-    //decodingPerformance(per);
+    //std::string codeName = argv[1];
+    double      per          = std::stod(argv[1]);
+    //runtime(codeName);
+    decodingPerformance(per);
 }
