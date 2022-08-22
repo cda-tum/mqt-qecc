@@ -54,24 +54,23 @@ void runtime(const std::string& codeName) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string rootPath   = "/home/berent/ufpaper/simulations/decodingPerfSim/final/"; // TODO adapt
-    const std::string outpath    = rootPath + "out/";
-    const std::string inCodePath = rootPath + "source/code/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::string rootPath   = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt"; // TODO adapt
     const std::size_t code_K     = 18;
 
-    const std::size_t nrOfRunsPerRate    = 100'000;
+    const std::size_t nrOfRunsPerRate    = 10;
 
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     //    decodingResOutput << "{ \"runs\" : [ ";
     //    rawIntermediateOut << "{ ";
 
-    auto        code = HGPcode(inCodePath, code_K);
+    auto        code = HGPcode(rootPath, code_K);
     const auto  K    = code.getK();
     const auto  N    = code.getN();
 
     std::size_t nrOfFailedRuns = 0U;
     for (std::size_t j = 0; j < nrOfRunsPerRate; j++) {
-        auto* decoder = new UFDecoder();
+        std::cout << "run " << j << std::endl;
+        auto* decoder = new UFHeuristic();
         decoder->setCode(code);
         decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
         auto error    = Utils::sampleErrorIidPauliNoise(N, per);

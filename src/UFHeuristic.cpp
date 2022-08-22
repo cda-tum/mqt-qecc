@@ -16,8 +16,8 @@
      * @param syndrome
      * @return
     */
-std::vector<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& syndrome) {
-    std::vector<std::size_t> result{};
+std::unordered_set<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& syndrome) {
+    std::unordered_set<std::size_t> result{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
             const auto idx       = i + getCode()->getN();
@@ -25,7 +25,7 @@ std::vector<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& sy
             syndrNode->isCheck   = true;
             syndrNode->checkVertices.emplace_back(syndrNode->vertexIdx);
             nodeMap.try_emplace(syndrNode->vertexIdx, std::move(syndrNode));
-            result.emplace_back(idx);
+            result.insert(idx);
         }
     }
     //std::cout << "computed inits" << std::endl;
@@ -42,15 +42,18 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
         auto                     syndrComponents   = computeInitTreeComponents(syndrome);
         auto                     invalidComponents = syndrComponents;
-        std::vector<std::size_t> erasure;
-        while (!invalidComponents.empty()) {
+        std::unordered_set<std::size_t> erasure;
+        while (!invalidComponents.empty() && invalidComponents.size() < (this->getCode()->getHz()->pcm->size()+getCode()->getHz()->pcm->front().size())) {
+            std::cout << "growing" << std::endl;
             // Step 1 growth
             std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
             std::unordered_map<std::size_t, bool>            presentMap; // for step 4
 
             if (this->growth == GrowthVariant::ALL_COMPONENTS) {
                 // to grow all components (including valid ones)
-                std::move(erasure.begin(), erasure.end(), std::back_inserter(invalidComponents));
+                for (auto e : erasure) {
+                    invalidComponents.insert(e);
+                }
                 standardGrowth(fusionEdges, presentMap, invalidComponents);
             } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
                 standardGrowth(fusionEdges, presentMap, invalidComponents);
@@ -105,7 +108,9 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
                     toAdd.emplace_back(root->vertexIdx);
                 }
             }
-            std::move(toAdd.begin(), toAdd.end(), std::back_inserter(invalidComponents));
+            for(auto c : toAdd){
+                invalidComponents.insert(c);
+            }
 
             // Update Boundary Lists: remove vertices that are not in boundary anymore
             for (auto& compId: invalidComponents) {
@@ -147,8 +152,10 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
 
 void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                  std::unordered_map<std::size_t, bool>&            presentMap,
-                                 const std::vector<std::size_t>&                   components) {
+                                 const std::unordered_set<std::size_t>&                   components) {
+    std::cout << "std growth# comps:  " << components.size() << std::endl;
     for (const auto& compId: components) {
+        std::cout << compId << std::endl;
         const auto& compNode = getNodeFromIdx(compId);
         presentMap.try_emplace(compNode->vertexIdx, true);
         const auto& bndryNodes = compNode->boundaryVertices;
@@ -163,7 +170,8 @@ void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
 }
 
 void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                   std::unordered_map<std::size_t, bool>& presentMap, const std::vector<std::size_t>& components) {
+                                                   std::unordered_map<std::size_t, bool>& presentMap,
+                                                   const std::unordered_set<std::size_t>& components) {
     std::size_t smallestComponent;
     std::size_t smallestSize = SIZE_MAX;
     for (const auto& cId: components) {
@@ -186,7 +194,7 @@ void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
 
 void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                  std::unordered_map<std::size_t, bool>&            presentMap,
-                                                 const std::vector<std::size_t>&                   components) {
+                                                 const std::unordered_set<std::size_t>&                   components) {
     std::size_t        chosenComponent;
     std::random_device rd;
     std::mt19937       gen(rd());
@@ -218,12 +226,13 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @param syndrome
  * @return
  */
-std::vector<std::size_t> UFHeuristic::erasureDecoder(std::vector<std::size_t>& erasure, std::vector<std::size_t>& syndr) {
+std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndr) {
     std::unordered_set<std::size_t>       syndrome(syndr.begin(), syndr.end());
     std::vector<std::vector<std::size_t>> erasureSet{};
     std::size_t                           erasureSetIdx = 0;
     // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
     for (auto& currCompRootId: erasure) {
+        std::cout << "next erasure" << std::endl;
         std::vector<std::size_t> compErasure;
         const auto&              currCompRoot = getNodeFromIdx(currCompRootId);
         std::queue<std::size_t>  queue;
@@ -232,6 +241,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::vector<std::size_t>& e
         queue.push(currCompRoot->vertexIdx);
 
         while (!queue.empty()) {
+            std::cout << "queue not empty" << std::endl;
             const auto& currV = getNodeFromIdx(queue.front());
             queue.pop();
             if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
@@ -259,6 +269,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::vector<std::size_t>& e
     for (auto& component: erasureSet) {
         auto compNodeIt = component.begin();
         while (compNodeIt != component.end() && !syndrome.empty()) {
+            std::cout << "syndr not empty" << std::endl;
             const auto& currN = getNodeFromIdx(*compNodeIt++);
             if (!currN->isCheck && !currN->deleted) {
                 resList.emplace_back(currN->vertexIdx); // add bit node to estimate
@@ -294,12 +305,12 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::vector<std::size_t>& e
  * @param invalidComponents containts components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void UFHeuristic::extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents) {
+void UFHeuristic::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& validComponents) {
     //std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
         if (isValidComponent(*it)) {
-            validComponents.emplace_back(*it);
+            validComponents.insert(*it);
             it = invalidComponents.erase(it);
         } else {
             it++;
