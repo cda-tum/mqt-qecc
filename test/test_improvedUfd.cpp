@@ -343,7 +343,7 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
 TEST_F(ImprovedUFDtestBase, BothErrsTest) {
     try {
         auto        code = SteaneCode();
-        ImprovedUFD decoder;
+        UFHeuristic decoder;
         decoder.setCode(code);
         std::vector<bool> err(code.N * 2);
         err.at(0)           = 1;

@@ -321,7 +321,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::vector<std::size_t>& e
  * @param invalidComponents containts components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void UFHeuristic::extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents,, const std::unique_ptr<ParityCheckMatrix>& pcm) {
+void UFHeuristic::extractValidComponents(std::vector<std::size_t>& invalidComponents, std::vector<std::size_t>& validComponents, const std::unique_ptr<ParityCheckMatrix>& pcm) {
     //std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
