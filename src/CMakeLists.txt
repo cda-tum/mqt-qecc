@@ -1,16 +1,18 @@
 # main project library
 add_library(${PROJECT_NAME}_lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/ImprovedUFD.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/OriginalUFD.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/UFHeuristic.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/UFDecoder.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/DecodingSimulator.cpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingSimulator.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/TreeNode.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Codes.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/ImprovedUFD.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/OriginalUFD.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/UFHeuristic.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/UFDecoder.hpp
         ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp
-        ${${PROJECT_NAME}_SOURCE_DIR}/include/QeccException.hpp)
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/QeccException.hpp )
 
 # set include directories
 target_include_directories(${PROJECT_NAME}_lib PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)

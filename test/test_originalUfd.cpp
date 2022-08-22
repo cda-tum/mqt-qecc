@@ -3,7 +3,7 @@
 //
 
 #include "Codes.hpp"
-#include "OriginalUFD.hpp"
+#include "UFDecoder.hpp"
 
 #include <gtest/gtest.h>
 
@@ -42,7 +42,7 @@ INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, OriginalUFDtest,
  */
 TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     auto code = SteaneXCode();
-    OriginalUFD decoder;
+    UFDecoder decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -79,7 +79,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  */
 TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     auto code = SteaneXCode();
-    OriginalUFD decoder;
+    UFDecoder decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -109,7 +109,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  */
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     auto code = SteaneXCode();
-    OriginalUFD decoder;
+    UFDecoder decoder;
     //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     std::cout << "code: " << std::endl
@@ -143,7 +143,7 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
 }
 TEST_F(OriginalUFDtest, LargeCodeTest) {
     auto        code = HGPcode();
-    OriginalUFD decoder;
+    UFDecoder   decoder;
     //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     auto err  = gf2Vec(code.getN());

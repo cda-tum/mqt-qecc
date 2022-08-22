@@ -5,11 +5,13 @@
 
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
-#include "ImprovedUFD.hpp"
-#include "OriginalUFD.hpp"
+#include "DecodingSimulator.hpp"
+#include "UFDecoder.hpp"
+#include "UFHeuristic.hpp"
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
+
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
@@ -63,17 +65,18 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("set_growth", &Decoder::setGrowth)
             .def("decode", &Decoder::decode);
 
-    py::class_<ImprovedUFD, Decoder>(m, "ImprovedUFD", "ImprovedUFD object")
+    py::class_<UFHeuristic, Decoder>(m, "UFHeuristic", "UFHeuristic object")
             .def(py::init<>())
-            .def_readwrite("result", &ImprovedUFD::result)
-            .def_readwrite("growth", &ImprovedUFD::growth)
-            .def("decode", &ImprovedUFD::decode);
+            .def_readwrite("result", &UFHeuristic::result)
+            .def_readwrite("growth", &UFHeuristic::growth)
+            .def("reset", &UFHeuristic::reset)
+            .def("decode", &UFHeuristic::decode);
 
-    py::class_<OriginalUFD, Decoder>(m, "OriginalUFD", "OriginalUFD object")
+    py::class_<UFDecoder, Decoder>(m, "UFDecoder", "UFDecoder object")
             .def(py::init<>())
-            .def_readwrite("result", &OriginalUFD::result)
-            .def_readwrite("growth", &OriginalUFD::growth)
-            .def("decode", &OriginalUFD::decode);
+            .def_readwrite("result", &UFDecoder::result)
+            .def_readwrite("growth", &UFDecoder::growth)
+            .def("decode", &UFDecoder::decode);
 
     py::enum_<DecodingResultStatus>(m, "DecodingResultStatus")
             .value("ALL_COMPONENTS", DecodingResultStatus::SUCCESS)
@@ -93,6 +96,18 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("result", &DecodingRunInformation::result)
             .def("json", &DecodingRunInformation::to_json)
             .def("__repr__", &DecodingRunInformation::toString);
+
+    py::class_<DecodingSimulator>(m, "DecodingSimulator")
+            .def(py::init<>())
+            .def("simulate_wer", &DecodingSimulator::simulateWER)
+            .def("simulate_avg_runtime", &DecodingSimulator::simulateAverageRuntime);
+
+      py::enum_<DecoderType>(m, "DecoderType")
+            .value("UF_HEURISTIC", DecoderType::UF_HEURISTIC)
+            .value("ORIGINAL_UF", DecoderType::UF_DECODER)
+            .export_values()
+            .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
+
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
