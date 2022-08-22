@@ -36,12 +36,6 @@ std::vector<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& sy
  * Main part of the heuristic. Uses Union-Find datastructure for efficient cluster growth and validtiy check
  * @param syndrome
  */
-
-/**
- * Main part of the heuristic. Uses Union-Find datastructure for efficient cluster growth and validtiy check
- * @param syndrome
- */
-
 void UFHeuristic::decode(const gf2Vec& syndrome) {
     if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
         std::vector<bool> xSyndr;
