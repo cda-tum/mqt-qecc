@@ -57,7 +57,7 @@ void decodingPerformance(const double per) {
     const std::string rootPath   = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt"; // TODO adapt
     const std::size_t code_K     = 18;
 
-    const std::size_t nrOfRunsPerRate    = 10;
+    const std::size_t nrOfRunsPerRate    = 100'000;
 
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     //    decodingResOutput << "{ \"runs\" : [ ";
