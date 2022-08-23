@@ -1,3 +1,4 @@
+#using tools from https://github.com/quantumgizmos/bp_osd
 import ldpc.protograph as pt
 import numpy as np
 

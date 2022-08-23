@@ -1,4 +1,4 @@
-# from https://github.com/quantumgizmos/bias_tailored_qldpc
+# taken from https://github.com/quantumgizmos/bias_tailored_qldpc
 import ldpc.protograph as pt
 import numpy as np
 from bposd.css import css_code
