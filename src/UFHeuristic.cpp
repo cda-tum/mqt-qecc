@@ -198,7 +198,7 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     if (components.size() > std::numeric_limits<int>::max()) {
         throw QeccException("cannot setup distribution, size too large for function");
     }
-    std::uniform_int_distribution d(static_cast<std::size_t>(0U), components.size());
+    std::uniform_int_distribution d(static_cast<std::size_t>(0U), components.size()-1);
     std::size_t                   chosenIdx = d(gen);
     auto                          it        = components.begin();
     std::advance(it, chosenIdx);
