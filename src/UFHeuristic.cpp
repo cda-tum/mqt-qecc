@@ -245,7 +245,7 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @param syndrome
  * @return
  */
-std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::size_t>& erasure, std::vector<std::size_t>& syndr,const std::unique_ptr<ParityCheckMatrix>& pcm) {
+std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndr,const std::unique_ptr<ParityCheckMatrix>& pcm) {
     std::unordered_set<std::size_t>       syndrome(syndr.begin(), syndr.end());
     std::vector<std::vector<std::size_t>> erasureSet{};
     std::size_t                           erasureSetIdx = 0;
