@@ -12,11 +12,9 @@ The tool can be used to decode quantum LDPC codes and conduct respective numeric
 
 At the moment the general QLDPC
 decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
-and heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. At the moment to,
-to construct codes we use the open-source software by Joshka Roffe et
-al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc).
-
-For more information, please visit [cda.cit.tum.de/](https://www.cda.cit.tum.de/).
+and heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. At the moment, 
+we use open-source software by Joshka Roffe et
+al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) to construct codes.
 
 If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by
 creating an issue on [GitHub](https://github.com/cda-tum/qecc/issues).
@@ -40,10 +38,12 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
   ```python
   from mqt.qecc import *
   
-  code = import_code_from_file(code_file)
-  syndrome = code.compute_syndrome(error)
-  decoder = decoder(code)
-  result = decoder.decode(syndrome)
+  decoder = UFHeuristic()
+  decoder.set_code(code)
+  err = sample_iid_pauli_err(code.N, 0.05)
+  decoder.decode(code.get_syndrome(err))
+  result = decoder.result
+  print(code.is_stabilizer(result.estimate))
   ```
 
 ### System Requirements
@@ -58,8 +58,6 @@ guide please refer to the official [flint documentation](https://flintlib.org/do
 is to download and build locally and then use the environment variable `LD_LIBRARY_PATH`
 to specify the location of flint (e.g. `export LD_LIBRARY_PATH=/usr/local/lib` on UNIX).
 
-`parallel`[parallel](https://www.gnu.org/software/parallel/man.html) is used for parallel execution of independant 
-simulation runs. It is pre-installed on Linux devices.
 ### Configure, Build, and Install
 
 To start off, clone this repository using
