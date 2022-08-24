@@ -1,4 +1,5 @@
 # MQT QECC - A tool for Quantum Error Correcting Codes written in C++
+:warning: **This project is still in early development and breaking changes might happen frequently.**:
 
 A tool for quantum error correcting codes and numerical simulations developed by the
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
