@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 
 
 def wer():
-    plt.rcParams.update({'font.size': 15})
+    plt.rcParams.update({'font.size': 14})
     inputFilename = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-singlerandomg-100k-runs.json'
-    inputFilename2 = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-singlesmallest-100kruns.json'
+    inputFilename2 = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-original-stdgrowth-100k-runs.json'
     inputFilename3 = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-standardg-100k-runs.json'
+    fig,ax = plt.subplots(1)
 
     f = open(inputFilename)
     data = json.load(f)
@@ -46,27 +47,32 @@ def wer():
     xData3f =np.array(xData3)[order3]
     yData3f =np.array(yData3)[order3]
 
-    plt.plot(xDataf, yDataf, '-d', label='heuristic SRG', color='b')
-    plt.plot(xData2f, yData2f, '-o', label='heuristic SSG', color='g')
-    plt.plot(xData3f, yData3f, '-x', label='heuristic AG', color='r')
+    ax.plot(xDataf, yDataf, '-x', label='heuristic SRG', color='b')
+    ax.plot(xData2f, yData2f, '-o', label='general UFD', color='g')
+    ax.plot(xData3f, yData3f, '-x', label='heuristic AG', color='r')
     print(yData)
     print(yData2)
     print(yData3)
 
-    plt.xlabel('physical X-error rate')
-    plt.ylabel('WER')
-    plt.legend()
-    plt.grid()
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.show()
-    plt.gca().set_position([0, 0, 1, 1])
-    plt.savefig("wers.svg")
+    ax.set_xlabel('physical X-error rate')
+    ax.set_ylabel('WER')
+    ax.legend()
+    ax.grid()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    #ax.gca().set_position([0, 0, 1, 1])
+    handles,labels = ax.get_legend_handles_labels()
 
+    handles = [handles[1], handles[2], handles[0] ]
+    labels = [labels[1], labels[2], labels[0] ]
+
+    ax.legend(handles,labels,loc=4)
+    plt.show()
 def werComp():
     plt.rcParams.update({'font.size': 15})
     inputFilename = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-singlerandomg-100k-runs.json'
     inputFilename2 = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-original-stdgrowth-100k-runs.json'
+    fig,ax = plt.subplots(1)
 
     f = open(inputFilename)
     data = json.load(f)
@@ -84,19 +90,26 @@ def werComp():
         xData2.append(float(key2))
         yData2.append(data2[key2])
 
-    plt.plot(xData, yData, '-d', label='heuristic', color='b')
-    plt.plot(xData2, yData2, '-o', label='decoder', color='g')
+    ax.plot(xData, yData, '-d', label='heuristic', color='b')
+    ax.plot(xData2, yData2, '-o', label='decoder', color='g')
     print(yData)
     print(yData2)
 
-    plt.xlabel('physical X-error rate')
-    plt.ylabel('WER')
-    plt.legend()
-    plt.grid()
-    plt.xscale('log')
-    plt.yscale('log')
+    ax.xlabel('physical X-error rate')
+    ax.ylabel('WER')
+    ax.legend()
+    ax.grid()
+    ax.xscale('log')
+    ax.yscale('log')
+    ax.gca().set_position([0, 0, 1, 1])
+    ax.savefig("werComp.svg")
+    handles,labels = ax.get_legend_handles_labels()
+
+    handles = [handles[2], handles[1], handles[0]]
+    labels = [labels[2], labels[1], labels[0]]
+
+    ax.legend(handles,labels,loc=2)
     plt.show()
-    plt.gca().set_position([0, 0, 1, 1])
-    plt.savefig("werComp.svg")
+
 wer()
 #werComp()

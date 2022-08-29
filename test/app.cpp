@@ -26,9 +26,9 @@ void runtime(const std::string& codeName) {
     //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
     //const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
-    const std::size_t nrRuns    = 100'000;
-    const std::size_t nrSamples = 10;
-    const double      per       = 0.02;
+    const std::size_t nrRuns    = 1000;
+    const std::size_t nrSamples = 50;
+    const double      per       = 0.01;
     auto              code      = Code(inPath + codeName);
     const auto        codeN     = code.getN();
 
@@ -38,9 +38,12 @@ void runtime(const std::string& codeName) {
     for (std::size_t i = 0; i < nrSamples; i++) {
         runsSum = 0;
         for (std::size_t j = 0; j < nrRuns; j++) {
-            auto decoder = UFHeuristic();
+            auto decoder = UFDecoder();
             decoder.setCode(code);
-            auto error    = Utils::sampleErrorIidPauliNoise(codeN, per);
+            std::vector<bool> error;
+            while(error.empty() || std::none_of(error.begin(), error.end(), [](bool c) {return c;})) {
+                error = Utils::sampleErrorIidPauliNoise(codeN, per);
+            }
             auto syndrome = code.getSyndrome(error);
             decoder.decode(syndrome);
             runsSum += decoder.result.decodingTime;
@@ -97,8 +100,8 @@ void decodingPerformance(const double per) {
 }
 
 int main(int argc, char* argv[]) {
-    //std::string codeName = argv[1];
-    double      per          = std::stod(argv[1]);
-    //runtime(codeName);
-    decodingPerformance(per);
+    std::string codeName = argv[1];
+    //double      per          = std::stod(argv[1]);
+    runtime(codeName);
+   // decodingPerformance(per);
 }

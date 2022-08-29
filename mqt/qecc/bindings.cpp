@@ -24,7 +24,7 @@ std::vector<bool> sample_iid_pauli_err(const std::size_t length, const double ph
 
 PYBIND11_MODULE(pyqecc, m) {
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";
-    m.def("sample_iid_pauli_err", &sample_iid_pauli_err, "sample a iid pauli error represented as binary string");
+    m.def("sample_iid_pauli_err", &sample_iid_pauli_err, "Sample a iid pauli error represented as binary string");
 
     py::class_<Code>(m, "Code", "CSS code object")
             .def(py::init<>())
