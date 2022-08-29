@@ -2,8 +2,9 @@
 // Created by lucas on 21/04/2022.
 //
 
-#include "Decoder.hpp"
 #include "UFDecoder.hpp"
+
+#include "Decoder.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -15,7 +16,26 @@
  * Original implementation of the generalized decoder for QLDPC codes using Gaussian elimination
  * @param syndrome
  */
-void UFDecoder::decode(const std::vector<bool>& syndrome) {
+void UFDecoder::decode(const gf2Vec& syndrome) {
+    if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
+        std::vector<bool> xSyndr;
+        std::vector<bool> zSyndr;
+        auto              mid = syndrome.begin() + (syndrome.size() / 2U);
+        std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
+        std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
+        doDecode(xSyndr, this->getCode()->getHz());
+        auto xres = this->result;
+        this->reset();
+        doDecode(zSyndr, this->getCode()->getHx());
+        this->result.decodingTime += xres.decodingTime;
+        std::move(xres.estimBoolVector.begin(), xres.estimBoolVector.end(), std::back_inserter(this->result.estimBoolVector));
+        std::move(xres.estimNodeIdxVector.begin(), xres.estimNodeIdxVector.end(), std::back_inserter(this->result.estimNodeIdxVector));
+    } else {
+        this->doDecode(syndrome, getCode()->getHz()); // X errs per default if single sided
+    }
+}
+
+void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm) {
     const auto                                   decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::unordered_set<std::size_t>              components; // used to store vertex indices in E set
     std::vector<std::unordered_set<std::size_t>> invalidComponents;
@@ -32,8 +52,8 @@ void UFDecoder::decode(const std::vector<bool>& syndrome) {
             components.insert(s);
         }
 
-
-        while (containsInvalidComponents(components, syndr, invalidComponents) && components.size() < (this->getCode()->getHz()->pcm->size()+getCode()->getHz()->pcm->front().size())) {
+        while (containsInvalidComponents(components, syndr, invalidComponents,pcm) &&
+               components.size() < (pcm->pcm->size() + pcm->pcm->front().size())) {
             if (this->growth == GrowthVariant::ALL_COMPONENTS) {
                 // // grow all components (including valid ones) by 1
                 standardGrowth(components);
@@ -55,9 +75,9 @@ void UFDecoder::decode(const std::vector<bool>& syndrome) {
     }
 
     std::vector<std::set<std::size_t>> estims;
-    auto ccomps = getConnectedComps(components);
+    auto                               ccomps = getConnectedComps(components);
     for (const auto& comp: ccomps) {
-        auto compEstimate = getEstimateForComponent(comp, syndr);
+        auto compEstimate = getEstimateForComponent(comp, syndr, pcm);
         estims.emplace_back(compEstimate.begin(), compEstimate.end());
     }
     std::set<std::size_t> tmp;
@@ -82,10 +102,11 @@ void UFDecoder::decode(const std::vector<bool>& syndrome) {
  * @return
  */
 bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome,
-                                            std::vector<std::unordered_set<std::size_t>>& invalidComps) const {
+                                          std::vector<std::unordered_set<std::size_t>>& invalidComps,
+                                          const std::unique_ptr<ParityCheckMatrix>&     pcm) const {
     auto ccomps = getConnectedComps(nodeSet);
     return std::any_of(ccomps.begin(), ccomps.end(), [&](const auto& comp) {
-        bool res = isValidComponent(comp, syndrome);
+        bool res = isValidComponent(comp, syndrome, pcm);
         if (!res) {
             invalidComps.emplace_back(comp.begin(), comp.end());
         }
@@ -100,8 +121,10 @@ bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>&
  * @param syndrome
  * @return
  */
-bool UFDecoder::isValidComponent(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome) const {
-    return !getEstimateForComponent(nodeSet, syndrome).empty();
+bool UFDecoder::isValidComponent(const std::unordered_set<std::size_t>&    nodeSet,
+                                 const std::unordered_set<std::size_t>&    syndrome,
+                                 const std::unique_ptr<ParityCheckMatrix>& pcm) const {
+    return !getEstimateForComponent(nodeSet, syndrome, pcm).empty();
 }
 
 /**
@@ -130,23 +153,24 @@ std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered
  * @param syndrome
  * @return
  */
-std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::unordered_set<std::size_t>& nodeSet,
-                                                                     const std::unordered_set<std::size_t>& syndrome) const {
+std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::unordered_set<std::size_t>&    nodeSet,
+                                                                   const std::unordered_set<std::size_t>&    syndrome,
+                                                                   const std::unique_ptr<ParityCheckMatrix>& pcm) const {
     std::unordered_set<std::size_t> res{};
 
-    auto                            intNodes = computeInteriorBitNodes(nodeSet);
+    auto intNodes = computeInteriorBitNodes(nodeSet);
     if (intNodes.empty()) {
         return std::unordered_set<std::size_t>{};
     }
     gf2Mat            redHz;
     std::size_t       idxCnt = 0;
     gf2Vec            redSyndr(idxCnt);
-    std::vector<bool> used(this->getCode()->getHz()->pcm->size());
+    std::vector<bool> used(pcm->pcm->size());
 
     for (const auto it: nodeSet) {
         if (it >= getCode()->getN()) { // is a check node
             if (!used.at(it - getCode()->getN())) {
-                redHz.emplace_back(this->getCode()->getHz()->pcm->at(it - getCode()->getN()));
+                redHz.emplace_back(pcm->pcm->at(it - getCode()->getN()));
                 used.at(it - getCode()->getN()) = true;
                 if (syndrome.contains(it - getCode()->getN())) {
                     redSyndr.emplace_back(1); // If the check node is in the syndrome we need to satisfy check=1
@@ -158,7 +182,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             const auto nbrs = this->getCode()->getHz()->getNbrs(it);
             for (auto n: nbrs) { // add neighbouring checks (these are maybe not in the interior but to stay consistent with the syndrome we need to include these in the check)
                 if (!used.at(n - getCode()->getN())) {
-                    redHz.emplace_back(this->getCode()->getHz()->pcm->at(n - getCode()->getN()));
+                    redHz.emplace_back(pcm->pcm->at(n - getCode()->getN()));
                     if (syndrome.contains(n)) {
                         redSyndr.emplace_back(1);
                     } else {

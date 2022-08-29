@@ -340,3 +340,41 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
 }
+TEST_F(ImprovedUFDtestBase, BothErrsTest) {
+    try {
+        auto        code = SteaneCode();
+        UFHeuristic decoder;
+        decoder.setCode(code);
+        std::vector<bool> err(code.N * 2);
+        err.at(0)           = 1;
+        err.at(code.getN()) = 1;
+
+        std::cout << "err :" << std::endl;
+        Utils::printGF2vector(err);
+        auto syndr = code.getSyndrome(err);
+        decoder.decode(syndr);
+        const auto& decodingResult = decoder.result;
+        const auto& estim          = decodingResult.estimBoolVector;
+        const auto& estimIdx       = decodingResult.estimNodeIdxVector;
+        gf2Vec      estim2(err.size());
+        std::cout << "estiIdxs: ";
+        for (unsigned long idx: estimIdx) {
+            estim2.at(idx) = true;
+            std::cout << idx;
+        }
+        std::cout << std::endl;
+        std::vector<bool> residualErr(err.size());
+        for (std::size_t i = 0; i < err.size(); i++) {
+            residualErr.at(i) = (err.at(i) != estim.at(i));
+        }
+        std::vector<bool> residualErr2(err.size());
+        for (std::size_t i = 0; i < err.size(); i++) {
+            residualErr2.at(i) = (err.at(i) != estim2.at(i));
+        }
+        EXPECT_TRUE(code.isStabilizer(residualErr));
+        //EXPECT_TRUE(code.isStabilizer(residualErr2));
+    }catch(QeccException e){
+        std::cout << e.getMessage() << std::endl;
+        EXPECT_TRUE(false);
+    }
+}

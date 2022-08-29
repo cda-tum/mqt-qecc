@@ -36,6 +36,28 @@ std::unordered_set<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2
  * @param syndrome
  */
 void UFHeuristic::decode(const gf2Vec& syndrome) {
+    if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
+        std::vector<bool> xSyndr;
+        std::vector<bool> zSyndr;
+        auto              mid = syndrome.begin() + (syndrome.size() / 2U);
+        std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
+        std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
+        doDecoding(xSyndr, this->getCode()->getHz());
+        auto xres = this->result;
+        this->reset();
+        doDecoding(zSyndr, this->getCode()->getHx());
+        this->result.decodingTime += xres.decodingTime;
+        std::move(xres.estimBoolVector.begin(), xres.estimBoolVector.end(), std::back_inserter(this->result.estimBoolVector));
+        std::move(xres.estimNodeIdxVector.begin(), xres.estimNodeIdxVector.end(), std::back_inserter(this->result.estimNodeIdxVector));
+    } else {
+        this->doDecoding(syndrome, getCode()->getHz()); // X errs per default if single sided
+    }
+}
+/**
+ * Main part of the heuristic. Uses Union-Find datastructure for efficient cluster growth and validtiy check
+ * @param syndrome
+ */
+void UFHeuristic::doDecoding(const gf2Vec& syndrome,const std::unique_ptr<ParityCheckMatrix>& pcm) {
     auto                     decodingTimeBegin = std::chrono::high_resolution_clock::now();
     std::vector<std::size_t> res;
     if (!syndrome.empty() && !std::all_of(syndrome.begin(), syndrome.end(), [](bool val) { return !val; })) {
@@ -52,13 +74,13 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
                 for (auto e : erasure) {
                     invalidComponents.insert(e);
                 }
-                standardGrowth(fusionEdges, presentMap, invalidComponents);
+                standardGrowth(fusionEdges, presentMap, invalidComponents, pcm);
             } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
-                standardGrowth(fusionEdges, presentMap, invalidComponents);
+                standardGrowth(fusionEdges, presentMap, invalidComponents, pcm);
             } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
-                singleClusterSmallestFirstGrowth(fusionEdges, presentMap, invalidComponents);
+                singleClusterSmallestFirstGrowth(fusionEdges, presentMap, invalidComponents, pcm);
             } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
-                singleClusterRandomFirstGrowth(fusionEdges, presentMap, invalidComponents);
+                singleClusterRandomFirstGrowth(fusionEdges, presentMap, invalidComponents, pcm);
             } else {
                 throw std::invalid_argument("Unsupported growth variant");
             }
@@ -115,7 +137,7 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
                 const auto& compNode = getNodeFromIdx(compId);
                 auto        iter     = compNode->boundaryVertices.begin();
                 while (iter != compNode->boundaryVertices.end()) {
-                    const auto& nbrs     = getCode()->getHz()->getNbrs(*iter);
+                    const auto& nbrs     = pcm->getNbrs(*iter);
                     auto        currNode = getNodeFromIdx(*iter);
                     const auto& currRoot = TreeNode::Find(currNode);
                     for (const auto& nbr: nbrs) {
@@ -134,9 +156,9 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
                     }
                 }
             }
-            extractValidComponents(invalidComponents, erasure);
+            extractValidComponents(invalidComponents, erasure, pcm);
         }
-        res = erasureDecoder(erasure, syndrComponents);
+        res = erasureDecoder(erasure, syndrComponents, pcm);
     }
     auto decodingTimeEnd   = std::chrono::high_resolution_clock::now();
     this->result           = DecodingResult();
@@ -150,14 +172,15 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
 
 void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                  std::unordered_map<std::size_t, bool>&            presentMap,
-                                 const std::unordered_set<std::size_t>&                   components) {
+                                 const std::unordered_set<std::size_t>&                   components,
+                                 const std::unique_ptr<ParityCheckMatrix>& pcm) {
     for (const auto& compId: components) {
         const auto& compNode = getNodeFromIdx(compId);
         presentMap.try_emplace(compNode->vertexIdx, true);
         const auto& bndryNodes = compNode->boundaryVertices;
 
         for (const auto& bndryNode: bndryNodes) {
-            const auto& nbrs = getCode()->getHz()->getNbrs(bndryNode);
+            const auto& nbrs = pcm->getNbrs(bndryNode);
             for (const auto& nbr: nbrs) {
                 fusionEdges.emplace_back(bndryNode, nbr);
             }
@@ -166,8 +189,7 @@ void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
 }
 
 void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                   std::unordered_map<std::size_t, bool>& presentMap,
-                                                   const std::unordered_set<std::size_t>& components) {
+                                                   std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components,const std::unique_ptr<ParityCheckMatrix>& pcm) {
     std::size_t smallestComponent;
     std::size_t smallestSize = SIZE_MAX;
     for (const auto& cId: components) {
@@ -181,7 +203,7 @@ void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     const auto& bndryNodes = smallestC->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        const auto& nbrs = getCode()->getHz()->getNbrs(bndryNode);
+        const auto& nbrs = pcm->getNbrs(bndryNode);
         for (const auto& nbr: nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
@@ -190,7 +212,8 @@ void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
 
 void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                  std::unordered_map<std::size_t, bool>&            presentMap,
-                                                 const std::unordered_set<std::size_t>&                   components) {
+                                                 const std::unordered_set<std::size_t>&                   components,
+                                                 const std::unique_ptr<ParityCheckMatrix>&         pcm) {
     std::size_t        chosenComponent;
     std::random_device rd;
     std::mt19937       gen(rd());
@@ -209,7 +232,7 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     const auto& bndryNodes = chosenNode->boundaryVertices;
 
     for (const auto& bndryNode: bndryNodes) {
-        const auto& nbrs = getCode()->getHz()->getNbrs(bndryNode);
+        const auto& nbrs = pcm->getNbrs(bndryNode);
         for (const auto& nbr: nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
@@ -222,7 +245,7 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
  * @param syndrome
  * @return
  */
-std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndr) {
+std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndr,const std::unique_ptr<ParityCheckMatrix>& pcm) {
     std::unordered_set<std::size_t>       syndrome(syndr.begin(), syndr.end());
     std::vector<std::vector<std::size_t>> erasureSet{};
     std::size_t                           erasureSetIdx = 0;
@@ -267,10 +290,10 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
             if (!currN->isCheck && !currN->deleted) {
                 resList.emplace_back(currN->vertexIdx); // add bit node to estimate
                 // if we add a bit node we have to delete adjacent check nodes and their neighbours
-                for (const auto& adjCheck: getCode()->getHz()->getNbrs(currN->vertexIdx)) {
+                for (const auto& adjCheck: pcm->getNbrs(currN->vertexIdx)) {
                     const auto& adjCheckNode = getNodeFromIdx(adjCheck);
                     if (adjCheckNode->marked && !adjCheckNode->deleted) {
-                        const auto& nNbrs = getCode()->getHz()->getNbrs(adjCheck);
+                        const auto& nNbrs = pcm->getNbrs(adjCheck);
                         auto        nnbr  = nNbrs.begin();
                         // remove bit nodes adjacent to neighbour check
                         while (nnbr != nNbrs.end()) {
@@ -298,10 +321,11 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
  * @param invalidComponents containts components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
-void UFHeuristic::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& validComponents) {
+void UFHeuristic::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& validComponents,const std::unique_ptr<ParityCheckMatrix>& pcm) {
+    //std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
-        if (isValidComponent(*it)) {
+        if (isValidComponent(*it, pcm)) {
             validComponents.insert(*it);
             it = invalidComponents.erase(it);
         } else {
@@ -312,12 +336,12 @@ void UFHeuristic::extractValidComponents(std::unordered_set<std::size_t>& invali
 
 // for each check node verify that there is no neighbour that is in the boundary of the component
 // if there is no neighbour in the boundary for each check vertex the check is covered by a node in Int TODO prove this in paper
-bool UFHeuristic::isValidComponent(const std::size_t& compId) {
+bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_ptr<ParityCheckMatrix>& pcm) {
     const auto& compNode = getNodeFromIdx(compId);
     gf2Vec      valid(compNode->checkVertices.size());
     std::size_t i = 0U;
     for (const auto& checkVertex: compNode->checkVertices) {
-        for (const auto& nbrs = getCode()->getHz()->getNbrs(checkVertex); const auto& nbr: nbrs) {
+        for (const auto& nbrs = pcm->getNbrs(checkVertex); const auto& nbr: nbrs) {
             if (!compNode->boundaryVertices.contains(nbr)) {
                 valid.at(i) = true;
                 break;
@@ -357,4 +381,5 @@ void UFHeuristic::reset() {
     this->result = {};
     this->growth = GrowthVariant::ALL_COMPONENTS;
     this->getCode()->getHz()->nbrCache.clear();
+    this->getCode()->getHx()->nbrCache.clear();
 }
