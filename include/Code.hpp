@@ -108,43 +108,39 @@ struct ParityCheckMatrix {
     }
 };
 
-/**
- * Considers X errors with Z checks only.
- * Z errors are corrected completely analogously in a symmetric way for Z and X.
- */
 class Code {
 private:
-    std::unique_ptr<ParityCheckMatrix> Hz;
     std::unique_ptr<ParityCheckMatrix> Hx;
+    std::unique_ptr<ParityCheckMatrix> Hz;
 
 public:
-    std::size_t K = 0U;
     std::size_t N = 0U;
+    std::size_t K = 0U;
     std::size_t D = 0U;
 
-    Code() = default;
-
-    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& getHz() const {
-        return Hz;
-    }
     [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& getHx() const {
         return Hx;
     }
 
-    gf2Mat getHzMat() {
-        return *this->Hz->pcm;
+    Code() = default;
+    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& getHz() const {
+        return Hz;
     }
 
     gf2Mat getHxMat() {
         return *this->Hx->pcm;
     }
 
-    void setHz(std::vector<std::vector<bool>>& hz) {
-        Hz = std::make_unique<ParityCheckMatrix>(hz);
+    gf2Mat getHzMat() {
+        return *this->Hz->pcm;
     }
 
     void setHx(std::vector<std::vector<bool>>& hx) {
         Hx = std::make_unique<ParityCheckMatrix>(hx);
+    }
+
+    void setHz(std::vector<std::vector<bool>>& hz) {
+        Hz = std::make_unique<ParityCheckMatrix>(hz);
     }
     /*
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
@@ -247,6 +243,9 @@ public:
      * @return
      */
     [[nodiscard]] bool isXStabilizer(const gf2Vec& est) const {
+        if (!Hx) {
+            throw QeccException("Hx not set, cannot check if vector is a stabilizer");
+        }
         return Utils::isVectorInRowspace(*Hx->pcm, est);
     }
 
@@ -269,18 +268,18 @@ public:
      * @return
      */
     [[nodiscard]] bool isStabilizer(const gf2Vec& est) const {
-        if(std::all_of(est.begin(), est.end(), [](int i) { return !i; })){ // trivial case, all 0 vector
+        if (std::all_of(est.begin(), est.end(), [](int i) { return !i; })) { // trivial case, all 0 vector
             return true;
         }
-        if(est.size() > getN()){
+        if (est.size() > getN()) {
             std::vector<bool> xEst;
             xEst.reserve(getN());
             std::vector<bool> zEst;
             zEst.reserve(getN());
-            std::move(est.begin(), est.begin()+(est.size())/2, std::back_inserter(xEst));
-            std::move(est.begin()+(est.size())/2, est.end(), std::back_inserter(zEst));
+            std::move(est.begin(), est.begin() + (est.size()) / 2, std::back_inserter(xEst));
+            std::move(est.begin() + (est.size()) / 2, est.end(), std::back_inserter(zEst));
             return Utils::isVectorInRowspace(*Hx->pcm, xEst) && Utils::isVectorInRowspace(*Hz->pcm, zEst);
-        }else{
+        } else {
             return Utils::isVectorInRowspace(*Hx->pcm, est);
         }
     }

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def wer():
     plt.rcParams.update({'font.size': 14})
-    inputFilename = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-singlerandomg-100k-runs.json'
+    inputFilename = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-singlesmallest-100k-runs.json'
     inputFilename2 = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-original-stdgrowth-100k-runs.json'
     inputFilename3 = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/decodingPerformance/1024_lp_code/dp-heur-standardg-100k-runs.json'
     fig,ax = plt.subplots(1)
@@ -47,7 +47,7 @@ def wer():
     xData3f =np.array(xData3)[order3]
     yData3f =np.array(yData3)[order3]
 
-    ax.plot(xDataf, yDataf, '-x', label='heuristic SRG', color='b')
+    ax.plot(xDataf, yDataf, '-x', label='heuristic SSG', color='b')
     ax.plot(xData2f, yData2f, '-o', label='general UFD', color='g')
     ax.plot(xData3f, yData3f, '-x', label='heuristic AG', color='r')
     print(yData)

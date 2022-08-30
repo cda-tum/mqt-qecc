@@ -11,4 +11,4 @@ for i in range(2, 100):
 
     qcode = hgp(h1, h2, compute_distance=True)
     if qcode.test:  # to make sure it is a valid css code
-        np.savetxt(f"../examples/toricCodes/toric_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+        np.savetxt(f"./toric_{qcode.code_params}_hz.txt", qcode.hz, fmt='%d', newline='\n')
