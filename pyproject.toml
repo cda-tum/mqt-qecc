@@ -5,19 +5,19 @@ requires = [
     "ninja>=1.10; sys_platform != 'win32'",
     "cmake>=3.14",
 ]
-
 build-backend = "setuptools.build_meta"
+
 [project]
 name = "mqt.qecc"
 description = "A tool for Quantum Error Correction"
 readme = "README.md"
 authors = [
-    { name = "Lucas Berent", email = "lucas.berent@tum.de"}
+    { name = "Lucas Berent", email = "lucas.berent@tum.de" }
 ]
-keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding","algorithms"]
+keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "algorithms"]
 license = { file = "LICENSE.md" }
 
-classifiers=[
+classifiers = [
     "Development Status :: 0 - Alpha",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
@@ -34,27 +34,33 @@ classifiers=[
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
 requires-python = ">=3.7"
+dependencies = []
 dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/lucasberent/qecc"
+Documentation = "https://github.com/lucasberent/qecc"
+"Bug Tracker" = "https://github.com/lucasberent/qecc/issues"
+Discussions = "https://github.com/lucasberent/qecc/discussions"
 
 [tool.setuptools.packages.find]
 include = ["mqt.*"]
+
 [tool.setuptools_scm]
 
 [tool.cibuildwheel]
 build = "cp3*"
 archs = "auto64"
-skip = "*-musllinux*"
 test-skip = "cp311-* *-macosx_arm64 *-musllinux* *aarch64"
+test-extras = ["test"]
 test-command = "python -c \"from mqt import qecc\""
 environment = { DEPLOY = "ON" }
 build-frontend = "build"
 build-verbosity = 3
-manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
 
 [tool.cibuildwheel.macos]
-archs = "x86_64"
 environment = { MACOSX_DEPLOYMENT_TARGET = "10.15", DEPLOY = "ON" }
 
 [tool.cibuildwheel.windows]
