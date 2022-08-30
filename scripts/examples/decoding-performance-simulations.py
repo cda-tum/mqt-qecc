@@ -1,14 +1,14 @@
 from mqt.qecc import *
-import glob
 
-code = Code("/home/luca/Documents/codeRepos/qecc/examples/hgp_(4,8)-[[5408,18,26]]_hx.txt", 18)
+code = Code("../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt")
+code.K = 18
 outpath = "./dp-sims-bindings.out"
 outfile =  open(outpath, 'w')
 
-runsPerEr = 1000000
+runsPerEr = 10000
 currPer = 0.00001
 maxPer = 0.1
-stepSize = 0.00002
+stepSize = 0.00001
 nrFailedRuns = 0
 codeK = code.K
 

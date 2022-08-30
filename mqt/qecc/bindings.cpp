@@ -29,6 +29,7 @@ PYBIND11_MODULE(pyqecc, m) {
     py::class_<Code>(m, "Code", "CSS code object")
             .def(py::init<>())
             .def(py::init<std::string, std::string>())
+            .def(py::init<std::string>())
             .def(py::init<std::vector<std::vector<bool>>&>())
             .def(py::init<std::vector<std::vector<bool>>&,std::vector<std::vector<bool>>&>())
             .def("setHz", &Code::setHz)
