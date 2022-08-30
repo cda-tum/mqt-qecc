@@ -40,11 +40,11 @@ PYBIND11_MODULE(pyqecc, m) {
             .def_readwrite("K", &Code::K)
             .def_readwrite("D", &Code::D)
             .def("json", &Code::to_json)
-            .def("is_stabilizer", &Code::isVectorStabilizer)
-            .def("is_stab", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&)const>(&Code::isStabilizer))
-            .def("is_stab", static_cast<bool (Code::*)(const std::vector<bool>&)const>(&Code::isStabilizer))
-            .def("get_syndrome", static_cast<std::vector<bool> (Code::*)(const std::vector<bool>&, const std::vector<bool>&)const>(&Code::getSyndrome))
-            .def("get_syndrome", static_cast<std::vector<bool> (Code::*)(const std::vector<bool>&)const>(&Code::getSyndrome))
+            .def("is_x_stabilizer", &Code::isXStabilizer)
+            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&)const>(&Code::isStabilizer))
+            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&)const>(&Code::isStabilizer))
+            .def("get_syndrome", &Code::getSyndrome)
+            .def("get_x_syndrome", &Code::getXSyndrome)
             .def("__repr__", &Code::toString);
 
              py::enum_<GrowthVariant>(m, "GrowthVariant")

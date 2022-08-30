@@ -58,12 +58,12 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
             }
             decoder->setCode(code);
             const auto error    = Utils::sampleErrorIidPauliNoise(code.getN(), currPer);
-            const auto syndrome = decoder->getCode()->getSyndrome(error);
+            const auto syndrome = decoder->getCode()->getXSyndrome(error);
             decoder->decode(syndrome);
             const auto& decodingResult = decoder->result;
             auto        residualErr    = decodingResult.estimBoolVector;
             Utils::computeResidualErr(error, residualErr);
-            const auto success = decoder->getCode()->isVectorStabilizer(residualErr);
+            const auto success = decoder->getCode()->isXStabilizer(residualErr);
 
             DecodingRunInformation stats;
             stats.result = decoder->result;
@@ -149,7 +149,7 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
                     }
                     decoder->setCode(code);
                     auto error    = Utils::sampleErrorIidPauliNoise(codeN, physicalErrRate);
-                    auto syndrome = code.getSyndrome(error);
+                    auto syndrome = code.getXSyndrome(error);
                     decoder->decode(syndrome);
                     auto const& decodingResult = decoder->result;
                     if (infoOut) {

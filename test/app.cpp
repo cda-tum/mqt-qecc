@@ -44,7 +44,7 @@ void runtime(const std::string& codeName) {
             while(error.empty() || std::none_of(error.begin(), error.end(), [](bool c) {return c;})) {
                 error = Utils::sampleErrorIidPauliNoise(codeN, per);
             }
-            auto syndrome = code.getSyndrome(error);
+            auto syndrome = code.getXSyndrome(error);
             decoder.decode(syndrome);
             runsSum += decoder.result.decodingTime;
             decoder.reset();
@@ -57,17 +57,17 @@ void runtime(const std::string& codeName) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string rootPath = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
-    //const std::string rootPath   = "/home/berent/ufpaper/simulations/decodingPerfSim/final/source/code/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::string rootPath = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string rootPath2 = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
     const std::size_t code_K = 18;
 
-    const std::size_t nrOfRunsPerRate = 100'000;
+    const std::size_t nrOfRunsPerRate = 1;
 
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
     //    decodingResOutput << "{ \"runs\" : [ ";
     //    rawIntermediateOut << "{ ";
 
-    auto       code = HGPcode(rootPath, code_K);
+    auto       code = HGPcode(rootPath, rootPath2, code_K);
     const auto K    = code.getK();
     const auto N    = code.getN();
 
@@ -78,12 +78,12 @@ void decodingPerformance(const double per) {
         decoder->setCode(code);
         //decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
         auto error    = Utils::sampleErrorIidPauliNoise(N, per);
-        auto syndrome = code.getSyndrome(error);
+        auto syndrome = code.getXSyndrome(error);
         decoder->decode(syndrome);
         auto const&       decodingResult = decoder->result;
         std::vector<bool> residualErr    = decodingResult.estimBoolVector;
         Utils::computeResidualErr(error, residualErr);
-        auto success = code.isVectorStabilizer(residualErr);
+        auto success = code.isXStabilizer(residualErr);
         if (!success) {
             nrOfFailedRuns++;
         }
@@ -100,8 +100,8 @@ void decodingPerformance(const double per) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string codeName = argv[1];
-    //double      per          = std::stod(argv[1]);
-    runtime(codeName);
-   // decodingPerformance(per);
+    //std::string codeName = argv[1];
+    double      per          = std::stod(argv[1]);
+    //runtime(codeName);
+    decodingPerformance(per);
 }

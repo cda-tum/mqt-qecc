@@ -48,7 +48,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
               << code << std::endl;
     std::vector<bool> err = GetParam();
 
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code.getXSyndrome(err);
     std::cout << "syndrome: ";
     Utils::printGF2vector(syndr);
     decoder.decode(syndr);
@@ -85,7 +85,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
               << code << std::endl;
     std::vector<bool> err = GetParam();
 
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
     const auto&   decodingResult = decoder.result;
     const auto&   estim          = decodingResult.estimBoolVector;
@@ -117,7 +117,7 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     std::vector<bool> err = GetParam();
     std::cout << "err :" << std::endl;
     Utils::printGF2vector(err);
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
     const auto&   decodingResult = decoder.result;
     const auto&   estim          = decodingResult.estimBoolVector;
@@ -153,7 +153,7 @@ TEST_F(OriginalUFDtest, LargeCodeTest) {
     std::cout << "err :" << std::endl;
     Utils::printGF2vector(err);
     std::cout << std::endl;
-    auto syndr = code.getSyndrome(err);
+    auto syndr = code.getXSyndrome(err);
     std::cout << "syndrome" << std::endl;
     Utils::printGF2vector(syndr);
     std::cout << std::endl;

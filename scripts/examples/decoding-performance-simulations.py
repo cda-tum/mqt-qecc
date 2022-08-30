@@ -1,6 +1,6 @@
 from mqt.qecc import *
 
-code = Code("../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt")
+code = Code("../../examples/lp_(4,8)-[[1024,18,nan]]_hx.txt", "../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt")
 code.K = 18
 outpath = "./dp-sims-bindings.out"
 outfile =  open(outpath, 'w')

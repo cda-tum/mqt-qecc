@@ -159,7 +159,7 @@ public:
      * Takes two pcms over GF(2) and constructs respective code
      * Convention: Rows in first dim, columns in second
      */
-    explicit Code(std::vector<std::vector<bool>>& hz, std::vector<std::vector<bool>>& hx):
+    explicit Code(std::vector<std::vector<bool>>& hx, std::vector<std::vector<bool>>& hz):
         Hz(std::make_unique<ParityCheckMatrix>(hz)), Hx(std::make_unique<ParityCheckMatrix>(hx)) {
         N = Hz->pcm->front().size();
     }
@@ -201,7 +201,7 @@ public:
      * @param err
      * @return
      */
-    [[nodiscard]] gf2Vec getSyndrome(const gf2Vec& err) const {
+    [[nodiscard]] gf2Vec getXSyndrome(const gf2Vec& err) const {
         if (err.empty()) {
             throw QeccException("Cannot compute syndrome, err empy");
         } else if (err.size() > this->getN()) {
@@ -246,8 +246,8 @@ public:
      * @param est
      * @return
      */
-    [[nodiscard]] bool isVectorStabilizer(const gf2Vec& est) const {
-        return Utils::isVectorInRowspace(*Hz->pcm, est);
+    [[nodiscard]] bool isXStabilizer(const gf2Vec& est) const {
+        return Utils::isVectorInRowspace(*Hx->pcm, est);
     }
 
     /**
@@ -258,7 +258,7 @@ public:
      * @return
      */
     [[nodiscard]] bool isStabilizer(const gf2Vec& Xest, const gf2Vec& Zest) const {
-        return Utils::isVectorInRowspace(*Hz->pcm, Xest) && Utils::isVectorInRowspace(*Hx->pcm, Zest);
+        return Utils::isVectorInRowspace(*Hx->pcm, Xest) && Utils::isVectorInRowspace(*Hz->pcm, Zest);
     }
 
     /**
@@ -279,9 +279,9 @@ public:
             zEst.reserve(getN());
             std::move(est.begin(), est.begin()+(est.size())/2, std::back_inserter(xEst));
             std::move(est.begin()+(est.size())/2, est.end(), std::back_inserter(zEst));
-            return Utils::isVectorInRowspace(*Hz->pcm, xEst) && Utils::isVectorInRowspace(*Hx->pcm, zEst);
+            return Utils::isVectorInRowspace(*Hx->pcm, xEst) && Utils::isVectorInRowspace(*Hz->pcm, zEst);
         }else{
-            return Utils::isVectorInRowspace(*Hz->pcm, est);
+            return Utils::isVectorInRowspace(*Hx->pcm, est);
         }
     }
 
