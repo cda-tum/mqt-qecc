@@ -64,7 +64,7 @@ to specify the location of flint (e.g. `export LD_LIBRARY_PATH=/usr/local/lib` o
 To start off, clone this repository using
 
 ```shell
-git clone --recurse-submodules -j8 https://github.com/cda-tum/qecc 
+git clone --recurse-submodules -j8 https://github.com/lucasberent/qecc
 ```
 
 Note the `--recurse-submodules` flag. It is required to also clone all the required submodules.
