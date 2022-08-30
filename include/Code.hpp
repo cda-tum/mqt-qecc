@@ -257,7 +257,7 @@ public:
      * @param Zest
      * @return
      */
-    bool isStabilizer(const gf2Vec& Xest, const gf2Vec& Zest) const {
+    [[nodiscard]] bool isStabilizer(const gf2Vec& Xest, const gf2Vec& Zest) const {
         return Utils::isVectorInRowspace(*Hz->pcm, Xest) && Utils::isVectorInRowspace(*Hx->pcm, Zest);
     }
 
@@ -268,7 +268,7 @@ public:
      * @param Zest
      * @return
      */
-    bool isStabilizer(const gf2Vec& est) const {
+    [[nodiscard]] bool isStabilizer(const gf2Vec& est) const {
         if(std::all_of(est.begin(), est.end(), [](int i) { return !i; })){ // trivial case, all 0 vector
             return true;
         }

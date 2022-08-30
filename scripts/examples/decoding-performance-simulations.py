@@ -15,7 +15,7 @@ codeK = code.K
 while(currPer < maxPer):
     nrFailedRuns = 0
     for i in range(runsPerEr):
-        decoder = ImprovedUFD()
+        decoder = UFHeuristic()
         decoder.set_code(code)
         err = sample_iid_pauli_err(code.N, currPer)
         decoder.decode(code.get_syndrome(err))

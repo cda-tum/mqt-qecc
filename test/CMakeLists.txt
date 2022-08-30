@@ -36,7 +36,7 @@ macro(package_add_test TESTNAME)
 endmacro()
 
 package_add_test(${PROJECT_NAME}_test
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_improvedUfd.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_ufdheuristic.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_originalUfd.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_simulator.cpp
