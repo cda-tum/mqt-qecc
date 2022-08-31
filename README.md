@@ -14,7 +14,7 @@ The tool can be used to decode quantum LDPC codes and conduct respective numeric
 At the moment the general QLDPC
 decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
 and heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. At the moment, 
-we use open-source software by Joshka Roffe et
+we use open-source software by Joschka Roffe et
 al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) to construct codes.
 
 If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by
@@ -38,13 +38,17 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
 - Once installed, start using it in Python:
   ```python
   from mqt.qecc import *
+  import numpy as np
   
+  code = Code('/path/to/Hx', 'path/to/Hz')
   decoder = UFHeuristic()
   decoder.set_code(code)
-  err = sample_iid_pauli_err(code.N, 0.05)
-  decoder.decode(code.get_syndrome(err))
+  x_err = sample_iid_pauli_err(code.N, 0.05)
+  decoder.decode(code.get_x_syndrome(x_err))
   result = decoder.result
-  print(code.is_stabilizer(result.estimate))
+  print(result)
+  residual_err = np.array(x_err)^np.array(result.estimate)
+  print(code.is_x_stabilizer(residual_err))
   ```
 
 ### System Requirements
@@ -101,7 +105,7 @@ Building the project this way generates
 ### Extending the Python Bindings
 
 To extend the Python bindings you can locally install the package in edit mode, so that changes in the Python code are
-instantly available.
+instantly available. Note that this does not rebuild the C++ code, only the python package.
 The following example assumes you have a [virtual environment](https://docs.python.org/3/library/venv.html) set up and
 activated.
 
