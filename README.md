@@ -13,9 +13,9 @@ The tool can be used to decode quantum LDPC codes and conduct respective numeric
 
 At the moment the general QLDPC
 decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
-and heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. At the moment, 
-we use open-source software by Joschka Roffe et
-al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) to construct codes.
+and a heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. Currently, 
+open-source software by Joschka Roffe et
+al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product and hypergraph product).
 
 If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by
 creating an issue on [GitHub](https://github.com/cda-tum/qecc/issues).
