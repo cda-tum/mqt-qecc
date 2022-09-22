@@ -38,6 +38,11 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
     pip install  mqt.qecc --no-binary mqt.qecc
     ```
   This enables platform specific compiler optimizations that cannot be enabled on portable wheels.
+
+> **Note**
+> Pre-built wheels are not yet available. They will be released soon. In the meantime, follow the instructions below for cloning the repository
+> and call `pip install --editable .` in the cloned directory to install the Python package.
+
 - Once installed, start using it in Python:
   ```python
   from mqt.qecc import *
