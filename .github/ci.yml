@@ -1,0 +1,59 @@
+name: C++
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 3
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  cpp-tests:
+    name: Tests ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: ubuntu-20.04, test-dir: build/test, toolchain: "" }
+          - { os: macos-11, test-dir: build/test, toolchain: "" }
+          - {
+            os: windows-2022,
+            test-dir: build\test\Release,
+            toolchain: "-T ClangCl",
+          }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        working-directory: ${{ matrix.config.test-dir }}
+        run: ctest -C Release --output-on-failure
+      - if: runner.os == 'Linux'
+        name: Coverage
+        run: |
+          cmake -S . -B buildCov -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
+          cmake --build buildCov --config Debug --target qecc_test
+          cd buildCov/test
+          ctest -C Debug --output-on-failure
+      - if: runner.os == 'Linux'
+        name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          gcov: true
+          gcov_ignore: "extern/**/*"

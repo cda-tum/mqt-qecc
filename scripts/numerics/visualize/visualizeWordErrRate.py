@@ -48,7 +48,7 @@ def wer():
     yData3f =np.array(yData3)[order3]
 
     ax.plot(xDataf, yDataf, '-x', label='heuristic SSG', color='b')
-    ax.plot(xData2f, yData2f, '-o', label='general UFD', color='g')
+    ax.plot(xData2f, yData2f, '-o', label='GD', color='g')
     ax.plot(xData3f, yData3f, '-x', label='heuristic AG', color='r')
     print(yData)
     print(yData2)

@@ -21,6 +21,9 @@ def QuadFun(x, a, b):
 def PowThreeFun(x, a, b):
     return np.multiply(a, np.power(x, 3)) + b
 
+def PowFourFun(x, a, b):
+    return np.multiply(a, np.power(x, 4)) + b
+
 
 def runtime():
     plt.rcParams.update({'font.size': 15})
@@ -138,7 +141,7 @@ def runtimeComparison():
         start = 0
         optimizedParameters, pcov = opt.curve_fit(LinFun, xfinal[i][start:], yfinal[i][start:])
         plt.plot(xfinal[i][start:], LinFun(xfinal[i][start:], *optimizedParameters), '--', color=col,
-                 label=r'$O(n^{2})$')
+                 label=r'$O(n)$')
         print(xfinal)
         print(yfinal)
 
@@ -148,9 +151,9 @@ def runtimeComparison():
     xfinal2 = np.array(xData2)[orders2]
     yfinal2 = np.array(yData2)[orders2]
     plt.plot(xfinal2, yfinal2, 'd', label='GD, p=' + label, color='green')
-
-    optimizedParameters, pcov = opt.curve_fit(QuadFun, xfinal2, yfinal2)
-    plt.plot(xfinal2, QuadFun(xfinal2, *optimizedParameters), '--', color='green', label=r'$O(n^{2})$')
+    start = 0
+    optimizedParameters2, pcov = opt.curve_fit(QuadFun, xfinal2[start:], yfinal2[start:])
+    plt.plot(xfinal2[start:], QuadFun(xfinal2[start:], *optimizedParameters2), '--', color='green', label=r'$O(n^{2})$')
 
 
     plt.legend()

@@ -129,10 +129,10 @@ If you change parts of the C++ code, you have to run the second line to make the
 If you use our tool for your research, we will be thankful if you refer to it by citing the appropriate publications.
 
 ```bibtex
-@article{DBLP:conf/to/do,
-  author    = {todo},
-  title     = {todo},
-  journal   = {todo},
-  year      = {2022}
+@article{berent2022software,
+  title={Software Tools for Decoding Quantum Low-Density Parity Check Codes},
+  author={Berent, Lucas and Burgholzer, Lukas and Wille, Robert},
+  journal={arXiv:2209.01180},
+  year={2022}
 }
 ```
