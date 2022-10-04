@@ -1,0 +1,61 @@
+name: Python
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: 3
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: my[py] linter
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup nox
+        uses: excitedleigh/setup-nox@v2.1.0
+      - name: Run mypy via nox
+        run: nox -s mypy
+
+  python-tests:
+    name: Tests ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Setup nox
+        uses: excitedleigh/setup-nox@v2.1.0
+      - name: Test on 🐍 3.7
+        run: nox -s tests-3.7
+      # Python 3.8 and 3.9 are only tested on Linux.
+      - if: runner.os == 'Linux'
+        name: Test on 🐍 3.8
+        run: nox -s tests-3.8
+      - if: runner.os == 'Linux'
+        name: Test on 🐍 3.9
+        run: nox -s tests-3.9
+      # Python 3.10 under Linux is tested separately as part of the coverage job.
+      - if: runner.os != 'Linux'
+        name: Test on 🐍 3.10
+        run: nox -s tests-3.10
+      # Run the coverage job on Python 3.10 and upload the coverage data.
+      - if: runner.os == 'Linux'
+        name: Test and Coverage on 🐍 3.10
+        run: nox -s coverage-3.10 -- --cov-report=xml
+      - if: runner.os == 'Linux'
+        name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3.1.1

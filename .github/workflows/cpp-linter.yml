@@ -1,0 +1,39 @@
+name: cpp-linter
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cpp-linter:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Generate compilation database
+        run: CC=clang-14 CXX=clang++-14 cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Run cpp-linter
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pipx run cpp-linter \
+          --version=14 \
+          --style="file" \
+          --tidy-checks="" \
+          --thread-comments=true \
+          --files-changed-only=true \
+          --ignore="build" \
+          --database=build
+      - name: Fail if linter found errors
+        if: steps.linter.outputs.checks-failed > 0
+        run: echo "Linter found errors" && exit 1
