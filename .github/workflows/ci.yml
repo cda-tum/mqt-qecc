@@ -36,6 +36,7 @@ jobs:
     steps:
       - name: Install FLINT2
         run: |
+          sudo apt-get install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg
           git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
