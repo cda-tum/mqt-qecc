@@ -26,17 +26,28 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: ubuntu-20.04, test-dir: build/test, toolchain: "" }
-          - { os: macos-11, test-dir: build/test, toolchain: "" }
+          - {
+            os: ubuntu-20.04,
+            test-dir: build/test,
+            toolchain: "",
+            mpfr-install-cmd: "sudo apt-get install libmpfr-dev"
+          }
+          - {
+            os: macos-11,
+            test-dir: build/test,
+            toolchain: "",
+            mpfr-install-cmd: "sudo port install mpfr"
+          }
           - {
             os: windows-2022,
             test-dir: build\test\Release,
             toolchain: "-T ClangCl",
+            mpfr-install-cmd: ""
           }
     steps:
       - name: Install FLINT2
         run: |
-          sudo apt-get install libmpfr-dev
+          ${{ matrix.config.mpfr-install-cmd}}
           git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
@@ -47,8 +58,8 @@ jobs:
           submodules: recursive
       - name: Configure CMake
         run: |
-          echo $LD_LIBRARY_PATH
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/runner/work/qecc/qecc/flint2/build/lib
+          echo $LD_LIBRARY_PATH
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
         run: cmake --build build --config Release
