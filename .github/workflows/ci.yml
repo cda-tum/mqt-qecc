@@ -52,13 +52,13 @@ jobs:
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
           echo "LD_LIBRARY_PATH=$(pwd)/lib/:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "{{env.LD_LIBRARY_PATH}}"
+          echo "${{ env.LD_LIBRARY_PATH }}"
       - uses: actions/checkout@v3
         with:
           submodules: recursive
       - name: Configure CMake
         run: |
-          echo "{{env.LD_LIBRARY_PATH}}"
+          echo "${{ env.LD_LIBRARY_PATH }}"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
         run: cmake --build build --config Release
