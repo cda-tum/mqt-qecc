@@ -51,7 +51,7 @@ jobs:
           git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/lib/
+          export LD_LIBRARY_PATH=$(pwd)/lib/:$LD_LIBRARY_PATH
           echo $LD_LIBRARY_PATH
       - uses: actions/checkout@v3
         with:
