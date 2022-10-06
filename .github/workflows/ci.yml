@@ -41,11 +41,14 @@ jobs:
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/lib
+          echo $LD_LIBRARY_PATH
       - uses: actions/checkout@v3
         with:
           submodules: recursive
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
+        run: |
+          echo $LD_LIBRARY_PATH
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
         run: cmake --build build --config Release
       - name: Test
