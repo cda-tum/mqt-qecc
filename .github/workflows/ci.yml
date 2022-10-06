@@ -36,7 +36,7 @@ jobs:
             os: macos-11,
             test-dir: build/test,
             toolchain: "",
-            mpfr-install-cmd: "sudo port install mpfr"
+            mpfr-install-cmd: "brew install mpfr"
           }
           - {
             os: windows-2022,
@@ -51,14 +51,13 @@ jobs:
           git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/runner/work/qecc/qecc/flint2/build/lib/
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/lib/
           echo $LD_LIBRARY_PATH
       - uses: actions/checkout@v3
         with:
           submodules: recursive
       - name: Configure CMake
         run: |
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/runner/work/qecc/qecc/flint2/build/lib/
           echo $LD_LIBRARY_PATH
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
