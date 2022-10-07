@@ -73,7 +73,7 @@ jobs:
               cd flint2
               sudo make install
       - name: Install sdist
-        run:  python -m pip install --verbose dist/*.tar.gz
+        run:  pip install --verbose dist/*.tar.gz
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
