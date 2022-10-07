@@ -14,37 +14,31 @@ concurrency:
 
 jobs:
   build_wheels:
-    name: ${{ matrix.os }}${{ matrix.archname }}${{ matrix.libc }} wheels
+    name: ${{ matrix.os }} ${{ matrix.arch }} wheels
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64]
-        archname: [""]
-        skip: ["*-musllinux_*"]
-        libc: [""]
-        include:
-          - arch: arm64
-            archname: "-arm64"
-            os: macos-latest
-          - arch: x86_64
-            os: ubuntu-latest
-            skip: "*-manylinux_*"
-            libc: "-musl"
+        config:
+          - { os: ubuntu-latest, arch: x64 }
+          - { os: macos-latest, arch: x64 }
+          - { os: windows-latest, arch: x64 }
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          submodules: recursive
-      - uses: ilammy/msvc-dev-cmd@v1
+          submodules:  recursive
+      - if:   runner.os == 'Windows'
+        name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          install: make mingw-w64-x86_64-clang mingw-w64-flint
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
-          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-          CIBW_SKIP: ${{ matrix.skip }}
+          CC:  clang
+          CXX: clang++
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
