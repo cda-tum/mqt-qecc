@@ -57,24 +57,24 @@ jobs:
         with:
           path: flint2
           key:  ci-${{ runner.OS }}-${{ hashFiles('**/ci.yml') }}
-      - name: Install FLINT2
+      - name: Build FLINT2
         if:   steps.cache-flint2.outputs.cache-hit != 'true'
         run:  |
               git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
               cmake -S flint2 -B flint2/build -DCMAKE_BUILD_TYPE=Release
               cmake --build flint2/build --config Release --parallel 3
-              echo "LD_LIBRARY_PATH=${{github.workspace}}/flint2/build" >> $GITHUB_ENV
-              ls -la flint2/build
+      - name: Install FLINT2
+        run:  sudo cmake --install flint2/build --config Release
       - name: Configure CMake
         run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
-        run: cmake --build build --config Release
-      - name: Test
+        run:  cmake --build build --config Release
+      - name:              Test
         working-directory: ${{ matrix.config.test-dir }}
-        run: ctest -C Release --output-on-failure
-      - if: runner.os == 'Linux'
+        run:               ctest -C Release --output-on-failure
+      - if:   runner.os == 'Linux'
         name: Coverage
-        run: |
+        run:  |
           cmake -S . -B buildCov -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
           cmake --build buildCov --config Debug --target qecc_test
           cd buildCov/test
