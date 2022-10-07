@@ -43,7 +43,7 @@ jobs:
               cd flint2
               sudo make install
       - name: Generate compilation database
-        run:  cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run: cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Run cpp-linter
         id:   linter
         env:
