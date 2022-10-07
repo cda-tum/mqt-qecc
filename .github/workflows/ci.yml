@@ -63,10 +63,8 @@ jobs:
               git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
               cmake -S flint2 -B flint2/build -DCMAKE_BUILD_TYPE=Release
               cmake --build flint2/build --config Release --parallel 3
-      - name: Install FLINT2
-        run:  sudo cmake --install flint2/build --config Release
       - name: Configure CMake
-        run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }} -DFLINT_ROOT=flint2
       - name: Build
         run:  cmake --build build --config Release
       - name:              Test
