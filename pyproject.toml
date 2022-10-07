@@ -9,21 +9,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mqt.qecc"
-description = "A tool for Quantum Error Correction"
+description = "MQT QECC - A tool for Quantum Error Correcting Codes"
 readme = "README.md"
 authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" }
 ]
 keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "algorithms"]
-license = { file = "LICENSE.md" }
+license = { file = "LICENSE" }
 
 classifiers = [
-    "Development Status :: 0 - Alpha",
+    "Development Status :: 1 - Alpha",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: C++",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
@@ -51,7 +52,7 @@ include = ["mqt.*"]
 [tool.cibuildwheel]
 build = "cp3*"
 archs = "auto64"
-test-skip = "cp311-* *-macosx_arm64 *-musllinux* *aarch64"
+test-skip = "*-macosx_arm64 *-musllinux* *aarch64"
 test-extras = ["test"]
 test-command = "python -c \"from mqt import qecc\""
 environment = { DEPLOY = "ON" }
