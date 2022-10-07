@@ -55,7 +55,7 @@ jobs:
               --style="file" \
               --tidy-checks="" \
               --thread-comments=true \
-              --files-changed-only=true \
+              --files-changed-only=false \
               --ignore="build" \
               --database=build
       - name: Fail if linter found errors
