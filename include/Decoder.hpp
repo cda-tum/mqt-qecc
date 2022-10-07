@@ -48,16 +48,16 @@ struct DecodingResult {
     std::vector<std::size_t> estimNodeIdxVector = {};
     gf2Vec                   estimBoolVector    = {};
     [[nodiscard]] json       to_json() const {
-              return json{
-                {"decodingTime(ms)", decodingTime},
-                {"estimate", Utils::getStringFrom(estimBoolVector)}};
+        return json{
+                      {"decodingTime(ms)", decodingTime},
+                      {"estimate", Utils::getStringFrom(estimBoolVector)}};
     }
     void from_json(const json& j) {
         j.at("decodingTime(ms)").get_to(decodingTime);
         j.at("estimate").get_to(estimBoolVector);
         j.at("estimatedNodes").get_to(estimNodeIdxVector);
     }
-    [[nodiscard]] std::string toString() const{
+    [[nodiscard]] std::string toString() const {
         return this->to_json().dump(2U);
     }
 };
@@ -83,9 +83,9 @@ public:
         Decoder::growth = g;
     }
     void setCode(Code& c) {
-        if(c.getHx() == nullptr) {
+        if (c.getHx() == nullptr) {
             this->code = std::make_unique<Code>(*c.getHz()->pcm);
-        }else{
+        } else {
             this->code = std::make_unique<Code>(*c.getHz()->pcm, *c.getHx()->pcm);
         }
     }

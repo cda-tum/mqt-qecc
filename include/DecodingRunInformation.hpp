@@ -33,21 +33,23 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"},
  * result contains information obtained from the decoder
  */
 struct DecodingRunInformation {
-    DecodingRunInformation(double                physicalErrR,
-                           std::size_t                codeSize,
-                           gf2Vec          error,
-                           gf2Vec          syndrome,
-                           DecodingResultStatus  status,
-                           DecodingResult  result):
+    DecodingRunInformation(double               physicalErrR,
+                           std::size_t          codeSize,
+                           gf2Vec               error,
+                           gf2Vec               syndrome,
+                           DecodingResultStatus status,
+                           DecodingResult       result):
         physicalErrR(physicalErrR),
         codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), status(status), result(std::move(result)) {}
-    DecodingRunInformation(double physicalErrR,
-                           std::size_t codeSize,
-                           gf2Vec  error,
-                           gf2Vec  syndrome,
-                           DecodingResult  result):
-        physicalErrR(physicalErrR), codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), result(std::move(result)) {}
-    DecodingRunInformation() = default;;
+    DecodingRunInformation(double         physicalErrR,
+                           std::size_t    codeSize,
+                           gf2Vec         error,
+                           gf2Vec         syndrome,
+                           DecodingResult result):
+        physicalErrR(physicalErrR),
+        codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), result(std::move(result)) {}
+    DecodingRunInformation() = default;
+    ;
 
     double               physicalErrR = 0.0;
     std::size_t          codeSize     = 0U;
@@ -56,13 +58,13 @@ struct DecodingRunInformation {
     DecodingResultStatus status{};
     DecodingResult       result{};
     [[nodiscard]] json   to_json() const {
-          return json{
-                {"physicalErrRate", physicalErrR},
-                {"codeSize", codeSize},
-                {"error", Utils::getStringFrom(error)},
-                {"syndrome", Utils::getStringFrom(syndrome)},
-                {"decodingResult", result.to_json()},
-                {"decodingStatus", status}};
+        return json{
+                  {"physicalErrRate", physicalErrR},
+                  {"codeSize", codeSize},
+                  {"error", Utils::getStringFrom(error)},
+                  {"syndrome", Utils::getStringFrom(syndrome)},
+                  {"decodingResult", result.to_json()},
+                  {"decodingStatus", status}};
     }
 
     void from_json(const json& j) {

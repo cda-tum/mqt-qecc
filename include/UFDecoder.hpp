@@ -15,7 +15,7 @@ private:
     void                                                       doDecode(const std::vector<bool>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm);
     [[nodiscard]] bool                                         isValidComponent(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm) const;
     bool                                                       containsInvalidComponents(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome,
-                                                                                         std::vector<std::unordered_set<std::size_t>>& invalidComps,const std::unique_ptr<ParityCheckMatrix>& pcm) const;
+                                                                                         std::vector<std::unordered_set<std::size_t>>& invalidComps, const std::unique_ptr<ParityCheckMatrix>& pcm) const;
     [[nodiscard]] std::vector<std::size_t>                     computeInteriorBitNodes(const std::unordered_set<std::size_t>& nodeSet) const;
     [[nodiscard]] std::unordered_set<std::size_t>              getEstimateForComponent(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome,
                                                                                        const std::unique_ptr<ParityCheckMatrix>& pcm) const;

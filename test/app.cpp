@@ -41,7 +41,7 @@ void runtime(const std::string& codeName) {
             auto decoder = UFDecoder();
             decoder.setCode(code);
             std::vector<bool> error;
-            while(error.empty() || std::none_of(error.begin(), error.end(), [](bool c) {return c;})) {
+            while (error.empty() || std::none_of(error.begin(), error.end(), [](bool c) { return c; })) {
                 error = Utils::sampleErrorIidPauliNoise(codeN, per);
             }
             auto syndrome = code.getXSyndrome(error);
@@ -57,9 +57,9 @@ void runtime(const std::string& codeName) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string rootPath = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string rootPath  = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
     const std::string rootPath2 = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
-    const std::size_t code_K = 18;
+    const std::size_t code_K    = 18;
 
     const std::size_t nrOfRunsPerRate = 1;
 
@@ -72,7 +72,7 @@ void decodingPerformance(const double per) {
     const auto N    = code.getN();
 
     std::size_t nrOfFailedRuns = 0U;
-    std::size_t j = 0;
+    std::size_t j              = 0;
     while (nrOfFailedRuns < 1 || j < nrOfRunsPerRate) {
         auto* decoder = new UFDecoder();
         decoder->setCode(code);
@@ -101,7 +101,7 @@ void decodingPerformance(const double per) {
 
 int main(int argc, char* argv[]) {
     //std::string codeName = argv[1];
-    double      per          = std::stod(argv[1]);
+    double per = std::stod(argv[1]);
     //runtime(codeName);
     decodingPerformance(per);
 }

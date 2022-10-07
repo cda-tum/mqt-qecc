@@ -31,15 +31,15 @@ private:
     std::unordered_map<std::size_t, std::unique_ptr<TreeNode>> nodeMap{};
     TreeNode*                                                  getNodeFromIdx(std::size_t idx);
     void                                                       standardGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components,const std::unique_ptr<ParityCheckMatrix>& pcm);
+                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components, const std::unique_ptr<ParityCheckMatrix>& pcm);
     void                                                       singleClusterRandomFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components,const std::unique_ptr<ParityCheckMatrix>& pcm);
+                                                                                              std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components, const std::unique_ptr<ParityCheckMatrix>& pcm);
     void                                                       singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
-                                                                                                std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components,const std::unique_ptr<ParityCheckMatrix>& pcm);
-    bool                                                       isValidComponent(const std::size_t& compId,const std::unique_ptr<ParityCheckMatrix>& pcm);
-    std::vector<std::size_t>                            erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm);
+                                                                                                std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components, const std::unique_ptr<ParityCheckMatrix>& pcm);
+    bool                                                       isValidComponent(const std::size_t& compId, const std::unique_ptr<ParityCheckMatrix>& pcm);
+    std::vector<std::size_t>                                   erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm);
     void                                                       extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& erasure, const std::unique_ptr<ParityCheckMatrix>& pcm);
     std::unordered_set<std::size_t>                            computeInitTreeComponents(const gf2Vec& syndrome);
-    void doDecoding(const gf2Vec& syndrome,const std::unique_ptr<ParityCheckMatrix>& pcm);
+    void                                                       doDecoding(const gf2Vec& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm);
 };
 #endif //QUNIONFIND_IMPROVEDUFD_HPP

@@ -42,8 +42,8 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
         statisticsOutstr << R"({ "run": { "physicalErrRate":)" << minPhysicalErrRate << ", \"data\": [ ";
     }
 
-    auto        nrOfFailedRuns = 0U;
-    auto        currPer        = minPhysicalErrRate;
+    auto nrOfFailedRuns = 0U;
+    auto currPer        = minPhysicalErrRate;
     while (currPer < maxPhysicalErrRate) {
         nrOfFailedRuns = 0;
         for (std::size_t j = 0; j < nrRunsPerRate; j++) {

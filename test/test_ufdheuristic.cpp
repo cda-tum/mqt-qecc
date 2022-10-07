@@ -49,8 +49,7 @@ INSTANTIATE_TEST_SUITE_P(NotorrectableSingleBitErrsToric, IncorrectableErrToricC
 
 INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, CorrectableLargeToric,
                          testing::Values(
-                                 std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}
-                                 ));
+                                 std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}));
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
@@ -311,8 +310,8 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     auto        code = HGPcode();
     UFHeuristic decoder;
     decoder.setCode(code);
-    auto        err = gf2Vec(code.N);
-    err.at(0)       = 1;
+    auto err  = gf2Vec(code.N);
+    err.at(0) = 1;
 
     std::cout << "err :" << std::endl;
     Utils::printGF2vector(err);
@@ -373,7 +372,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         }
         EXPECT_TRUE(code.isStabilizer(residualErr));
         //EXPECT_TRUE(code.isStabilizer(residualErr2));
-    }catch(QeccException e){
+    } catch (QeccException e) {
         std::cout << e.getMessage() << std::endl;
         EXPECT_TRUE(false);
     }

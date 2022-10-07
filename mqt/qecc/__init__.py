@@ -22,4 +22,3 @@ __all__ = ['Code',
            'DecodingResultStatus',
            'DecodingRunInformation',
            'sample_iid_pauli_err']
-

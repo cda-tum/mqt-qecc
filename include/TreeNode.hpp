@@ -23,7 +23,7 @@ public:
     std::vector<TreeNode*>          children{};
     size_t                          clusterSize = 1U;
     std::unordered_set<std::size_t> boundaryVertices{};
-    std::vector<std::size_t> checkVertices{};
+    std::vector<std::size_t>        checkVertices{};
     bool                            marked  = false;
     bool                            deleted = false;
 
@@ -42,7 +42,7 @@ public:
         //std::cout << "in find" << std::endl;
         auto parent = node->parent;
         while (parent != nullptr && parent->parent != nullptr) {
-            node = parent;
+            node   = parent;
             parent = parent->parent;
         }
         if (parent == nullptr) {
@@ -55,8 +55,8 @@ public:
      * Merge two trees with given roots
      */
     static void Union(TreeNode* tree1, TreeNode* tree2) {
-        auto        root1 = Find(tree1);
-        auto        root2 = Find(tree2);
+        auto root1 = Find(tree1);
+        auto root2 = Find(tree2);
 
         if (root1->vertexIdx == root2->vertexIdx) {
             return;
@@ -69,7 +69,7 @@ public:
     }
 
     static void addFirstToSecondTree(TreeNode* first, TreeNode* second) {
-        first->parent     = second;
+        first->parent = second;
         second->children.emplace_back(first);
         second->clusterSize += first->clusterSize;
         std::move(first->checkVertices.begin(), first->checkVertices.end(), std::back_inserter(second->checkVertices));
@@ -84,7 +84,7 @@ public:
         return vertexIdx == other.vertexIdx;
     }
     auto operator<=>(const TreeNode& other) const {
-        return (vertexIdx <=> other.vertexIdx);
+        return (vertexIdx <= > other.vertexIdx);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const TreeNode& v) {

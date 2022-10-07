@@ -20,7 +20,7 @@ public:
 class SteaneCode: public Code {
 public:
     SteaneCode():
-    Code("./resources/codes/testCode.txt","./resources/codes/testCode.txt"){
+        Code("./resources/codes/testCode.txt", "./resources/codes/testCode.txt") {
         K = 3;
         N = 7;
     }
@@ -35,7 +35,7 @@ public:
         K = 36;
         N = 900;
     }
-    HGPcode(const std::string& hxIn,const std::string& hzIn, const std::size_t K):
+    HGPcode(const std::string& hxIn, const std::string& hzIn, const std::size_t K):
         Code(hxIn, hzIn) { this->K = K; };
 };
 

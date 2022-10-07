@@ -17,8 +17,7 @@ INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest_or
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0},
-                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0}
-                                 ));
+                                 std::vector<bool>{0, 0, 1, 0, 0, 0, 0}));
 
 INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, InCorrectableErrTest_original,
                          testing::Values(
@@ -35,13 +34,12 @@ INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest_
 
 INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, OriginalUFDtest,
                          testing::Values(
-                                 std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}
-                                 ));
+                                 std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}));
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
 TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
-    auto code = SteaneXCode();
+    auto      code = SteaneXCode();
     UFDecoder decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
@@ -52,12 +50,12 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     std::cout << "syndrome: ";
     Utils::printGF2vector(syndr);
     decoder.decode(syndr);
-    const auto&   decodingResult = decoder.result;
-    const auto&   estim          = decodingResult.estimBoolVector;
-    const auto&   estimIdx       = decodingResult.estimNodeIdxVector;
-    gf2Vec estim2(err.size());
+    const auto& decodingResult = decoder.result;
+    const auto& estim          = decodingResult.estimBoolVector;
+    const auto& estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (unsigned long idx: estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -78,7 +76,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  * Tests for ambigous errors that cannot be corrected
  */
 TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
-    auto code = SteaneXCode();
+    auto      code = SteaneXCode();
     UFDecoder decoder;
     decoder.setCode(code);
     std::cout << "code: " << std::endl
@@ -87,12 +85,12 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 
     auto syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
-    const auto&   decodingResult = decoder.result;
-    const auto&   estim          = decodingResult.estimBoolVector;
-    const auto&   estimIdx       = decodingResult.estimNodeIdxVector;
-    gf2Vec estim2(err.size());
+    const auto& decodingResult = decoder.result;
+    const auto& estim          = decodingResult.estimBoolVector;
+    const auto& estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (unsigned long idx: estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -108,7 +106,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
  * Tests for errors that are correctable up to stabilizer
  */
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
-    auto code = SteaneXCode();
+    auto      code = SteaneXCode();
     UFDecoder decoder;
     //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
@@ -119,12 +117,12 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     Utils::printGF2vector(err);
     auto syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
-    const auto&   decodingResult = decoder.result;
-    const auto&   estim          = decodingResult.estimBoolVector;
-    const auto&   estimIdx       = decodingResult.estimNodeIdxVector;
-    gf2Vec estim2(err.size());
+    const auto& decodingResult = decoder.result;
+    const auto& estim          = decodingResult.estimBoolVector;
+    const auto& estimIdx       = decodingResult.estimNodeIdxVector;
+    gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (unsigned long idx: estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -142,8 +140,8 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
 }
 TEST_F(OriginalUFDtest, LargeCodeTest) {
-    auto        code = HGPcode();
-    UFDecoder   decoder;
+    auto      code = HGPcode();
+    UFDecoder decoder;
     //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     auto err  = gf2Vec(code.getN());

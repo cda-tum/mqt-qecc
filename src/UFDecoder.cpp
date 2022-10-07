@@ -52,7 +52,7 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
             components.insert(s);
         }
 
-        while (containsInvalidComponents(components, syndr, invalidComponents,pcm) &&
+        while (containsInvalidComponents(components, syndr, invalidComponents, pcm) &&
                components.size() < (pcm->pcm->size() + pcm->pcm->front().size())) {
             if (this->growth == GrowthVariant::ALL_COMPONENTS) {
                 // // grow all components (including valid ones) by 1
@@ -246,7 +246,7 @@ void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& 
     std::unordered_set<std::size_t> chosenComponent;
     std::random_device              rd;
     std::mt19937                    gen(rd());
-    std::uniform_int_distribution   d(static_cast<std::size_t>(0U), ccomps.size()-1);
+    std::uniform_int_distribution   d(static_cast<std::size_t>(0U), ccomps.size() - 1);
     std::size_t                     chosenIdx = d(gen);
     auto                            it        = ccomps.begin();
     std::advance(it, chosenIdx);

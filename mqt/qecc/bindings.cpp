@@ -18,7 +18,7 @@ namespace py = pybind11;
 namespace nl = nlohmann;
 using namespace pybind11::literals;
 
-std::vector<bool> sample_iid_pauli_err(const std::size_t length, const double physicalErrRate){
+std::vector<bool> sample_iid_pauli_err(const std::size_t length, const double physicalErrRate) {
     return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
@@ -31,23 +31,23 @@ PYBIND11_MODULE(pyqecc, m) {
             .def(py::init<std::string, std::string>())
             .def(py::init<std::string>())
             .def(py::init<std::vector<std::vector<bool>>&>())
-            .def(py::init<std::vector<std::vector<bool>>&,std::vector<std::vector<bool>>&>())
+            .def(py::init<std::vector<std::vector<bool>>&, std::vector<std::vector<bool>>&>())
             .def("setHz", &Code::setHz)
             .def("getHz", &Code::getHzMat)
             .def("setHx", &Code::setHx)
             .def("getHx", &Code::getHxMat)
-            .def_readwrite("N",&Code::N)
+            .def_readwrite("N", &Code::N)
             .def_readwrite("K", &Code::K)
             .def_readwrite("D", &Code::D)
             .def("json", &Code::to_json)
             .def("is_x_stabilizer", &Code::isXStabilizer)
-            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&)const>(&Code::isStabilizer))
-            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&)const>(&Code::isStabilizer))
+            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&) const>(&Code::isStabilizer))
+            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&) const>(&Code::isStabilizer))
             .def("get_syndrome", &Code::getSyndrome)
             .def("get_x_syndrome", &Code::getXSyndrome)
             .def("__repr__", &Code::toString);
 
-             py::enum_<GrowthVariant>(m, "GrowthVariant")
+    py::enum_<GrowthVariant>(m, "GrowthVariant")
             .value("ALL_COMPONENTS", GrowthVariant::ALL_COMPONENTS)
             .value("INVALID_COMPONENTS", GrowthVariant::INVALID_COMPONENTS)
             .value("SINGLE_SMALLEST", GrowthVariant::SINGLE_SMALLEST)
@@ -109,7 +109,7 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("simulate_wer", &DecodingSimulator::simulateWER)
             .def("simulate_avg_runtime", &DecodingSimulator::simulateAverageRuntime);
 
-      py::enum_<DecoderType>(m, "DecoderType")
+    py::enum_<DecoderType>(m, "DecoderType")
             .value("UF_HEURISTIC", DecoderType::UF_HEURISTIC)
             .value("ORIGINAL_UF", DecoderType::UF_DECODER)
             .export_values()

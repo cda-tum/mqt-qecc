@@ -26,7 +26,7 @@ enum DecoderType {
     }
 }
 NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UF_HEURISTIC, "UF_HEURISTIC"},
-                                                    {UF_DECODER, "UF_DECODER"}})
+                                           {UF_DECODER, "UF_DECODER"}})
 
 class DecodingSimulator {
 public:
@@ -71,7 +71,6 @@ public:
                                        const std::string& codesPath,
                                        std::size_t        nrSamples,
                                        const DecoderType& decoderType);
-
 };
 
 #endif //QECC_DECODINGSIMULATOR_HPP
