@@ -1,0 +1,18 @@
+prune test
+prune .idea
+
+graft extern/googletest
+graft extern/json
+graft extern/pybind11
+graft extern/pybind11_json
+
+prune **/.github
+prune **/apps
+prune **/doc
+prune **/docs
+prune **/meta
+prune **/plots
+prune **/test
+prune **/tests
+
+prune extern/json/include
