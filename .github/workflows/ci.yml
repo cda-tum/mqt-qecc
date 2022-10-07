@@ -59,6 +59,7 @@ jobs:
       - name: Configure CMake
         run: |
           echo "${{ env.LD_LIBRARY_PATH }}"
+          export LD_LIBRARY_PATH=$(echo "${{ env.LD_LIBRARY_PATH }}")
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
         run: cmake --build build --config Release
