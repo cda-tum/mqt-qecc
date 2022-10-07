@@ -43,7 +43,8 @@ jobs:
               cd flint2
               sudo make install
       - name: Generate compilation database
-        run: cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run:  |
+              cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Run cpp-linter
         id:   linter
         env:
@@ -52,11 +53,11 @@ jobs:
               pipx run cpp-linter \
               --version=14 \
               --style="file" \
-          --tidy-checks="" \
-          --thread-comments=true \
-          --files-changed-only=true \
-          --ignore="build" \
-          --database=build
+              --tidy-checks="" \
+              --thread-comments=true \
+              --files-changed-only=true \
+              --ignore="build" \
+              --database=build
       - name: Fail if linter found errors
-        if: steps.linter.outputs.checks-failed > 0
-        run: echo "Linter found errors" && exit 1
+        if:   steps.linter.outputs.checks-failed > 0
+        run:  echo "Linter found errors" && exit 1
