@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: flint2
-          key:  codeql-${{ runner.OS }}-${{ hashFiles('**/codeql-analysis.yml') }}
+          key:  codeql-${{ matrix.language }}-${{ hashFiles('**/codeql-analysis.yml') }}
       - name: Build FLINT2
         if:   steps.cache-flint2.outputs.cache-hit != 'true'
         run:  |
