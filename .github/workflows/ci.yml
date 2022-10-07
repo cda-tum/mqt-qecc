@@ -55,9 +55,9 @@ jobs:
         if: steps.cache-flint2.outputs.cache-hit != 'true'
         run: |
           ${{ matrix.config.mpfr-install-cmd}}
-          git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
-          cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cd flint2/build && make -j4
+          git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git "${{github.workspace}}/flint"
+          cmake -S "${{github.workspace}}/flint" -B "${{github.workspace}}/flint-build" -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cd "${{github.workspace}}/flint-build" && make -j4
           echo "LD_LIBRARY_PATH=lib/:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           cd ..
           ls
