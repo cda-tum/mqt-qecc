@@ -5,6 +5,7 @@
 #ifndef QUNIONFIND_TREENODE_HPP
 #define QUNIONFIND_TREENODE_HPP
 
+#include <compare>
 #include <iostream>
 #include <map>
 #include <memory>

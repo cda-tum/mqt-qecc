@@ -100,9 +100,6 @@ struct ParityCheckMatrix {
                 {"pcm", *this->pcm}};
     }
 
-    void from_json(const json& j) {
-    }
-
     [[nodiscard]] std::string toString() const {
         return this->to_json().dump(2U);
     }
@@ -156,7 +153,7 @@ public:
      * Convention: Rows in first dim, columns in second
      */
     explicit Code(std::vector<std::vector<bool>>& hx, std::vector<std::vector<bool>>& hz):
-        Hz(std::make_unique<ParityCheckMatrix>(hz)), Hx(std::make_unique<ParityCheckMatrix>(hx)) {
+        Hx(std::make_unique<ParityCheckMatrix>(hx)), Hz(std::make_unique<ParityCheckMatrix>(hz)) {
         N = Hz->pcm->front().size();
     }
 
@@ -173,7 +170,7 @@ public:
     }
 
     explicit Code(const std::string& pathToHx, const std::string& pathToHz):
-        Hz(std::make_unique<ParityCheckMatrix>(pathToHz)), Hx(std::make_unique<ParityCheckMatrix>(pathToHx)) {
+        Hx(std::make_unique<ParityCheckMatrix>(pathToHx)), Hz(std::make_unique<ParityCheckMatrix>(pathToHz)) {
         if (Hz->pcm->empty() || Hz->pcm->front().empty() || Hx->pcm->empty() || Hx->pcm->front().empty()) {
             throw QeccException("[Code::ctor] - Cannot construct Code, Hx or Hz empty");
         }
