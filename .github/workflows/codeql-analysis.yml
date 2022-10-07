@@ -18,7 +18,7 @@ env:
 jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       security-events: write
 
@@ -31,17 +31,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: recursive
+          submodules:  recursive
           fetch-depth: 0
+
+      - name: Install MPFR
+        run:  sudo apt-get install libmpfr-dev
+      - name: Cache FLINT
+        id:   cache-flint2
+        uses: actions/cache@v3
+        with:
+          path: flint2
+          key:  codeql-${{ runner.OS }}-${{ hashFiles('**/codeql-analysis.yml') }}
+      - name: Build FLINT2
+        if:   steps.cache-flint2.outputs.cache-hit != 'true'
+        run:  |
+              git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
+              cd flint2
+              ./configure
+              make -j3
+      - name: Install FLINT2
+        run:  |
+              cd flint2
+              sudo make install
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: ${{ matrix.language }}
+          languages:   ${{ matrix.language }}
           config-file: .github/codeql-config.yml
 
-      - if: matrix.language == 'cpp'
+      - if:   matrix.language == 'cpp'
         name: Configure CMake
         run: cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON
 
