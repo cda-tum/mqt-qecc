@@ -59,9 +59,10 @@ jobs:
           key:  ci-${{ runner.OS }}-${{ hashFiles('**/ci.yml') }}
       - name: Build FLINT2
         if:   steps.cache-flint2.outputs.cache-hit != 'true'
-        run:  |
+        run: |
               git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
               cd flint2
+              ./configure
               make -j3
       - name: Install FLINT2
         run:  |
