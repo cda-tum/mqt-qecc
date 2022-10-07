@@ -33,7 +33,7 @@ jobs:
         name: Install MSYS2
         uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
+          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
       - if:   runner.os == 'macOS'
         name: Install MPFR
         run:  brew install mpfr
