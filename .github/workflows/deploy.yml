@@ -33,7 +33,7 @@ jobs:
         name: Install MSYS2
         uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-clang mingw-w64-flint
+          install: make mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
