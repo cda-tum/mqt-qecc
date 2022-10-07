@@ -61,10 +61,14 @@ jobs:
         if:   steps.cache-flint2.outputs.cache-hit != 'true'
         run:  |
               git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
-              cmake -S flint2 -B flint2/build -DCMAKE_BUILD_TYPE=Release
-              cmake --build flint2/build --config Release --parallel 3
+              cd flint2
+              make -j3
+      - name: Install FLINT2
+        run:  |
+              cd flint2
+              sudo make install
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }} -DFLINT_ROOT=flint2
+        run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
         run:  cmake --build build --config Release
       - name:              Test
