@@ -51,7 +51,7 @@ jobs:
           git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
           cmake -S flint2 -B flint2/build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd flint2/build && make -j4
-          echo "LD_LIBRARY_PATH=$(pwd)/lib/:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=flint2/lib/:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "${{ env.LD_LIBRARY_PATH }}"
       - uses: actions/checkout@v3
         with:
@@ -61,7 +61,7 @@ jobs:
           echo "${{ env.LD_LIBRARY_PATH }}"
           export LD_LIBRARY_PATH=$(echo "${{ env.LD_LIBRARY_PATH }}")
           echo $LD_LIBRARY_PATH
-          ls /home/runner/work/qecc/qecc/flint2/build/lib/
+          ls flint2/lib/
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON ${{ matrix.config.toolchain }}
       - name: Build
         run: cmake --build build --config Release
