@@ -91,6 +91,9 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
+      - name: Debug flint location
+        run:
+          pacman -Ql mingw-w64-clang-x86_64-flint
       - name: Configure CMake
         run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
         env:
