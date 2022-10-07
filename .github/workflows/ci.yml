@@ -27,9 +27,9 @@ jobs:
       matrix:
         config:
           - {
-            os: ubuntu-20.04,
-            test-dir: build/test,
-            toolchain: "",
+            os:               ubuntu-22.04,
+            test-dir:         build/test,
+            toolchain:        "",
             mpfr-install-cmd: "sudo apt-get install libmpfr-dev"
           }
           - {
