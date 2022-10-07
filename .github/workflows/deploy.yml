@@ -14,15 +14,15 @@ concurrency:
 
 jobs:
   build_wheels:
-    name: ${{ matrix.os }} ${{ matrix.arch }} wheels
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.config.os }} wheels
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { os: ubuntu-latest, arch: x64 }
-          - { os: macos-latest, arch: x64 }
-          - { os: windows-latest, arch: x64 }
+          - { os: ubuntu-22.04 }
+          - { os: macos-11 }
+          - { os: windows-2022 }
 
     steps:
       - uses: actions/checkout@v3
