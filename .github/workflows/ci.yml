@@ -58,9 +58,7 @@ jobs:
           git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git "${{github.workspace}}/flint"
           cmake -S "${{github.workspace}}/flint" -B "${{github.workspace}}/flint-build" -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
           cd "${{github.workspace}}/flint-build" && make -j4
-          echo "LD_LIBRARY_PATH=lib/:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          cd ..
-          ls
+          echo "LD_LIBRARY_PATH="${{github.workspace}}/flint/" >> $GITHUB_ENV
       - uses: actions/checkout@v3
         with:
           submodules: recursive
