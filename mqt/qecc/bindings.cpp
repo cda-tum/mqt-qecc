@@ -14,6 +14,9 @@
 
 #include <pybind11/stl.h>
 
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+
 namespace py = pybind11;
 namespace nl = nlohmann;
 using namespace pybind11::literals;
