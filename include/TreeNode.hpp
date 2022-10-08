@@ -84,7 +84,7 @@ public:
         return vertexIdx == other.vertexIdx;
     }
     auto operator<=>(const TreeNode& other) const {
-        return (vertexIdx <= > other.vertexIdx);
+        return (vertexIdx <=> other.vertexIdx);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const TreeNode& v) {
