@@ -56,7 +56,7 @@ jobs:
               --tidy-checks="" \
               --thread-comments=true \
               --files-changed-only=false \
-              --ignore="build|/flint2" \
+              --ignore="build|flint2" \
               --database=build
       - name: Fail if linter found errors
         if:   steps.linter.outputs.checks-failed > 0
