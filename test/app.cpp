@@ -99,7 +99,7 @@ void decodingPerformance(const double per) {
     flint_cleanup();
 }
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, char* argv[]) {
     //std::string codeName = argv[1];
     double per = std::stod(argv[1]);
     //runtime(codeName);
