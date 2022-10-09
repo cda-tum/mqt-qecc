@@ -1,34 +1,44 @@
-# Prerequisites
-*.d
+/build*
+/cmake-build-*
+.idea/*
+!.idea/runConfigurations
+!.idea/cmake.xml
+.vscode/*
+*~
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+__pycache__/
 *.so
-*.dylib
-*.dll
+*.py[cod]
 
-# Fortran module files
-*.mod
-*.smod
+*.egg
+*.eggs
+*.egg-info
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+.installed.cfg
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+.cache/
+.pytest_cache/
+.coverage
+.coverage*
+.tox
+coverage.xml
+htmlcov
 
-# Executables
-*.exe
-*.out
-*.app
+docs/_build
 
-./cmake-build-debug
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
