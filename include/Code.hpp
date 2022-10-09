@@ -30,8 +30,7 @@ struct ParityCheckMatrix {
     ParityCheckMatrix(const ParityCheckMatrix& m)          = delete;
     ParityCheckMatrix& operator=(const ParityCheckMatrix&) = delete;
 
-    explicit ParityCheckMatrix(gf2Mat& pcm):
-        pcm(std::make_unique<gf2Mat>(pcm)) {}
+    explicit ParityCheckMatrix(gf2Mat& pcm) : pcm(std::make_unique<gf2Mat>(pcm)) {}
 
     explicit ParityCheckMatrix(const std::string& filePath) {
         if (filePath.empty()) {
@@ -41,7 +40,7 @@ struct ParityCheckMatrix {
         int           word;
         std::ifstream inFile;
         gf2Mat        result;
-        //std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
+        // std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
         try {
             inFile.open(filePath);
             while (getline(inFile, line, '\n')) {
@@ -58,7 +57,7 @@ struct ParityCheckMatrix {
             throw QeccException(e.what());
         }
         inFile.close();
-        //std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
+        // std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
     }
 
     /**
@@ -143,8 +142,7 @@ public:
      * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
      * Convention: Rows in first dim, columns in second
      */
-    explicit Code(std::vector<std::vector<bool>>& hz):
-        Hz(std::make_unique<ParityCheckMatrix>(hz)) {
+    explicit Code(std::vector<std::vector<bool>>& hz) : Hz(std::make_unique<ParityCheckMatrix>(hz)) {
         N = Hz->pcm->front().size();
     }
 
@@ -152,8 +150,7 @@ public:
      * Takes two pcms over GF(2) and constructs respective code
      * Convention: Rows in first dim, columns in second
      */
-    explicit Code(std::vector<std::vector<bool>>& hx, std::vector<std::vector<bool>>& hz):
-        Hx(std::make_unique<ParityCheckMatrix>(hx)), Hz(std::make_unique<ParityCheckMatrix>(hz)) {
+    explicit Code(std::vector<std::vector<bool>>& hx, std::vector<std::vector<bool>>& hz) : Hx(std::make_unique<ParityCheckMatrix>(hx)), Hz(std::make_unique<ParityCheckMatrix>(hz)) {
         N = Hz->pcm->front().size();
     }
 
@@ -161,16 +158,14 @@ public:
      * Constructs the X check part of a code given
      * @param pathToPcm
      */
-    explicit Code(const std::string& pathToPcm):
-        Hz(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
+    explicit Code(const std::string& pathToPcm) : Hz(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
         if (Hz->pcm->empty() || Hz->pcm->front().empty()) {
             throw QeccException("[Code::ctor] - Cannot construct Code, Hz empty");
         }
         N = Hz->pcm->front().size();
     }
 
-    explicit Code(const std::string& pathToHx, const std::string& pathToHz):
-        Hx(std::make_unique<ParityCheckMatrix>(pathToHx)), Hz(std::make_unique<ParityCheckMatrix>(pathToHz)) {
+    explicit Code(const std::string& pathToHx, const std::string& pathToHz) : Hx(std::make_unique<ParityCheckMatrix>(pathToHx)), Hz(std::make_unique<ParityCheckMatrix>(pathToHz)) {
         if (Hz->pcm->empty() || Hz->pcm->front().empty() || Hx->pcm->empty() || Hx->pcm->front().empty()) {
             throw QeccException("[Code::ctor] - Cannot construct Code, Hx or Hz empty");
         }
@@ -342,4 +337,4 @@ public:
         return this->to_json().dump(2U);
     }
 };
-#endif //QUNIONFIND_CODE_HPP
+#endif // QUNIONFIND_CODE_HPP

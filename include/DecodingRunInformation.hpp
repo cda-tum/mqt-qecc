@@ -12,7 +12,7 @@ using json = nlohmann::json;
 enum DecodingResultStatus {
     SUCCESS, // estimated correctly up to stabilizer
     FAILURE  // logical operator introduced
-    //FLAGGED_ERROR // not implemented
+    // FLAGGED_ERROR // not implemented
 };
 
 [[maybe_unused]] static DecodingResultStatus decodingResultStatusFromString(const std::string& status) {
@@ -38,16 +38,14 @@ struct DecodingRunInformation {
                            gf2Vec               error,
                            gf2Vec               syndrome,
                            DecodingResultStatus status,
-                           DecodingResult       result):
-        physicalErrR(physicalErrR),
-        codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), status(status), result(std::move(result)) {}
+                           DecodingResult       result) : physicalErrR(physicalErrR),
+                                                    codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), status(status), result(std::move(result)) {}
     DecodingRunInformation(double         physicalErrR,
                            std::size_t    codeSize,
                            gf2Vec         error,
                            gf2Vec         syndrome,
-                           DecodingResult result):
-        physicalErrR(physicalErrR),
-        codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), result(std::move(result)) {}
+                           DecodingResult result) : physicalErrR(physicalErrR),
+                                                    codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), result(std::move(result)) {}
     DecodingRunInformation() = default;
     ;
 
@@ -84,4 +82,4 @@ struct DecodingRunInformation {
         std::cout << json.dump(2U);
     }
 };
-#endif //QUNIONFIND_DECODINGRUNINFORMATION_HPP
+#endif // QUNIONFIND_DECODINGRUNINFORMATION_HPP

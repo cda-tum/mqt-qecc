@@ -1,6 +1,6 @@
 /**
-* Simulate average runtime for codes with growing nr of N for several physical err rates (err rates should only increase slope of curve)
-*/
+ * Simulate average runtime for codes with growing nr of N for several physical err rates (err rates should only increase slope of curve)
+ */
 #include "Code.hpp"
 #include "DecodingRunInformation.hpp"
 #include "UFDecoder.hpp"
@@ -23,8 +23,8 @@ void runtime(const std::string& codeName) {
     const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
     const std::string inPath   = rootPath + "in/toricCodes2/";
     //**** local:
-    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
-    //const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
+    // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
+    // const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
     const std::size_t nrRuns    = 1000;
     const std::size_t nrSamples = 50;
@@ -76,7 +76,7 @@ void decodingPerformance(const double per) {
     while (nrOfFailedRuns < 1 || j < nrOfRunsPerRate) {
         auto* decoder = new UFDecoder();
         decoder->setCode(code);
-        //decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
+        // decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
         auto error    = Utils::sampleErrorIidPauliNoise(N, per);
         auto syndrome = code.getXSyndrome(error);
         decoder->decode(syndrome);
@@ -91,7 +91,7 @@ void decodingPerformance(const double per) {
         delete decoder;
         j++;
     }
-    //compute word error rate WER
+    // compute word error rate WER
     const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(j);
     const auto wordErrRate  = blockErrRate / static_cast<double>(K); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
     std::cout << "per:wer = " << per << ":" << wordErrRate << std::endl;
@@ -100,8 +100,8 @@ void decodingPerformance(const double per) {
 }
 
 int main([[maybe_unused]] int argc, char* argv[]) {
-    //std::string codeName = argv[1];
+    // std::string codeName = argv[1];
     double per = std::stod(argv[1]);
-    //runtime(codeName);
+    // runtime(codeName);
     decodingPerformance(per);
 }

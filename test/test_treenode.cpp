@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-class TreeNodeTest: public testing::TestWithParam<std::string> {};
+class TreeNodeTest : public testing::TestWithParam<std::string> {};
 
 TEST(TreeNodeTest, TestFindDisjoint) {
     auto n1 = std::make_unique<TreeNode>(0);

@@ -12,11 +12,11 @@
 #include <queue>
 #include <random>
 /**
-     * returns list of tree node (in UF data structure) representations for syndrome
-     * @param code
-     * @param syndrome
-     * @return
-    */
+ * returns list of tree node (in UF data structure) representations for syndrome
+ * @param code
+ * @param syndrome
+ * @return
+ */
 std::unordered_set<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& syndrome) {
     std::unordered_set<std::size_t> result{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
@@ -72,7 +72,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
 
             if (this->growth == GrowthVariant::ALL_COMPONENTS) {
                 // to grow all components (including valid ones)
-                for (auto e: erasure) {
+                for (auto e : erasure) {
                     invalidComponents.insert(e);
                 }
                 standardGrowth(fusionEdges, presentMap, invalidComponents, pcm);
@@ -92,7 +92,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
                 auto n2    = getNodeFromIdx(eIt->second);
                 auto root1 = TreeNode::Find(n1);
                 auto root2 = TreeNode::Find(n2);
-                //compares vertexIdx only
+                // compares vertexIdx only
                 if (root1->vertexIdx == root2->vertexIdx) {
                     eIt = fusionEdges.erase(eIt); // passes eIt to erase
                 } else {
@@ -101,12 +101,12 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
                     TreeNode::Union(root1, root2);
 
                     if (s1 <= s2) { // Step 3 fusion of boundary lists
-                        for (const auto& boundaryVertex: root1->boundaryVertices) {
+                        for (const auto& boundaryVertex : root1->boundaryVertices) {
                             root2->boundaryVertices.insert(boundaryVertex);
                         }
                         root1->boundaryVertices.clear();
                     } else {
-                        for (const auto& boundaryVertex: root2->boundaryVertices) {
+                        for (const auto& boundaryVertex : root2->boundaryVertices) {
                             root1->boundaryVertices.insert(boundaryVertex);
                         }
                         root2->boundaryVertices.clear();
@@ -129,19 +129,19 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
                     toAdd.emplace_back(root->vertexIdx);
                 }
             }
-            for (auto c: toAdd) {
+            for (auto c : toAdd) {
                 invalidComponents.insert(c);
             }
 
             // Update Boundary Lists: remove vertices that are not in boundary anymore
-            for (auto& compId: invalidComponents) {
+            for (auto& compId : invalidComponents) {
                 const auto& compNode = getNodeFromIdx(compId);
                 auto        iter     = compNode->boundaryVertices.begin();
                 while (iter != compNode->boundaryVertices.end()) {
                     const auto& nbrs     = pcm->getNbrs(*iter);
                     auto        currNode = getNodeFromIdx(*iter);
                     const auto& currRoot = TreeNode::Find(currNode);
-                    for (const auto& nbr: nbrs) {
+                    for (const auto& nbr : nbrs) {
                         auto node = getNodeFromIdx(nbr);
                         if (const auto nbrRoot = TreeNode::Find(node); currRoot->vertexIdx != nbrRoot->vertexIdx) {
                             // if we find one neighbour that is not in the same component the currNode is in the boundary
@@ -150,7 +150,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
                         }
                         if (nbr == nbrs.back()) {
                             // if we have checked all neighbours and found none in another component remove from boundary list
-                            //toRemoveList.emplace_back(*iter);
+                            // toRemoveList.emplace_back(*iter);
                             iter = compNode->boundaryVertices.erase(iter);
                             break;
                         }
@@ -165,7 +165,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
     this->result           = DecodingResult();
     result.decodingTime    = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
     result.estimBoolVector = gf2Vec(getCode()->getN());
-    for (const auto& re: res) {
+    for (const auto& re : res) {
         result.estimBoolVector.at(re) = true;
         result.estimNodeIdxVector.emplace_back(re);
     }
@@ -175,14 +175,14 @@ void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
                                  std::unordered_map<std::size_t, bool>&            presentMap,
                                  const std::unordered_set<std::size_t>&            components,
                                  const std::unique_ptr<ParityCheckMatrix>&         pcm) {
-    for (const auto& compId: components) {
+    for (const auto& compId : components) {
         const auto& compNode = getNodeFromIdx(compId);
         presentMap.try_emplace(compNode->vertexIdx, true);
         const auto& bndryNodes = compNode->boundaryVertices;
 
-        for (const auto& bndryNode: bndryNodes) {
+        for (const auto& bndryNode : bndryNodes) {
             const auto& nbrs = pcm->getNbrs(bndryNode);
-            for (const auto& nbr: nbrs) {
+            for (const auto& nbr : nbrs) {
                 fusionEdges.emplace_back(bndryNode, nbr);
             }
         }
@@ -193,7 +193,7 @@ void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
                                                    std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components, const std::unique_ptr<ParityCheckMatrix>& pcm) {
     std::size_t smallestComponent;
     std::size_t smallestSize = SIZE_MAX;
-    for (const auto& cId: components) {
+    for (const auto& cId : components) {
         const auto& comp = getNodeFromIdx(cId);
         if (comp->clusterSize < smallestSize) {
             smallestComponent = comp->vertexIdx;
@@ -203,9 +203,9 @@ void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
     presentMap.try_emplace(smallestC->vertexIdx, true);
     const auto& bndryNodes = smallestC->boundaryVertices;
 
-    for (const auto& bndryNode: bndryNodes) {
+    for (const auto& bndryNode : bndryNodes) {
         const auto& nbrs = pcm->getNbrs(bndryNode);
-        for (const auto& nbr: nbrs) {
+        for (const auto& nbr : nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
     }
@@ -232,9 +232,9 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     presentMap.try_emplace(chosenNode->vertexIdx, true);
     const auto& bndryNodes = chosenNode->boundaryVertices;
 
-    for (const auto& bndryNode: bndryNodes) {
+    for (const auto& bndryNode : bndryNodes) {
         const auto& nbrs = pcm->getNbrs(bndryNode);
-        for (const auto& nbr: nbrs) {
+        for (const auto& nbr : nbrs) {
             fusionEdges.emplace_back(bndryNode, nbr);
         }
     }
@@ -251,7 +251,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
     std::vector<std::vector<std::size_t>> erasureSet{};
     std::size_t                           erasureSetIdx = 0;
     // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
-    for (auto& currCompRootId: erasure) {
+    for (auto& currCompRootId : erasure) {
         std::vector<std::size_t> compErasure;
         const auto&              currCompRoot = getNodeFromIdx(currCompRootId);
         std::queue<std::size_t>  queue;
@@ -268,7 +268,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
                 compErasure.emplace_back(currV->vertexIdx);
             }
 
-            for (const auto& node: currV->children) {
+            for (const auto& node : currV->children) {
                 if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
@@ -284,14 +284,14 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
     std::vector<std::size_t> resList;
     // go through nodes in erasure
     // if current node v is a bit node in Int, remove adjacent check nodes c_i and B(c_i,1)
-    for (auto& component: erasureSet) {
+    for (auto& component : erasureSet) {
         auto compNodeIt = component.begin();
         while (compNodeIt != component.end() && !syndrome.empty()) {
             const auto& currN = getNodeFromIdx(*compNodeIt++);
             if (!currN->isCheck && !currN->deleted) {
                 resList.emplace_back(currN->vertexIdx); // add bit node to estimate
                 // if we add a bit node we have to delete adjacent check nodes and their neighbours
-                for (const auto& adjCheck: pcm->getNbrs(currN->vertexIdx)) {
+                for (const auto& adjCheck : pcm->getNbrs(currN->vertexIdx)) {
                     const auto& adjCheckNode = getNodeFromIdx(adjCheck);
                     if (adjCheckNode->marked && !adjCheckNode->deleted) {
                         const auto& nNbrs = pcm->getNbrs(adjCheck);
@@ -299,7 +299,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
                         // remove bit nodes adjacent to neighbour check
                         while (nnbr != nNbrs.end()) {
                             const auto& nnbrNode = getNodeFromIdx(*nnbr++);
-                            if (!nnbrNode->deleted && nnbrNode->marked) { //also removes currN
+                            if (!nnbrNode->deleted && nnbrNode->marked) { // also removes currN
                                 nnbrNode->deleted = true;
                             }
                         }
@@ -323,7 +323,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
 void UFHeuristic::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& validComponents, const std::unique_ptr<ParityCheckMatrix>& pcm) {
-    //std::cout << "extracting" << std::endl;
+    // std::cout << "extracting" << std::endl;
     auto it = invalidComponents.begin();
     while (it != invalidComponents.end()) {
         if (isValidComponent(*it, pcm)) {
@@ -341,8 +341,8 @@ bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_
     const auto& compNode = getNodeFromIdx(compId);
     gf2Vec      valid(compNode->checkVertices.size());
     std::size_t i = 0U;
-    for (const auto& checkVertex: compNode->checkVertices) {
-        for (const auto& nbrs = pcm->getNbrs(checkVertex); const auto& nbr: nbrs) {
+    for (const auto& checkVertex : compNode->checkVertices) {
+        for (const auto& nbrs = pcm->getNbrs(checkVertex); const auto& nbr : nbrs) {
             if (!compNode->boundaryVertices.contains(nbr)) {
                 valid.at(i) = true;
                 break;
@@ -370,8 +370,8 @@ TreeNode* UFHeuristic::getNodeFromIdx(const std::size_t idx) {
 }
 
 void UFHeuristic::reset() {
-    for (auto& n: nodeMap) {
-        for (auto& c: n.second->children) {
+    for (auto& n : nodeMap) {
+        for (auto& c : n.second->children) {
             c = nullptr;
         }
         n.second->children.clear();

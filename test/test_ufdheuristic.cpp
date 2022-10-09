@@ -6,13 +6,13 @@
 #include "UFHeuristic.hpp"
 
 #include <gtest/gtest.h>
-class ImprovedUFDtestBase: public testing::TestWithParam<std::vector<bool>> {};
-class UniquelyCorrectableErrTest: public ImprovedUFDtestBase {};
-class UniquelyCorrectableErrToricCodeTest: public ImprovedUFDtestBase {}; // test cases wrong not uniquely determined
-class IncorrectableErrToricCodeTest: public ImprovedUFDtestBase {};       // test cases not uniquely fixed
-class IncorrectableErrTest: public ImprovedUFDtestBase {};
-class UpToStabCorrectableErrTest: public ImprovedUFDtestBase {}; // first case not dec
-class CorrectableLargeToric: public ImprovedUFDtestBase {};
+class ImprovedUFDtestBase : public testing::TestWithParam<std::vector<bool>> {};
+class UniquelyCorrectableErrTest : public ImprovedUFDtestBase {};
+class UniquelyCorrectableErrToricCodeTest : public ImprovedUFDtestBase {}; // test cases wrong not uniquely determined
+class IncorrectableErrToricCodeTest : public ImprovedUFDtestBase {};       // test cases not uniquely fixed
+class IncorrectableErrTest : public ImprovedUFDtestBase {};
+class UpToStabCorrectableErrTest : public ImprovedUFDtestBase {}; // first case not dec
+class CorrectableLargeToric : public ImprovedUFDtestBase {};
 
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest,
                          testing::Values(
@@ -69,7 +69,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     auto const& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -101,7 +101,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     const auto& estimIdx = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -135,7 +135,7 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -177,7 +177,7 @@ TEST_P(UniquelyCorrectableErrToricCodeTest, ToricCodeTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
@@ -213,7 +213,7 @@ TEST_P(IncorrectableErrToricCodeTest, ToricCodeTest2) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
@@ -253,7 +253,7 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
@@ -290,7 +290,7 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
@@ -322,7 +322,7 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -357,7 +357,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         const auto& estimIdx       = decodingResult.estimNodeIdxVector;
         gf2Vec      estim2(err.size());
         std::cout << "estiIdxs: ";
-        for (unsigned long idx: estimIdx) {
+        for (unsigned long idx : estimIdx) {
             estim2.at(idx) = true;
             std::cout << idx;
         }
@@ -371,7 +371,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
             residualErr2.at(i) = (err.at(i) != estim2.at(i));
         }
         EXPECT_TRUE(code.isStabilizer(residualErr));
-        //EXPECT_TRUE(code.isStabilizer(residualErr2));
+        // EXPECT_TRUE(code.isStabilizer(residualErr2));
     } catch (QeccException e) {
         std::cout << e.getMessage() << std::endl;
         EXPECT_TRUE(false);

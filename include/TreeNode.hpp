@@ -27,19 +27,17 @@ public:
     bool                            marked  = false;
     bool                            deleted = false;
 
-    TreeNode():
-        TreeNode(-1) {}
+    TreeNode() : TreeNode(-1) {}
 
-    explicit TreeNode(const std::size_t& vertexIdx):
-        vertexIdx(vertexIdx) {
+    explicit TreeNode(const std::size_t& vertexIdx) : vertexIdx(vertexIdx) {
         boundaryVertices.emplace(vertexIdx);
     }
 
     /*
- * find using path compression
- */
+     * find using path compression
+     */
     static TreeNode* Find(TreeNode* node) {
-        //std::cout << "in find" << std::endl;
+        // std::cout << "in find" << std::endl;
         auto parent = node->parent;
         while (parent != nullptr && parent->parent != nullptr) {
             node   = parent;
@@ -97,7 +95,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i.vertexIdx;
             os << ", ";
         }
@@ -111,7 +109,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i.vertexIdx;
             os << ", ";
         }
@@ -125,7 +123,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i->vertexIdx;
             os << ", ";
         }
@@ -139,7 +137,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i->vertexIdx;
             os << ", ";
         }
@@ -149,4 +147,4 @@ public:
     }
 };
 
-#endif //QUNIONFIND_TREENODE_HPP
+#endif // QUNIONFIND_TREENODE_HPP

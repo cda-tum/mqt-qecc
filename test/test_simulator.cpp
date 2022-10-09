@@ -14,7 +14,7 @@
 #include <locale>
 #include <random>
 using json = nlohmann::json;
-class DecodingSimulatorTest: public testing::TestWithParam<std::string> {
+class DecodingSimulatorTest : public testing::TestWithParam<std::string> {
 };
 
 TEST(DecodingSimulatorTest, TestRuntimeSim) {

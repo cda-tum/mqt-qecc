@@ -48,7 +48,7 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
 
     if (!syndr.empty()) {
         // Set set of nodes equal to syndrome E = syndrome
-        for (auto s: syndr) {
+        for (auto s : syndr) {
             components.insert(s);
         }
 
@@ -76,12 +76,12 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
 
     std::vector<std::set<std::size_t>> estims;
     auto                               ccomps = getConnectedComps(components);
-    for (const auto& comp: ccomps) {
+    for (const auto& comp : ccomps) {
         auto compEstimate = getEstimateForComponent(comp, syndr, pcm);
         estims.emplace_back(compEstimate.begin(), compEstimate.end());
     }
     std::set<std::size_t> tmp;
-    for (auto& estim: estims) {
+    for (auto& estim : estims) {
         tmp.insert(estim.begin(), estim.end());
     }
     std::vector<std::size_t> res(tmp.begin(), tmp.end());
@@ -89,7 +89,7 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
     const auto decodingTimeEnd = std::chrono::high_resolution_clock::now();
     result.decodingTime        = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
     result.estimBoolVector     = std::vector<bool>(getCode()->getN());
-    for (unsigned long re: res) {
+    for (unsigned long re : res) {
         result.estimBoolVector.at(re) = true;
     }
     result.estimNodeIdxVector = std::move(res);
@@ -135,7 +135,7 @@ bool UFDecoder::isValidComponent(const std::unordered_set<std::size_t>&    nodeS
 std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered_set<std::size_t>& nodeSet) const {
     std::vector<std::size_t> res;
 
-    for (const auto idx: nodeSet) {
+    for (const auto idx : nodeSet) {
         const auto& nbrs = getCode()->getHz()->getNbrs(idx);
         if (std::includes(nodeSet.begin(), nodeSet.end(), nbrs.begin(), nbrs.end()) && idx < getCode()->getN()) {
             res.emplace_back(idx);
@@ -167,7 +167,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
     gf2Vec            redSyndr(idxCnt);
     std::vector<bool> used(pcm->pcm->size());
 
-    for (const auto it: nodeSet) {
+    for (const auto it : nodeSet) {
         if (it >= getCode()->getN()) { // is a check node
             if (!used.at(it - getCode()->getN())) {
                 redHz.emplace_back(pcm->pcm->at(it - getCode()->getN()));
@@ -180,7 +180,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         } else { // is a bit node
             const auto nbrs = this->getCode()->getHz()->getNbrs(it);
-            for (auto n: nbrs) { // add neighbouring checks (these are maybe not in the interior but to stay consistent with the syndrome we need to include these in the check)
+            for (auto n : nbrs) { // add neighbouring checks (these are maybe not in the interior but to stay consistent with the syndrome we need to include these in the check)
                 if (!used.at(n - getCode()->getN())) {
                     redHz.emplace_back(pcm->pcm->at(n - getCode()->getN()));
                     if (syndrome.contains(n)) {
@@ -210,7 +210,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
 void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
     for (auto currCompIt = comps.begin(); currCompIt != comps.end(); currCompIt++) {
         const auto nbrs = getCode()->getHz()->getNbrs(*currCompIt);
-        for (auto n: nbrs) {
+        for (auto n : nbrs) {
             comps.insert(n);
         }
     }
@@ -224,14 +224,14 @@ void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>
     std::unordered_set<std::size_t> compNbrs;
     std::unordered_set<std::size_t> smallestComponent;
     std::size_t                     smallestSize;
-    for (const auto& cId: ccomps) {
+    for (const auto& cId : ccomps) {
         if (cId.size() < smallestSize) {
             smallestComponent = cId;
             smallestSize      = cId.size();
         }
     }
 
-    for (auto node: smallestComponent) {
+    for (auto node : smallestComponent) {
         const auto& nbrs = getCode()->getHz()->getNbrs(node);
         nodeSet.insert(nbrs.begin(), nbrs.end());
     }
@@ -252,7 +252,7 @@ void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& 
     std::advance(it, chosenIdx);
     chosenComponent = *it;
 
-    for (auto node: chosenComponent) {
+    for (auto node : chosenComponent) {
         const auto& nbrs = getCode()->getHz()->getNbrs(node);
         nodeSet.insert(nbrs.begin(), nbrs.end());
     }
@@ -294,7 +294,7 @@ std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const 
     std::unordered_set<std::size_t>              visited;
     std::vector<std::unordered_set<std::size_t>> result;
 
-    for (auto c: nodes) {
+    for (auto c : nodes) {
         if (!visited.contains(c)) {
             visited.insert(c);
             std::unordered_set<std::size_t> ccomp;
@@ -307,7 +307,7 @@ std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const 
                 if (!ccomp.contains(curr)) {
                     ccomp.insert(curr);
                     auto nbrs = getCode()->getHz()->getNbrs(curr);
-                    for (auto n: nbrs) {
+                    for (auto n : nbrs) {
                         if (!ccomp.contains(n) && nodes.contains(n)) {
                             stack.push(n);
                             visited.insert(n);

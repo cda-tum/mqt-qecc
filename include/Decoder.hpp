@@ -91,4 +91,4 @@ public:
     }
     virtual void reset(){};
 };
-#endif //QUNIONFIND_DECODER_HPP
+#endif // QUNIONFIND_DECODER_HPP

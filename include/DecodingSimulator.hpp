@@ -73,4 +73,4 @@ public:
                                        const DecoderType& decoderType);
 };
 
-#endif //QECC_DECODINGSIMULATOR_HPP
+#endif // QECC_DECODINGSIMULATOR_HPP

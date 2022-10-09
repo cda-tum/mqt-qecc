@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-class UtilsTest: public testing::TestWithParam<std::string> {
+class UtilsTest : public testing::TestWithParam<std::string> {
 protected:
     void setUp() {
     }

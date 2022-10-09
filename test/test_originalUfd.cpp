@@ -7,10 +7,10 @@
 
 #include <gtest/gtest.h>
 
-class OriginalUFDtest: public testing::TestWithParam<std::vector<bool>> {};
-class UniquelyCorrectableErrTest_original: public OriginalUFDtest {};
-class InCorrectableErrTest_original: public OriginalUFDtest {};
-class UpToStabCorrectableErrTest_original: public OriginalUFDtest {};
+class OriginalUFDtest : public testing::TestWithParam<std::vector<bool>> {};
+class UniquelyCorrectableErrTest_original : public OriginalUFDtest {};
+class InCorrectableErrTest_original : public OriginalUFDtest {};
+class UpToStabCorrectableErrTest_original : public OriginalUFDtest {};
 
 INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest_original,
                          testing::Values(
@@ -55,7 +55,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -90,7 +90,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -108,7 +108,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     auto      code = SteaneXCode();
     UFDecoder decoder;
-    //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
+    // decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
@@ -122,7 +122,7 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -142,7 +142,7 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
 TEST_F(OriginalUFDtest, LargeCodeTest) {
     auto      code = HGPcode();
     UFDecoder decoder;
-    //decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
+    // decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     auto err  = gf2Vec(code.getN());
     err.at(0) = 1;
@@ -161,7 +161,7 @@ TEST_F(OriginalUFDtest, LargeCodeTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx: estimIdx) {
+    for (unsigned long idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }

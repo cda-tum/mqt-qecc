@@ -4,8 +4,8 @@
 #ifndef QUNIONFIND_UTILS_HPP
 #define QUNIONFIND_UTILS_HPP
 
-#include "TreeNode.hpp"
 #include "QeccException.hpp"
+#include "TreeNode.hpp"
 #include "nlohmann/json.hpp"
 
 #include <cassert>
@@ -70,7 +70,7 @@ public:
                 result.at(i) = nmod_mat_get_entry(x, i, xColIdx);
             }
         } else {
-            //std::cout << "no sol" << std::endl;
+            // std::cout << "no sol" << std::endl;
         }
         nmod_mat_clear(mat);
         nmod_mat_clear(x);
@@ -147,8 +147,8 @@ public:
             matrix.at(i).emplace_back(vec.at(i));
         }
         auto reduced = gauss(matrix);
-        //flint::print_pretty(reduced);
-        // check consistency, inconsistent <=> vec not in rowspace
+        // flint::print_pretty(reduced);
+        //  check consistency, inconsistent <=> vec not in rowspace
         for (slong i = 0; i < reduced.rows(); i++) {
             if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
                 bool inconsistent = true;
@@ -174,7 +174,7 @@ public:
     getTranspose(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
         gf2Mat transp(matrix.at(0).size());
-        for (auto& i: transp) {
+        for (auto& i : transp) {
             i = gf2Vec(matrix.size());
         }
         for (std::size_t i = 0; i < matrix.size(); i++) {
@@ -198,14 +198,14 @@ public:
             std::cerr << "Cannot multiply" << std::endl;
             throw QeccException("Cannot multiply, dimensions wrong");
         }
-        //std::cout << "starting mult" << std::endl;
+        // std::cout << "starting mult" << std::endl;
         for (std::size_t i = 0; i < m1.size(); i++) {
             const auto& row = m1.at(i);
             for (std::size_t k = 0; k < vec.size(); k++) {
                 result.at(i) = result.at(i) ^ (row.at(k) && vec.at(k));
             }
         }
-        //std::cout << "rect mult done" << std::endl;
+        // std::cout << "rect mult done" << std::endl;
     }
 
     static void assertMatrixPresent(const gf2Mat& matrix) {
@@ -301,10 +301,10 @@ public:
     }
 
     /**
-         *
-         * @param error bool vector representing error
-         * @param residual estimate vector that contains residual error at end of function
-    */
+     *
+     * @param error bool vector representing error
+     * @param residual estimate vector that contains residual error at end of function
+     */
     static void computeResidualErr(const gf2Vec& error, gf2Vec& residual) {
         for (std::size_t j = 0; j < residual.size(); j++) {
             residual.at(j) = (residual.at(j) != error.at(j));
@@ -339,9 +339,9 @@ public:
     }
 
     static void readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths) {
-        for (const auto& file: std::filesystem::directory_iterator(inPath)) {
+        for (const auto& file : std::filesystem::directory_iterator(inPath)) {
             codePaths.emplace_back(file.path());
         }
     }
 };
-#endif //QUNIONFIND_UTILS_HPP
+#endif // QUNIONFIND_UTILS_HPP

@@ -5,7 +5,7 @@
 #ifndef QUNIONFIND_IMPROVEDUF_HPP
 #define QUNIONFIND_IMPROVEDUF_HPP
 #include "Decoder.hpp"
-class UFDecoder: public Decoder {
+class UFDecoder : public Decoder {
 public:
     using Decoder::Decoder;
     void decode(const std::vector<bool>& syndrome) override;
@@ -25,4 +25,4 @@ private:
     void                                                       singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& comps);
     [[nodiscard]] std::vector<std::unordered_set<std::size_t>> getConnectedComps(const std::unordered_set<std::size_t>& nodes) const;
 };
-#endif //QUNIONFIND_IMPROVEDUF_HPP
+#endif // QUNIONFIND_IMPROVEDUF_HPP

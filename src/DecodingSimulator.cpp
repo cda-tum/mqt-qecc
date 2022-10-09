@@ -79,7 +79,7 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
                 }
             }
         }
-        //compute word error rate WER
+        // compute word error rate WER
         const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(nrRunsPerRate);
         const auto wordErrRate  = blockErrRate / static_cast<double>(code.getK());       // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
         wordErrRatePerPhysicalErrRate.try_emplace(std::to_string(currPer), wordErrRate); // to string for json parsing
@@ -127,12 +127,12 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
     std::map<std::string, std::map<std::string, std::size_t, std::less<>>>         avgSampleRunsPerCode;
 
     DecodingRunInformation info;
-    for (const auto& file: std::filesystem::directory_iterator(codesPath)) {
+    for (const auto& file : std::filesystem::directory_iterator(codesPath)) {
         codePaths.emplace_back(file.path());
     }
     std::map<std::string, double, std::less<>> avgTimePerSizeData;
     try {
-        for (const auto& currPath: codePaths) {
+        for (const auto& currPath : codePaths) {
             avgDecodingTimeAcc = 0U;
             auto       code    = Code(currPath);
             const auto codeN   = code.getN();
