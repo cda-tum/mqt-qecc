@@ -5,6 +5,7 @@
 #define QUNIONFIND_UTILS_HPP
 
 #include "TreeNode.hpp"
+#include "QeccException.hpp"
 #include "nlohmann/json.hpp"
 
 #include <cassert>
