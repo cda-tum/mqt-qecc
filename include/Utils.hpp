@@ -16,9 +16,6 @@
 #include <random>
 #include <set>
 #include <vector>
-extern "C" {
-#include <flint/nmod_mat.h>
-}
 
 using gf2Mat = std::vector<std::vector<bool>>;
 using gf2Vec = std::vector<bool>;
