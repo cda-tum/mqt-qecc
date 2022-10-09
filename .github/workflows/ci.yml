@@ -95,7 +95,7 @@ jobs:
         run:
           pacman -Ql mingw-w64-clang-x86_64-flint
       - name: Configure CMake
-        run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/mingw64/clang64
+        run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
         env:
           CC:  clang
           CXX: clang++

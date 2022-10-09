@@ -8,12 +8,17 @@ endif ()
 
 # if FLINT_ROOT is provided, check there first
 if (NOT ${FLINT_ROOT} STREQUAL "")
+	message(STATUS "FLINT_ROOT provided.")
 	find_path(
 			FLINT_INCLUDE_DIR
 			NAMES flint.h flintxx.h
 			NO_DEFAULT_PATH
 			PATHS ${FLINT_ROOT}
 			PATH_SUFFIXES libflint flint)
+
+	if (FLINT_INCLUDE_DIR)
+		message(VERBOSE "FLINT_INCLUDE_DIR: ${FLINT_INCLUDE_DIR}")
+	endif ()
 
 	find_library(
 			FLINT_LIBRARY
@@ -22,9 +27,7 @@ if (NOT ${FLINT_ROOT} STREQUAL "")
 			PATHS ${FLINT_ROOT}
 			PATH_SUFFIXES lib bin)
 
-	if (FLINT_INCLUDE_DIR AND FLINT_LIBRARY)
-		message(STATUS "FLINT_ROOT provided and includes and libraries found.")
-		message(VERBOSE "FLINT_INCLUDE_DIR: ${FLINT_INCLUDE_DIR}")
+	if (FLINT_LIBRARY)
 		message(VERBOSE "FLINT_LIBRARY: ${FLINT_LIBRARY}")
 	endif ()
 endif ()
