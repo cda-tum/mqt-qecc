@@ -66,9 +66,6 @@ if(BINDINGS)
     add_subdirectory(mqt/qecc)
 endif()
 
-# files containing codes for tests
-FILE(COPY examples/test/ DESTINATION "${CMAKE_BINARY_DIR}/test/resources/codes/" PATTERN "*")
-
 add_compile_options(fno-inline)
 add_link_options(fno-inline)
 add_compile_options(-fno-omit-frame-pointer)

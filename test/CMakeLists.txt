@@ -42,6 +42,9 @@ package_add_test(${PROJECT_NAME}_test
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_simulator.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_treenode.cpp)
 
+# files containing codes for tests
+FILE(COPY "${CMAKE_SOURCE_DIR}/examples/test/" DESTINATION "${CMAKE_SOURCE_DIR}/test/resources/codes/" PATTERN "*")
+
 add_custom_command(TARGET ${PROJECT_NAME}_test
                    POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE_DIR:${PROJECT_NAME}_test>/${PROJECT_NAME}_test ${CMAKE_BINARY_DIR}/${PROJECT_NAME}_test
