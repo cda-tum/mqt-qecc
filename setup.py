@@ -83,6 +83,7 @@ class CMakeBuild(build_ext):
             cwd=self.build_temp,
         )
 
+
 setup(
     ext_modules=[CMakeExtension("mqt.qecc.pyqecc")],
     cmdclass=dict(build_ext=CMakeBuild),
