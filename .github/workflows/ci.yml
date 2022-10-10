@@ -19,67 +19,47 @@ defaults:
     shell: bash
 
 jobs:
-  cpp-tests:
-    name: Tests ${{ matrix.config.os }}
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {
-            os:               ubuntu-22.04,
-            mpfr-install-cmd: "sudo apt-get install libmpfr-dev"
-          }
-          - {
-            os: macos-11,
-            mpfr-install-cmd: "brew install mpfr"
-          }
+  ubuntu-tests:
+    name: Tests ubuntu-22.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Install MPFR
-        run:  ${{ matrix.config.mpfr-install-cmd }}
-      - name: Cache FLINT
-        id:   cache-flint2
-        uses: actions/cache@v3
-        with:
-          path: flint2
-          key:  ci-${{ runner.OS }}-${{ hashFiles('**/ci.yml') }}
-      - name: Build FLINT2
-        if:   steps.cache-flint2.outputs.cache-hit != 'true'
-        run: |
-              git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
-              cd flint2
-              ./configure
-              make -j3
-      - name: Install FLINT2
-        run:  |
-              cd flint2
-              sudo make install
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
       - name: Build
-        run:  cmake --build build --config Release
-      - name:              Test
+        run: cmake --build build
+      - name: Test
         working-directory: build/test
-        run:               ctest -C Release --output-on-failure
-      - if:   runner.os == 'Linux'
-        name: Coverage
-        run:  |
-          cmake -S . -B buildCov -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
-              cmake --build buildCov --config Debug --target qecc_test
-              cd buildCov/test
-              ctest -C Debug --output-on-failure
-      - if:   runner.os == 'Linux'
-        name: Upload coverage to Codecov
+        run: ctest -C Debug --output-on-failure
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
-          gcov:        true
+          gcov: true
           gcov_ignore: "extern/**/*"
 
+  macos-tests:
+    name: Tests macos-11
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install flint
+        run: brew install flint
+      - name: Configure CMake
+        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        working-directory: build/test
+        run: ctest -C Release --output-on-failure
+
   windows-tests:
-    name:    Tests windows-2022
+    name: Tests windows-2022
     runs-on: windows-2022
     defaults:
       run:
@@ -92,15 +72,14 @@ jobs:
         with:
           install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
       - name: Debug flint location
-        run:
-          pacman -Ql mingw-w64-clang-x86_64-flint
+        run: pacman -Ql mingw-w64-clang-x86_64-flint
       - name: Configure CMake
-        run:  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
         env:
-          CC:  clang
+          CC: clang
           CXX: clang++
       - name: Build
-        run:  cmake --build build --config Release --parallel 3
-      - name:              Test
+        run: cmake --build build --config Release --parallel 3
+      - name: Test
         working-directory: build\Release\test
-        run:               ctest -C Release --output-on-failure
+        run: ctest -C Release --output-on-failure
