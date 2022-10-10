@@ -45,18 +45,21 @@ jobs:
 
   build_sdist:
     name: sdist
-    runs-on: macos-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: recursive
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Install flint
-        run: brew install flint
+        run: sudo apt-get install libflint-dev
       - name: Build SDist
         run: pipx run build --sdist
       - name: Install sdist
-        run: python3 -m pip install --verbose dist/*.tar.gz
+        run: python -m pip install --verbose dist/*.tar.gz
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
