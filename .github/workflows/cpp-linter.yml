@@ -23,25 +23,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Install MPFR
-        run:  sudo apt-get install libmpfr-dev
-      - name: Cache FLINT
-        id:   cache-flint2
-        uses: actions/cache@v3
-        with:
-          path: flint2
-          key:  cpp-linter-${{ runner.OS }}-${{ hashFiles('**/cpp-linter.yml') }}
-      - name: Build FLINT2
-        if:   steps.cache-flint2.outputs.cache-hit != 'true'
-        run:  |
-              git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
-              cd flint2
-              ./configure
-              make -j3
-      - name: Install FLINT2
-        run:  |
-              cd flint2
-              sudo make install
+      - name: Install flint
+        run:  sudo apt-get install libflint-dev
       - name: Generate compilation database
         run:  |
               cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
