@@ -34,25 +34,8 @@ jobs:
           submodules:  recursive
           fetch-depth: 0
 
-      - name: Install MPFR
-        run:  sudo apt-get install libmpfr-dev
-      - name: Cache FLINT
-        id:   cache-flint2
-        uses: actions/cache@v3
-        with:
-          path: flint2
-          key:  codeql-${{ matrix.language }}-${{ hashFiles('**/codeql-analysis.yml') }}
-      - name: Build FLINT2
-        if:   steps.cache-flint2.outputs.cache-hit != 'true'
-        run:  |
-              git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git
-              cd flint2
-              ./configure
-              make -j3
-      - name: Install FLINT2
-        run:  |
-              cd flint2
-              sudo make install
+      - name: Install flint
+        run:  sudo apt-get install libflint-dev
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
