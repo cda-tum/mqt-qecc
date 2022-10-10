@@ -62,7 +62,7 @@ manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
 before-all = [
-    "yum install mpfr-devel",
+    "yum -y install mpfr-devel",
     "git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git",
     "cd flint2 && ./configure && make -j 3 && make install"
 ]
