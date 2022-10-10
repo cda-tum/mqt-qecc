@@ -50,10 +50,9 @@ TEST(UtilsTest, TestSwapRows) {
     gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
                      {1, 0, 1, 0, 1, 0, 0},
                      {0, 1, 1, 0, 0, 1, 0}};
-    gf2Mat sol    = {
-            {1, 1, 0, 1, 0, 0, 1},
-            {0, 1, 1, 0, 0, 1, 0},
-            {1, 0, 1, 0, 1, 0, 0}};
+    gf2Mat sol    = {{1, 1, 0, 1, 0, 0, 1},
+                     {0, 1, 1, 0, 0, 1, 0},
+                     {1, 0, 1, 0, 1, 0, 0}};
 
     Utils::swapRows(matrix, 1, 2);
     EXPECT_TRUE(sol == matrix);
@@ -63,11 +62,10 @@ TEST(UtilsTest, TestReduce) {
     gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
                      {1, 0, 1, 0, 1, 0, 0},
                      {0, 1, 1, 0, 0, 1, 0}};
-    gf2Mat sol    = {
-            {1, 0, 1, 0, 1, 0, 0},
-            {0, 1, 1, 0, 0, 1, 0},
-            {0, 0, 0, 1, 1, 1, 1}};
-    auto res = Utils::gauss(matrix);
+    gf2Mat sol    = {{1, 0, 1, 0, 1, 0, 0},
+                     {0, 1, 1, 0, 0, 1, 0},
+                     {0, 0, 0, 1, 1, 1, 1}};
+    auto   res    = Utils::gauss(matrix);
     EXPECT_TRUE(Utils::getFlintMatrix(sol) == res);
 }
 

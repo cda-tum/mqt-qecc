@@ -55,14 +55,14 @@ struct DecodingRunInformation {
     gf2Vec               syndrome     = {};
     DecodingResultStatus status{};
     DecodingResult       result{};
-    [[nodiscard]] json   to_json() const {
-        return json{
-                  {"physicalErrRate", physicalErrR},
-                  {"codeSize", codeSize},
-                  {"error", Utils::getStringFrom(error)},
-                  {"syndrome", Utils::getStringFrom(syndrome)},
-                  {"decodingResult", result.to_json()},
-                  {"decodingStatus", status}};
+
+    [[nodiscard]] json to_json() const {
+        return json{{"physicalErrRate", physicalErrR},
+                    {"codeSize", codeSize},
+                    {"error", Utils::getStringFrom(error)},
+                    {"syndrome", Utils::getStringFrom(syndrome)},
+                    {"decodingResult", result.to_json()},
+                    {"decodingStatus", status}};
     }
 
     void from_json(const json& j) {
