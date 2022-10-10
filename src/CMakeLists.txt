@@ -56,6 +56,8 @@ if (GENERATE_POSITION_INDEPENDENT_CODE OR BINDINGS)
 endif ()
 
 # add nlohmann::json library
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(JSON_MultipleHeaders OFF CACHE INTERNAL "")
 add_subdirectory("${PROJECT_SOURCE_DIR}/extern/json" "extern/json" EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 
