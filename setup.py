@@ -30,8 +30,7 @@ class CMakeBuild(build_ext):
             "-DPYTHON_EXECUTABLE={}".format(sys.executable),
             "-DQECC_VERSION_INFO={}".format(version),
             "-DCMAKE_BUILD_TYPE={}".format(cfg),
-            "-DBINDINGS=ON",
-            "-DCMAKE_CXX_COMPILER=/usr/bin/g++-11"
+            "-DBINDINGS=ON"
         ]
         build_args = []
 
