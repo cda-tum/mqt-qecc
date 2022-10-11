@@ -38,6 +38,24 @@ requires-python = ">=3.7"
 dependencies = []
 dynamic = ["version"]
 
+[project.optional-dependencies]
+test = ["pytest>=7"]
+coverage = ["mqt.qecc[test]", "coverage[toml]~=6.4.2", "pytest-cov~=3.0.0"]
+docs = [
+    "sphinx>=5.1.1",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-bibtex~=2.5",
+    "sphinx-copybutton",
+    "sphinx-hoverxref~=1.1.3",
+    "pybtex>=0.24",
+    "importlib_metadata>=3.6; python_version < '3.10'",
+    "ipython",
+    "ipykernel",
+    "nbsphinx",
+    "qiskit-terra[visualization]",
+]
+dev = ["mqt.qecc[coverage, docs]"]
+
 [project.urls]
 Homepage = "https://github.com/lucasberent/qecc"
 Documentation = "https://github.com/lucasberent/qecc"
@@ -75,6 +93,47 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "10.15", DEPLOY = "ON" }
 before-build = "pip install delvewheel"
 repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel}"
 environment = { DEPLOY = "ON", CC = "clang", CXX = "clang++", FLINT_ROOT = "/clang64" }
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["test/python"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
+log_cli_level = "INFO"
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["mqt.qecc"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+precision = 1
+
+[tool.check-manifest]
+ignore = [
+    "docs/**",
+    ".*",
+    ".*/**",
+    "noxfile.py"
+]
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+src_paths = ["mqt/qecc", "test/python"]
+
+[tool.mypy]
+files = ["mqt/qecc", "test/python", "setup.py"]
+python_version = "3.7"
+strict = true
+warn_unused_configs = true
+check_untyped_defs = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
 
 [tool.pylint]
 master.py-version = "3.7"

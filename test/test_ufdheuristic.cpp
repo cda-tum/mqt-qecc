@@ -32,7 +32,6 @@ INSTANTIATE_TEST_SUITE_P(UptoStabCorrectable, UpToStabCorrectableErrTest,
                                  std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
 
-
 INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, CorrectableLargeToric,
                          testing::Values(
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}));
@@ -282,7 +281,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         }
         EXPECT_TRUE(code.isStabilizer(residualErr));
         // EXPECT_TRUE(code.isStabilizer(residualErr2));
-    } catch (QeccException &e) {
+    } catch (QeccException& e) {
         std::cout << e.getMessage() << std::endl;
         EXPECT_TRUE(false);
     }

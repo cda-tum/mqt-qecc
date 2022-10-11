@@ -25,6 +25,7 @@ def tests(session: Session) -> None:
         run_install = False
         session.posargs.remove("skip-install")
     if run_install:
+        session.install("numpy")
         session.install("-e", ".[test]")
     session.run("pytest", *session.posargs)
 

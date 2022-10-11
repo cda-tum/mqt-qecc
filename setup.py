@@ -31,6 +31,7 @@ class CMakeBuild(build_ext):
             "-DQECC_VERSION_INFO={}".format(version),
             "-DCMAKE_BUILD_TYPE={}".format(cfg),
             "-DBINDINGS=ON",
+            "-DCMAKE_CXX_COMPILER=/usr/bin/g++-11"
         ]
         build_args = []
 
