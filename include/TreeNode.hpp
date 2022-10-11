@@ -37,7 +37,6 @@ public:
      * find using path compression
      */
     static TreeNode* Find(TreeNode* node) {
-        // std::cout << "in find" << std::endl;
         auto parent = node->parent;
         while (parent != nullptr && parent->parent != nullptr) {
             node   = parent;

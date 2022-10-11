@@ -114,7 +114,6 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     auto      code = SteaneCode();
     UFDecoder decoder;
-    // decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;

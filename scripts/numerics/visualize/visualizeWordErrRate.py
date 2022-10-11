@@ -13,6 +13,7 @@ def wer():
 
     f = open(inputFilename)
     data = json.load(f)
+    f.close()
     xData = []
     yData = []
     for key in data:
@@ -25,6 +26,7 @@ def wer():
 
     f2 = open(inputFilename2)
     data2 = json.load(f2)
+    f2.close()
     xData2 = []
     yData2 = []
     for key2 in data2:
@@ -37,6 +39,7 @@ def wer():
 
     f3 = open(inputFilename3)
     data3 = json.load(f3)
+    f3.close()
     xData3 = []
     yData3 = []
     for key3 in data3:
@@ -76,6 +79,7 @@ def werComp():
 
     f = open(inputFilename)
     data = json.load(f)
+    f.close()
     xData = []
     yData = []
     for key in data:
@@ -84,6 +88,7 @@ def werComp():
 
     f2 = open(inputFilename2)
     data2 = json.load(f2)
+    f2.close()
     xData2 = []
     yData2 = []
     for key2 in data2:

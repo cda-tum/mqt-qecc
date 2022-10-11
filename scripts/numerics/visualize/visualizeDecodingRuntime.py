@@ -28,7 +28,6 @@ def PowFourFun(x, a, b):
 def runtime():
     plt.rcParams.update({'font.size': 15})
     inputFilen = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/runtime/rt-original-1k-01.json'
-    colors = mcolors.BASE_COLORS
     xData = []
     yData = []
     pers = []
@@ -52,7 +51,6 @@ def runtime():
     yfinal = []
     cols = []
     colors = mcolors.BASE_COLORS
-    colors2 = mcolors.BASE_COLORS
 
     for i in range(len(xData)):
         col, val = colors.popitem()
@@ -124,7 +122,6 @@ def runtimeComparison():
     yfinal = []
     cols = []
     colors = mcolors.BASE_COLORS
-    colors2 = mcolors.BASE_COLORS
 
     for i in range(len(xData)):
         col, val = colors.popitem()

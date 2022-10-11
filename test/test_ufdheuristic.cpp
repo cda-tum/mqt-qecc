@@ -280,7 +280,6 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
             residualErr2.at(i) = (err.at(i) != estim2.at(i));
         }
         EXPECT_TRUE(code.isStabilizer(residualErr));
-        // EXPECT_TRUE(code.isStabilizer(residualErr2));
     } catch (QeccException& e) {
         std::cout << e.getMessage() << std::endl;
         EXPECT_TRUE(false);

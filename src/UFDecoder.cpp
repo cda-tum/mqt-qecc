@@ -223,7 +223,7 @@ void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>
     auto                            ccomps = getConnectedComps(nodeSet);
     std::unordered_set<std::size_t> compNbrs;
     std::unordered_set<std::size_t> smallestComponent;
-    std::size_t                     smallestSize;
+    std::size_t                     smallestSize = SIZE_MAX;
     for (const auto& cId : ccomps) {
         if (cId.size() < smallestSize) {
             smallestComponent = cId;

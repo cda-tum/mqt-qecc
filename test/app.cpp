@@ -64,8 +64,6 @@ void decodingPerformance(const double per) {
     const std::size_t nrOfRunsPerRate = 1;
 
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
-    //    decodingResOutput << "{ \"runs\" : [ ";
-    //    rawIntermediateOut << "{ ";
 
     auto       code = HGPcode(rootPath, rootPath2, code_K);
     const auto K    = code.getK();
@@ -76,7 +74,6 @@ void decodingPerformance(const double per) {
     while (nrOfFailedRuns < 1 || j < nrOfRunsPerRate) {
         auto* decoder = new UFDecoder();
         decoder->setCode(code);
-        // decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
         auto error    = Utils::sampleErrorIidPauliNoise(N, per);
         auto syndrome = code.getXSyndrome(error);
         decoder->decode(syndrome);
@@ -100,8 +97,6 @@ void decodingPerformance(const double per) {
 }
 
 int main([[maybe_unused]] int argc, char* argv[]) {
-    // std::string codeName = argv[1];
     double per = std::stod(argv[1]);
-    // runtime(codeName);
     decodingPerformance(per);
 }

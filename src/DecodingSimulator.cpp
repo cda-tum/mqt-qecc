@@ -7,10 +7,12 @@
 #include "UFDecoder.hpp"
 
 std::string generateOutFileName(const std::string& filepath) {
-    auto               t  = std::time(nullptr);
-    auto               tm = *std::localtime(&t);
+    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    char buf[16] = { 0 };
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::localtime(&now));
+
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%d-%m-%Y");
+    oss << std::string(buf);
     auto timestamp = oss.str();
     return filepath + "-" + timestamp + ".json";
 }

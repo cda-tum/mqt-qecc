@@ -70,7 +70,7 @@ public:
                 result.at(i) = nmod_mat_get_entry(x, i, xColIdx);
             }
         } else {
-            // std::cout << "no sol" << std::endl;
+            // no solution
         }
         nmod_mat_clear(mat);
         nmod_mat_clear(x);
@@ -198,14 +198,12 @@ public:
             std::cerr << "Cannot multiply" << std::endl;
             throw QeccException("Cannot multiply, dimensions wrong");
         }
-        // std::cout << "starting mult" << std::endl;
         for (std::size_t i = 0; i < m1.size(); i++) {
             const auto& row = m1.at(i);
             for (std::size_t k = 0; k < vec.size(); k++) {
                 result.at(i) = result.at(i) ^ (row.at(k) && vec.at(k));
             }
         }
-        // std::cout << "rect mult done" << std::endl;
     }
 
     static void assertMatrixPresent(const gf2Mat& matrix) {

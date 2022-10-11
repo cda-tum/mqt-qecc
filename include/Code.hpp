@@ -40,7 +40,6 @@ struct ParityCheckMatrix {
         int           word;
         std::ifstream inFile;
         gf2Mat        result;
-        // std::cout << "[PCM::ctor] - reading pcm from codefile" << std::endl;
         try {
             inFile.open(filePath);
             while (getline(inFile, line, '\n')) {
@@ -57,7 +56,6 @@ struct ParityCheckMatrix {
             throw QeccException(e.what());
         }
         inFile.close();
-        // std::cout << "[PCM::ctor] - importing from codefile done" << std::endl;
     }
 
     /**
