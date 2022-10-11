@@ -192,7 +192,7 @@ void UFHeuristic::standardGrowth(std::vector<std::pair<std::size_t, std::size_t>
 void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::size_t, std::size_t>>& fusionEdges,
                                                    std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components, const std::unique_ptr<ParityCheckMatrix>& pcm) {
     std::size_t smallestComponent = *components.begin();
-    std::size_t smallestSize = SIZE_MAX;
+    std::size_t smallestSize      = SIZE_MAX;
     for (const auto& cId : components) {
         const auto& comp = getNodeFromIdx(cId);
         if (comp->clusterSize < smallestSize) {

@@ -7,8 +7,8 @@
 #include "UFDecoder.hpp"
 
 std::string generateOutFileName(const std::string& filepath) {
-    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    char buf[16] = { 0 };
+    std::time_t now     = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    char        buf[16] = {0};
     std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::localtime(&now));
 
     std::ostringstream oss;
