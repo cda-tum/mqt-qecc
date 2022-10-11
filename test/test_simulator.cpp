@@ -38,7 +38,7 @@ TEST(DecodingSimulatorTest, TestPerformanceSim) {
     std::string rawOut = "./testRawFile", testOut = "./testStatFile";
     double      minErate = 0.01, maxErate = 0.03, stepSize = 0.01;
     std::size_t runsPerRate = 2;
-    auto        code        = SteaneXCode();
+    auto        code        = SteaneCode();
     try {
         DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, runsPerRate, code, stepSize, DecoderType::UF_DECODER);
     } catch (QeccException& e) {

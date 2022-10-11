@@ -12,29 +12,26 @@ class UniquelyCorrectableErrTest_original : public OriginalUFDtest {};
 class InCorrectableErrTest_original : public OriginalUFDtest {};
 class UpToStabCorrectableErrTest_original : public OriginalUFDtest {};
 
-INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrs, UniquelyCorrectableErrTest_original,
+INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrsSteane, UniquelyCorrectableErrTest_original,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 1, 0, 0, 0, 0}));
 
-INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, InCorrectableErrTest_original,
+INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, InCorrectableErrTest_original,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 1, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 0, 1, 0}));
 
-INSTANTIATE_TEST_SUITE_P(IncorrectableSingleBitErrs, UpToStabCorrectableErrTest_original,
+INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, UpToStabCorrectableErrTest_original,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
                                  std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 1, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
 
-INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, OriginalUFDtest,
-                         testing::Values(
-                                 std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}));
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
@@ -99,14 +96,23 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
         residualErr.at(i) = (err[i] != estim[i]);
     }
 
-    EXPECT_FALSE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
+    gf2Vec sol = GetParam();
+
+    std::cout << "Estim: " << std::endl;
+    Utils::printGF2vector(estim);
+    std::cout << "EstimIdx: " << std::endl;
+    Utils::printGF2vector(estim2);
+    std::cout << "Sol: " << std::endl;
+    Utils::printGF2vector(sol);
+    EXPECT_FALSE(sol == estim);
+    EXPECT_FALSE(sol == estim2);
 }
 
 /**
  * Tests for errors that are correctable up to stabilizer
  */
 TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
-    auto      code = SteaneXCode();
+    auto      code = SteaneCode();
     UFDecoder decoder;
     // decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
     decoder.setCode(code);
@@ -136,42 +142,6 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
         residualErr2.at(i) = (err[i] != estim2[i]);
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
-}
-TEST_F(OriginalUFDtest, LargeCodeTest) {
-    auto      code = HGPcode();
-    UFDecoder decoder;
-    // decoder.setGrowth(GrowthVariant::SINGLE_SMALLEST);
-    decoder.setCode(code);
-    auto err  = gf2Vec(code.getN());
-    err.at(0) = 1;
-    err.at(1) = 1;
-
-    std::cout << "err :" << std::endl;
-    Utils::printGF2vector(err);
-    std::cout << std::endl;
-    auto syndr = code.getXSyndrome(err);
-    std::cout << "syndrome" << std::endl;
-    Utils::printGF2vector(syndr);
-    std::cout << std::endl;
-    decoder.decode(syndr);
-    const auto& decodingResult = decoder.result;
-    const auto& estim          = decodingResult.estimBoolVector;
-    const auto& estimIdx       = decodingResult.estimNodeIdxVector;
-    gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
-        estim2.at(idx) = true;
-        std::cout << idx;
-    }
-    std::cout << std::endl;
-    std::vector<bool> residualErr(err.size());
-    for (std::size_t i = 0; i < err.size(); i++) {
-        residualErr.at(i) = (err.at(i) != estim.at(i));
-    }
-    std::vector<bool> residualErr2(err.size());
-    for (std::size_t i = 0; i < err.size(); i++) {
-        residualErr2.at(i) = (err.at(i) != estim2.at(i));
-    }
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHx()->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHx()->pcm, residualErr2));
 }
