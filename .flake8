@@ -1,0 +1,17 @@
+[flake8]
+extend-select = B9
+extend-ignore = E203, E231, E501, E722, W503, B950, B014, W504, E123, E126, E226, E121
+max-line-length = 120
+show-source = true
+exclude =
+    .git,
+    .idea,
+    .eggs,
+    __pycache__,
+    .tox,
+    docs/source/conf.py,
+    build,
+    .nox,
+    venv,
+    .venv
+application-import-names = mqt.qecc
