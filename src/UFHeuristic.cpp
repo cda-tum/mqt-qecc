@@ -40,7 +40,7 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
     if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
         std::vector<bool> xSyndr;
         std::vector<bool> zSyndr;
-        auto              mid = syndrome.begin() + (syndrome.size() / 2U);
+        auto              mid = syndrome.begin() + (std::ssize(syndrome) / 2U);
         std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
         std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
         doDecoding(xSyndr, this->getCode()->getHz());
@@ -88,10 +88,10 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
             // Fuse clusters that grew together
             auto eIt = fusionEdges.begin();
             while (eIt != fusionEdges.end()) {
-                auto n1    = getNodeFromIdx(eIt->first);
-                auto n2    = getNodeFromIdx(eIt->second);
-                auto root1 = TreeNode::Find(n1);
-                auto root2 = TreeNode::Find(n2);
+                auto* n1    = getNodeFromIdx(eIt->first);
+                auto* n2    = getNodeFromIdx(eIt->second);
+                auto* root1 = TreeNode::Find(n1);
+                auto* root2 = TreeNode::Find(n2);
                 // compares vertexIdx only
                 if (root1->vertexIdx == root2->vertexIdx) {
                     eIt = fusionEdges.erase(eIt); // passes eIt to erase
@@ -118,7 +118,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
             std::vector<std::size_t> toAdd;
             auto                     idxIt = invalidComponents.begin();
             while (idxIt != invalidComponents.end()) {
-                auto        elem = getNodeFromIdx(*idxIt);
+                auto*       elem = getNodeFromIdx(*idxIt);
                 const auto& root = TreeNode::Find(elem);
                 if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
                     // root already in component list, no replacement necessary
@@ -134,16 +134,16 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
             }
 
             // Update Boundary Lists: remove vertices that are not in boundary anymore
-            for (auto& compId : invalidComponents) {
+            for (const auto& compId : invalidComponents) {
                 const auto& compNode = getNodeFromIdx(compId);
                 auto        iter     = compNode->boundaryVertices.begin();
                 while (iter != compNode->boundaryVertices.end()) {
                     const auto& nbrs     = pcm->getNbrs(*iter);
-                    auto        currNode = getNodeFromIdx(*iter);
+                    auto*       currNode = getNodeFromIdx(*iter);
                     const auto& currRoot = TreeNode::Find(currNode);
                     for (const auto& nbr : nbrs) {
-                        auto node = getNodeFromIdx(nbr);
-                        if (const auto nbrRoot = TreeNode::Find(node); currRoot->vertexIdx != nbrRoot->vertexIdx) {
+                        auto* node = getNodeFromIdx(nbr);
+                        if (auto* const nbrRoot = TreeNode::Find(node); currRoot->vertexIdx != nbrRoot->vertexIdx) {
                             // if we find one neighbour that is not in the same component the currNode is in the boundary
                             iter++;
                             break;
@@ -215,7 +215,7 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
                                                  std::unordered_map<std::size_t, bool>&            presentMap,
                                                  const std::unordered_set<std::size_t>&            components,
                                                  const std::unique_ptr<ParityCheckMatrix>&         pcm) {
-    std::size_t        chosenComponent;
+    std::size_t        chosenComponent = 0;
     std::random_device rd;
     std::mt19937       gen(rd());
     gf2Vec             result;
@@ -251,7 +251,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
     std::vector<std::vector<std::size_t>> erasureSet{};
     std::size_t                           erasureSetIdx = 0;
     // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
-    for (auto& currCompRootId : erasure) {
+    for (const auto& currCompRootId : erasure) {
         std::vector<std::size_t> compErasure;
         const auto&              currCompRoot = getNodeFromIdx(currCompRootId);
         std::queue<std::size_t>  queue;

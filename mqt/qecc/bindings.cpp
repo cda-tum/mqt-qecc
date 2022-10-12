@@ -18,16 +18,15 @@
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
 namespace py = pybind11;
-namespace nl = nlohmann;
 using namespace pybind11::literals;
 
-std::vector<bool> sample_iid_pauli_err(const std::size_t length, const double physicalErrRate) {
+std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physicalErrRate) {
     return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
 PYBIND11_MODULE(pyqecc, m) {
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";
-    m.def("sample_iid_pauli_err", &sample_iid_pauli_err, "Sample a iid pauli error represented as binary string");
+    m.def("sample_iid_pauli_err", &sampleIidPauliErr, "Sample a iid pauli error represented as binary string");
 
     py::class_<Code>(m, "Code", "CSS code object")
             .def(py::init<>())
