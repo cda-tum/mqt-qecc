@@ -20,6 +20,8 @@ jobs:
     name: my[py] linter
     steps:
       - uses: actions/checkout@v3
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
       - name: Setup nox
         uses: excitedleigh/setup-nox@v2.1.0
       - name: Run mypy via nox
@@ -37,6 +39,8 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
       - name: Setup nox
         uses: excitedleigh/setup-nox@v2.1.0
       - name: Test on 3.7

@@ -58,28 +58,28 @@ jobs:
         working-directory: build/test
         run: ctest -C Release --output-on-failure
 
-  windows-tests:
-    name: Tests windows-2022
-    runs-on: windows-2022
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - uses: msys2/setup-msys2@v2
-        with:
-          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
-      - name: Debug flint location
-        run: pacman -Ql mingw-w64-clang-x86_64-flint
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
-        env:
-          CC: clang
-          CXX: clang++
-      - name: Build
-        run: cmake --build build --config Release --parallel 3
-      - name: Test
-        working-directory: build\Release\test
-        run: ctest -C Release --output-on-failure
+#  windows-tests: TODO
+#    name: Tests windows-2022
+#    runs-on: windows-2022
+#    defaults:
+#      run:
+#        shell: msys2 {0}
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: recursive
+#      - uses: msys2/setup-msys2@v2
+#        with:
+#          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
+#      - name: Debug flint location
+#        run: pacman -Ql mingw-w64-clang-x86_64-flint
+#      - name: Configure CMake
+#        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
+#        env:
+#          CC: clang
+#          CXX: clang++
+#      - name: Build
+#        run: cmake --build build --config Release --parallel 3
+#      - name: Test
+#        working-directory: build\Release\test
+#        run: ctest -C Release --output-on-failure
