@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mqt.qecc"
-description = "MQT QECC - A tool for Quantum Error Correcting Codes"
+description = "MQT QECC - A Tool for Quantum Error Correcting Codes"
 readme = "README.md"
 authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" }
