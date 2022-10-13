@@ -1,12 +1,15 @@
 from __future__ import annotations
-from mqt.qecc import *
+
 import numpy as np
 
-def test_basic():
+from mqt.qecc import Code, UFHeuristic, sample_iid_pauli_err
+
+
+def test_basic() -> None:
     H = [
-        [1 ,0 ,0 ,1 ,0 ,1 ,1],
-        [0 ,1 ,0 ,1 ,1 ,0 ,1],
-        [0 ,0 ,1 ,0 ,1 ,1 ,1],
+        [1, 0, 0, 1, 0, 1, 1],
+        [0, 1, 0, 1, 1, 0, 1],
+        [0, 0, 1, 0, 1, 1, 1],
     ]
     code = Code(H, H)
     decoder = UFHeuristic()
@@ -15,5 +18,5 @@ def test_basic():
     decoder.decode(code.get_x_syndrome(x_err))
     result = decoder.result
     print(result)
-    residual_err = np.array(x_err)^np.array(result.estimate)
+    residual_err = np.array(x_err) ^ np.array(result.estimate)
     print(code.is_x_stabilizer(residual_err))
