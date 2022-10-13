@@ -56,7 +56,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     auto const& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -88,7 +88,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     const auto& estimIdx = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -122,7 +122,7 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -145,7 +145,7 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
  * Tests for toric code one bit correctable errs
  */
 TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
-    auto        code = ToricCode_32();
+    auto        code = ToricCode32();
     UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
@@ -164,7 +164,7 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
@@ -182,7 +182,7 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
  * Tests for toric code one bit correctable errs
  */
 TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
-    auto        code = ToricCode_32();
+    auto        code = ToricCode32();
     UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
@@ -201,7 +201,7 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
@@ -221,7 +221,7 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     auto        code = HGPcode();
     UFHeuristic decoder;
     decoder.setCode(code);
-    auto err  = gf2Vec(code.N);
+    auto err  = gf2Vec(code.n);
     err.at(0) = 1;
 
     std::cout << "err :" << std::endl;
@@ -233,7 +233,7 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -255,7 +255,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         auto        code = SteaneCode();
         UFHeuristic decoder;
         decoder.setCode(code);
-        std::vector<bool> err(code.N * 2);
+        std::vector<bool> err(code.n * 2);
         err.at(0)           = 1;
         err.at(code.getN()) = 1;
 
@@ -268,7 +268,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         const auto& estimIdx       = decodingResult.estimNodeIdxVector;
         gf2Vec      estim2(err.size());
         std::cout << "estiIdxs: ";
-        for (unsigned long idx : estimIdx) {
+        for (auto idx : estimIdx) {
             estim2.at(idx) = true;
             std::cout << idx;
         }

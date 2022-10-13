@@ -20,7 +20,7 @@ void UFDecoder::decode(const gf2Vec& syndrome) {
     if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
         std::vector<bool> xSyndr;
         std::vector<bool> zSyndr;
-        auto              mid = syndrome.begin() + (syndrome.size() / 2U);
+        auto              mid = syndrome.begin() + (static_cast<int64_t>(syndrome.size()) / 2U);
         std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
         std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
         doDecode(xSyndr, this->getCode()->getHz());
@@ -54,18 +54,18 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
 
         while (containsInvalidComponents(components, syndr, invalidComponents, pcm) &&
                components.size() < (pcm->pcm->size() + pcm->pcm->front().size())) {
-            if (this->growth == GrowthVariant::ALL_COMPONENTS) {
+            if (this->growth == GrowthVariant::AllComponents) {
                 // // grow all components (including valid ones) by 1
                 standardGrowth(components);
-            } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
+            } else if (this->growth == GrowthVariant::InvalidComponents) {
                 // not implemented yet
-            } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
+            } else if (this->growth == GrowthVariant::SingleSmallest) {
                 // grow only by neighbours of single smallest cluster
                 singleClusterSmallestFirstGrowth(components);
-            } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
+            } else if (this->growth == GrowthVariant::SingleRandom) {
                 // grow only by neighbours of single random cluster
                 singleClusterRandomFirstGrowth(components);
-            } else if (this->growth == GrowthVariant::SINGLE_QUBIT_RANDOM) {
+            } else if (this->growth == GrowthVariant::SingleQubitRandom) {
                 // grow only by neighbours of single qubit
                 singleQubitRandomFirstGrowth(components);
             } else {
@@ -89,7 +89,7 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
     const auto decodingTimeEnd = std::chrono::high_resolution_clock::now();
     result.decodingTime        = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
     result.estimBoolVector     = std::vector<bool>(getCode()->getN());
-    for (unsigned long re : res) {
+    for (auto re : res) {
         result.estimBoolVector.at(re) = true;
     }
     result.estimNodeIdxVector = std::move(res);
@@ -263,7 +263,7 @@ void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& 
  */
 void UFDecoder::reset() {
     this->result = {};
-    this->growth = GrowthVariant::ALL_COMPONENTS;
+    this->growth = GrowthVariant::AllComponents;
 }
 
 /**

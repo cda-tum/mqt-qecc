@@ -70,17 +70,17 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
             std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
             std::unordered_map<std::size_t, bool>            presentMap; // for step 4
 
-            if (this->growth == GrowthVariant::ALL_COMPONENTS) {
+            if (this->growth == GrowthVariant::AllComponents) {
                 // to grow all components (including valid ones)
                 for (auto e : erasure) {
                     invalidComponents.insert(e);
                 }
                 standardGrowth(fusionEdges, presentMap, invalidComponents, pcm);
-            } else if (this->growth == GrowthVariant::INVALID_COMPONENTS) {
+            } else if (this->growth == GrowthVariant::InvalidComponents) {
                 standardGrowth(fusionEdges, presentMap, invalidComponents, pcm);
-            } else if (this->growth == GrowthVariant::SINGLE_SMALLEST) {
+            } else if (this->growth == GrowthVariant::SingleSmallest) {
                 singleClusterSmallestFirstGrowth(fusionEdges, presentMap, invalidComponents, pcm);
-            } else if (this->growth == GrowthVariant::SINGLE_RANDOM) {
+            } else if (this->growth == GrowthVariant::SingleRandom) {
                 singleClusterRandomFirstGrowth(fusionEdges, presentMap, invalidComponents, pcm);
             } else {
                 throw std::invalid_argument("Unsupported growth variant");
@@ -215,7 +215,6 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
                                                  std::unordered_map<std::size_t, bool>&            presentMap,
                                                  const std::unordered_set<std::size_t>&            components,
                                                  const std::unique_ptr<ParityCheckMatrix>&         pcm) {
-    std::size_t        chosenComponent = 0;
     std::random_device rd;
     std::mt19937       gen(rd());
     gf2Vec             result;
@@ -226,8 +225,8 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
     std::size_t                   chosenIdx = d(gen);
     auto                          it        = components.begin();
     std::advance(it, chosenIdx);
-    chosenComponent        = *it;
-    const auto& chosenNode = getNodeFromIdx(chosenComponent);
+    auto        chosenComponent = *it;
+    const auto& chosenNode      = getNodeFromIdx(chosenComponent);
 
     presentMap.try_emplace(chosenNode->vertexIdx, true);
     const auto& bndryNodes = chosenNode->boundaryVertices;
@@ -249,7 +248,6 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
 std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndr, const std::unique_ptr<ParityCheckMatrix>& pcm) {
     std::unordered_set<std::size_t>       syndrome(syndr.begin(), syndr.end());
     std::vector<std::vector<std::size_t>> erasureSet{};
-    std::size_t                           erasureSetIdx = 0;
     // compute interior of grown erasure components, that is nodes all of whose neighbours are also in the component
     for (const auto& currCompRootId : erasure) {
         std::vector<std::size_t> compErasure;
@@ -278,7 +276,6 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
             }
         }
         erasureSet.emplace_back(compErasure);
-        erasureSetIdx++;
     }
 
     std::vector<std::size_t> resList;
@@ -354,18 +351,20 @@ bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_
 
 // return raw ptr to leave ownership in list
 TreeNode* UFHeuristic::getNodeFromIdx(const std::size_t idx) {
+    TreeNode* res = nullptr;
     if (auto nodeIt = nodeMap.find(idx); nodeIt != nodeMap.end()) {
-        return nodeIt->second.get();
+        res = nodeIt->second.get();
     } else {
-        auto res = std::make_unique<TreeNode>(idx);
+        auto treeNode = std::make_unique<TreeNode>(idx);
         // determine if idx is a check
         if (idx >= getCode()->getN()) {
-            res->isCheck = true;
-            res->checkVertices.emplace_back(res->vertexIdx);
+            treeNode->isCheck = true;
+            treeNode->checkVertices.emplace_back(treeNode->vertexIdx);
         }
-        const auto [it, inserted] = nodeMap.try_emplace(idx, std::move(res));
-        return it->second.get();
+        const auto [it, inserted] = nodeMap.try_emplace(idx, std::move(treeNode));
+        res = it->second.get();
     }
+    return res;
 }
 
 void UFHeuristic::reset() {
@@ -379,7 +378,7 @@ void UFHeuristic::reset() {
     }
     nodeMap.clear();
     this->result = {};
-    this->growth = GrowthVariant::ALL_COMPONENTS;
+    this->growth = GrowthVariant::AllComponents;
     this->getCode()->getHz()->nbrCache.clear();
     if (this->getCode()->getHx()) {
         this->getCode()->getHx()->nbrCache.clear();

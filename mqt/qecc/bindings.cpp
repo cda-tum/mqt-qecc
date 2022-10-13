@@ -38,9 +38,9 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("getHz", &Code::getHzMat)
             .def("setHx", &Code::setHx)
             .def("getHx", &Code::getHxMat)
-            .def_readwrite("N", &Code::N)
-            .def_readwrite("K", &Code::K)
-            .def_readwrite("D", &Code::D)
+            .def_readwrite("n", &Code::n)
+            .def_readwrite("k", &Code::k)
+            .def_readwrite("d", &Code::d)
             .def("json", &Code::to_json)
             .def("is_x_stabilizer", &Code::isXStabilizer)
             .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&) const>(&Code::isStabilizer))
@@ -50,11 +50,11 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("__repr__", &Code::toString);
 
     py::enum_<GrowthVariant>(m, "GrowthVariant")
-            .value("ALL_COMPONENTS", GrowthVariant::ALL_COMPONENTS)
-            .value("INVALID_COMPONENTS", GrowthVariant::INVALID_COMPONENTS)
-            .value("SINGLE_SMALLEST", GrowthVariant::SINGLE_SMALLEST)
-            .value("SINGLE_RANDOM", GrowthVariant::SINGLE_RANDOM)
-            .value("SINGLE_QUBIT_RANDOM", GrowthVariant::SINGLE_QUBIT_RANDOM)
+            .value("ALL_COMPONENTS", GrowthVariant::AllComponents)
+            .value("INVALID_COMPONENTS", GrowthVariant::InvalidComponents)
+            .value("SINGLE_SMALLEST", GrowthVariant::SingleSmallest)
+            .value("SINGLE_RANDOM", GrowthVariant::SingleRandom)
+            .value("SINGLE_QUBIT_RANDOM", GrowthVariant::SingleQubitRandom)
             .export_values()
             .def(py::init([](const std::string& str) -> GrowthVariant { return growthVariantFromString(str); }));
 

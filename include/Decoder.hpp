@@ -15,44 +15,44 @@
 using json = nlohmann::json;
 
 enum class GrowthVariant {
-    ALL_COMPONENTS, // standard growth
-    INVALID_COMPONENTS,
-    SINGLE_SMALLEST,
-    SINGLE_RANDOM,
-    SINGLE_QUBIT_RANDOM
+    AllComponents, // standard growth
+    InvalidComponents,
+    SingleSmallest,
+    SingleRandom,
+    SingleQubitRandom
 };
 
 [[maybe_unused]] static GrowthVariant growthVariantFromString(const std::string& architecture) {
     if (architecture == "ALL_COMPONENTS" || architecture == "0") {
-        return GrowthVariant::ALL_COMPONENTS;
-    } else if (architecture == "INVALID_COMPONENTS" || architecture == "1") {
-        return GrowthVariant::INVALID_COMPONENTS;
+        return GrowthVariant::AllComponents;
+    } else if (architecture == "INVALID_COMPONENTS" || architecture == "1") { // NOLINT(readability-else-after-return)
+        return GrowthVariant::InvalidComponents;
     } else if (architecture == "SINGLE_SMALLEST" || architecture == "2") {
-        return GrowthVariant::SINGLE_SMALLEST;
+        return GrowthVariant::SingleSmallest;
     } else if (architecture == "SINGLE_RANDOM" || architecture == "3") {
-        return GrowthVariant::SINGLE_RANDOM;
+        return GrowthVariant::SingleRandom;
     } else if (architecture == "SINGLE_QUBIT_RANDOM" || architecture == "4") {
-        return GrowthVariant::SINGLE_QUBIT_RANDOM;
+        return GrowthVariant::SingleQubitRandom;
     } else {
         throw std::invalid_argument("Invalid growth variant: " + architecture);
     }
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::ALL_COMPONENTS, "all components"},
-                                             {GrowthVariant::INVALID_COMPONENTS, "invalid components"},
-                                             {GrowthVariant::SINGLE_SMALLEST, "smallest component only"},
-                                             {GrowthVariant::SINGLE_QUBIT_RANDOM, "single random qubit only"},
-                                             {GrowthVariant::SINGLE_RANDOM, "single random component"}})
+NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::AllComponents, "all components"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+                                             {GrowthVariant::InvalidComponents, "invalid components"},
+                                             {GrowthVariant::SingleSmallest, "smallest component only"},
+                                             {GrowthVariant::SingleQubitRandom, "single random qubit only"},
+                                             {GrowthVariant::SingleRandom, "single random component"}})
 struct DecodingResult {
     std::size_t              decodingTime       = 0U; // in ms
     std::vector<std::size_t> estimNodeIdxVector = {};
     gf2Vec                   estimBoolVector    = {};
 
-    [[nodiscard]] json to_json() const {
+    [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{{"decodingTime(ms)", decodingTime},
                     {"estimate", Utils::getStringFrom(estimBoolVector)}};
     }
-    void from_json(const json& j) {
+    void from_json(const json& j) { // NOLINT(readability-identifier-naming)
         j.at("decodingTime(ms)").get_to(decodingTime);
         j.at("estimate").get_to(estimBoolVector);
         j.at("estimatedNodes").get_to(estimNodeIdxVector);
@@ -67,10 +67,10 @@ private:
 
 public:
     DecodingResult result{};
-    GrowthVariant  growth = GrowthVariant::ALL_COMPONENTS; // standard
+    GrowthVariant  growth = GrowthVariant::AllComponents; // standard
 
     Decoder() = default;
-    virtual void decode(const std::vector<bool>&){};
+    virtual void decode(const std::vector<bool>&){}; // NOLINT(readability-named-parameter)
     virtual ~Decoder() = default;
 
     [[nodiscard]] const std::unique_ptr<Code>& getCode() const {

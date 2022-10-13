@@ -10,24 +10,24 @@
 #include <gtest/gtest.h>
 
 class OriginalUFDtest : public testing::TestWithParam<std::vector<bool>> {};
-class UniquelyCorrectableErrTest_original : public OriginalUFDtest {};
-class InCorrectableErrTest_original : public OriginalUFDtest {};
-class UpToStabCorrectableErrTest_original : public OriginalUFDtest {};
+class UniquelyCorrectableErrTestOriginal : public OriginalUFDtest {};
+class InCorrectableErrTestOriginal : public OriginalUFDtest {};
+class UpToStabCorrectableErrTestOriginal : public OriginalUFDtest {};
 
-INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrsSteane, UniquelyCorrectableErrTest_original,
+INSTANTIATE_TEST_SUITE_P(CorrectableSingleBitErrsSteane, UniquelyCorrectableErrTestOriginal,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 1, 0, 0, 0, 0, 0},
                                  std::vector<bool>{0, 0, 1, 0, 0, 0, 0}));
 
-INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, InCorrectableErrTest_original,
+INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, InCorrectableErrTestOriginal,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 1, 0, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 1, 0, 0},
                                  std::vector<bool>{0, 0, 0, 0, 0, 1, 0}));
 
-INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, UpToStabCorrectableErrTest_original,
+INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, UpToStabCorrectableErrTestOriginal,
                          testing::Values(
                                  std::vector<bool>{0, 0, 0, 0, 0, 0, 1},
                                  std::vector<bool>{1, 1, 0, 0, 0, 0, 0},
@@ -37,7 +37,7 @@ INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, UpToStabCorrectableErrTest_original
 /**
  * Tests for unambigous syndromes, estimates must be computed exactly
  */
-TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
+TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     auto      code = SteaneXCode();
     UFDecoder decoder;
     decoder.setCode(code);
@@ -54,7 +54,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -74,7 +74,7 @@ TEST_P(UniquelyCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 /**
  * Tests for ambigous errors that cannot be corrected
  */
-TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
+TEST_P(InCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     auto      code = SteaneXCode();
     UFDecoder decoder;
     decoder.setCode(code);
@@ -89,7 +89,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
@@ -113,7 +113,7 @@ TEST_P(InCorrectableErrTest_original, SteaneCodeDecodingTestEstim) {
 /**
  * Tests for errors that are correctable up to stabilizer
  */
-TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
+TEST_P(UpToStabCorrectableErrTestOriginal, SteaneCodeDecodingTest) {
     auto      code = SteaneCode();
     UFDecoder decoder;
     decoder.setCode(code);
@@ -129,7 +129,7 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
-    for (unsigned long idx : estimIdx) {
+    for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
