@@ -31,11 +31,10 @@ void runtime(const std::string& codename) {
     auto              code      = Code(inPath + codename);
     const auto        coden     = code.getN();
 
-    std::size_t runsSum    = 0;
     std::size_t samplesSum = 0;
 
     for (std::size_t i = 0; i < nrSamples; i++) {
-        runsSum = 0;
+        auto runsSum = 0U;
         for (std::size_t j = 0; j < nrRuns; j++) {
             auto decoder = UFDecoder();
             decoder.setCode(code);
@@ -56,12 +55,10 @@ void runtime(const std::string& codename) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string rootPath  = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
-    const std::string rootPath2 = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
-    const std::size_t codeK    = 18;
-
-    const std::size_t nrOfRunsPerRate = 1;
-
+    const std::string                          rootPath        = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string                          rootPath2       = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::size_t                          codeK           = 18;
+    const std::size_t                          nrOfRunsPerRate = 1;
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
 
     auto       code = HGPcode(rootPath, rootPath2, codeK);
@@ -94,7 +91,7 @@ void decodingPerformance(const double per) {
     flint_cleanup();
 }
 
-int main(int argc, char* argv[]) { // NOLINT(misc-unused-parameters)
+int main(int argc, char* argv[]) {   // NOLINT(clang-diagnostic-unused-parameter, bugprone-exception-escape,misc-unused-parameters)
     double per = std::stod(argv[1]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     decodingPerformance(per);
 }
