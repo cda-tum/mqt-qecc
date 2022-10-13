@@ -33,7 +33,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ ubuntu-22.04, macos-latest, windows-latest ]
+        include:
+          - runs-on: ubuntu-22.04
+            flint-inst-cmd: sudo apt-get install libflint-dev
+          - runs-on: macos-latest
+            flint-inst-cmd: brew install flint
+#          - runs-on: windows-latest
+#            flint-inst-cmd:
     steps:
       - uses: actions/checkout@v3
         with:
@@ -41,7 +47,7 @@ jobs:
           fetch-depth: 0
       - name: Install dependencies
         run: |
-          sudo apt-get install libflint-dev
+          ${{ matrix.flint-inst-cmd }}
       - name: Setup nox
         uses: excitedleigh/setup-nox@v2.1.0
       - name: Test on 3.7
