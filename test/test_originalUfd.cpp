@@ -1,6 +1,8 @@
 //
 // Created by lucas on 13/06/22.
 //
+// to keep 0/1 in boolean areas without clang-tidy warnings:
+// NOLINTBEGIN(readability-implicit-bool-conversion,modernize-use-bool-literals)
 
 #include "Codes.hpp"
 #include "UFDecoder.hpp"
@@ -144,3 +146,4 @@ TEST_P(UpToStabCorrectableErrTest_original, SteaneCodeDecodingTest) {
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHx()->pcm, residualErr));
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHx()->pcm, residualErr2));
 }
+// NOLINTEND(readability-implicit-bool-conversion,modernize-use-bool-literals)

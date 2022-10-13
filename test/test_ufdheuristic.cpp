@@ -1,6 +1,8 @@
 //
 // Created by lucas on 13/06/22.
 //
+// to keep 0/1 in boolean areas without clang-tidy warnings:
+// NOLINTBEGIN(readability-implicit-bool-conversion,modernize-use-bool-literals)
 
 #include "Codes.hpp"
 #include "UFHeuristic.hpp"
@@ -285,3 +287,4 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         EXPECT_TRUE(false);
     }
 }
+// NOLINTEND(readability-implicit-bool-conversion,modernize-use-bool-literals)

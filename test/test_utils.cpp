@@ -1,9 +1,10 @@
+// to keep 0/1 in boolean areas without clang-tidy warnings:
+// NOLINTBEGIN(readability-implicit-bool-conversion,modernize-use-bool-literals)
+
 //
 // Created by lucas on 13/06/22.
 //
-
 #include "Codes.hpp"
-#include "UFDecoder.hpp"
 
 #include <gtest/gtest.h>
 
@@ -223,3 +224,5 @@ TEST(UtilsTest, MatrixMultiply2) {
 
     EXPECT_TRUE(comp == sol);
 }
+
+// NOLINTEND(readability-implicit-bool-conversion,modernize-use-bool-literals)
