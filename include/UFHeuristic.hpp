@@ -38,7 +38,7 @@ private:
                                                                                                 std::unordered_map<std::size_t, bool>& presentMap, const std::unordered_set<std::size_t>& components, const std::unique_ptr<ParityCheckMatrix>& pcm);
     bool                                                       isValidComponent(const std::size_t& compId, const std::unique_ptr<ParityCheckMatrix>& pcm);
     std::vector<std::size_t>                                   erasureDecoder(std::unordered_set<std::size_t>& erasure, std::unordered_set<std::size_t>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm);
-    void                                                       extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& erasure, const std::unique_ptr<ParityCheckMatrix>& pcm);
+    void                                                       extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& validComponents, const std::unique_ptr<ParityCheckMatrix>& pcm);
     std::unordered_set<std::size_t>                            computeInitTreeComponents(const gf2Vec& syndrome);
     void                                                       doDecoding(const gf2Vec& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm);
 };

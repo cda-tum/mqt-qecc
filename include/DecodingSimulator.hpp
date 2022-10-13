@@ -13,20 +13,22 @@
 using json = nlohmann::json;
 
 enum DecoderType {
-    UF_HEURISTIC,
-    UF_DECODER
+    UfHeuristic,
+    UfDecoder
 };
 [[maybe_unused]] static DecoderType decoderTypeFromString(const std::string& status) {
+    DecoderType res = {};
     if (status == "UF_HEURISTIC" || status == "0") {
-        return DecoderType::UF_HEURISTIC;
+        res = DecoderType::UfHeuristic;
     } else if (status == "ORIGINAL_UF" || status == "1") {
-        return DecoderType::UF_DECODER;
+        res = DecoderType::UfDecoder;
     } else {
         throw std::invalid_argument("Invalid decodinger type: " + status);
     }
+    return res;
 }
-NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UF_HEURISTIC, "UF_HEURISTIC"},
-                                           {UF_DECODER, "UF_DECODER"}})
+NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UfHeuristic, "UF_HEURISTIC"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+                                           {UfDecoder, "UF_DECODER"}})
 
 class DecodingSimulator {
 public:
@@ -51,7 +53,7 @@ public:
                             double             maxPhysicalErrRate,
                             std::size_t        nrRunsPerRate,
                             Code&              code,
-                            const double       perStepSize,
+                            double             perStepSize,
                             const DecoderType& decoderType); // code is field of decoder
 
     /**

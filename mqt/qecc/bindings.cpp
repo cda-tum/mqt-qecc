@@ -36,8 +36,8 @@ PYBIND11_MODULE(pyqecc, m) {
             .def(py::init<std::vector<std::vector<bool>>&, std::vector<std::vector<bool>>&>())
             .def("setHz", &Code::setHz)
             .def("getHz", &Code::getHzMat)
-            .def("setHx", &Code::setHx)
-            .def("getHx", &Code::getHxMat)
+            .def("gethX", &Code::getHxMat)
+            .def("getHx", &Code::setHx)
             .def_readwrite("n", &Code::n)
             .def_readwrite("k", &Code::k)
             .def_readwrite("d", &Code::d)
@@ -112,8 +112,8 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("simulate_avg_runtime", &DecodingSimulator::simulateAverageRuntime);
 
     py::enum_<DecoderType>(m, "DecoderType")
-            .value("UF_HEURISTIC", DecoderType::UF_HEURISTIC)
-            .value("ORIGINAL_UF", DecoderType::UF_DECODER)
+            .value("UF_HEURISTIC", DecoderType::UfHeuristic)
+            .value("ORIGINAL_UF", DecoderType::UfDecoder)
             .export_values()
             .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
 

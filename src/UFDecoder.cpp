@@ -17,21 +17,21 @@
  * @param syndrome
  */
 void UFDecoder::decode(const gf2Vec& syndrome) {
-    if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
+    if (syndrome.size() > this->getCode()->gethZ()->pcm->size()) {
         std::vector<bool> xSyndr;
         std::vector<bool> zSyndr;
         auto              mid = syndrome.begin() + (static_cast<int64_t>(syndrome.size()) / 2U);
         std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
         std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
-        doDecode(xSyndr, this->getCode()->getHz());
+        doDecode(xSyndr, this->getCode()->gethZ());
         auto xres = this->result;
         this->reset();
-        doDecode(zSyndr, this->getCode()->getHx());
+        doDecode(zSyndr, this->getCode()->gethX());
         this->result.decodingTime += xres.decodingTime;
         std::move(xres.estimBoolVector.begin(), xres.estimBoolVector.end(), std::back_inserter(this->result.estimBoolVector));
         std::move(xres.estimNodeIdxVector.begin(), xres.estimNodeIdxVector.end(), std::back_inserter(this->result.estimNodeIdxVector));
     } else {
-        this->doDecode(syndrome, getCode()->getHz()); // X errs per default if single sided
+        this->doDecode(syndrome, getCode()->gethZ()); // X errs per default if single sided
     }
 }
 
@@ -136,7 +136,7 @@ std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered
     std::vector<std::size_t> res;
 
     for (const auto idx : nodeSet) {
-        const auto& nbrs = getCode()->getHz()->getNbrs(idx);
+        const auto& nbrs = getCode()->gethZ()->getNbrs(idx);
         if (std::includes(nodeSet.begin(), nodeSet.end(), nbrs.begin(), nbrs.end()) && idx < getCode()->getN()) {
             res.emplace_back(idx);
         }
@@ -179,7 +179,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
                 }
             }
         } else { // is a bit node
-            const auto nbrs = this->getCode()->getHz()->getNbrs(it);
+            const auto nbrs = this->getCode()->gethZ()->getNbrs(it);
             for (auto n : nbrs) { // add neighbouring checks (these are maybe not in the interior but to stay consistent with the syndrome we need to include these in the check)
                 if (!used.at(n - getCode()->getN())) {
                     redHz.emplace_back(pcm->pcm->at(n - getCode()->getN()));
@@ -209,7 +209,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
  */
 void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
     for (auto currCompIt = comps.begin(); currCompIt != comps.end(); currCompIt++) {
-        const auto nbrs = getCode()->getHz()->getNbrs(*currCompIt);
+        const auto nbrs = getCode()->gethZ()->getNbrs(*currCompIt);
         for (auto n : nbrs) {
             comps.insert(n);
         }
@@ -232,7 +232,7 @@ void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>
     }
 
     for (auto node : smallestComponent) {
-        const auto& nbrs = getCode()->getHz()->getNbrs(node);
+        const auto& nbrs = getCode()->gethZ()->getNbrs(node);
         nodeSet.insert(nbrs.begin(), nbrs.end());
     }
 }
@@ -253,7 +253,7 @@ void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& 
     chosenComponent = *it;
 
     for (auto node : chosenComponent) {
-        const auto& nbrs = getCode()->getHz()->getNbrs(node);
+        const auto& nbrs = getCode()->gethZ()->getNbrs(node);
         nodeSet.insert(nbrs.begin(), nbrs.end());
     }
 }
@@ -282,7 +282,7 @@ void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& co
     std::advance(it, chosenIdx);
     chosenComponent = *it;
 
-    const auto& nbrs = getCode()->getHz()->getNbrs(*chosenComponent.begin());
+    const auto& nbrs = getCode()->gethZ()->getNbrs(*chosenComponent.begin());
     comps.insert(nbrs.begin(), nbrs.end());
 }
 /**
@@ -306,7 +306,7 @@ std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const 
                 stack.pop();
                 if (!ccomp.contains(curr)) {
                     ccomp.insert(curr);
-                    auto nbrs = getCode()->getHz()->getNbrs(curr);
+                    auto nbrs = getCode()->gethZ()->getNbrs(curr);
                     for (auto n : nbrs) {
                         if (!ccomp.contains(n) && nodes.contains(n)) {
                             stack.push(n);

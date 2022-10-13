@@ -97,7 +97,7 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
         residualErr.at(i) = (err[i] != estim[i]);
     }
 
-    EXPECT_FALSE(Utils::isVectorInRowspace(*(code.getHz()->pcm), residualErr));
+    EXPECT_FALSE(Utils::isVectorInRowspace(*(code.gethZ()->pcm), residualErr));
 }
 
 /**
@@ -137,8 +137,8 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     }
     std::cout << "estim: " << Utils::getStringFrom(estim) << std::endl;
     std::cout << "resid: " << Utils::getStringFrom(residualErr) << std::endl;
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethZ()->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethZ()->pcm, residualErr2));
 }
 
 /**
@@ -149,7 +149,7 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
-              << Utils::getStringFrom(*code.getHz()->pcm) << std::endl;
+              << Utils::getStringFrom(*code.gethZ()->pcm) << std::endl;
     const std::vector<bool> err = {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
     std::cout << "error: ";
     Utils::printGF2vector(err);
@@ -186,7 +186,7 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     UFHeuristic decoder;
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
-              << Utils::getStringFrom(*code.getHz()->pcm) << std::endl;
+              << Utils::getStringFrom(*code.gethZ()->pcm) << std::endl;
     std::vector<bool> err = GetParam();
     std::cout << "error: ";
     Utils::printGF2vector(err);
@@ -247,8 +247,8 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
         residualErr2.at(i) = (err.at(i) != estim2.at(i));
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHz()->pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethZ()->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethZ()->pcm, residualErr2));
 }
 TEST_F(ImprovedUFDtestBase, BothErrsTest) {
     try {

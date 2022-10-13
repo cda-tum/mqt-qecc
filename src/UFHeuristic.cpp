@@ -37,21 +37,21 @@ std::unordered_set<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2
  * @param syndrome
  */
 void UFHeuristic::decode(const gf2Vec& syndrome) {
-    if (syndrome.size() > this->getCode()->getHz()->pcm->size()) {
+    if (syndrome.size() > this->getCode()->gethZ()->pcm->size()) {
         std::vector<bool> xSyndr;
         std::vector<bool> zSyndr;
         auto              mid = syndrome.begin() + (std::ssize(syndrome) / 2U);
         std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
         std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
-        doDecoding(xSyndr, this->getCode()->getHz());
+        doDecoding(xSyndr, this->getCode()->gethZ());
         auto xres = this->result;
         this->reset();
-        doDecoding(zSyndr, this->getCode()->getHx());
+        doDecoding(zSyndr, this->getCode()->gethZ());
         this->result.decodingTime += xres.decodingTime;
         std::move(xres.estimBoolVector.begin(), xres.estimBoolVector.end(), std::back_inserter(this->result.estimBoolVector));
         std::move(xres.estimNodeIdxVector.begin(), xres.estimNodeIdxVector.end(), std::back_inserter(this->result.estimNodeIdxVector));
     } else {
-        this->doDecoding(syndrome, getCode()->getHz()); // X errs per default if single sided
+        this->doDecoding(syndrome, getCode()->gethZ()); // X errs per default if single sided
     }
 }
 /**
@@ -65,7 +65,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
         auto                            syndrComponents   = computeInitTreeComponents(syndrome);
         auto                            invalidComponents = syndrComponents;
         std::unordered_set<std::size_t> erasure;
-        while (!invalidComponents.empty() && invalidComponents.size() < (this->getCode()->getHz()->pcm->size() + getCode()->getHz()->pcm->front().size())) {
+        while (!invalidComponents.empty() && invalidComponents.size() < (this->getCode()->gethZ()->pcm->size() + getCode()->gethZ()->pcm->front().size())) {
             // Step 1 growth
             std::vector<std::pair<std::size_t, std::size_t>> fusionEdges;
             std::unordered_map<std::size_t, bool>            presentMap; // for step 4
@@ -379,8 +379,8 @@ void UFHeuristic::reset() {
     nodeMap.clear();
     this->result = {};
     this->growth = GrowthVariant::AllComponents;
-    this->getCode()->getHz()->nbrCache.clear();
-    if (this->getCode()->getHx()) {
-        this->getCode()->getHx()->nbrCache.clear();
+    this->getCode()->gethZ()->nbrCache.clear();
+    if (this->getCode()->gethZ()) {
+        this->getCode()->gethZ()->nbrCache.clear();
     }
 }

@@ -94,7 +94,7 @@ void decodingPerformance(const double per) {
     flint_cleanup();
 }
 
-int main([[maybe_unused]] int argc, char* argv[]) {
+int main(int argc, char* argv[]) { // NOLINT(misc-unused-parameters)
     double per = std::stod(argv[1]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     decodingPerformance(per);
 }

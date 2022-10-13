@@ -47,9 +47,9 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
         auto nrOfFailedRuns = 0;
         for (std::size_t j = 0; j < nrRunsPerRate; j++) {
             std::unique_ptr<Decoder> decoder;
-            if (decoderType == DecoderType::UF_DECODER) {
+            if (decoderType == DecoderType::UfDecoder) {
                 decoder = std::make_unique<UFDecoder>();
-            } else if (decoderType == DecoderType::UF_HEURISTIC) {
+            } else if (decoderType == DecoderType::UfHeuristic) {
                 decoder = std::make_unique<UFHeuristic>();
             } else {
                 throw QeccException("Invalid DecoderType, cannot simulate");
@@ -137,9 +137,9 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
             for (std::size_t j = 0; j < nrRuns; j++) {
                 for (std::size_t i = 0; i < nrSamples; i++) {
                     std::unique_ptr<Decoder> decoder;
-                    if (decoderType == DecoderType::UF_DECODER) {
+                    if (decoderType == DecoderType::UfDecoder) {
                         decoder = std::make_unique<UFDecoder>();
-                    } else if (decoderType == DecoderType::UF_HEURISTIC) {
+                    } else if (decoderType == DecoderType::UfHeuristic) {
                         decoder = std::make_unique<UFHeuristic>();
                     } else {
                         throw QeccException("Invalid DecoderType, cannot simulate");

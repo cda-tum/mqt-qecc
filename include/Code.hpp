@@ -37,7 +37,7 @@ struct ParityCheckMatrix {
             throw QeccException("[PCM::ctor] - Cannot open pcm, filepath empty");
         }
         std::string   line;
-        int           word;
+        int           word = 0;
         std::ifstream inFile;
         gf2Mat        result;
         try {
@@ -46,7 +46,7 @@ struct ParityCheckMatrix {
                 gf2Vec             tempVec;
                 std::istringstream instream(line);
                 while (instream >> word) {
-                    tempVec.push_back(word);
+                    tempVec.push_back(static_cast<bool>(word));
                 }
                 result.emplace_back(tempVec);
             }
@@ -65,8 +65,9 @@ struct ParityCheckMatrix {
      * @return a list of node indices of adjacent nodes
      */
     std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
+        std::vector<std::size_t> result;
         if (auto it = nbrCache.find(nodeIdx); it != nbrCache.end()) {
-            return it->second;
+            result = it->second;
         } else {
             if (pcm->empty() || pcm->front().empty()) {
                 std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
@@ -89,8 +90,9 @@ struct ParityCheckMatrix {
                 }
             }
             const auto [nbrIt, inserted] = nbrCache.try_emplace(nodeIdx, res);
-            return nbrIt->second;
+            result                       = nbrIt->second;
         }
+        return result;
     }
     [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{
@@ -104,73 +106,73 @@ struct ParityCheckMatrix {
 
 class Code {
 private:
-    std::unique_ptr<ParityCheckMatrix> Hx;
-    std::unique_ptr<ParityCheckMatrix> Hz;
+    std::unique_ptr<ParityCheckMatrix> hX;
+    std::unique_ptr<ParityCheckMatrix> hZ;
 
 public:
     std::size_t n = 0U;
     std::size_t k = 0U;
     std::size_t d = 0U;
 
-    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& getHx() const {
-        return Hx;
+    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& gethX() const {
+        return hX;
     }
 
     Code() = default;
-    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& getHz() const {
-        return Hz;
+    [[nodiscard]] const std::unique_ptr<ParityCheckMatrix>& gethZ() const {
+        return hZ;
     }
 
     gf2Mat getHxMat() {
-        return *this->Hx->pcm;
+        return *this->hX->pcm;
     }
 
     gf2Mat getHzMat() {
-        return *this->Hz->pcm;
+        return *this->hZ->pcm;
     }
 
     void setHx(std::vector<std::vector<bool>>& hx) {
-        Hx = std::make_unique<ParityCheckMatrix>(hx);
+        hX = std::make_unique<ParityCheckMatrix>(hx);
     }
 
     void setHz(std::vector<std::vector<bool>>& hz) {
-        Hz = std::make_unique<ParityCheckMatrix>(hz);
+        hZ = std::make_unique<ParityCheckMatrix>(hz);
     }
     /*
-     * Takes matrix Hz over GF(2) and constructs respective code for X errors with Z checks represented by Hz
+     * Takes matrix hZ over GF(2) and constructs respective code for X errors with Z checks represented by hZ
      * Convention: Rows in first dim, columns in second
      */
-    explicit Code(std::vector<std::vector<bool>>& hz) : Hz(std::make_unique<ParityCheckMatrix>(hz)) {
-        n = Hz->pcm->front().size();
+    explicit Code(std::vector<std::vector<bool>>& hz) : hZ(std::make_unique<ParityCheckMatrix>(hz)), n(hZ->pcm->front().size()) {
     }
 
     /*
      * Takes two pcms over GF(2) and constructs respective code
      * Convention: Rows in first dim, columns in second
      */
-    explicit Code(std::vector<std::vector<bool>>& hx, std::vector<std::vector<bool>>& hz) : Hx(std::make_unique<ParityCheckMatrix>(hx)), Hz(std::make_unique<ParityCheckMatrix>(hz)) {
-        n = Hz->pcm->front().size();
+    explicit Code(std::vector<std::vector<bool>>& hx, std::vector<std::vector<bool>>& hz) : hX(std::make_unique<ParityCheckMatrix>(hx)),
+                                                                                            hZ(std::make_unique<ParityCheckMatrix>(hz)),
+                                                                                            n(hZ->pcm->front().size()) {
     }
 
     /**
      * Constructs the X check part of a code given
      * @param pathToPcm
      */
-    explicit Code(const std::string& pathToPcm) : Hz(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
-        if (Hz->pcm->empty() || Hz->pcm->front().empty()) {
-            throw QeccException("[Code::ctor] - Cannot construct Code, Hz empty");
+    explicit Code(const std::string& pathToPcm) : hZ(std::make_unique<ParityCheckMatrix>(pathToPcm)) {
+        if (hZ->pcm->empty() || hZ->pcm->front().empty()) {
+            throw QeccException("[Code::ctor] - Cannot construct Code, hZ empty");
         }
-        n = Hz->pcm->front().size();
+        n = hZ->pcm->front().size();
     }
 
-    explicit Code(const std::string& pathToHx, const std::string& pathToHz) : Hx(std::make_unique<ParityCheckMatrix>(pathToHx)), Hz(std::make_unique<ParityCheckMatrix>(pathToHz)) {
-        if (Hz->pcm->empty() || Hz->pcm->front().empty() || Hx->pcm->empty() || Hx->pcm->front().empty()) {
-            throw QeccException("[Code::ctor] - Cannot construct Code, Hx or Hz empty");
+    explicit Code(const std::string& pathTohX, const std::string& pathTohZ) : hX(std::make_unique<ParityCheckMatrix>(pathTohX)), hZ(std::make_unique<ParityCheckMatrix>(pathTohZ)) {
+        if (hZ->pcm->empty() || hZ->pcm->front().empty() || hX->pcm->empty() || hX->pcm->front().empty()) {
+            throw QeccException("[Code::ctor] - Cannot construct Code, hX or hZ empty");
         }
-        n = Hz->pcm->front().size();
-        // todo HxHz^T=0
-        if (!Hx->pcm || !Hz->pcm || Hx->pcm->front().size() != Hz->pcm->front().size()) {
-            throw QeccException("[Code::ctor] - Hx and Hz dimensions do not match");
+        n = hZ->pcm->front().size();
+        // todo hXhZ^T=0
+        if (!hX->pcm || !hZ->pcm || hX->pcm->front().size() != hZ->pcm->front().size()) {
+            throw QeccException("[Code::ctor] - hX and hZ dimensions do not match");
         }
     }
 
@@ -190,19 +192,20 @@ public:
     [[nodiscard]] gf2Vec getXSyndrome(const gf2Vec& err) const {
         if (err.empty()) {
             throw QeccException("Cannot compute syndrome, err empy");
-        } else if (err.size() > this->getN()) {
+        }
+        if (err.size() > this->getN()) {
             std::vector<bool> xerr;
             xerr.reserve(getN());
             std::vector<bool> zerr;
             zerr.reserve(getN());
-            std::move(err.begin(), err.begin() + getN(), std::back_inserter(xerr));
-            std::move(err.begin() + getN(), err.end(), std::back_inserter(zerr));
+            std::move(err.begin(), err.begin() + static_cast<int64_t>(getN()), std::back_inserter(xerr));
+            std::move(err.begin() + static_cast<int64_t>(getN()), err.end(), std::back_inserter(zerr));
             return getSyndrome(xerr, zerr);
-        } else { // per defalut X errs only
-            gf2Vec syndr((*Hz->pcm).size(), false);
-            Utils::rectMatrixMultiply(*Hz->pcm, err, syndr);
-            return syndr;
         }
+        // per defalut X errs only
+        gf2Vec syndr((*hZ->pcm).size(), false);
+        Utils::rectMatrixMultiply(*hZ->pcm, err, syndr);
+        return syndr;
     }
 
     /**
@@ -215,11 +218,11 @@ public:
             throw QeccException("Cannot compute syndrome, err empy or wrong size");
         }
 
-        gf2Vec xsyndr((*Hz->pcm).size(), false);
-        Utils::rectMatrixMultiply(*Hz->pcm, xerr, xsyndr);
+        gf2Vec xsyndr((*hZ->pcm).size(), false);
+        Utils::rectMatrixMultiply(*hZ->pcm, xerr, xsyndr);
 
-        gf2Vec zsyndr((*Hx->pcm).size(), false);
-        Utils::rectMatrixMultiply(*Hx->pcm, zerr, zsyndr);
+        gf2Vec zsyndr((*hX->pcm).size(), false);
+        Utils::rectMatrixMultiply(*hX->pcm, zerr, zsyndr);
         gf2Vec res;
         res.reserve(xsyndr.size() + zsyndr.size());
         std::move(xsyndr.begin(), xsyndr.end(), std::back_inserter(res));
@@ -233,10 +236,10 @@ public:
      * @return
      */
     [[nodiscard]] bool isXStabilizer(const gf2Vec& est) const {
-        if (!Hx) {
-            throw QeccException("Hx not set, cannot check if vector is a stabilizer");
+        if (!hX) {
+            throw QeccException("hX not set, cannot check if vector is a stabilizer");
         }
-        return Utils::isVectorInRowspace(*Hx->pcm, est);
+        return Utils::isVectorInRowspace(*hX->pcm, est);
     }
 
     /**
@@ -247,7 +250,7 @@ public:
      * @return
      */
     [[nodiscard]] bool isStabilizer(const gf2Vec& xest, const gf2Vec& zest) const {
-        return Utils::isVectorInRowspace(*Hx->pcm, xest) && Utils::isVectorInRowspace(*Hz->pcm, zest);
+        return Utils::isVectorInRowspace(*hX->pcm, xest) && Utils::isVectorInRowspace(*hZ->pcm, zest);
     }
 
     /**
@@ -258,7 +261,7 @@ public:
      * @return
      */
     [[nodiscard]] bool isStabilizer(const gf2Vec& est) const {
-        if (std::all_of(est.begin(), est.end(), [](int i) { return !i; })) { // trivial case, all 0 vector
+        if (std::all_of(est.begin(), est.end(), [](int i) { return !static_cast<bool>(i); })) { // trivial case, all 0 vector
             return true;
         }
         if (est.size() > getN()) {
@@ -266,12 +269,11 @@ public:
             xEst.reserve(getN());
             std::vector<bool> zEst;
             zEst.reserve(getN());
-            std::move(est.begin(), est.begin() + (est.size()) / 2, std::back_inserter(xEst));
-            std::move(est.begin() + (est.size()) / 2, est.end(), std::back_inserter(zEst));
-            return Utils::isVectorInRowspace(*Hx->pcm, xEst) && Utils::isVectorInRowspace(*Hz->pcm, zEst);
-        } else {
-            return Utils::isVectorInRowspace(*Hx->pcm, est);
+            std::move(est.begin(), est.begin() + static_cast<int64_t>(est.size()) / 2, std::back_inserter(xEst));
+            std::move(est.begin() + static_cast<int64_t>(est.size()) / 2, est.end(), std::back_inserter(zEst));
+            return Utils::isVectorInRowspace(*hX->pcm, xEst) && Utils::isVectorInRowspace(*hZ->pcm, zEst);
         }
+        return Utils::isVectorInRowspace(*hX->pcm, est);
     }
 
     [[nodiscard]] CodeProperties getProperties() const {
@@ -280,35 +282,35 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Code& c) {
-        auto   nrChecks = c.Hz->pcm->size();
-        auto   nrData   = c.Hz->pcm->front().size();
+        auto   nrChecks = c.hZ->pcm->size();
+        auto   nrData   = c.hZ->pcm->front().size();
         auto   dim      = nrChecks + nrData;
         gf2Mat res(dim);
-        os << "Hz: " << std::endl;
+        os << "hZ: " << std::endl;
         for (size_t i = 0; i < dim; i++) {
             gf2Vec row(dim);
             if (i < dim - nrChecks) {
                 for (size_t j = 0; j < nrChecks; j++) {
-                    row.at(nrData + j) = c.Hz->pcm->at(j).at(i);
+                    row.at(nrData + j) = c.hZ->pcm->at(j).at(i);
                 }
             } else {
                 for (size_t j = 0; j < nrData; j++) {
-                    row.at(j) = c.Hz->pcm->at(i - nrData).at(j);
+                    row.at(j) = c.hZ->pcm->at(i - nrData).at(j);
                 }
             }
             res.at(i) = row;
         }
-        if (c.getHx()) {
-            os << Utils::getStringFrom(res) << "Hx: " << std::endl;
+        if (c.gethX()) {
+            os << Utils::getStringFrom(res) << "hX: " << std::endl;
             for (size_t i = 0; i < dim; i++) {
                 gf2Vec row(dim);
                 if (i < dim - nrChecks) {
                     for (size_t j = 0; j < nrChecks; j++) {
-                        row.at(nrData + j) = c.Hx->pcm->at(j).at(i);
+                        row.at(nrData + j) = c.hX->pcm->at(j).at(i);
                     }
                 } else {
                     for (size_t j = 0; j < nrData; j++) {
-                        row.at(j) = c.Hx->pcm->at(i - nrData).at(j);
+                        row.at(j) = c.hX->pcm->at(i - nrData).at(j);
                     }
                 }
                 res.at(i) = row;
@@ -318,8 +320,8 @@ public:
     }
     [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{
-                {"Hz", Hz ? Hz->to_json() : ""},
-                {"Hx", Hx ? Hx->to_json() : ""},
+                {"hZ", hZ ? hZ->to_json() : ""},
+                {"hX", hX ? hX->to_json() : ""},
                 {"n", n},
                 {"k", k},
                 {"d", d}};

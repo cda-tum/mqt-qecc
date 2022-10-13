@@ -143,7 +143,7 @@ TEST_P(UpToStabCorrectableErrTestOriginal, SteaneCodeDecodingTest) {
         residualErr2.at(i) = (err[i] != estim2[i]);
     }
 
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHx()->pcm, residualErr));
-    EXPECT_TRUE(Utils::isVectorInRowspace(*code.getHx()->pcm, residualErr2));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethX()->pcm, residualErr));
+    EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethX()->pcm, residualErr2));
 }
 // NOLINTEND(readability-implicit-bool-conversion,modernize-use-bool-literals)

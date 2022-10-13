@@ -36,24 +36,24 @@ public:
     /*
      * find using path compression
      */
-    static TreeNode* Find(TreeNode* node) {
-        auto parent = node->parent;
+    static TreeNode* Find(TreeNode* node) { // NOLINT(readability-identifier-naming)
+        auto* parent = node->parent;
         while (parent != nullptr && parent->parent != nullptr) {
             node   = parent;
             parent = parent->parent;
         }
         if (parent == nullptr) {
             return node;
-        } else {
+        } else { // NOLINT(readability-else-after-return)
             return parent;
         }
     }
     /*
      * Merge two trees with given roots
      */
-    static void Union(TreeNode* tree1, TreeNode* tree2) {
-        auto root1 = Find(tree1);
-        auto root2 = Find(tree2);
+    static void Union(TreeNode* tree1, TreeNode* tree2) { // NOLINT(readability-identifier-naming)
+        auto* root1 = Find(tree1);
+        auto* root2 = Find(tree2);
 
         if (root1->vertexIdx == root2->vertexIdx) {
             return;

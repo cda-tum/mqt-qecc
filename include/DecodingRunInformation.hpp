@@ -16,16 +16,18 @@ enum DecodingResultStatus {
 };
 
 [[maybe_unused]] static DecodingResultStatus decodingResultStatusFromString(const std::string& status) {
+    DecodingResultStatus result = {};
     if (status == "SUCCESS" || status == "0") {
-        return DecodingResultStatus::SUCCESS;
+        result = DecodingResultStatus::SUCCESS;
     } else if (status == "FAILURE" || status == "1") {
-        return DecodingResultStatus::FAILURE;
+        result = DecodingResultStatus::FAILURE;
     } else {
         throw std::invalid_argument("Invalid decoding result status: " + status);
     }
+    return result;
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"},
+NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
                                                     {FAILURE, "failure"}})
 /**
  * Contains information about a single run of a decoder
@@ -56,7 +58,7 @@ struct DecodingRunInformation {
     DecodingResultStatus status{};
     DecodingResult       result{};
 
-    [[nodiscard]] json to_json() const {
+    [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{{"physicalErrRate", physicalErrR},
                     {"codeSize", codeSize},
                     {"error", Utils::getStringFrom(error)},
@@ -65,7 +67,7 @@ struct DecodingRunInformation {
                     {"decodingStatus", status}};
     }
 
-    void from_json(const json& j) {
+    void from_json(const json& j) { // NOLINT(readability-identifier-naming)
         j.at("physicalErrRate").get_to(physicalErrR);
         j.at("codeSize").get_to(codeSize);
         j.at("error").get_to(error);

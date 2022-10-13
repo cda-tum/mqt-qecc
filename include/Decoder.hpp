@@ -83,10 +83,10 @@ public:
         Decoder::growth = g;
     }
     void setCode(Code& c) {
-        if (c.getHx() == nullptr) {
-            this->code = std::make_unique<Code>(*c.getHz()->pcm);
+        if (c.gethX() == nullptr) {
+            this->code = std::make_unique<Code>(*c.gethZ()->pcm);
         } else {
-            this->code = std::make_unique<Code>(*c.getHz()->pcm, *c.getHx()->pcm);
+            this->code = std::make_unique<Code>(*c.gethZ()->pcm, *c.gethX()->pcm);
         }
     }
     virtual void reset(){};

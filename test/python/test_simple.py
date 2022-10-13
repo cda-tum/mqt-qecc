@@ -14,7 +14,7 @@ def test_basic() -> None:
     code = Code(H, H)
     decoder = UFHeuristic()
     decoder.set_code(code)
-    x_err = sample_iid_pauli_err(code.N, 0.05)
+    x_err = sample_iid_pauli_err(code.n, 0.05)
     decoder.decode(code.get_x_syndrome(x_err))
     result = decoder.result
     print(result)
