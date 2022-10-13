@@ -42,6 +42,7 @@ def coverage(session: Session) -> None:
         run_install = False
         session.posargs.remove("skip-install")
     if run_install:
+        session.install("numpy")
         session.install("-e", ".[coverage]")
     session.run("pytest", "--cov", *session.posargs)
 
@@ -69,6 +70,7 @@ def pylint(session: Session) -> None:
         run_install = False
         session.posargs.remove("skip-install")
     if run_install:
+        session.install("numpy")
         session.install("-e", ".")
     session.run("pylint", "mqt.qecc", "--extension-pkg-allow-list=mqt.qecc.pyqecc", *session.posargs)
 

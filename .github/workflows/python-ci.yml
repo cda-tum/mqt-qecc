@@ -42,7 +42,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install libflint-dev
-          pip install numpy
       - name: Setup nox
         uses: excitedleigh/setup-nox@v2.1.0
       - name: Test on 3.7
