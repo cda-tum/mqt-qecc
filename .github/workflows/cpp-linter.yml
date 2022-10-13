@@ -9,11 +9,11 @@ on:
       - main
 
 concurrency:
-  group:              ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  CC:  clang-14
+  CC: clang-14
   CXX: clang++-14
 
 jobs:
@@ -24,23 +24,23 @@ jobs:
         with:
           submodules: recursive
       - name: Install flint
-        run:  sudo apt-get install libflint-dev
+        run: sudo apt-get install libflint-dev
       - name: Generate compilation database
-        run:  |
-              cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run: |
+          cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Run cpp-linter
-        id:   linter
+        id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run:  |
-              pipx run cpp-linter \
-              --version=14 \
-              --style="file" \
-              --tidy-checks="" \
-              --thread-comments=true \
-              --files-changed-only=false \
-              --ignore="build|flint2" \
-              --database=build
+        run: |
+          pipx run cpp-linter \
+          --version=14 \
+          --style="file" \
+          --tidy-checks="" \
+          --thread-comments=true \
+          --files-changed-only=false \
+          --ignore="build|flint2" \
+          --database=build
       - name: Fail if linter found errors
-        if:   steps.linter.outputs.checks-failed > 0
-        run:  echo "Linter found errors" && exit 1
+        if: steps.linter.outputs.checks-failed > 0
+        run: echo "Linter found errors" && exit 1

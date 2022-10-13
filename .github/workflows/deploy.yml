@@ -22,7 +22,7 @@ jobs:
         config:
           - { os: ubuntu-22.04 }
           - { os: macos-11 }
-          - { os: windows-2022 }
+#          - { os: windows-2022 } TODO
 
     steps:
       - uses: actions/checkout@v3

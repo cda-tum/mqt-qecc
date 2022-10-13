@@ -4,7 +4,6 @@
 #include "Code.hpp"
 #include "DecodingRunInformation.hpp"
 #include "UFDecoder.hpp"
-#include "UFHeuristic.hpp"
 #include "Utils.hpp"
 
 #include <ctime>
