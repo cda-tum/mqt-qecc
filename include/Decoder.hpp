@@ -25,17 +25,20 @@ enum class GrowthVariant {
 [[maybe_unused]] static GrowthVariant growthVariantFromString(const std::string& architecture) {
     if (architecture == "ALL_COMPONENTS" || architecture == "0") {
         return GrowthVariant::AllComponents;
-    } else if (architecture == "INVALID_COMPONENTS" || architecture == "1") { // NOLINT(readability-else-after-return)
-        return GrowthVariant::InvalidComponents;
-    } else if (architecture == "SINGLE_SMALLEST" || architecture == "2") {
-        return GrowthVariant::SingleSmallest;
-    } else if (architecture == "SINGLE_RANDOM" || architecture == "3") {
-        return GrowthVariant::SingleRandom;
-    } else if (architecture == "SINGLE_QUBIT_RANDOM" || architecture == "4") {
-        return GrowthVariant::SingleQubitRandom;
-    } else {
-        throw std::invalid_argument("Invalid growth variant: " + architecture);
     }
+    if (architecture == "INVALID_COMPONENTS" || architecture == "1") {
+        return GrowthVariant::InvalidComponents;
+    }
+    if (architecture == "SINGLE_SMALLEST" || architecture == "2") {
+        return GrowthVariant::SingleSmallest;
+    }
+    if (architecture == "SINGLE_RANDOM" || architecture == "3") {
+        return GrowthVariant::SingleRandom;
+    }
+    if (architecture == "SINGLE_QUBIT_RANDOM" || architecture == "4") {
+        return GrowthVariant::SingleQubitRandom;
+    }
+    throw std::invalid_argument("Invalid growth variant: " + architecture);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::AllComponents, "all components"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)

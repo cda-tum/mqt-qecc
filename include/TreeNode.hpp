@@ -44,9 +44,8 @@ public:
         }
         if (parent == nullptr) {
             return node;
-        } else { // NOLINT(readability-else-after-return)
-            return parent;
         }
+        return parent;
     }
     /*
      * Merge two trees with given roots

@@ -17,6 +17,8 @@ def test_basic() -> None:
     x_err = sample_iid_pauli_err(code.n, 0.05)
     decoder.decode(code.get_x_syndrome(x_err))
     result = decoder.result
-    print(result)
     residual_err = np.array(x_err) ^ np.array(result.estimate)
+
+    print(result)
     print(code.is_x_stabilizer(residual_err))
+    print(np.array(x_err).astype(int))

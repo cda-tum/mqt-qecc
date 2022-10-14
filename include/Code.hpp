@@ -198,8 +198,8 @@ public:
             xerr.reserve(getN());
             std::vector<bool> zerr;
             zerr.reserve(getN());
-            std::move(err.begin(), err.begin() + static_cast<int64_t>(getN()), std::back_inserter(xerr));
-            std::move(err.begin() + static_cast<int64_t>(getN()), err.end(), std::back_inserter(zerr));
+            std::move(err.begin(), err.begin() + static_cast<std::int64_t>(getN()), std::back_inserter(xerr));
+            std::move(err.begin() + static_cast<std::int64_t>(getN()), err.end(), std::back_inserter(zerr));
             return getSyndrome(xerr, zerr);
         }
         // per defalut X errs only
@@ -269,8 +269,8 @@ public:
             xEst.reserve(getN());
             std::vector<bool> zEst;
             zEst.reserve(getN());
-            std::move(est.begin(), est.begin() + static_cast<int64_t>(est.size()) / 2, std::back_inserter(xEst));
-            std::move(est.begin() + static_cast<int64_t>(est.size()) / 2, est.end(), std::back_inserter(zEst));
+            std::move(est.begin(), est.begin() + static_cast<std::int64_t>(est.size()) / 2, std::back_inserter(xEst));
+            std::move(est.begin() + static_cast<std::int64_t>(est.size()) / 2, est.end(), std::back_inserter(zEst));
             return Utils::isVectorInRowspace(*hX->pcm, xEst) && Utils::isVectorInRowspace(*hZ->pcm, zEst);
         }
         return Utils::isVectorInRowspace(*hX->pcm, est);

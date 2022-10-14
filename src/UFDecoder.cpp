@@ -20,7 +20,7 @@ void UFDecoder::decode(const gf2Vec& syndrome) {
     if (syndrome.size() > this->getCode()->gethZ()->pcm->size()) {
         std::vector<bool> xSyndr;
         std::vector<bool> zSyndr;
-        auto              mid = syndrome.begin() + (static_cast<int64_t>(syndrome.size()) / 2U);
+        auto              mid = syndrome.begin() + (static_cast<std::int64_t>(syndrome.size()) / 2U);
         std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
         std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
         doDecode(xSyndr, this->getCode()->gethZ());
