@@ -33,9 +33,9 @@ if(DEPLOY)
 endif()
 
 # build type settings
-set(default_build_type "Release")
+set(DEFAULT_BUILD_TYPE "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
   set(CMAKE_BUILD_TYPE
       "${default_build_type}"
       CACHE STRING "Choose the type of build." FORCE)
@@ -43,12 +43,14 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
                                                "RelWithDebInfo")
 endif()
 
-macro(check_submodule_present MODULENAME)
-  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/${MODULENAME}/CMakeLists.txt")
+# check whether the submodule ``modulename`` is correctly cloned in the ``/extern`` directory.
+macro(CHECK_SUBMODULE_PRESENT modulename)
+  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/${modulename}/CMakeLists.txt")
     message(
       FATAL_ERROR
-        "${MODULENAME} submodule not cloned properly. Please run `git submodule update --init --recursive` from the main project directory"
-    )
+        "${modulename} submodule not cloned properly. \
+        Please run `git submodule update --init --recursive` \
+        from the main project directory")
   endif()
 endmacro()
 

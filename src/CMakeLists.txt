@@ -21,8 +21,8 @@ target_include_directories(${PROJECT_NAME}_lib
 
 # set required C++ standard and disable compiler specific extensions
 target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_20)
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS
-                                                                                    OFF)
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES CXX_EXTENSIONS OFF)
 
 # enable interprocedural optimization if it is supported
 include(CheckIPOSupported)
@@ -59,10 +59,10 @@ if(GENERATE_POSITION_INDEPENDENT_CODE OR BINDINGS)
 endif()
 
 # add nlohmann::json library
-set(JSON_BuildTests
+set(JSON_BuildTests # cmake-lint: disable=C0103
     OFF
     CACHE INTERNAL "")
-set(JSON_MultipleHeaders
+set(JSON_MultipleHeaders # cmake-lint: disable=C0103
     OFF
     CACHE INTERNAL "")
 add_subdirectory("${PROJECT_SOURCE_DIR}/extern/json" "extern/json" EXCLUDE_FROM_ALL)
