@@ -11,9 +11,8 @@ def wer():
     input_filename3 = ''
     fig, ax = plt.subplots(1)
 
-    f = open(input_filename)
-    data = json.load(f)
-    f.close()
+    with open(input_filename) as f:
+        data = json.load(f)
     x_data = []
     y_data = []
     for key in data:
@@ -24,9 +23,8 @@ def wer():
     x_dataf = np.array(x_data)[order]
     y_dataf = np.array(y_data)[order]
 
-    f2 = open(input_filename2)
-    data2 = json.load(f2)
-    f2.close()
+    with open(input_filename2) as f:
+        data2 = json.load(f)
     x_data2 = []
     y_data2 = []
     for key2 in data2:
@@ -37,9 +35,8 @@ def wer():
     x_data2f = np.array(x_data2)[order2]
     y_data2f = np.array(y_data2)[order2]
 
-    f3 = open(input_filename3)
-    data3 = json.load(f3)
-    f3.close()
+    with open(input_filename3) as f:
+        data3 = json.load(f)
     x_data3 = []
     y_data3 = []
     for key3 in data3:
@@ -79,18 +76,16 @@ def wer_comp():
     input_filename2 = ''
     fig, ax = plt.subplots(1)
 
-    f = open(input_filename)
-    data = json.load(f)
-    f.close()
+    with open(input_filename) as f:
+        data = json.load(f)
     x_data = []
     y_data = []
     for key in data:
         x_data.append(float(key))
         y_data.append(data[key])
 
-    f2 = open(input_filename2)
-    data2 = json.load(f2)
-    f2.close()
+    with open(input_filename2) as f:
+        data2 = json.load(f)
     x_data2 = []
     y_data2 = []
     for key2 in data2:
