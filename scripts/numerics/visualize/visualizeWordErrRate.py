@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +12,7 @@ def wer():
     input_filename3 = ""
     fig, ax = plt.subplots(1)
 
-    with open(input_filename) as f:
+    with Path(input_filename).open() as f:
         data = json.load(f)
     x_data = []
     y_data = []
@@ -23,7 +24,7 @@ def wer():
     x_dataf = np.array(x_data)[order]
     y_dataf = np.array(y_data)[order]
 
-    with open(input_filename2) as f:
+    with Path(input_filename2).open() as f:
         data2 = json.load(f)
     x_data2 = []
     y_data2 = []
@@ -35,7 +36,7 @@ def wer():
     x_data2f = np.array(x_data2)[order2]
     y_data2f = np.array(y_data2)[order2]
 
-    with open(input_filename3) as f:
+    with Path(input_filename3).open() as f:
         data3 = json.load(f)
     x_data3 = []
     y_data3 = []
@@ -76,7 +77,7 @@ def wer_comp():
     input_filename2 = ""
     fig, ax = plt.subplots(1)
 
-    with open(input_filename) as f:
+    with Path(input_filename).open() as f:
         data = json.load(f)
     x_data = []
     y_data = []
@@ -84,7 +85,7 @@ def wer_comp():
         x_data.append(float(key))
         y_data.append(data[key])
 
-    with open(input_filename2) as f:
+    with Path(input_filename2).open() as f:
         data2 = json.load(f)
     x_data2 = []
     y_data2 = []

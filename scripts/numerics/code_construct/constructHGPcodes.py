@@ -6,7 +6,7 @@ from bposd.hgp import hgp
 
 h = np.loadtxt("examples/mkmn_24_6_10.txt").astype(int)
 qcode = hgp(h)  # construct quantum LDPC code using the symmetric hypergraph product
-seed_code = np.loadtxt(f"examples/mkmn_24_6_10.txt").astype(int)
+seed_code = np.loadtxt("examples/mkmn_24_6_10.txt").astype(int)
 # print(seed_code)
 qcode = hgp(seed_code, compute_distance=True)
 qcode.canonical_logicals()

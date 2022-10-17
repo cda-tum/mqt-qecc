@@ -4,7 +4,7 @@ from bposd.hgp import hgp
 # med sized HGP code from
 
 h = np.loadtxt("./mkmn_24_6_10.txt").astype(int)
-seed_code = np.loadtxt(f"./mkmn_24_6_10.txt").astype(int)
+seed_code = np.loadtxt("./mkmn_24_6_10.txt").astype(int)
 # print(seed_code)
 qcode = hgp(seed_code, compute_distance=True)
 qcode.canonical_logicals()

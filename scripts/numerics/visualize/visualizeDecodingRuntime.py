@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import matplotlib
 import matplotlib.colors as mcolors
@@ -36,7 +37,7 @@ def runtime():
     pers = []
     orders = []
 
-    with open(input_filen) as data_file:
+    with Path(input_filen).open as data_file:
         data = json.load(data_file)
 
     for per in data:
@@ -96,9 +97,9 @@ def runtime_comparison():
     pers2 = 0.0
     orders = []
 
-    with open(input_filen) as data_file:
+    with Path(input_filen).open() as data_file:
         data = json.load(data_file)
-    with open(input_filen2) as data_file2:
+    with Path(input_filen2).open() as data_file2:
         data2 = json.load(data_file2)
 
     for per in data:
