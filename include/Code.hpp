@@ -89,8 +89,8 @@ struct ParityCheckMatrix {
                     }
                 }
             }
-            const auto [nbrIt, inserted] = nbrCache.try_emplace(nodeIdx, res);
-            result                       = nbrIt->second;
+            const auto ins = nbrCache.try_emplace(nodeIdx, res);
+            result         = ins.first->second;
         }
         return result;
     }

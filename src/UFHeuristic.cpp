@@ -361,8 +361,8 @@ TreeNode* UFHeuristic::getNodeFromIdx(const std::size_t idx) {
             treeNode->isCheck = true;
             treeNode->checkVertices.emplace_back(treeNode->vertexIdx);
         }
-        const auto [it, inserted] = nodeMap.try_emplace(idx, std::move(treeNode));
-        res                       = it->second.get();
+        const auto ins = nodeMap.try_emplace(idx, std::move(treeNode));
+        res            = ins.first->second.get();
     }
     return res;
 }
