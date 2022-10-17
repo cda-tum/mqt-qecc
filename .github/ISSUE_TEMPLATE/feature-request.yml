@@ -1,7 +1,7 @@
 name: ✨ Feature request
 description: Suggest an idea
 title: "✨ <title>"
-labels: [ "enhancement" ]
+labels: ["enhancement"]
 assignees:
   - lucasberent
 body:

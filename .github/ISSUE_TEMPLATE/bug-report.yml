@@ -1,7 +1,7 @@
 name: 🐛 Bug report
 description: Something is not working correctly.
 title: "🐛 <title>"
-labels: [ "bug" ]
+labels: ["bug"]
 assignees:
   - lucasberent
 body:

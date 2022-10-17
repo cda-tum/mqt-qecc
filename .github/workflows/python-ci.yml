@@ -38,8 +38,8 @@ jobs:
             flint-inst-cmd: sudo apt-get install libflint-dev
           - runs-on: macos-latest
             flint-inst-cmd: brew install flint
-#          - runs-on: windows-latest
-#            flint-inst-cmd:
+    #          - runs-on: windows-latest
+    #            flint-inst-cmd:
     steps:
       - uses: actions/checkout@v3
         with:

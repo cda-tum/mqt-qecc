@@ -5,10 +5,10 @@ import numpy as np
 
 
 def wer():
-    plt.rcParams.update({'font.size': 14})
-    input_filename = ''
-    input_filename2 = ''
-    input_filename3 = ''
+    plt.rcParams.update({"font.size": 14})
+    input_filename = ""
+    input_filename2 = ""
+    input_filename3 = ""
     fig, ax = plt.subplots(1)
 
     with open(input_filename) as f:
@@ -47,19 +47,19 @@ def wer():
     x_data3f = np.array(x_data3)[order3]
     y_data3f = np.array(y_data3)[order3]
 
-    ax.plot(x_dataf, y_dataf, '-x', label='heuristic SSG', color='b')
-    ax.plot(x_data2f, y_data2f, '-o', label='GD', color='g')
-    ax.plot(x_data3f, y_data3f, '-x', label='heuristic AG', color='r')
+    ax.plot(x_dataf, y_dataf, "-x", label="heuristic SSG", color="b")
+    ax.plot(x_data2f, y_data2f, "-o", label="GD", color="g")
+    ax.plot(x_data3f, y_data3f, "-x", label="heuristic AG", color="r")
     print(y_data)
     print(y_data2)
     print(y_data3)
 
-    ax.set_xlabel('physical X-error rate')
-    ax.set_ylabel('WER')
+    ax.set_xlabel("physical X-error rate")
+    ax.set_ylabel("WER")
     ax.legend()
     ax.grid()
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    ax.set_xscale("log")
+    ax.set_yscale("log")
     # ax.gca().set_position([0, 0, 1, 1])
     handles, labels = ax.get_legend_handles_labels()
 
@@ -71,9 +71,9 @@ def wer():
 
 
 def wer_comp():
-    plt.rcParams.update({'font.size': 15})
-    input_filename = ''
-    input_filename2 = ''
+    plt.rcParams.update({"font.size": 15})
+    input_filename = ""
+    input_filename2 = ""
     fig, ax = plt.subplots(1)
 
     with open(input_filename) as f:
@@ -92,17 +92,17 @@ def wer_comp():
         x_data2.append(float(key2))
         y_data2.append(data2[key2])
 
-    ax.plot(x_data, y_data, '-d', label='heuristic', color='b')
-    ax.plot(x_data2, y_data2, '-o', label='decoder', color='g')
+    ax.plot(x_data, y_data, "-d", label="heuristic", color="b")
+    ax.plot(x_data2, y_data2, "-o", label="decoder", color="g")
     print(y_data)
     print(y_data2)
 
-    ax.xlabel('physical X-error rate')
-    ax.ylabel('WER')
+    ax.xlabel("physical X-error rate")
+    ax.ylabel("WER")
     ax.legend()
     ax.grid()
-    ax.xscale('log')
-    ax.yscale('log')
+    ax.xscale("log")
+    ax.yscale("log")
     ax.gca().set_position([0, 0, 1, 1])
     ax.savefig("werComp.svg")
     handles, labels = ax.get_legend_handles_labels()

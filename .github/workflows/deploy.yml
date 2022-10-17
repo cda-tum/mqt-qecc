@@ -2,10 +2,10 @@ name: Python Packaging
 
 on:
   release:
-    types: [ published ]
+    types: [published]
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -22,7 +22,7 @@ jobs:
         config:
           - { os: ubuntu-22.04 }
           - { os: macos-11 }
-#          - { os: windows-2022 } TODO
+    #          - { os: windows-2022 } TODO
 
     steps:
       - uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: "3.9"
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Build SDist
@@ -65,7 +65,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
-    needs: [ build_wheels, build_sdist ]
+    needs: [build_wheels, build_sdist]
     runs-on: ubuntu-22.04
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:

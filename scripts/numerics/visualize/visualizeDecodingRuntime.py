@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize as opt
 
-matplotlib.rcParams['mathtext.fontset'] = 'custom'
-matplotlib.rcParams['mathtext.rm'] = 'Bitstream Vera Sans'
-matplotlib.rcParams['mathtext.it'] = 'Bitstream Vera Sans:italic'
-matplotlib.rcParams['mathtext.bf'] = 'Bitstream Vera Sans:bold'
+matplotlib.rcParams["mathtext.fontset"] = "custom"
+matplotlib.rcParams["mathtext.rm"] = "Bitstream Vera Sans"
+matplotlib.rcParams["mathtext.it"] = "Bitstream Vera Sans:italic"
+matplotlib.rcParams["mathtext.bf"] = "Bitstream Vera Sans:bold"
 
 
 def lin_fun(x, a, b):
@@ -29,8 +29,8 @@ def pow_four_fun(x, a, b):
 
 
 def runtime():
-    plt.rcParams.update({'font.size': 15})
-    input_filen = '/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/runtime/rt-original-1k-01.json'
+    plt.rcParams.update({"font.size": 15})
+    input_filen = "/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/runtime/rt-original-1k-01.json"
     x_data = []
     y_data = []
     pers = []
@@ -57,16 +57,16 @@ def runtime():
 
     for i in range(len(x_data)):
         col, val = colors.popitem()
-        if col == 'w' or col == 'k':
+        if col == "w" or col == "k":
             col, val = colors.popitem()
-            if col == 'w' or col == 'k':
+            if col == "w" or col == "k":
                 col, val = colors.popitem()
                 cols.append(col)
-        label = '% 6.3f' % pers[i]
+        label = "% 6.3f" % pers[i]
         orders.append(np.argsort(x_data[i]))
         xfinal.append(np.array(x_data[i])[orders[i]])
         yfinal.append(np.array(y_data[i])[orders[i]])
-        plt.plot(xfinal[i], yfinal[i], 'o', label='p=' + label, color=col)
+        plt.plot(xfinal[i], yfinal[i], "o", label="p=" + label, color=col)
         # start = 5
         # optimizedParameters, pcov = opt.curve_fit(LinFun, xfinal[i][start:], yfinal[i][start:])
         # plt.plot(xfinal[i][start:], LinFun(xfinal[i][start:], *optimizedParameters), '--', color=col, label='O(n)')
@@ -85,9 +85,9 @@ def runtime():
 
 
 def runtime_comparison():
-    plt.rcParams.update({'font.size': 14})
-    input_filen = ''
-    input_filen2 = ''
+    plt.rcParams.update({"font.size": 14})
+    input_filen = ""
+    input_filen2 = ""
     x_data = []
     y_data = []
     pers = []
@@ -126,33 +126,33 @@ def runtime_comparison():
 
     for i in range(len(x_data)):
         col, val = colors.popitem()
-        if col == 'w' or col == 'k':
+        if col == "w" or col == "k":
             col, val = colors.popitem()
-            if col == 'w' or col == 'k':
+            if col == "w" or col == "k":
                 col, val = colors.popitem()
                 cols.append(col)
-        label = '%2.2f' % pers[i]
+        label = "%2.2f" % pers[i]
         orders.append(np.argsort(x_data[i]))
         xfinal.append(np.array(x_data[i])[orders[i]])
         yfinal.append(np.array(y_data[i])[orders[i]])
-        plt.plot(xfinal[i], yfinal[i], 'o', label='UFH, p=' + label, color=col)
+        plt.plot(xfinal[i], yfinal[i], "o", label="UFH, p=" + label, color=col)
         start = 0
         optimized_parameters, pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
-        plt.plot(xfinal[i][start:], lin_fun(xfinal[i][start:], *optimized_parameters), '--', color=col,
-                 label=r'$O(n)$')
+        plt.plot(xfinal[i][start:], lin_fun(xfinal[i][start:], *optimized_parameters), "--", color=col, label=r"$O(n)$")
         print(xfinal)
         print(yfinal)
 
     # general qlpd decoder data
-    label = '%2.2f' % pers2
+    label = "%2.2f" % pers2
     orders2 = np.argsort(x_data2)
     xfinal2 = np.array(x_data2)[orders2]
     yfinal2 = np.array(y_data2)[orders2]
-    plt.plot(xfinal2, yfinal2, 'd', label='GD, p=' + label, color='green')
+    plt.plot(xfinal2, yfinal2, "d", label="GD, p=" + label, color="green")
     start = 0
     optimized_parameters2, pcov = opt.curve_fit(quad_fun, xfinal2[start:], yfinal2[start:])
-    plt.plot(xfinal2[start:], quad_fun(xfinal2[start:], *optimized_parameters2), '--', color='green',
-             label=r'$O(n^{2})$')
+    plt.plot(
+        xfinal2[start:], quad_fun(xfinal2[start:], *optimized_parameters2), "--", color="green", label=r"$O(n^{2})$"
+    )
 
     plt.legend()
     plt.ylabel("avg runtime (s) to decode $10^3$ samples")

@@ -10,12 +10,11 @@ def I(n):
 
 
 class lifted_hgp(css_code):
-
     def __init__(self, lift_parameter, a, b=None):
 
-        '''
+        """
         Generates the lifted hypergraph product of the protographs a and b
-        '''
+        """
         self.a = a
 
         self.a_m, self.a_n = self.a.shape
@@ -63,7 +62,6 @@ class lifted_hgp(css_code):
 
 
 class bias_tailored_lifted_product(stab_code):
-
     def __init__(self, lift_parameter, a, b=None):
         lhgp = lifted_hgp(lift_parameter, a, b)
 

@@ -5,12 +5,12 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 
-from setuptools import setup, Extension
+from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=''):
+    def __init__(self, name, sourcedir=""):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = str(Path(sourcedir).resolve())
 
@@ -18,19 +18,20 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
         from setuptools_scm import get_version
+
         version = get_version(relative_to=__file__)
 
         extdir = str(Path(self.get_ext_fullpath(ext.name)).parent.resolve())
 
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
-        cfg = 'Debug' if self.debug else 'Release'
+        cfg = "Debug" if self.debug else "Release"
 
         cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
-            "-DPYTHON_EXECUTABLE={}".format(sys.executable),
-            "-DQECC_VERSION_INFO={}".format(version),
-            "-DCMAKE_BUILD_TYPE={}".format(cfg),
-            "-DBINDINGS=ON"
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DQECC_VERSION_INFO={version}",
+            f"-DCMAKE_BUILD_TYPE={cfg}",
+            "-DBINDINGS=ON",
         ]
         build_args = []
 
@@ -56,7 +57,7 @@ class CMakeBuild(build_ext):
                 cmake_args += ["-A", plat_to_cmake[self.plat_name]]
             # Multi-config generators have a different way to specify configs
             if not single_config:
-                cmake_args += ["-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)]
+                cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
                 build_args += ["--config", cfg]
 
         # cross-compile support for macOS - respect ARCHFLAGS if set

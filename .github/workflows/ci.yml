@@ -57,7 +57,6 @@ jobs:
       - name: Test
         working-directory: build/test
         run: ctest -C Release --output-on-failure
-
 #  windows-tests: TODO
 #    name: Tests windows-2022
 #    runs-on: windows-2022

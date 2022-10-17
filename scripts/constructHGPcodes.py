@@ -13,8 +13,8 @@ print(qcode.code_params)
 print(qcode.hx)
 print("hx:")
 print(qcode.hz)
-np.savetxt(f"./hgp_{qcode.code_params}_hz.txt", qcode.hz, fmt='%d', newline='\n')
-np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+np.savetxt(f"./hgp_{qcode.code_params}_hz.txt", qcode.hz, fmt="%d", newline="\n")
+np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt="%d", newline="\n")
 
 # larger code
 # a1 = pt.array([
