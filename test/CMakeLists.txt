@@ -37,9 +37,9 @@ if(ipo_supported)
 endif()
 
 macro(package_add_test TESTNAME)
-  # create an exectuable in which the tests will be stored
+  # create an executable in which the tests will be stored
   add_executable(${TESTNAME} ${ARGN})
-  # link the Google test infrastructure and a default main fuction to the test executable.
+  # link the Google test infrastructure and a default main function to the test executable.
   target_link_libraries(${TESTNAME} PRIVATE MQT::${PROJECT_NAME}_lib gmock gtest_main)
   # discover tests
   gtest_discover_tests(

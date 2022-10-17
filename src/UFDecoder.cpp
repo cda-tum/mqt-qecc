@@ -147,7 +147,7 @@ std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered
 /**
  * Computes estimate vector x for a component and a syndrome. This is done by considering all vertices in Tanner Graph
  * that are in the Interior of the given node set and additionally the neighbours of the bit vertices in the interior.
- * Then, using Gaussian elimination, it is checked whether a solution for the local cluster that is consitent with the syndrome
+ * Then, using Gaussian elimination, it is checked whether a solution for the local cluster that is consistent with the syndrome
  * can be found. If so, this local estimate is returned.
  * @param nodeSet
  * @param syndrome

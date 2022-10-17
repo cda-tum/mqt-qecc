@@ -90,11 +90,11 @@ public:
 
     static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
-        const slong     rows   = static_cast<slong>(matrix.size());
-        const slong     cols   = static_cast<slong>(matrix.front().size());
-        const mp_limb_t modul  = 2;
-        const auto&     ctxx   = flint::nmodxx_ctx(modul);
-        auto            result = flint::nmod_matxx(matrix.size(), matrix.front().size(), modul);
+        const slong     rows    = static_cast<slong>(matrix.size());
+        const slong     cols    = static_cast<slong>(matrix.front().size());
+        const mp_limb_t modulus = 2;
+        const auto&     ctxx    = flint::nmodxx_ctx(modulus);
+        auto            result  = flint::nmod_matxx(matrix.size(), matrix.front().size(), modulus);
         for (slong i = 0; i < rows; i++) {
             for (slong j = 0; j < cols; j++) {
                 if (matrix.at(i).at(j)) {

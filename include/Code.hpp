@@ -191,7 +191,7 @@ public:
      */
     [[nodiscard]] gf2Vec getXSyndrome(const gf2Vec& err) const {
         if (err.empty()) {
-            throw QeccException("Cannot compute syndrome, err empy");
+            throw QeccException("Cannot compute syndrome, err empty");
         }
         if (err.size() > this->getN()) {
             std::vector<bool> xerr;
@@ -202,7 +202,7 @@ public:
             std::move(err.begin() + static_cast<std::int64_t>(getN()), err.end(), std::back_inserter(zerr));
             return getSyndrome(xerr, zerr);
         }
-        // per defalut X errs only
+        // per default X errs only
         gf2Vec syndr((*hZ->pcm).size(), false);
         Utils::rectMatrixMultiply(*hZ->pcm, err, syndr);
         return syndr;
@@ -215,7 +215,7 @@ public:
      */
     [[nodiscard]] gf2Vec getSyndrome(const gf2Vec& xerr, const gf2Vec& zerr) const {
         if (xerr.empty() || zerr.empty() || xerr.size() != getN() || zerr.size() != getN()) {
-            throw QeccException("Cannot compute syndrome, err empy or wrong size");
+            throw QeccException("Cannot compute syndrome, err empty or wrong size");
         }
 
         gf2Vec xsyndr((*hZ->pcm).size(), false);

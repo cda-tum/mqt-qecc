@@ -35,7 +35,7 @@ INSTANTIATE_TEST_SUITE_P(UptoStabCorrSteane, UpToStabCorrectableErrTestOriginal,
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 1}));
 
 /**
- * Tests for unambigous syndromes, estimates must be computed exactly
+ * Tests for unambiguous syndromes, estimates must be computed exactly
  */
 TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     auto      code = SteaneXCode();
@@ -72,7 +72,7 @@ TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
 }
 
 /**
- * Tests for ambigous errors that cannot be corrected
+ * Tests for ambiguous errors that cannot be corrected
  */
 TEST_P(InCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     auto      code = SteaneXCode();

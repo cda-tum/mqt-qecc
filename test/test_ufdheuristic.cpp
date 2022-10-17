@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(CorrectableLargeToricTests, CorrectableLargeToric,
                          testing::Values(
                                  std::vector<bool>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}));
 /**
- * Tests for unambigous syndromes, estimates must be computed exactly
+ * Tests for unambiguous syndromes, estimates must be computed exactly
  */
 TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     auto        code = SteaneXCode();
@@ -71,7 +71,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
 }
 
 /**
- * Tests for ambigous errors that cannot be corrected
+ * Tests for ambiguous errors that cannot be corrected
  */
 TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     auto        code = SteaneXCode();

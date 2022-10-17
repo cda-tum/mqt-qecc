@@ -260,14 +260,14 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
         while (!queue.empty()) {
             const auto& currV = getNodeFromIdx(queue.front());
             queue.pop();
-            if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
+            if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
                 // add to interior by adding it to the list and marking it
                 currV->marked = true;
                 compErasure.emplace_back(currV->vertexIdx);
             }
 
             for (const auto& node : currV->children) {
-                if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restriced interior
+                if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
                     compErasure.emplace_back(node->vertexIdx);
@@ -316,7 +316,7 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
 
 /**
  * Add those components that are valid to the erasure
- * @param invalidComponents containts components to check validity for
+ * @param invalidComponents contains components to check validity for
  * @param validComponents contains valid components (including possible new ones at end of function)
  */
 void UFHeuristic::extractValidComponents(std::unordered_set<std::size_t>& invalidComponents, std::unordered_set<std::size_t>& validComponents, const std::unique_ptr<ParityCheckMatrix>& pcm) {
