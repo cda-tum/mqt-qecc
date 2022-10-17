@@ -14,45 +14,47 @@
 
 #include <pybind11/stl.h>
 
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+
 namespace py = pybind11;
-namespace nl = nlohmann;
 using namespace pybind11::literals;
 
-std::vector<bool> sample_iid_pauli_err(const std::size_t length, const double physicalErrRate){
+std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physicalErrRate) {
     return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
 PYBIND11_MODULE(pyqecc, m) {
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";
-    m.def("sample_iid_pauli_err", &sample_iid_pauli_err, "Sample a iid pauli error represented as binary string");
+    m.def("sample_iid_pauli_err", &sampleIidPauliErr, "Sample a iid pauli error represented as binary string");
 
     py::class_<Code>(m, "Code", "CSS code object")
             .def(py::init<>())
             .def(py::init<std::string, std::string>())
             .def(py::init<std::string>())
             .def(py::init<std::vector<std::vector<bool>>&>())
-            .def(py::init<std::vector<std::vector<bool>>&,std::vector<std::vector<bool>>&>())
+            .def(py::init<std::vector<std::vector<bool>>&, std::vector<std::vector<bool>>&>())
             .def("setHz", &Code::setHz)
             .def("getHz", &Code::getHzMat)
-            .def("setHx", &Code::setHx)
-            .def("getHx", &Code::getHxMat)
-            .def_readwrite("N",&Code::N)
-            .def_readwrite("K", &Code::K)
-            .def_readwrite("D", &Code::D)
+            .def("gethX", &Code::getHxMat)
+            .def("getHx", &Code::setHx)
+            .def_readwrite("n", &Code::n)
+            .def_readwrite("k", &Code::k)
+            .def_readwrite("d", &Code::d)
             .def("json", &Code::to_json)
             .def("is_x_stabilizer", &Code::isXStabilizer)
-            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&)const>(&Code::isStabilizer))
-            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&)const>(&Code::isStabilizer))
+            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&, const std::vector<bool>&) const>(&Code::isStabilizer))
+            .def("is_stabilizer", static_cast<bool (Code::*)(const std::vector<bool>&) const>(&Code::isStabilizer))
             .def("get_syndrome", &Code::getSyndrome)
             .def("get_x_syndrome", &Code::getXSyndrome)
             .def("__repr__", &Code::toString);
 
-             py::enum_<GrowthVariant>(m, "GrowthVariant")
-            .value("ALL_COMPONENTS", GrowthVariant::ALL_COMPONENTS)
-            .value("INVALID_COMPONENTS", GrowthVariant::INVALID_COMPONENTS)
-            .value("SINGLE_SMALLEST", GrowthVariant::SINGLE_SMALLEST)
-            .value("SINGLE_RANDOM", GrowthVariant::SINGLE_RANDOM)
-            .value("SINGLE_QUBIT_RANDOM", GrowthVariant::SINGLE_QUBIT_RANDOM)
+    py::enum_<GrowthVariant>(m, "GrowthVariant")
+            .value("ALL_COMPONENTS", GrowthVariant::AllComponents)
+            .value("INVALID_COMPONENTS", GrowthVariant::InvalidComponents)
+            .value("SINGLE_SMALLEST", GrowthVariant::SingleSmallest)
+            .value("SINGLE_RANDOM", GrowthVariant::SingleRandom)
+            .value("SINGLE_QUBIT_RANDOM", GrowthVariant::SingleQubitRandom)
             .export_values()
             .def(py::init([](const std::string& str) -> GrowthVariant { return growthVariantFromString(str); }));
 
@@ -109,9 +111,9 @@ PYBIND11_MODULE(pyqecc, m) {
             .def("simulate_wer", &DecodingSimulator::simulateWER)
             .def("simulate_avg_runtime", &DecodingSimulator::simulateAverageRuntime);
 
-      py::enum_<DecoderType>(m, "DecoderType")
-            .value("UF_HEURISTIC", DecoderType::UF_HEURISTIC)
-            .value("ORIGINAL_UF", DecoderType::UF_DECODER)
+    py::enum_<DecoderType>(m, "DecoderType")
+            .value("UF_HEURISTIC", DecoderType::UfHeuristic)
+            .value("ORIGINAL_UF", DecoderType::UfDecoder)
             .export_values()
             .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
 

@@ -4,6 +4,7 @@
 #ifndef QUNIONFIND_UTILS_HPP
 #define QUNIONFIND_UTILS_HPP
 
+#include "QeccException.hpp"
 #include "TreeNode.hpp"
 #include "nlohmann/json.hpp"
 
@@ -15,48 +16,47 @@
 #include <random>
 #include <set>
 #include <vector>
-extern "C" {
-#include <flint/nmod_mat.h>
-}
 
 using gf2Mat = std::vector<std::vector<bool>>;
 using gf2Vec = std::vector<bool>;
 
 class Utils {
 public:
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
     /**
      * Uses flint's integers mod n matrix package nnmod_mat to solve the system given by Mx=b
      * Returns x if there is a solution, or an empty vector if there is no solution
      * By the behaviour of flint's solve function, if there are multiple valid solutions one is returned
-     * @param M
+     * @param inmat
      * @param vec
      * @return
      */
-    static gf2Vec solveSystem(const gf2Mat& M, const gf2Vec& vec) {
-        assertMatrixPresent(M);
+    static gf2Vec solveSystem(const gf2Mat& inmat, const gf2Vec& vec) {
+        assertMatrixPresent(inmat);
         assertVectorPresent(vec);
-        if (M.size() > std::numeric_limits<long int>::max() || M.front().size() > std::numeric_limits<long int>::max()) {
+        if (inmat.size() > std::numeric_limits<long int>::max() || inmat.front().size() > std::numeric_limits<long int>::max()) { // NOLINT(google-runtime-int)
             throw QeccException("size of matrix too large for flint");
-        } else if (M.size() != vec.size()) {
+        }
+        if (inmat.size() != vec.size()) { // NOLINT(readability-else-after-return)
             std::cerr << "Cannot solve system, dimensions do not match" << std::endl;
             throw QeccException("Cannot solve system, dimensions do not match");
         }
 
         gf2Vec     result{};
-        slong      rows = M.size();
-        slong      cols = M.front().size();
+        slong      rows = inmat.size();         // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+        slong      cols = inmat.front().size(); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
         nmod_mat_t mat;
         nmod_mat_t x;
         nmod_mat_t b;
         mp_limb_t  mod = 2;
         // initializes mat to rows x cols matrix with coefficients mod 2
-        nmod_mat_init(mat, rows, cols, mod);
+        nmod_mat_init(mat, rows, cols, mod); // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
         nmod_mat_init(x, cols, 1, mod);
         nmod_mat_init(b, rows, 1, mod);
 
         for (slong i = 0; i < nmod_mat_nrows(mat); i++) {
             for (slong j = 0; j < nmod_mat_ncols(mat); j++) {
-                nmod_mat_set_entry(mat, i, j, M.at(i).at(j) ? 1U : 0U);
+                nmod_mat_set_entry(mat, i, j, inmat.at(i).at(j) ? 1U : 0U);
             }
         }
         slong bColIdx = nmod_mat_ncols(b) - 1;
@@ -68,17 +68,18 @@ public:
         if (sol == 1) {
             result       = gf2Vec(nmod_mat_nrows(x));
             auto xColIdx = nmod_mat_ncols(x) - 1;
-            for (long i = 0; i < nmod_mat_nrows(x); i++) {
-                result.at(i) = nmod_mat_get_entry(x, i, xColIdx);
+            for (auto i = 0; i < nmod_mat_nrows(x); i++) {
+                result.at(i) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
             }
         } else {
-            //std::cout << "no sol" << std::endl;
+            // no solution
         }
         nmod_mat_clear(mat);
         nmod_mat_clear(x);
         nmod_mat_clear(b);
         return result;
     }
+    // NOLINTEND(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
 
     static flint::nmod_matxx gauss(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
@@ -89,11 +90,11 @@ public:
 
     static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
-        const slong     rows   = static_cast<slong>(matrix.size());
-        const slong     cols   = static_cast<slong>(matrix.front().size());
-        const mp_limb_t modul  = 2;
-        const auto&     ctxx   = flint::nmodxx_ctx(modul);
-        auto            result = flint::nmod_matxx(matrix.size(), matrix.front().size(), modul);
+        const slong     rows    = static_cast<slong>(matrix.size());
+        const slong     cols    = static_cast<slong>(matrix.front().size());
+        const mp_limb_t modulus = 2;
+        const auto&     ctxx    = flint::nmodxx_ctx(modulus);
+        auto            result  = flint::nmod_matxx(matrix.size(), matrix.front().size(), modulus);
         for (slong i = 0; i < rows; i++) {
             for (slong j = 0; j < cols; j++) {
                 if (matrix.at(i).at(j)) {
@@ -128,19 +129,19 @@ public:
 
     /**
      * Checks if the given vector is in the rowspace of matrix M
-     * @param M
+     * @param inmat
      * @param vec
      * @return
      */
-    static bool isVectorInRowspace(const gf2Mat& M, const gf2Vec& vec) {
-        assertMatrixPresent(M);
+    static bool isVectorInRowspace(const gf2Mat& inmat, const gf2Vec& vec) {
+        assertMatrixPresent(inmat);
         assertVectorPresent(vec);
         if (std::none_of(vec.begin(), vec.end(), [](const bool val) { return val; })) { // all zeros vector trivial
             return true;
         }
         gf2Mat matrix;
-        if (vec.size() == M.at(0).size()) {
-            matrix = getTranspose(M); // v is in rowspace of M <=> v is in col space of M^T
+        if (vec.size() == inmat.at(0).size()) {
+            matrix = getTranspose(inmat); // v is in rowspace of M <=> v is in col space of M^T
         } else {
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
@@ -149,8 +150,8 @@ public:
             matrix.at(i).emplace_back(vec.at(i));
         }
         auto reduced = gauss(matrix);
-        //flint::print_pretty(reduced);
-        // check consistency, inconsistent <=> vec not in rowspace
+        // flint::print_pretty(reduced);
+        //  check consistency, inconsistent <=> vec not in rowspace
         for (slong i = 0; i < reduced.rows(); i++) {
             if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
                 bool inconsistent = true;
@@ -176,7 +177,7 @@ public:
     getTranspose(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
         gf2Mat transp(matrix.at(0).size());
-        for (auto& i: transp) {
+        for (auto& i : transp) {
             i = gf2Vec(matrix.size());
         }
         for (std::size_t i = 0; i < matrix.size(); i++) {
@@ -200,14 +201,12 @@ public:
             std::cerr << "Cannot multiply" << std::endl;
             throw QeccException("Cannot multiply, dimensions wrong");
         }
-        //std::cout << "starting mult" << std::endl;
         for (std::size_t i = 0; i < m1.size(); i++) {
             const auto& row = m1.at(i);
             for (std::size_t k = 0; k < vec.size(); k++) {
                 result.at(i) = result.at(i) ^ (row.at(k) && vec.at(k));
             }
         }
-        //std::cout << "rect mult done" << std::endl;
     }
 
     static void assertMatrixPresent(const gf2Mat& matrix) {
@@ -230,7 +229,7 @@ public:
         }
     }
 
-    static void printGF2matrix(const gf2Mat& matrix) {
+    [[maybe_unused]] static void printGF2matrix(const gf2Mat& matrix) {
         std::cout << getStringFrom(matrix);
     }
 
@@ -303,10 +302,10 @@ public:
     }
 
     /**
-         *
-         * @param error bool vector representing error
-         * @param residual estimate vector that contains residual error at end of function
-    */
+     *
+     * @param error bool vector representing error
+     * @param residual estimate vector that contains residual error at end of function
+     */
     static void computeResidualErr(const gf2Vec& error, gf2Vec& residual) {
         for (std::size_t j = 0; j < residual.size(); j++) {
             residual.at(j) = (residual.at(j) != error.at(j));
@@ -315,7 +314,7 @@ public:
 
     static gf2Mat importGf2MatrixFromFile(const std::string& filepath) {
         std::string   line;
-        int           word;
+        int           word; // NOLINT(cppcoreguidelines-init-variables)
         std::ifstream inFile(filepath);
         gf2Mat        result;
 
@@ -324,7 +323,7 @@ public:
                 gf2Vec             tempVec;
                 std::istringstream instream(line);
                 while (instream >> word) {
-                    tempVec.push_back(word);
+                    tempVec.push_back(static_cast<bool>(word));
                 }
                 result.emplace_back(tempVec);
             }
@@ -335,15 +334,15 @@ public:
         inFile.close();
         return result;
     }
-    static void printTimePerSampleRun(const std::map<std::string, std::size_t, std::less<>>& avgSampleRuns) {
+    [[maybe_unused]] static void printTimePerSampleRun(const std::map<std::string, std::size_t, std::less<>>& avgSampleRuns) {
         nlohmann::json avgData = avgSampleRuns;
         std::cout << "trial:timesum = " << avgData.dump(2U) << std::endl;
     }
 
-    static void readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths) {
-        for (const auto& file: std::filesystem::directory_iterator(inPath)) {
+    [[maybe_unused]] static void readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths) {
+        for (const auto& file : std::filesystem::directory_iterator(inPath)) {
             codePaths.emplace_back(file.path());
         }
     }
 };
-#endif //QUNIONFIND_UTILS_HPP
+#endif // QUNIONFIND_UTILS_HPP

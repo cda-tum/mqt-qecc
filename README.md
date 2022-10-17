@@ -1,14 +1,14 @@
 # MQT QECC - A tool for Quantum Error Correcting Codes written in C++
+
 :warning: **This project is still in early development and breaking changes might happen frequently.**
 
 (Additionally to the basic numerical results already provided, further data will be published continually)
-
 
 A tool for quantum error correcting codes and numerical simulations developed by the
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
 based on methods proposed in [[1]](todo)
 
-QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ 
+QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ
 [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the
 [Johannes Kepler University Linz](https://jku.at)).
 
@@ -16,7 +16,7 @@ The tool can be used to decode quantum LDPC codes and conduct respective numeric
 
 At the moment the general QLDPC
 decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
-and a heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. Currently, 
+and a heuristic (which improves the runtime of the algorithm) [[1]](todo) are implemented. Currently,
 open-source software by Joschka Roffe et
 al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product and hypergraph product).
 
@@ -29,14 +29,14 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
 
 - In order to make the library as easy to use as possible (without compilation), we provide pre-built wheels for most
   common platforms (64-bit Linux, MacOS, Windows). These can be installed using
-    ```bash
-    pip install mqt.qecc
-    ```
+  ```bash
+  pip install mqt.qecc
+  ```
   However, in order to get the best performance out of QECC, it is recommended to build it locally from the source
   distribution (see [system requirements](#system-requirements)) via
-    ```bash
-    pip install  mqt.qecc --no-binary mqt.qecc
-    ```
+  ```bash
+  pip install  mqt.qecc --no-binary mqt.qecc
+  ```
   This enables platform specific compiler optimizations that cannot be enabled on portable wheels.
 
 > **Note**
@@ -44,18 +44,19 @@ MQT QECC is developed as a C++ library with an easy to use Python interface.
 > and call `pip install --editable .` in the cloned directory to install the Python package.
 
 - Once installed, start using it in Python:
+
   ```python
   from mqt.qecc import *
   import numpy as np
-  
-  code = Code('/path/to/Hx', 'path/to/Hz')
+
+  code = Code("/path/to/Hx", "path/to/Hz")
   decoder = UFHeuristic()
   decoder.set_code(code)
   x_err = sample_iid_pauli_err(code.N, 0.05)
   decoder.decode(code.get_x_syndrome(x_err))
   result = decoder.result
   print(result)
-  residual_err = np.array(x_err)^np.array(result.estimate)
+  residual_err = np.array(x_err) ^ np.array(result.estimate)
   print(code.is_x_stabilizer(residual_err))
   ```
 
@@ -84,15 +85,15 @@ If you happen to forget passing the flag on your initial clone, you can initiali
 executing `git submodule update --init --recursive` in the main project directory.
 
 Our projects use CMake as the main build configuration tool. Building a project using CMake is a two-stage process.
-First, CMake needs to be *configured* by calling
+First, CMake needs to be _configured_ by calling
 
-```shell 
+```shell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
-This tells CMake to search the current directory `.` (passed via `-S`) for a *CMakeLists.txt* file and process it into a
+This tells CMake to search the current directory `.` (passed via `-S`) for a _CMakeLists.txt_ file and process it into a
 directory `build` (passed via `-B`).
-The flag `-DCMAKE_BUILD_TYPE=Release` tells CMake to configure a *Release* build (as opposed to, e.g., a *Debug* build).
+The flag `-DCMAKE_BUILD_TYPE=Release` tells CMake to configure a _Release_ build (as opposed to, e.g., a _Debug_ build).
 
 After configuring with CMake, the project can be built by calling
 
@@ -129,10 +130,10 @@ If you change parts of the C++ code, you have to run the second line to make the
 If you use our tool for your research, we will be thankful if you refer to it by citing the appropriate publications.
 
 ```bibtex
-@article{DBLP:conf/to/do,
-  author    = {todo},
-  title     = {todo},
-  journal   = {todo},
-  year      = {2022}
+@article{berent2022software,
+  title={Software Tools for Decoding Quantum Low-Density Parity Check Codes},
+  author={Berent, Lucas and Burgholzer, Lukas and Wille, Robert},
+  journal={arXiv:2209.01180},
+  year={2022}
 }
 ```

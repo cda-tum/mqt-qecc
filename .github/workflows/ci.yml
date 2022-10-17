@@ -1,0 +1,84 @@
+name: C++
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 3
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ubuntu-tests:
+    name: Tests ubuntu-22.04
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        working-directory: build/test
+        run: ctest -C Debug --output-on-failure
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          gcov: true
+          gcov_ignore: "extern/**/*"
+
+  macos-tests:
+    name: Tests macos-11
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install flint
+        run: brew install flint
+      - name: Configure CMake
+        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        working-directory: build/test
+        run: ctest -C Release --output-on-failure
+#  windows-tests: TODO
+#    name: Tests windows-2022
+#    runs-on: windows-2022
+#    defaults:
+#      run:
+#        shell: msys2 {0}
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: recursive
+#      - uses: msys2/setup-msys2@v2
+#        with:
+#          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
+#      - name: Debug flint location
+#        run: pacman -Ql mingw-w64-clang-x86_64-flint
+#      - name: Configure CMake
+#        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
+#        env:
+#          CC: clang
+#          CXX: clang++
+#      - name: Build
+#        run: cmake --build build --config Release --parallel 3
+#      - name: Test
+#        working-directory: build\Release\test
+#        run: ctest -C Release --output-on-failure

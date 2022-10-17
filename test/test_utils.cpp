@@ -1,13 +1,14 @@
+// to keep 0/1 in boolean areas without clang-tidy warnings:
+// NOLINTBEGIN(readability-implicit-bool-conversion,modernize-use-bool-literals)
+
 //
 // Created by lucas on 13/06/22.
 //
-
 #include "Codes.hpp"
-#include "UFDecoder.hpp"
 
 #include <gtest/gtest.h>
 
-class UtilsTest: public testing::TestWithParam<std::string> {
+class UtilsTest : public testing::TestWithParam<std::string> {
 protected:
     void setUp() {
     }
@@ -50,10 +51,9 @@ TEST(UtilsTest, TestSwapRows) {
     gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
                      {1, 0, 1, 0, 1, 0, 0},
                      {0, 1, 1, 0, 0, 1, 0}};
-    gf2Mat sol    = {
-               {1, 1, 0, 1, 0, 0, 1},
-               {0, 1, 1, 0, 0, 1, 0},
-               {1, 0, 1, 0, 1, 0, 0}};
+    gf2Mat sol    = {{1, 1, 0, 1, 0, 0, 1},
+                     {0, 1, 1, 0, 0, 1, 0},
+                     {1, 0, 1, 0, 1, 0, 0}};
 
     Utils::swapRows(matrix, 1, 2);
     EXPECT_TRUE(sol == matrix);
@@ -63,11 +63,10 @@ TEST(UtilsTest, TestReduce) {
     gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
                      {1, 0, 1, 0, 1, 0, 0},
                      {0, 1, 1, 0, 0, 1, 0}};
-    gf2Mat sol    = {
-               {1, 0, 1, 0, 1, 0, 0},
-               {0, 1, 1, 0, 0, 1, 0},
-               {0, 0, 0, 1, 1, 1, 1}};
-    auto res = Utils::gauss(matrix);
+    gf2Mat sol    = {{1, 0, 1, 0, 1, 0, 0},
+                     {0, 1, 1, 0, 0, 1, 0},
+                     {0, 0, 0, 1, 1, 1, 1}};
+    auto   res    = Utils::gauss(matrix);
     EXPECT_TRUE(Utils::getFlintMatrix(sol) == res);
 }
 
@@ -199,7 +198,7 @@ TEST(UtilsTest, GetFlintMatrix) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                      {0, 1, 0, 1, 1, 0, 1},
                      {0, 0, 1, 0, 1, 1, 1}};
-    auto s = Utils::getFlintMatrix(matrix);
+    auto   s      = Utils::getFlintMatrix(matrix);
     print_pretty(s);
 }
 
@@ -207,10 +206,10 @@ TEST(UtilsTest, MatrixMultiply) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                      {0, 1, 0, 1, 1, 0, 1},
                      {0, 0, 1, 0, 1, 1, 1}};
-    gf2Vec vec = {1,0,0,0,0,0,0};
-    gf2Vec sol = {1,0,0};
+    gf2Vec vec    = {1, 0, 0, 0, 0, 0, 0};
+    gf2Vec sol    = {1, 0, 0};
     gf2Vec syndr(matrix.size());
-    Utils::rectMatrixMultiply(matrix,vec, syndr);
+    Utils::rectMatrixMultiply(matrix, vec, syndr);
     EXPECT_TRUE(syndr == sol);
 }
 
@@ -218,10 +217,12 @@ TEST(UtilsTest, MatrixMultiply2) {
     gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                      {0, 1, 0, 1, 1, 0, 1},
                      {0, 0, 1, 0, 1, 1, 1}};
-    gf2Vec vec = {1,1,0,0,0,0,0};
-    gf2Vec sol = {1,1,0};
+    gf2Vec vec    = {1, 1, 0, 0, 0, 0, 0};
+    gf2Vec sol    = {1, 1, 0};
     gf2Vec comp(matrix.size());
-    Utils::rectMatrixMultiply(matrix,vec, comp);
+    Utils::rectMatrixMultiply(matrix, vec, comp);
 
     EXPECT_TRUE(comp == sol);
 }
+
+// NOLINTEND(readability-implicit-bool-conversion,modernize-use-bool-literals)

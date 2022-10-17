@@ -1,0 +1,26 @@
+ignore:
+  - "extern/**/*"
+  - "mqt/**/*.cpp"
+  - "test/**/*"
+
+coverage:
+  range: 60..90
+  precision: 1
+  status:
+    project:
+      default:
+        threshold: 0.5%
+    patch:
+      default:
+        threshold: 1%
+        target: 90%
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: no
+      loop: no
+
+codecov:
+  notify:
+    after_n_builds: 2

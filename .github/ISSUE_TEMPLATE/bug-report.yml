@@ -1,0 +1,63 @@
+name: 🐛 Bug report
+description: Something is not working correctly.
+title: "🐛 <title>"
+labels: ["bug"]
+assignees:
+  - lucasberent
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        **Thank you for wanting to report a bug for this project!**
+
+        :warning:
+        Verify first that your issue is not [already reported on GitHub](https://github.com/lucasberent/qecc/issues).
+
+  - type: markdown
+    attributes:
+      value: >-
+        **Environment**
+  - type: input
+    attributes:
+      label: mqt.qecc version
+      placeholder: For example, mqt.qecc===2.0.0
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: OS
+      placeholder: For example, Ubuntu 22.04, macOS Big Sur, Windows etc.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Python version
+      placeholder: For example, Python 3.10
+  - type: input
+    attributes:
+      label: C++ compiler
+      placeholder: For example, gcc-10
+  - type: textarea
+    attributes:
+      label: Additional environment information
+      description: Feel free to add more information about your environment here.
+  - type: textarea
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+  - type: textarea
+    attributes:
+      label: How to Reproduce
+      description: Please provide steps to reproduce this bug.
+      placeholder: |
+        1. Get package from '...'
+        2. Then run '...'
+        3. An error occurs.
+    validations:
+      required: true

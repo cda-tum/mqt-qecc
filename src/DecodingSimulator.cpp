@@ -8,7 +8,7 @@
 
 std::string generateOutFileName(const std::string& filepath) {
     auto               t  = std::time(nullptr);
-    auto               tm = *std::localtime(&t);
+    auto               tm = *std::localtime(&t); // localtime might not be threadsafe. Currently irrelevant
     std::ostringstream oss;
     oss << std::put_time(&tm, "%d-%m-%Y");
     auto timestamp = oss.str();
@@ -42,17 +42,15 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
         statisticsOutstr << R"({ "run": { "physicalErrRate":)" << minPhysicalErrRate << ", \"data\": [ ";
     }
 
-    auto        nrOfFailedRuns = 0U;
-    auto        currPer        = minPhysicalErrRate;
-    std::size_t nrRuns         = 0;
+    auto currPer = minPhysicalErrRate;
     while (currPer < maxPhysicalErrRate) {
-        nrOfFailedRuns = 0;
+        auto nrOfFailedRuns = 0;
         for (std::size_t j = 0; j < nrRunsPerRate; j++) {
-            Decoder* decoder;
-            if (decoderType == DecoderType::UF_DECODER) {
-                decoder = new UFDecoder();
-            } else if (decoderType == DecoderType::UF_HEURISTIC) {
-                decoder = new UFHeuristic();
+            std::unique_ptr<Decoder> decoder;
+            if (decoderType == DecoderType::UfDecoder) {
+                decoder = std::make_unique<UFDecoder>();
+            } else if (decoderType == DecoderType::UfHeuristic) {
+                decoder = std::make_unique<UFHeuristic>();
             } else {
                 throw QeccException("Invalid DecoderType, cannot simulate");
             }
@@ -80,7 +78,7 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
                 }
             }
         }
-        //compute word error rate WER
+        // compute word error rate WER
         const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(nrRunsPerRate);
         const auto wordErrRate  = blockErrRate / static_cast<double>(code.getK());       // rate of codewords re decoder does not give correct answer (fails or introduces logical operator)
         wordErrRatePerPhysicalErrRate.try_emplace(std::to_string(currPer), wordErrRate); // to string for json parsing
@@ -111,16 +109,15 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
     if (rawOut) {
         std::cout << "writing raw data to " << rawDataOutputFilepath << std::endl;
         finalRawOut.open(generateOutFileName(rawDataOutputFilepath));
-        finalRawOut.rdbuf()->pubsetbuf(0, 0);
+        finalRawOut.rdbuf()->pubsetbuf(nullptr, 0);
     }
 
     if (infoOut) {
         std::cout << "writing statistics to " << decodingInfoOutfilePath << std::endl;
         dataOutStream.open(generateOutFileName(decodingInfoOutfilePath));
-        dataOutStream.rdbuf()->pubsetbuf(0, 0);
+        dataOutStream.rdbuf()->pubsetbuf(nullptr, 0);
     }
 
-    std::size_t                                                                    avgDecodingTimeAcc = 0U;
     std::map<std::string, std::map<std::string, double, std::less<>>, std::less<>> dataPerRate;
     std::map<std::string, double, std::less<>>                                     tmp;
     std::vector<std::string>                                                       codePaths{};
@@ -128,22 +125,22 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
     std::map<std::string, std::map<std::string, std::size_t, std::less<>>>         avgSampleRunsPerCode;
 
     DecodingRunInformation info;
-    for (const auto& file: std::filesystem::directory_iterator(codesPath)) {
+    for (const auto& file : std::filesystem::directory_iterator(codesPath)) {
         codePaths.emplace_back(file.path());
     }
     std::map<std::string, double, std::less<>> avgTimePerSizeData;
     try {
-        for (const auto& currPath: codePaths) {
-            avgDecodingTimeAcc = 0U;
-            auto       code    = Code(currPath);
-            const auto codeN   = code.getN();
+        for (const auto& currPath : codePaths) {
+            auto       avgDecodingTimeAcc = 0U;
+            auto       code               = Code(currPath);
+            const auto codeN              = code.getN();
             for (std::size_t j = 0; j < nrRuns; j++) {
                 for (std::size_t i = 0; i < nrSamples; i++) {
-                    Decoder* decoder;
-                    if (decoderType == DecoderType::UF_DECODER) {
-                        decoder = new UFDecoder();
-                    } else if (decoderType == DecoderType::UF_HEURISTIC) {
-                        decoder = new UFHeuristic();
+                    std::unique_ptr<Decoder> decoder;
+                    if (decoderType == DecoderType::UfDecoder) {
+                        decoder = std::make_unique<UFDecoder>();
+                    } else if (decoderType == DecoderType::UfHeuristic) {
+                        decoder = std::make_unique<UFHeuristic>();
                     } else {
                         throw QeccException("Invalid DecoderType, cannot simulate");
                     }
@@ -162,7 +159,6 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
                     }
                     avgDecodingTimeAcc = avgDecodingTimeAcc + decodingResult.decodingTime;
                     decoder->reset();
-                    delete decoder;
                 }
                 auto average = avgDecodingTimeAcc / nrSamples;
                 avgSampleRuns.try_emplace(std::to_string(j), average);

@@ -1,13 +1,10 @@
-
-import ldpc.protograph as pt
 import numpy as np
 from bposd.hgp import hgp
 
 # med sized HGP code from
 
 h = np.loadtxt("./mkmn_24_6_10.txt").astype(int)
-qcode = hgp(h)  # construct quantum LDPC code using the symmetric hypergraph product
-seed_code = np.loadtxt(f"./mkmn_24_6_10.txt").astype(int)
+seed_code = np.loadtxt("./mkmn_24_6_10.txt").astype(int)
 # print(seed_code)
 qcode = hgp(seed_code, compute_distance=True)
 qcode.canonical_logicals()
@@ -16,8 +13,8 @@ print(qcode.code_params)
 print(qcode.hx)
 print("hx:")
 print(qcode.hz)
-np.savetxt(f"./hgp_{qcode.code_params}_hz.txt", qcode.hz, fmt='%d', newline='\n')
-np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt='%d', newline='\n')
+np.savetxt(f"./hgp_{qcode.code_params}_hz.txt", qcode.hz, fmt="%d", newline="\n")
+np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt="%d", newline="\n")
 
 # larger code
 # a1 = pt.array([

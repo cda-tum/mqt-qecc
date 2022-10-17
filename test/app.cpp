@@ -1,10 +1,9 @@
 /**
-* Simulate average runtime for codes with growing nr of N for several physical err rates (err rates should only increase slope of curve)
-*/
+ * Simulate average runtime for codes with growing nr of n for several physical err rates (err rates should only increase slope of curve)
+ */
 #include "Code.hpp"
 #include "DecodingRunInformation.hpp"
 #include "UFDecoder.hpp"
-#include "UFHeuristic.hpp"
 #include "Utils.hpp"
 
 #include <ctime>
@@ -15,7 +14,7 @@
 
 using namespace std;
 
-void runtime(const std::string& codeName) {
+void runtime(const std::string& codename) {
     /**
      * ***************** Comment out accordingly *****************
      */
@@ -23,26 +22,25 @@ void runtime(const std::string& codeName) {
     const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
     const std::string inPath   = rootPath + "in/toricCodes2/";
     //**** local:
-    //const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
-    //const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
+    // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
+    // const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
     // ***************** config end *****************
     const std::size_t nrRuns    = 1000;
     const std::size_t nrSamples = 50;
     const double      per       = 0.01;
-    auto              code      = Code(inPath + codeName);
-    const auto        codeN     = code.getN();
+    auto              code      = Code(inPath + codename);
+    const auto        coden     = code.getN();
 
-    std::size_t runsSum    = 0;
     std::size_t samplesSum = 0;
 
     for (std::size_t i = 0; i < nrSamples; i++) {
-        runsSum = 0;
+        auto runsSum = 0U;
         for (std::size_t j = 0; j < nrRuns; j++) {
             auto decoder = UFDecoder();
             decoder.setCode(code);
             std::vector<bool> error;
-            while(error.empty() || std::none_of(error.begin(), error.end(), [](bool c) {return c;})) {
-                error = Utils::sampleErrorIidPauliNoise(codeN, per);
+            while (error.empty() || std::none_of(error.begin(), error.end(), [](bool c) { return c; })) {
+                error = Utils::sampleErrorIidPauliNoise(coden, per);
             }
             auto syndrome = code.getXSyndrome(error);
             decoder.decode(syndrome);
@@ -52,32 +50,27 @@ void runtime(const std::string& codeName) {
         std::cout << runsSum << std::endl;
         samplesSum += runsSum;
     }
-    std::cout << codeName << ":" << samplesSum / nrSamples << std::endl;
+    std::cout << codename << ":" << samplesSum / nrSamples << std::endl;
     flint_cleanup();
 }
 
 void decodingPerformance(const double per) {
-    const std::string rootPath = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
-    const std::string rootPath2 = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
-    const std::size_t code_K = 18;
-
-    const std::size_t nrOfRunsPerRate = 1;
-
+    const std::string                          rootPath        = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string                          rootPath2       = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::size_t                          codeK           = 18;
+    const std::size_t                          nrOfRunsPerRate = 1;
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
-    //    decodingResOutput << "{ \"runs\" : [ ";
-    //    rawIntermediateOut << "{ ";
 
-    auto       code = HGPcode(rootPath, rootPath2, code_K);
-    const auto K    = code.getK();
-    const auto N    = code.getN();
+    auto       code = HGPcode(rootPath, rootPath2, codeK);
+    const auto k    = code.getK();
+    const auto n    = code.getN();
 
     std::size_t nrOfFailedRuns = 0U;
-    std::size_t j = 0;
+    std::size_t j              = 0;
     while (nrOfFailedRuns < 1 || j < nrOfRunsPerRate) {
-        auto* decoder = new UFDecoder();
+        auto decoder = std::make_unique<UFDecoder>();
         decoder->setCode(code);
-        //decoder->setGrowth(GrowthVariant::ALL_COMPONENTS);
-        auto error    = Utils::sampleErrorIidPauliNoise(N, per);
+        auto error    = Utils::sampleErrorIidPauliNoise(n, per);
         auto syndrome = code.getXSyndrome(error);
         decoder->decode(syndrome);
         auto const&       decodingResult = decoder->result;
@@ -88,20 +81,17 @@ void decodingPerformance(const double per) {
             nrOfFailedRuns++;
         }
         decoder->reset();
-        delete decoder;
         j++;
     }
-    //compute word error rate WER
+    // compute word error rate WER
     const auto blockErrRate = static_cast<double>(nrOfFailedRuns) / static_cast<double>(j);
-    const auto wordErrRate  = blockErrRate / static_cast<double>(K); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
+    const auto wordErrRate  = blockErrRate / static_cast<double>(k); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
     std::cout << "per:wer = " << per << ":" << wordErrRate << std::endl;
     std::cout.flush();
     flint_cleanup();
 }
 
-int main(int argc, char* argv[]) {
-    //std::string codeName = argv[1];
-    double      per          = std::stod(argv[1]);
-    //runtime(codeName);
+int main(int argc, char* argv[]) {   // NOLINT(clang-diagnostic-unused-parameter, bugprone-exception-escape,misc-unused-parameters)
+    double per = std::stod(argv[1]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     decodingPerformance(per);
 }

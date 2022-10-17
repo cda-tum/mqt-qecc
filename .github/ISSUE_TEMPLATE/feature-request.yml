@@ -1,0 +1,35 @@
+name: ✨ Feature request
+description: Suggest an idea
+title: "✨ <title>"
+labels: ["enhancement"]
+assignees:
+  - lucasberent
+body:
+  - type: markdown
+    attributes:
+      value: >
+        **Thank you for wanting to suggest a feature for this project!**
+
+        :warning:
+        Verify first that your idea is not [already requested on GitHub](https://github.com/lucasberent/qecc/issues).
+
+  - type: textarea
+    attributes:
+      label: What's the problem this feature will solve?
+      description: >-
+        What are you trying to do, that you are unable to achieve as it currently stands?
+      placeholder: >-
+        I'm trying to do X and I'm missing feature Y for this to be
+        easily achievable.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the solution you'd like
+      description: >
+        Clear and concise description of what you want to happen.
+      placeholder: >-
+        When I do X, I want to achieve Y in a situation when Z.
+    validations:
+      required: true

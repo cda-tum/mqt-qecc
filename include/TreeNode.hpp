@@ -5,6 +5,7 @@
 #ifndef QUNIONFIND_TREENODE_HPP
 #define QUNIONFIND_TREENODE_HPP
 
+#include <compare>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -22,40 +23,36 @@ public:
     std::vector<TreeNode*>          children{};
     size_t                          clusterSize = 1U;
     std::unordered_set<std::size_t> boundaryVertices{};
-    std::vector<std::size_t> checkVertices{};
+    std::vector<std::size_t>        checkVertices{};
     bool                            marked  = false;
     bool                            deleted = false;
 
-    TreeNode():
-        TreeNode(-1) {}
+    TreeNode() : TreeNode(-1) {}
 
-    explicit TreeNode(const std::size_t& vertexIdx):
-        vertexIdx(vertexIdx) {
+    explicit TreeNode(const std::size_t& vertexIdx) : vertexIdx(vertexIdx) {
         boundaryVertices.emplace(vertexIdx);
     }
 
     /*
- * find using path compression
- */
-    static TreeNode* Find(TreeNode* node) {
-        //std::cout << "in find" << std::endl;
-        auto parent = node->parent;
+     * find using path compression
+     */
+    static TreeNode* Find(TreeNode* node) { // NOLINT(readability-identifier-naming)
+        auto* parent = node->parent;
         while (parent != nullptr && parent->parent != nullptr) {
-            node = parent;
+            node   = parent;
             parent = parent->parent;
         }
         if (parent == nullptr) {
             return node;
-        } else {
-            return parent;
         }
+        return parent;
     }
     /*
      * Merge two trees with given roots
      */
-    static void Union(TreeNode* tree1, TreeNode* tree2) {
-        auto        root1 = Find(tree1);
-        auto        root2 = Find(tree2);
+    static void Union(TreeNode* tree1, TreeNode* tree2) { // NOLINT(readability-identifier-naming)
+        auto* root1 = Find(tree1);
+        auto* root2 = Find(tree2);
 
         if (root1->vertexIdx == root2->vertexIdx) {
             return;
@@ -68,7 +65,7 @@ public:
     }
 
     static void addFirstToSecondTree(TreeNode* first, TreeNode* second) {
-        first->parent     = second;
+        first->parent = second;
         second->children.emplace_back(first);
         second->clusterSize += first->clusterSize;
         std::move(first->checkVertices.begin(), first->checkVertices.end(), std::back_inserter(second->checkVertices));
@@ -96,7 +93,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i.vertexIdx;
             os << ", ";
         }
@@ -110,7 +107,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i.vertexIdx;
             os << ", ";
         }
@@ -124,7 +121,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i->vertexIdx;
             os << ", ";
         }
@@ -138,7 +135,7 @@ public:
             return os;
         }
         os << "[";
-        for (const auto& i: v) {
+        for (const auto& i : v) {
             os << i->vertexIdx;
             os << ", ";
         }
@@ -148,4 +145,4 @@ public:
     }
 };
 
-#endif //QUNIONFIND_TREENODE_HPP
+#endif // QUNIONFIND_TREENODE_HPP

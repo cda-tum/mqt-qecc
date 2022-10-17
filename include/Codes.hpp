@@ -8,61 +8,53 @@
 
 #include <utility>
 
-class SteaneXCode: public Code {
+class SteaneXCode : public Code {
 public:
-    SteaneXCode():
-        Code("./resources/codes/testCode.txt") {
-        K = 3;
-        N = 7;
+    SteaneXCode() : Code("./resources/codes/testCode.txt") {
+        k = 3;
+        n = 7;
     }
 };
 
-class SteaneCode: public Code {
+class SteaneCode : public Code {
 public:
-    SteaneCode():
-    Code("./resources/codes/testCode.txt","./resources/codes/testCode.txt"){
-        K = 3;
-        N = 7;
+    SteaneCode() : Code("./resources/codes/testCode.txt", "./resources/codes/testCode.txt") {
+        k = 3;
+        n = 7;
     }
 };
 
-class HGPcode: public Code {
+class HGPcode : public Code {
 public:
-    HGPcode(const std::string& inFile, const std::size_t K):
-        Code(inFile) { this->K = K; };
-    HGPcode():
-        Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hz.txt") {
-        K = 36;
-        N = 900;
+    HGPcode(const std::string& inFile, const std::size_t k) : Code(inFile) { this->k = k; };
+    HGPcode() : Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hz.txt") {
+        k = 36;
+        n = 900;
     }
-    HGPcode(const std::string& hxIn,const std::string& hzIn, const std::size_t K):
-        Code(hxIn, hzIn) { this->K = K; };
+    HGPcode(const std::string& hxIn, const std::string& hzIn, const std::size_t k) : Code(hxIn, hzIn) { this->k = k; };
 };
 
-class ToricCode_8: public Code {
+class ToricCode8 : public Code {
 public:
-    ToricCode_8():
-        Code("./resources/codes/toric_(nan,nan)-[[8,2,2]]_hx.txt") {
-        K = 2;
-        N = 8;
+    ToricCode8() : Code("./resources/codes/toric_(nan,nan)-[[8,2,2]]_hx.txt") {
+        k = 2;
+        n = 8;
     }
 };
 
-class ToricCode_18: public Code {
+class ToricCode18 : public Code {
 public:
-    ToricCode_18():
-        Code("./resources/codes/toric_(nan,nan)-[[18,2,3]]_hx.txt") {
-        K = 2;
-        N = 18;
+    ToricCode18() : Code("./resources/codes/toric_(nan,nan)-[[18,2,3]]_hx.txt") {
+        k = 2;
+        n = 18;
     }
 };
 
-class ToricCode_32: public Code {
+class ToricCode32 : public Code {
 public:
-    ToricCode_32():
-        Code("./resources/codes/toric_(nan,nan)-[[32,2,4]]_hx.txt") {
-        K = 2;
-        N = 32;
+    ToricCode32() : Code("./resources/codes/toric_(nan,nan)-[[32,2,4]]_hx.txt") {
+        k = 2;
+        n = 32;
     }
 };
-#endif //QUNIONFIND_CODES_HPP
+#endif // QUNIONFIND_CODES_HPP
