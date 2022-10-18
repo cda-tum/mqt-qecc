@@ -11,7 +11,7 @@ body:
         **Thank you for wanting to suggest a feature for this project!**
 
         :warning:
-        Verify first that your idea is not [already requested on GitHub](https://github.com/lucasberent/qecc/issues).
+        Verify first that your idea is not [already requested on GitHub](https://github.com/cda-tum/qecc/issues).
 
   - type: textarea
     attributes:

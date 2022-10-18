@@ -57,10 +57,10 @@ docs = [
 dev = ["mqt.qecc[coverage, docs]"]
 
 [project.urls]
-Homepage = "https://github.com/lucasberent/qecc"
-Documentation = "https://github.com/lucasberent/qecc"
-"Bug Tracker" = "https://github.com/lucasberent/qecc/issues"
-Discussions = "https://github.com/lucasberent/qecc/discussions"
+Homepage = "https://github.com/cda-tum/qecc"
+Documentation = "https://github.com/cda-tum/qecc"
+"Bug Tracker" = "https://github.com/cda-tum/qecc/issues"
+Discussions = "https://github.com/cda-tum/qecc/discussions"
 
 [tool.setuptools.packages.find]
 include = ["mqt.*"]
