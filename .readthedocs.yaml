@@ -10,6 +10,7 @@ build:
     python: "3.9"
   apt_packages:
     - cmake
+    - libflint-dev
 
 sphinx:
   configuration: docs/source/conf.py
