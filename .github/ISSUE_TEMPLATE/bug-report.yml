@@ -11,7 +11,7 @@ body:
         **Thank you for wanting to report a bug for this project!**
 
         :warning:
-        Verify first that your issue is not [already reported on GitHub](https://github.com/lucasberent/qecc/issues).
+        Verify first that your issue is not [already reported on GitHub](https://github.com/cda-tum/qecc/issues).
 
   - type: markdown
     attributes:

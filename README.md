@@ -6,7 +6,7 @@
 
 A tool for quantum error correcting codes and numerical simulations developed by the
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
-based on methods proposed in [[1]](todo)
+based on methods proposed in [[1]](https://arxiv.org/abs/2209.01180).
 
 QECC is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ
 [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the
@@ -77,7 +77,7 @@ to specify the location of flint (e.g. `export LD_LIBRARY_PATH=/usr/local/lib` o
 To start off, clone this repository using
 
 ```shell
-git clone --recurse-submodules -j8 https://github.com/lucasberent/qecc
+git clone --recurse-submodules -j8 https://github.com/cda-tum/qecc
 ```
 
 Note the `--recurse-submodules` flag. It is required to also clone all the required submodules.
