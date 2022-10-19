@@ -18,7 +18,7 @@ keywords = ["MQT", "quantum computing", "quantum error correction", "error-corre
 license = { file = "LICENSE" }
 
 classifiers = [
-    "Development Status :: 1 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
