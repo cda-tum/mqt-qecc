@@ -6,7 +6,7 @@ We value contributions from people with all levels of experience.
 In particular if this is your first pull request not everything has to be perfect.
 We will guide you through the process.
 
-We use GitHub to `host code <https://github.com/cda-tum/qecc>`_, to `track issues and feature requests <https://github.com/cda-tum/qecc/issues>`_, as well as accept `pull requests <https://github.com/cda-tum/qcec/pulls>`_.
+We use GitHub to `host code <https://github.com/cda-tum/qecc>`_, to `track issues and feature requests <https://github.com/cda-tum/qecc/issues>`_, as well as accept `pull requests <https://github.com/cda-tum/qecc/pulls>`_.
 See https://docs.github.com/en/get-started/quickstart for a general introduction to working with GitHub and contributing to projects.
 
 Types of Contributions

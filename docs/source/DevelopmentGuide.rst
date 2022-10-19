@@ -266,9 +266,6 @@ You can build the documentation using the :code:`nox` session :code:`docs`.
 
         (venv) $ nox -rs docs
 
-.. note::
-    In order to properly build the jupyter notebooks in the documentation, you need to have :code:`pandoc` installed. See `the pandoc documentation <https://pandoc.org/installing.html>`_ for installation instructions.
-
 This will install all dependencies for building the documentation in an isolated environment, build the Python package, and then build the documentation.
 The session also provides a convenient option to automatically serve the docs on a local web server. Running
 

@@ -45,7 +45,8 @@ First, save the following lines as :code:`steane_example.py` in a folder where y
 
     .. code-block:: python
 
-        code = Code("path/to/Hx", "path/to/Hz")
+        H = [[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]]
+        code = Code(H, H)
         decoder = UFHeuristic()
         decoder.set_code(code)
         x_err = sample_iid_pauli_err(code.n, 0.05)
