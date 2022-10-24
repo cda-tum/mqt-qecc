@@ -65,11 +65,6 @@ print(code.is_x_stabilizer(residual_err))
 **Detailed documentation on all available methods, options, and input formats is available
 at [ReadTheDocs](https://qecc.readthedocs.io/en/latest/).**
 
-> **Note**
-> Pre-built wheels are not yet available. They will be released soon. In the meantime, follow the instructions below for
-> cloning the repository
-> and call `pip install --editable .` in the cloned directory to install the Python package.
-
 ## System Requirements and Building
 
 The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.14.
