@@ -38,8 +38,11 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
+          fail_ci_if_error: true
+          flags: cpp
           gcov: true
           gcov_ignore: "extern/**/*"
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   macos-tests:
     name: Tests macos-11
