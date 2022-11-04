@@ -4,7 +4,7 @@
 [![Bindings](https://img.shields.io/github/workflow/status/cda-tum/qecc/Python%20Packaging?style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/qecc/actions/workflows/deploy.yml)
 [![codecov](https://img.shields.io/codecov/c/github/cda-tum/qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/qecc)
 
-# MQT QECC - A tool for Quantum Error Correcting Codes written in C++
+# QECC: An MQT tool for Quantum Error Correcting Codes written in C++
 
 :warning: **This project is still in early development and breaking changes might happen frequently.**
 
