@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "setuptools>=61",
-    "setuptools_scm[toml]>=6.4",
+    "setuptools_scm[toml]>=7",
     "ninja>=1.10; sys_platform != 'win32'",
     "cmake>=3.14",
 ]
@@ -40,15 +40,15 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
-coverage = ["mqt.qecc[test]", "coverage[toml]~=6.4.2", "pytest-cov~=3.0.0"]
+coverage = ["mqt.qecc[test]", "coverage[toml]>=6.3", "pytest-cov>=3"]
 docs = [
-    "sphinx>=5.1.1",
+    "sphinx>=5",
     "sphinx-rtd-theme",
-    "sphinxcontrib-bibtex~=2.5",
+    "sphinxcontrib-bibtex>=2.4.2",
     "sphinx-copybutton",
-    "sphinx-hoverxref~=1.1.3",
+    "sphinx-hoverxref",
     "pybtex>=0.24",
-    "importlib_metadata>=3.6; python_version < '3.10'",
+    "importlib_metadata>=4.4; python_version < '3.10'",
     "ipython",
     "ipykernel",
     "nbsphinx",
