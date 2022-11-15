@@ -134,6 +134,7 @@ check_untyped_defs = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
+explicit_package_bases = true
 
 [tool.pylint]
 master.py-version = "3.7"
