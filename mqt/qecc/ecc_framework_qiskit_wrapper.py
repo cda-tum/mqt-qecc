@@ -1,10 +1,9 @@
 #!/bin/python3
 
 import argparse
-
-import numpy as np
 import typing
 
+import numpy as np
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
 from qiskit.result import counts
