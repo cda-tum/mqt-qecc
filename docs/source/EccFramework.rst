@@ -112,7 +112,7 @@ Available error-correcting codes and operations
     - Q9Shor
     - Q9Surface
     - Q18Surface
-  * Pauli (X, Y, Z)
+  * - Pauli (X, Y, Z)
     - ✔️
     - ✔️
     - ✔️
@@ -150,7 +150,8 @@ Properties of the implemented error-correcting codes
   :widths: 22 13 13 13 13 13 13
   :header-rows: 1
 
-  * - Q3Shor
+  * - Feature
+    - Q3Shor
     - Q5Laflamme
     - Q7Steane
     - Q9Shor
