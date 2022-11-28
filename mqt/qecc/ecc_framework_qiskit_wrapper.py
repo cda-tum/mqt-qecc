@@ -59,7 +59,7 @@ def create_noise_model(n_model, p_error):
 
 def print_simulation_results(result_counts, n_shots, threshold_probability=0):
     printed_results = 0
-    summarized_counts = dict()
+    summarized_counts = {}
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
