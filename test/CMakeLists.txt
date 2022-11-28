@@ -4,7 +4,7 @@ if(NOT TARGET gtest OR NOT TARGET gmock)
       ON
       CACHE BOOL "" FORCE)
   add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr/extern/dd_package/googletest"
-          "extern/qfr/extern/dd_package/googletest" EXCLUDE_FROM_ALL)
+                   "extern/qfr/extern/dd_package/googletest" EXCLUDE_FROM_ALL)
   mark_as_advanced(
     BUILD_GMOCK
     BUILD_GTEST

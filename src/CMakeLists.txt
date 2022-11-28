@@ -68,7 +68,8 @@ set(JSON_BuildTests # cmake-lint: disable=C0103
 set(JSON_MultipleHeaders # cmake-lint: disable=C0103
     OFF
     CACHE INTERNAL "")
-#add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr/extern/json" "extern/qfr/extern/json" EXCLUDE_FROM_ALL)
+# add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr/extern/json" "extern/qfr/extern/json"
+# EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 
 # add coverage compiler and linker flag to the library and all targets that link against it, if
