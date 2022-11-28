@@ -13,6 +13,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
 
+#include <../extern/qfr/include/QuantumComputation.hpp>
 #include <../extern/qfr/mqt/qfr/qiskit/QasmQobjExperiment.hpp>
 #include <../extern/qfr/mqt/qfr/qiskit/QuantumCircuit.hpp>
 #include <eccs/IdEcc.hpp>
@@ -34,7 +35,7 @@ std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physi
     return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
-py::dict apply_ecc(const py::object& circ, const std::string& eccString, const int ecc_frequency, const bool ecc_no_mc, const bool ecc_clifford_only) {
+py::dict apply_ecc(const py::object& circ, const std::string& eccString, const int ecc_frequency) {
     qc::QuantumComputation qc{};
     std::string            eccName{eccString};
 
@@ -58,24 +59,22 @@ py::dict apply_ecc(const py::object& circ, const std::string& eccString, const i
     }
 
     Ecc* mapper           = nullptr;
-    bool decomposeMC      = ecc_no_mc;
-    bool cliffOnly        = ecc_clifford_only;
     int  measureFrequency = ecc_frequency;
 
     if (eccName.compare(IdEcc::getName()) == 0) {
-        mapper = new IdEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new IdEcc(qc, measureFrequency);
     } else if (eccName.compare(Q3ShorEcc::getName()) == 0) {
-        mapper = new Q3ShorEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new Q3ShorEcc(qc, measureFrequency);
     } else if (eccName.compare(Q5LaflammeEcc::getName()) == 0) {
-        mapper = new Q5LaflammeEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new Q5LaflammeEcc(qc, measureFrequency);
     } else if (eccName.compare(Q7SteaneEcc::getName()) == 0) {
-        mapper = new Q7SteaneEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new Q7SteaneEcc(qc, measureFrequency);
     } else if (eccName.compare(Q9ShorEcc::getName()) == 0) {
-        mapper = new Q9ShorEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new Q9ShorEcc(qc, measureFrequency);
     } else if (eccName.compare(Q9SurfaceEcc::getName()) == 0) {
-        mapper = new Q9SurfaceEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new Q9SurfaceEcc(qc, measureFrequency);
     } else if (eccName.compare(Q18SurfaceEcc::getName()) == 0) {
-        mapper = new Q18SurfaceEcc(qc, measureFrequency, decomposeMC, cliffOnly);
+        mapper = new Q18SurfaceEcc(qc, measureFrequency);
     } else {
         std::stringstream ss{};
         ss << "No ECC found for " << eccName << " ";
@@ -89,10 +88,10 @@ py::dict apply_ecc(const py::object& circ, const std::string& eccString, const i
         ss << Q18SurfaceEcc::getName();
         return py::dict("error"_a = ss.str());
     }
-    mapper->apply();
+    qc::QuantumComputation& qcECC = mapper->apply();
 
     std::ostringstream oss{};
-    mapper->dumpResult(oss, qc::OpenQASM);
+    qcECC.dump(oss, qc::OpenQASM);
 
     return py::dict("circ"_a = oss.str());
 }
@@ -193,9 +192,7 @@ PYBIND11_MODULE(pyqecc, m) {
     m.def("apply_ecc", &apply_ecc, "applying an ecc to a circuit an returning a openQasm dump",
           "circ"_a,
           "eccString"_a,
-          "ecc_frequency"_a     = 100,
-          "ecc_no_mc"_a         = false,
-          "ecc_clifford_only"_a = false);
+          "ecc_frequency"_a = 100);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

@@ -102,8 +102,6 @@ def main():
                              'Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)')
     parser.add_argument('-fq', type=int, default=100, help='Specify after how many qubit usages error correction is '
                                                            'applied to it (Default=100)')
-    parser.add_argument('-mc', type=bool, default=False, help='Only allow single controlled gates (Default=False)')
-    parser.add_argument('-cf', type=bool, default=False, help='Only allow clifford operations (Default=False)')
 
     args = parser.parse_args()
 
@@ -124,8 +122,6 @@ def main():
         ecc = args.ecc
 
     ecc_frequency = args.fq
-    force_single_controlled = args.mc
-    force_clifford_gates = args.cf
     ecc_export_filename = args.e
 
     if number_of_shots > 0:
@@ -142,7 +138,7 @@ def main():
     # Initializing the quantum circuit
     if ecc is not None:
         # Applying error correction to the circuit
-        result = qfr.apply_ecc(open_qasm_file, ecc, ecc_frequency, force_single_controlled, force_clifford_gates)
+        result = qecc.apply_ecc(open_qasm_file, ecc, ecc_frequency)
         if "error" in result:
             print("Something went wrong when I tried to apply the ecc. Error message:\n" + result["error"])
             exit(1)
