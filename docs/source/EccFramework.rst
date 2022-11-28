@@ -47,7 +47,7 @@ Having the Python module installed, error correcting codes can be applied using 
 .. code-block:: file
 
   from mqt import qfr
-  
+
   file = "path/to/qasm/file.qasm" # Path to the openqasm file the quantum circuit shall be loaded from
   ecc = "Q7Steane" # Error correction code that shall be applied to the quantum circuit
   ecc_frequency = 100 # After how many times a qubit is used, error correction is applied
@@ -150,38 +150,38 @@ Properties of the implemented error-correcting codes
   :widths: 22 13 13 13 13 13 13
   :header-rows: 1
 
-  * - Q3Shor 	
-    - Q5Laflamme 	
-    - Q7Steane 	
-    - Q9Shor 	
-    - Q9Surface 	
+  * - Q3Shor
+    - Q5Laflamme
+    - Q7Steane
+    - Q9Shor
+    - Q9Surface
     - Q18Surface
-  * - able to detect bit flips 	
-    - ✔️ 	
-    - ✔️ 	
-    - ✔️ 	
-    - ✔️ 	
-    - ✔️ 	
+  * - able to detect bit flips
     - ✔️
-  * - able to detect phase flips 	
-    - ✖️ 	
-    - ✔️ 	
-    - ✔️ 	
-    - ✔️ 	
-    - ✔️ 	
     - ✔️
-  * - #qubits for n logical qubits 	
-    - 3n+2 	
-    - 5n+4 	
-    - 7n+3 	
-    - 9n+8 	
-    - 9n+8 	
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+  * - able to detect phase flips
+    - ✖️
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+  * - #qubits for n logical qubits
+    - 3n+2
+    - 5n+4
+    - 7n+3
+    - 9n+8
+    - 9n+8
     - 36n
-  * - #classical bits (total) 	
-    - 2 	
-    - 5 	
-    - 3 	
-    - 8 	
+  * - #classical bits (total)
+    - 2
+    - 5
+    - 3
+    - 8
     - 8
     - 16
 
