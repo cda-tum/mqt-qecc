@@ -7,7 +7,7 @@ import numpy as np
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
 from qiskit.result import counts
-from qiskit_aer.noise import NoiseModel, depolarizing_error, QuantumError
+from qiskit_aer.noise import NoiseModel, QuantumError, depolarizing_error
 from qiskit_aer.noise.errors import kraus_error, pauli_error
 
 
@@ -85,7 +85,7 @@ def main() -> None:
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
     parser.add_argument(
@@ -99,22 +99,22 @@ def main() -> None:
         required=False,
         default=None,
         help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
-             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="none",
         help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="none",
         help="Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, "
-             "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
+        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
     )
     parser.add_argument(
         "-fq",
