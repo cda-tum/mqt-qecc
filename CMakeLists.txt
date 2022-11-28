@@ -54,9 +54,8 @@ macro(CHECK_SUBMODULE_PRESENT modulename)
   endif()
 endmacro()
 
-#check_submodule_present(json)
-#check_submodule_present(pybind11)
-#check_submodule_present(pybind11_json)
+# check_submodule_present(json) check_submodule_present(pybind11)
+# check_submodule_present(pybind11_json)
 check_submodule_present(qfr)
 
 # Add path for custom modules

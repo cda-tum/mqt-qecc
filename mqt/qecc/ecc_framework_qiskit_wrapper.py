@@ -1,16 +1,12 @@
 #!/bin/python3
 
-from mqt import qecc
-
-import numpy as np
 import argparse
 
-from qiskit import execute, QuantumCircuit
+import numpy as np
+from mqt import qecc
+from qiskit import Aer, QuantumCircuit, execute, providers
 from qiskit.providers.aer.noise import NoiseModel, depolarizing_error
-from qiskit.providers.aer.noise.errors import pauli_error
-from qiskit.providers.aer.noise.errors import kraus_error
-from qiskit import Aer
-from qiskit import providers
+from qiskit.providers.aer.noise.errors import kraus_error, pauli_error
 
 
 def compose_error(error, new_error):
@@ -26,15 +22,15 @@ def create_noise_model(n_model, p_error):
     noise_model = NoiseModel()
     error = None
     for char in n_model:
-        if char == 'B':
+        if char == "B":
             # Add a bit flip error channel
-            new_error = pauli_error([('X', p_error), ('I', 1 - p_error)])
+            new_error = pauli_error([("X", p_error), ("I", 1 - p_error)])
             error = compose_error(error, new_error)
-        elif char == 'D':
+        elif char == "D":
             # Add a depolarization error channel
             new_error = depolarizing_error(p_error, 1)
             error = compose_error(error, new_error)
-        elif char == 'A':
+        elif char == "A":
             # simple amplitude damping error channel which mimics energy loss to the environment (T1-error)
             ap_error = p_error
             A0 = np.array([[1, 0], [0, np.sqrt(1 - 2 * ap_error)]], dtype=complex)
@@ -42,9 +38,9 @@ def create_noise_model(n_model, p_error):
             noise_ops = [a for a in [A0, A1] if np.linalg.norm(a) > 1e-10]
             new_error = kraus_error(noise_ops, canonical_kraus=True)
             error = compose_error(error, new_error)
-        elif char == 'P':
+        elif char == "P":
             # Add a phase flip error channel
-            new_error = pauli_error([('Z', p_error), ('I', 1 - p_error)])
+            new_error = pauli_error([("Z", p_error), ("I", 1 - p_error)])
             error = compose_error(error, new_error)
 
         else:
@@ -52,10 +48,11 @@ def create_noise_model(n_model, p_error):
     assert error is not None
 
     # single qubit and multi qubit operations are treated the same at the moment
-    noise_model.add_all_qubit_quantum_error(error,
-                                            ['u1', 'u2', 'u3', 'h', 'id', 't', 'tdg', 'sdg', 'rx', 'ry', 'rz', 's'])
-    noise_model.add_all_qubit_quantum_error(error.tensor(error), ['cx', 'swap'])
-    noise_model.add_all_qubit_quantum_error(error.tensor(error).tensor(error), ['cswap'])
+    noise_model.add_all_qubit_quantum_error(
+        error, ["u1", "u2", "u3", "h", "id", "t", "tdg", "sdg", "rx", "ry", "rz", "s"]
+    )
+    noise_model.add_all_qubit_quantum_error(error.tensor(error), ["cx", "swap"])
+    noise_model.add_all_qubit_quantum_error(error.tensor(error).tensor(error), ["cswap"])
 
     return noise_model
 
@@ -64,7 +61,7 @@ def print_simulation_results(result_counts, n_shots, threshold_probability=0):
     printed_results = 0
     summarized_counts = dict()
     for result_id in result_counts:
-        sub_result = result_id.split(' ')[-1]
+        sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
             summarized_counts[sub_result] = 0
         summarized_counts[sub_result] += result_counts[result_id]
@@ -80,28 +77,49 @@ def print_simulation_results(result_counts, n_shots, threshold_probability=0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='QiskitWrapper interface with error correction support!')
-    parser.add_argument('-m', type=str, default="D",
-                        help='Define the error_channels (e.g., -m APD), available errors channels are amplitude '
-                             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")')
-    parser.add_argument('-p', type=float, default=0.001, help='Set the noise probability (Default=0.001)')
-    parser.add_argument('-n', type=int, default=2000, help='Set the number of shots. 0 for deterministic simulation ('
-                                                           'Default=2000)')
-    parser.add_argument('-s', type=int, default=0, help='Set a seed (Default=0)')
-    parser.add_argument('-f', type=str, required=True, help='Path to a openqasm file')
-    parser.add_argument('-e', type=str, required=False, default=None,
-                        help='Export circuit, with error correcting code applied, as openqasm circuit instead of '
-                             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)')
-    parser.add_argument('-fs', type=str, default='none',
-                        help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-                             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-                             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(
-                            Aer.backends()))
-    parser.add_argument('-ecc', type=str, default='none',
-                        help='Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, '
-                             'Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)')
-    parser.add_argument('-fq', type=int, default=100, help='Specify after how many qubit usages error correction is '
-                                                           'applied to it (Default=100)')
+    parser = argparse.ArgumentParser(description="QiskitWrapper interface with error correction support!")
+    parser.add_argument(
+        "-m",
+        type=str,
+        default="D",
+        help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
+        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+    )
+    parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
+    parser.add_argument(
+        "-n", type=int, default=2000, help="Set the number of shots. 0 for deterministic simulation (" "Default=2000)"
+    )
+    parser.add_argument("-s", type=int, default=0, help="Set a seed (Default=0)")
+    parser.add_argument("-f", type=str, required=True, help="Path to a openqasm file")
+    parser.add_argument(
+        "-e",
+        type=str,
+        required=False,
+        default=None,
+        help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
+        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+    )
+    parser.add_argument(
+        "-fs",
+        type=str,
+        default="none",
+        help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
+        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+    )
+    parser.add_argument(
+        "-ecc",
+        type=str,
+        default="none",
+        help="Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, "
+        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
+    )
+    parser.add_argument(
+        "-fq",
+        type=int,
+        default=100,
+        help="Specify after how many qubit usages error correction is " "applied to it (Default=100)",
+    )
 
     args = parser.parse_args()
 
@@ -111,12 +129,12 @@ def main():
     seed = args.s
     open_qasm_file = args.f
 
-    if args.fs.lower() == 'none':
+    if args.fs.lower() == "none":
         forced_simulator = None
     else:
         forced_simulator = args.fs
 
-    if args.ecc.lower() == 'none':
+    if args.ecc.lower() == "none":
         ecc = None
     else:
         ecc = args.ecc
@@ -154,8 +172,18 @@ def main():
     size = circ.num_qubits
     result_counts = None
     simulator_backend = None
-    print("_____Trying to simulate with " + str(error_channels) + " (prob=" + str(error_probability) + ", shots=" + str(
-        n_shots) + ", n_qubits=" + str(size) + ") Error______", flush=True)
+    print(
+        "_____Trying to simulate with "
+        + str(error_channels)
+        + " (prob="
+        + str(error_probability)
+        + ", shots="
+        + str(n_shots)
+        + ", n_qubits="
+        + str(size)
+        + ") Error______",
+        flush=True,
+    )
 
     if forced_simulator is not None:
         # Setting the simulator backend to the requested one
@@ -166,23 +194,24 @@ def main():
             exit(1)
     elif error_probability == 0:
         # Statevector simulation method
-        simulator_backend = Aer.get_backend('statevector_simulator')
+        simulator_backend = Aer.get_backend("statevector_simulator")
     elif number_of_shots == 0:
         # Run the noisy density matrix (deterministic) simulation
-        simulator_backend = Aer.get_backend('aer_simulator_density_matrix')
+        simulator_backend = Aer.get_backend("aer_simulator_density_matrix")
     else:
         # Stochastic statevector simulation method
-        simulator_backend = Aer.get_backend('aer_simulator_statevector')
+        simulator_backend = Aer.get_backend("aer_simulator_statevector")
 
-    result = execute(circ,
-                     backend=simulator_backend,
-                     shots=n_shots,
-                     seed_simulator=seed,
-                     noise_model=noise_model,
-                     # optimization_level=0
-                     )
+    result = execute(
+        circ,
+        backend=simulator_backend,
+        shots=n_shots,
+        seed_simulator=seed,
+        noise_model=noise_model,
+        # optimization_level=0
+    )
 
-    if result.result().status != 'COMPLETED':
+    if result.result().status != "COMPLETED":
         print("Simulation exited with status: " + str(result.result().status))
         exit(1)
 

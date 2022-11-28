@@ -12,8 +12,8 @@ from mqt.qecc.pyqecc import (
     GrowthVariant,
     UFDecoder,
     UFHeuristic,
-    sample_iid_pauli_err,
     apply_ecc,
+    sample_iid_pauli_err,
 )
 
 __all__ = [
