@@ -66,6 +66,7 @@ add_subdirectory(src)
 
 # add test code
 if(BUILD_QECC_TESTS)
+  check_submodule_present(qfr/extern/dd_package/extern/benchmark)
   enable_testing()
   include(GoogleTest)
   add_subdirectory(test)
