@@ -1,15 +1,17 @@
 #!/bin/python3
 
 import argparse
+import typing
 
 import numpy as np
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
-from qiskit.providers.aer.noise import NoiseModel, depolarizing_error
-from qiskit.providers.aer.noise.errors import kraus_error, pauli_error
+from qiskit.result import counts
+from qiskit_aer.noise import NoiseModel, depolarizing_error, QuantumError
+from qiskit_aer.noise.errors import kraus_error, pauli_error
 
 
-def compose_error(error, new_error):
+def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:
     if error is None:
         error = new_error
     else:
@@ -17,7 +19,7 @@ def compose_error(error, new_error):
     return error
 
 
-def create_noise_model(n_model, p_error):
+def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
     # Create an empty noise model
     noise_model = NoiseModel()
     error = None
@@ -57,9 +59,9 @@ def create_noise_model(n_model, p_error):
     return noise_model
 
 
-def print_simulation_results(result_counts, n_shots, threshold_probability=0):
+def print_simulation_results(result_counts: counts, n_shots: int, threshold_probability: float = 0) -> None:
     printed_results = 0
-    summarized_counts = {}
+    summarized_counts: typing.TypedDict[str, int] = {}
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
@@ -76,14 +78,14 @@ def print_simulation_results(result_counts, n_shots, threshold_probability=0):
                 break
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="QiskitWrapper interface with error correction support!")
     parser.add_argument(
         "-m",
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
     parser.add_argument(
@@ -97,22 +99,22 @@ def main():
         required=False,
         default=None,
         help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
-        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="none",
         help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="none",
         help="Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, "
-        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
+             "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
     )
     parser.add_argument(
         "-fq",
