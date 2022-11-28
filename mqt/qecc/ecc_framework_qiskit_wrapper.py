@@ -1,9 +1,10 @@
 #!/bin/python3
 
 import argparse
-import typing
 
 import numpy as np
+import typing
+
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
 from qiskit.result import counts
@@ -61,7 +62,7 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
 
 def print_simulation_results(result_counts: counts, n_shots: int, threshold_probability: float = 0) -> None:
     printed_results = 0
-    summarized_counts: typing.TypedDict[str, int] = {}
+    summarized_counts: typing.Dict[str, int] = {}
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
