@@ -1,7 +1,6 @@
 #!/bin/python3
 
 import argparse
-from typing import TypedDict
 
 import numpy as np
 from mqt import qecc
@@ -9,7 +8,6 @@ from qiskit import Aer, QuantumCircuit, execute, providers
 from qiskit.result import counts
 from qiskit_aer.noise import NoiseModel, depolarizing_error, QuantumError
 from qiskit_aer.noise.errors import kraus_error, pauli_error
-
 
 def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:
     if error is None:
@@ -61,7 +59,7 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
 
 def print_simulation_results(result_counts: counts, n_shots: int, threshold_probability: float = 0) -> None:
     printed_results = 0
-    summarized_counts: TypedDict[str, int] = {}
+    summarized_counts: dict[str, int] = {}
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
