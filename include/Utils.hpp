@@ -225,7 +225,7 @@ public:
 
     static void swapRows(gf2Mat& matrix, const std::size_t row1, const std::size_t row2) {
         for (std::size_t col = 0; col < matrix.at(0).size(); col++) {
-            std::swap(matrix.at(row1).at(col), matrix.at(row2).at(col));
+            std::vector<bool>::swap(matrix.at(row1).at(col), matrix.at(row2).at(col));
         }
     }
 
