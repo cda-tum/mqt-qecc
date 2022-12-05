@@ -52,7 +52,7 @@ repos:
 
   # Upgrade old Python syntax
   - repo: https://github.com/asottile/pyupgrade
-    rev: "v3.2.2"
+    rev: "v3.3.0"
     hooks:
       - id: pyupgrade
         args: ["--py37-plus"]
@@ -92,7 +92,7 @@ repos:
 
   # Check the manifest for missing files
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.48"
+    rev: "0.49"
     hooks:
       - id: check-manifest
         stages: [manual] # Only runs whenever ``--hook-stage manual`` is passed
