@@ -172,7 +172,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             if (!used.at(it - getCode()->getN())) {
                 redHz.emplace_back(pcm->pcm->at(it - getCode()->getN()));
                 used.at(it - getCode()->getN()) = true;
-                if (syndrome.contains(it - getCode()->getN())) {
+                if (syndrome.find(it - getCode()->getN()) != syndrome.end()) {
                     redSyndr.emplace_back(1); // If the check node is in the syndrome we need to satisfy check=1
                 } else {
                     redSyndr.emplace_back(0);
@@ -183,7 +183,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             for (auto n : nbrs) { // add neighbouring checks (these are maybe not in the interior but to stay consistent with the syndrome we need to include these in the check)
                 if (!used.at(n - getCode()->getN())) {
                     redHz.emplace_back(pcm->pcm->at(n - getCode()->getN()));
-                    if (syndrome.contains(n)) {
+                    if (syndrome.find(n) != syndrome.end()) {
                         redSyndr.emplace_back(1);
                     } else {
                         redSyndr.emplace_back(0);
@@ -295,7 +295,7 @@ std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const 
     std::vector<std::unordered_set<std::size_t>> result;
 
     for (auto c : nodes) {
-        if (!visited.contains(c)) {
+        if (visited.find(c) == visited.end()) {
             visited.insert(c);
             std::unordered_set<std::size_t> ccomp;
 
@@ -304,11 +304,11 @@ std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const 
             while (!stack.empty()) { // use DFS-like algorithm to compute connected component containing node 'c'
                 auto curr = stack.back();
                 stack.pop();
-                if (!ccomp.contains(curr)) {
+                if (ccomp.find(curr) == ccomp.end()) {
                     ccomp.insert(curr);
                     auto nbrs = getCode()->gethZ()->getNbrs(curr);
                     for (auto n : nbrs) {
-                        if (!ccomp.contains(n) && nodes.contains(n)) {
+                        if (ccomp.find(n) == ccomp.end() && nodes.find(n) != nodes.end()) {
                             stack.push(n);
                             visited.insert(n);
                         }

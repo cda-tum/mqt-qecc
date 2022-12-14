@@ -120,7 +120,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
             while (idxIt != invalidComponents.end()) {
                 auto*       elem = getNodeFromIdx(*idxIt);
                 const auto& root = TreeNode::Find(elem);
-                if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
+                if (elem->vertexIdx != root->vertexIdx && presentMap.count(root->vertexIdx)) {
                     // root already in component list, no replacement necessary
                     idxIt = invalidComponents.erase(idxIt);
                 } else {
@@ -260,14 +260,14 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
         while (!queue.empty()) {
             const auto& currV = getNodeFromIdx(queue.front());
             queue.pop();
-            if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
+            if ((!currV->marked && !currCompRoot->boundaryVertices.count(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
                 // add to interior by adding it to the list and marking it
                 currV->marked = true;
                 compErasure.emplace_back(currV->vertexIdx);
             }
 
             for (const auto& node : currV->children) {
-                if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
+                if ((!node->marked && !currCompRoot->boundaryVertices.count(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
                     compErasure.emplace_back(node->vertexIdx);
@@ -339,7 +339,7 @@ bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_
     std::size_t i = 0U;
     for (const auto& checkVertex : compNode->checkVertices) {
         for (const auto& nbrs = pcm->getNbrs(checkVertex); const auto& nbr : nbrs) {
-            if (!compNode->boundaryVertices.contains(nbr)) {
+            if (!compNode->boundaryVertices.count(nbr)) {
                 valid.at(i) = true;
                 break;
             }
