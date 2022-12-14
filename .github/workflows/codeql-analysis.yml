@@ -18,7 +18,7 @@ env:
 jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       security-events: write
 
