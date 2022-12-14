@@ -4,6 +4,13 @@
 [![Bindings](https://img.shields.io/github/workflow/status/cda-tum/qecc/Python%20Packaging?style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/qecc/actions/workflows/deploy.yml)
 [![codecov](https://img.shields.io/codecov/c/github/cda-tum/qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/qecc)
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/qecc/main/docs/source/_static/mqt_light.png" width="60%">
+    <img src="https://raw.githubusercontent.com/cda-tum/qecc/main/docs/source/_static/mqt_dark.png" width="60%">
+  </picture>
+  </p>
+
 # QECC: An MQT tool for Quantum Error Correcting Codes written in C++
 
 :warning: **This project is still in early development and breaking changes might happen frequently.**
