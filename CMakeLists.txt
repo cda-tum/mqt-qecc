@@ -5,7 +5,7 @@ project(
   LANGUAGES CXX
   DESCRIPTION "QECC - An MQT Library for Quantum Error Correcting Codes")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 # enable organization of targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
