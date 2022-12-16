@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![CI](https://img.shields.io/github/workflow/status/cda-tum/qecc/C++?style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/qecc/actions/workflows/ci.yml)
-[![Python CI](https://img.shields.io/github/workflow/status/cda-tum/qecc/Python?style=flat-square&logo=github&label=python)](https://github.com/cda-tum/qecc/actions/workflows/python-ci.yml)
-[![Bindings](https://img.shields.io/github/workflow/status/cda-tum/qecc/Python%20Packaging?style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/qecc/actions/workflows/deploy.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/qecc/ci.yml?branch=main&style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/qecc/actions/workflows/ci.yml)
+[![Python CI](https://img.shields.io/github/actions/workflow/status/cda-tum/qecc/python-ci.yml?branch=main&style=flat-square&logo=github&label=python)](https://github.com/cda-tum/qecc/actions/workflows/python-ci.yml)
+[![Bindings](https://img.shields.io/github/actions/workflow/status/cda-tum/qecc/deploy.yml?branch=main&style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/qecc/actions/workflows/deploy.yml)
 [![codecov](https://img.shields.io/codecov/c/github/cda-tum/qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/qecc)
 
 <p align="center">
