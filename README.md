@@ -1,8 +1,15 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![CI](https://img.shields.io/github/workflow/status/cda-tum/qecc/C++?style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/qecc/actions/workflows/ci.yml)
-[![Python CI](https://img.shields.io/github/workflow/status/cda-tum/qecc/Python?style=flat-square&logo=github&label=python)](https://github.com/cda-tum/qecc/actions/workflows/python-ci.yml)
-[![Bindings](https://img.shields.io/github/workflow/status/cda-tum/qecc/Python%20Packaging?style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/qecc/actions/workflows/deploy.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/qecc/ci.yml?branch=main&style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/qecc/actions/workflows/ci.yml)
+[![Python CI](https://img.shields.io/github/actions/workflow/status/cda-tum/qecc/python-ci.yml?branch=main&style=flat-square&logo=github&label=python)](https://github.com/cda-tum/qecc/actions/workflows/python-ci.yml)
+[![Bindings](https://img.shields.io/github/actions/workflow/status/cda-tum/qecc/deploy.yml?branch=main&style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/qecc/actions/workflows/deploy.yml)
 [![codecov](https://img.shields.io/codecov/c/github/cda-tum/qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/qecc)
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/qecc/main/docs/source/_static/mqt_light.png" width="60%">
+    <img src="https://raw.githubusercontent.com/cda-tum/qecc/main/docs/source/_static/mqt_dark.png" width="60%">
+  </picture>
+  </p>
 
 # QECC: An MQT tool for Quantum Error Correcting Codes written in C++
 

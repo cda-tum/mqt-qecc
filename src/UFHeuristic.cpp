@@ -40,7 +40,7 @@ void UFHeuristic::decode(const gf2Vec& syndrome) {
     if (syndrome.size() > this->getCode()->gethZ()->pcm->size()) {
         std::vector<bool> xSyndr;
         std::vector<bool> zSyndr;
-        auto              mid = syndrome.begin() + (std::ssize(syndrome) / 2U);
+        auto              mid = syndrome.begin() + (static_cast<std::int64_t>(std::size(syndrome)) / 2U);
         std::move(syndrome.begin(), mid, std::back_inserter(xSyndr));
         std::move(mid, syndrome.end(), std::back_inserter(zSyndr));
         doDecoding(xSyndr, this->getCode()->gethZ());
@@ -120,7 +120,7 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
             while (idxIt != invalidComponents.end()) {
                 auto*       elem = getNodeFromIdx(*idxIt);
                 const auto& root = TreeNode::Find(elem);
-                if (elem->vertexIdx != root->vertexIdx && presentMap.contains(root->vertexIdx)) {
+                if (elem->vertexIdx != root->vertexIdx && presentMap.find(root->vertexIdx) != presentMap.end()) {
                     // root already in component list, no replacement necessary
                     idxIt = invalidComponents.erase(idxIt);
                 } else {
@@ -260,14 +260,14 @@ std::vector<std::size_t> UFHeuristic::erasureDecoder(std::unordered_set<std::siz
         while (!queue.empty()) {
             const auto& currV = getNodeFromIdx(queue.front());
             queue.pop();
-            if ((!currV->marked && !currCompRoot->boundaryVertices.contains(currV->vertexIdx)) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
+            if ((!currV->marked && (currCompRoot->boundaryVertices.find(currV->vertexIdx)) == currCompRoot->boundaryVertices.end()) || currV->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
                 // add to interior by adding it to the list and marking it
                 currV->marked = true;
                 compErasure.emplace_back(currV->vertexIdx);
             }
 
             for (const auto& node : currV->children) {
-                if ((!node->marked && !currCompRoot->boundaryVertices.contains(node->vertexIdx)) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
+                if ((!node->marked && (currCompRoot->boundaryVertices.find(node->vertexIdx)) == currCompRoot->boundaryVertices.end()) || node->isCheck) { // we need check nodes also if they are not in the "interior" or if there is only a restricted interior
                     // add to interior by adding it to the list and marking it
                     node->marked = true;
                     compErasure.emplace_back(node->vertexIdx);
@@ -339,7 +339,7 @@ bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_
     std::size_t i = 0U;
     for (const auto& checkVertex : compNode->checkVertices) {
         for (const auto& nbrs = pcm->getNbrs(checkVertex); const auto& nbr : nbrs) {
-            if (!compNode->boundaryVertices.contains(nbr)) {
+            if (compNode->boundaryVertices.find(nbr) == compNode->boundaryVertices.end()) {
                 valid.at(i) = true;
                 break;
             }

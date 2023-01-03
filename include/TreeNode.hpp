@@ -4,8 +4,6 @@
 
 #ifndef QUNIONFIND_TREENODE_HPP
 #define QUNIONFIND_TREENODE_HPP
-
-#include <compare>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -79,8 +77,20 @@ public:
     bool operator==(const TreeNode& other) const {
         return vertexIdx == other.vertexIdx;
     }
-    auto operator<=>(const TreeNode& other) const {
-        return (vertexIdx <=> other.vertexIdx);
+    auto operator<=(const TreeNode& other) const {
+        return (vertexIdx <= other.vertexIdx);
+    }
+
+    auto operator>=(const TreeNode& other) const {
+        return (vertexIdx >= other.vertexIdx);
+    }
+
+    auto operator<(const TreeNode& other) const {
+        return (vertexIdx < other.vertexIdx);
+    }
+
+    auto operator>(const TreeNode& other) const {
+        return (vertexIdx > other.vertexIdx);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const TreeNode& v) {

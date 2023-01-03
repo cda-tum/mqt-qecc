@@ -44,6 +44,8 @@ A Detailed Walk Through
 First, save the following lines as :code:`steane_example.py` in a folder where you want to install QECC and run the example:
 
     .. code-block:: python
+        from mqt.qecc import *
+        import numpy as np
 
         H = [[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]]
         code = Code(H, H)
