@@ -94,6 +94,8 @@ py::dict applyEcc(const py::object& circ, const std::string& eccString, const si
 }
 
 PYBIND11_MODULE(pyqecc, m) {
+    // In this function the exposed python functions are defined.
+    // Additionally, the required parameters are described.
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";
     m.def("sample_iid_pauli_err", &sampleIidPauliErr, "Sample a iid pauli error represented as binary string");
 
@@ -186,7 +188,8 @@ PYBIND11_MODULE(pyqecc, m) {
             .export_values()
             .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
 
-    m.def("applyEcc", &applyEcc, "applying an ecc to a circuit an returning a openQasm dump",
+    // Function signature for applying an error correction scheme
+    m.def("applyEcc", &applyEcc, "applying an ecc to a circuit and returning a openQasm dump",
           "circuitName"_a,
           "eccName"_a,
           "eccFrequency"_a = 100);

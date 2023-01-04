@@ -42,13 +42,13 @@ public:
             throw QeccException("Cannot solve system, dimensions do not match");
         }
 
-        gf2Vec     result{};
-        slong      rows = inmat.size();         // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        slong      cols = inmat.front().size(); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        nmod_mat_t mat;
-        nmod_mat_t x;
-        nmod_mat_t b;
-        mp_limb_t  mod = 2;
+        gf2Vec          result{};
+        slong           rows = static_cast<std::int64_t>(inmat.size());         // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+        slong           cols = static_cast<std::int64_t>(inmat.front().size()); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+        nmod_mat_t      mat;
+        nmod_mat_t      x;
+        nmod_mat_t      b;
+        mp_limb_t const mod = 2;
         // initializes mat to rows x cols matrix with coefficients mod 2
         nmod_mat_init(mat, rows, cols, mod); // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
         nmod_mat_init(x, cols, 1, mod);
@@ -56,17 +56,17 @@ public:
 
         for (slong i = 0; i < nmod_mat_nrows(mat); i++) {
             for (slong j = 0; j < nmod_mat_ncols(mat); j++) {
-                nmod_mat_set_entry(mat, i, j, inmat.at(i).at(j) ? 1U : 0U);
+                nmod_mat_set_entry(mat, i, j, inmat.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j)) ? 1U : 0U);
             }
         }
         slong bColIdx = nmod_mat_ncols(b) - 1;
         for (slong i = 0; i < nmod_mat_nrows(b); i++) {
-            nmod_mat_set_entry(b, i, bColIdx, vec.at(i) ? 1U : 0U);
+            nmod_mat_set_entry(b, i, bColIdx, vec.at(static_cast<std::int64_t>(i)) ? 1U : 0U);
         }
-        int sol = nmod_mat_can_solve(x, mat, b);
+        int const sol = nmod_mat_can_solve(x, mat, b);
 
         if (sol == 1) {
-            result       = gf2Vec(nmod_mat_nrows(x));
+            result       = gf2Vec(static_cast<std::int64_t>(nmod_mat_nrows(x)));
             auto xColIdx = nmod_mat_ncols(x) - 1;
             for (auto i = 0; i < nmod_mat_nrows(x); i++) {
                 result.at(i) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
@@ -97,7 +97,7 @@ public:
         auto            result  = flint::nmod_matxx(matrix.size(), matrix.front().size(), modulus);
         for (slong i = 0; i < rows; i++) {
             for (slong j = 0; j < cols; j++) {
-                if (matrix.at(i).at(j)) {
+                if (matrix.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j))) {
                     const mp_limb_t one = 1U;
                     result.at(i, j)     = flint::nmodxx::red(one, ctxx);
                 } else {
@@ -111,16 +111,16 @@ public:
 
     static gf2Mat getMatrixFromFlint(const flint::nmod_matxx& matrix) {
         const auto& ctxx = flint::nmodxx_ctx(2);
-        gf2Mat      result(matrix.rows());
+        gf2Mat      result(static_cast<std::int64_t>(matrix.rows()));
         const auto& a = flint::nmodxx::red(1, ctxx);
 
         for (slong i = 0; i < matrix.rows(); i++) {
-            result.at(i) = gf2Vec(matrix.cols());
+            result.at(static_cast<std::int64_t>(i)) = gf2Vec(static_cast<std::int64_t>(matrix.cols()));
             for (slong j = 0; j < matrix.cols(); j++) {
                 if (matrix.at(i, j) == a) {
-                    result.at(i).at(j) = true;
+                    result.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j)) = true;
                 } else {
-                    result.at(i).at(j) = false;
+                    result.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j)) = false;
                 }
             }
         }

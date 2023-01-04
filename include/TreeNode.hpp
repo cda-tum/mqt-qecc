@@ -25,7 +25,7 @@ public:
     bool                            marked  = false;
     bool                            deleted = false;
 
-    TreeNode() : TreeNode(-1) {}
+    TreeNode() : TreeNode(static_cast<size_t>(-1)) {}
 
     explicit TreeNode(const std::size_t& vertexIdx) : vertexIdx(vertexIdx) {
         boundaryVertices.emplace(vertexIdx);
