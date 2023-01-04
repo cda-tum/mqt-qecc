@@ -75,9 +75,9 @@ if(BUILD_QECC_TESTS)
 endif()
 
 # add Python binding code
-if (BINDINGS)
+if(BINDINGS)
   check_submodule_present(qfr/extern/json)
   check_submodule_present(qfr/extern/pybind11)
   check_submodule_present(qfr/extern/pybind11_json)
   add_subdirectory(mqt/qecc)
-endif ()
+endif()
