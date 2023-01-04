@@ -12,7 +12,7 @@ from mqt.qecc.pyqecc import (
     GrowthVariant,
     UFDecoder,
     UFHeuristic,
-    apply_ecc,
+    applyEcc,
     sample_iid_pauli_err,
 )
 
