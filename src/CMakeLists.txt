@@ -1,6 +1,3 @@
-# add MQT::QFR library add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr"
-# EXCLUDE_FROM_ALL)
-
 # main project library
 add_library(
   ${PROJECT_NAME}_lib
@@ -26,9 +23,6 @@ target_include_directories(${PROJECT_NAME}_lib
 target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_20)
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES CXX_EXTENSIONS OFF)
-
-# add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr")
-# target_link_libraries(${PROJECT_NAME}_lib PUBLIC MQT::qfr)
 
 # enable interprocedural optimization if it is supported
 include(CheckIPOSupported)
@@ -71,8 +65,6 @@ set(JSON_BuildTests # cmake-lint: disable=C0103
 set(JSON_MultipleHeaders # cmake-lint: disable=C0103
     OFF
     CACHE INTERNAL "")
-# add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr/extern/json" "extern/qfr/extern/json"
-# EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 
 # add coverage compiler and linker flag to the library and all targets that link against it, if
