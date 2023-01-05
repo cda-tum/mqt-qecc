@@ -23,16 +23,16 @@ based on methods proposed in [[1]](https://arxiv.org/abs/2209.01180). QECC is pa
 
 The tool can be used to:
 
-* Decode quantum LDPC codes and conduct respective numerical simulations.
-    * At the moment the general QLDPC
-      decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
-      and a heuristic (which improves the runtime of the algorithm) [[1]](https://arxiv.org/abs/2209.01180) are
-      implemented.
-      Currently, open-source software by Joschka Roffe et
-      al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product
-      and
-      hypergraph product).
-* Apply error correction to quantum circuits.
+- Decode quantum LDPC codes and conduct respective numerical simulations.
+  - At the moment the general QLDPC
+    decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
+    and a heuristic (which improves the runtime of the algorithm) [[1]](https://arxiv.org/abs/2209.01180) are
+    implemented.
+    Currently, open-source software by Joschka Roffe et
+    al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product
+    and
+    hypergraph product).
+- Apply error correction to quantum circuits.
 
 <p align="center">
   <a href="https://qecc.readthedocs.io/en/latest/">
