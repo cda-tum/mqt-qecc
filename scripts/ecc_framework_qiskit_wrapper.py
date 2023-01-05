@@ -85,7 +85,7 @@ def main() -> None:
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
     parser.add_argument(
@@ -99,15 +99,15 @@ def main() -> None:
         required=False,
         default=None,
         help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
-             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="none",
         help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
@@ -158,8 +158,10 @@ def main() -> None:
     circ = QuantumCircuit.from_qasm_file(open_qasm_file)
 
     if not any(gate[0].name == "measure" for gate in circ.data):
-        print("Warning: The provided circuit does not contain any measurements. "
-              "I am adding a measureAll at the end of the circuit.")
+        print(
+            "Warning: The provided circuit does not contain any measurements. "
+            "I am adding a measureAll at the end of the circuit."
+        )
         circ.measure_all()
 
     # Initializing the quantum circuit
