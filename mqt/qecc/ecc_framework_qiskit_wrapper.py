@@ -167,7 +167,7 @@ def main() -> None:
     # Initializing the quantum circuit
     if ecc is not None:
         # Applying error correction to the circuit
-        result = qecc.applyEcc(circ, ecc, ecc_frequency)
+        result = qecc.apply_ecc(circ, ecc, ecc_frequency)
         if "error" in result:
             print("Something went wrong when I tried to apply the ecc. Error message:\n" + result["error"])
             exit(1)
@@ -216,7 +216,6 @@ def main() -> None:
         shots=n_shots,
         seed_simulator=seed,
         noise_model=noise_model,
-        # optimization_level=0
     )
 
     if result.result().status != "COMPLETED":

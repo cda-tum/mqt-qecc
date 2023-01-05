@@ -49,30 +49,25 @@ else()
     if(HAS_MARCH_NATIVE)
       target_compile_options(${PROJECT_NAME}_lib PUBLIC -march=native)
     endif()
-  endif()
-endif()
+  endif ()
+endif ()
 
-if(GENERATE_POSITION_INDEPENDENT_CODE OR BINDINGS)
+if (GENERATE_POSITION_INDEPENDENT_CODE OR BINDINGS)
   include(CheckPIESupported)
   check_pie_supported()
   set_target_properties(${PROJECT_NAME}_lib PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-endif()
+endif ()
 
-# add nlohmann::json library
-set(JSON_BuildTests # cmake-lint: disable=C0103
-    OFF
-    CACHE INTERNAL "")
-set(JSON_MultipleHeaders # cmake-lint: disable=C0103
-    OFF
-    CACHE INTERNAL "")
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
+# add MQT::QFR library
+add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr" EXCLUDE_FROM_ALL)
 
 # add coverage compiler and linker flag to the library and all targets that link against it, if
 # COVERAGE is set
-if(COVERAGE)
+if (COVERAGE)
   target_compile_options(${PROJECT_NAME}_lib PUBLIC --coverage)
   target_link_libraries(${PROJECT_NAME}_lib PUBLIC --coverage)
-endif()
+endif ()
 
 find_package(FLINT REQUIRED)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)

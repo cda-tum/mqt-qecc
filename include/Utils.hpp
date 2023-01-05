@@ -43,8 +43,8 @@ public:
         }
 
         gf2Vec          result{};
-        slong           rows = static_cast<std::int64_t>(inmat.size());         // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        slong           cols = static_cast<std::int64_t>(inmat.front().size()); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+        slong           rows = static_cast<std::int64_t>(inmat.size());
+        slong           cols = static_cast<std::int64_t>(inmat.front().size());
         nmod_mat_t      mat;
         nmod_mat_t      x;
         nmod_mat_t      b;

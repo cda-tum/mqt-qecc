@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14...3.24)
+cmake_minimum_required(VERSION 3.19...3.24)
 
 # This avoids googletest complaining that this (IPO) policy is not set
 cmake_policy(SET CMP0069 NEW)
@@ -68,7 +68,6 @@ add_subdirectory(src)
 
 # add test code
 if(BUILD_QECC_TESTS)
-  check_submodule_present(qfr/extern/dd_package/extern/googletest)
   enable_testing()
   include(GoogleTest)
   add_subdirectory(test)
@@ -76,8 +75,5 @@ endif()
 
 # add Python binding code
 if(BINDINGS)
-  check_submodule_present(qfr/extern/json)
-  check_submodule_present(qfr/extern/pybind11)
-  check_submodule_present(qfr/extern/pybind11_json)
   add_subdirectory(mqt/qecc)
 endif()

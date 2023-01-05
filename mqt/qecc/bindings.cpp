@@ -30,15 +30,13 @@
 
 namespace py = pybind11;
 using namespace pybind11::literals;
-using namespace ecc;
 
 std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physicalErrRate) {
     return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
-py::dict applyEcc(const py::object& circ, const std::string& eccString, const size_t eccFrequency) {
-    auto               qc = std::make_shared<qc::QuantumComputation>();
-    const std::string& eccName{eccString};
+py::dict apply_ecc(const py::object& circ, const std::string& ecc_name, const size_t ecc_frequency) {
+    auto qc = std::make_shared<qc::QuantumComputation>();
 
     try {
         if (py::isinstance<py::str>(circ)) {
@@ -59,25 +57,27 @@ py::dict applyEcc(const py::object& circ, const std::string& eccString, const si
         return py::dict("error"_a = ss.str());
     }
 
-    [[maybe_unused]] Ecc* mapper{};
+    auto test = std::make_unique<ecc::Id>(qc, ecc_frequency);
 
-    if (eccName == "Id") {
-        mapper = new Id(qc, eccFrequency);
-    } else if (eccName == "Q3Shor") {
-        mapper = new Q3Shor(qc, eccFrequency);
-    } else if ((eccName == "Q5Laflamme")) {
-        mapper = new Q5Laflamme(qc, eccFrequency);
-    } else if ((eccName == "Q7Steane")) {
-        mapper = new Q7Steane(qc, eccFrequency);
-    } else if ((eccName == "Q9Shor")) {
-        mapper = new Q9Shor(qc, eccFrequency);
-    } else if ((eccName == "Q9Surface")) {
-        mapper = new Q9Surface(qc, eccFrequency);
-    } else if ((eccName == "Q18Surface")) {
-        mapper = new Q18Surface(qc, eccFrequency);
+    [[maybe_unused]] ecc::Ecc* mapper{};
+
+    if (ecc_name == "Id") {
+        mapper = new ecc::Id(qc, ecc_frequency);
+    } else if (ecc_name == "Q3Shor") {
+        mapper = new ecc::Q3Shor(qc, ecc_frequency);
+    } else if ((ecc_name == "Q5Laflamme")) {
+        mapper = new ecc::Q5Laflamme(qc, ecc_frequency);
+    } else if ((ecc_name == "Q7Steane")) {
+        mapper = new ecc::Q7Steane(qc, ecc_frequency);
+    } else if ((ecc_name == "Q9Shor")) {
+        mapper = new ecc::Q9Shor(qc, ecc_frequency);
+    } else if ((ecc_name == "Q9Surface")) {
+        mapper = new ecc::Q9Surface(qc, ecc_frequency);
+    } else if ((ecc_name == "Q18Surface")) {
+        mapper = new ecc::Q18Surface(qc, ecc_frequency);
     } else {
         std::stringstream ss{};
-        ss << "No ECC found for " << eccName << " ";
+        ss << "No ECC found for " << ecc_name << " ";
         ss << "Available ECCs: ";
         ss << "Id"
            << ", ";
@@ -199,10 +199,10 @@ PYBIND11_MODULE(pyqecc, m) {
             .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
 
     // Function signature for applying an error correction scheme
-    m.def("applyEcc", &applyEcc, "applying an ecc to a circuit and returning a openQasm dump",
-          "circuitName"_a,
-          "eccName"_a,
-          "eccFrequency"_a = 100);
+    m.def("apply_ecc", &apply_ecc, "apply an ECC to a circuit and return the resulting circuit as an OpenQASM string",
+          "circuit_name"_a,
+          "ecc_name"_a,
+          "ecc_frequency"_a = 100);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
