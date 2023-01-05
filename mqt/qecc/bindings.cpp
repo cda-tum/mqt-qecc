@@ -3,6 +3,8 @@
  * See file README.md for more information.
  */
 
+#include "../mqt/qfr/qiskit/QasmQobjExperiment.hpp"
+#include "../mqt/qfr/qiskit/QuantumCircuit.hpp"
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
@@ -35,13 +37,21 @@ std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physi
 }
 
 py::dict applyEcc(const py::object& circ, const std::string& eccString, const size_t eccFrequency) {
-    std::shared_ptr<qc::QuantumComputation> const qc{};
-    const std::string&                            eccName{eccString};
+    auto               qc = std::make_shared<qc::QuantumComputation>();
+    const std::string& eccName{eccString};
 
     try {
         if (py::isinstance<py::str>(circ)) {
             auto&& file = circ.cast<std::string>();
             qc->import(file);
+        } else {
+            py::object const quantumCircuit       = py::module::import("qiskit").attr("QuantumCircuit");
+            py::object const pyQasmQobjExperiment = py::module::import("qiskit.qobj").attr("QasmQobjExperiment");
+            if (py::isinstance(circ, quantumCircuit)) {
+                qc::qiskit::QuantumCircuit::import(*qc, circ);
+            } else if (py::isinstance(circ, pyQasmQobjExperiment)) {
+                qc::qiskit::QasmQobjExperiment::import(*qc, circ);
+            }
         }
     } catch (std::exception const& e) {
         std::stringstream ss{};
