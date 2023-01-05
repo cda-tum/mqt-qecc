@@ -56,9 +56,9 @@ Having the Python module installed, error correcting codes can be applied using 
 
   from mqt import qecc
 
-  file = "path/to/qasm/file.qasm" # Path to the openqasm file the quantum circuit shall be loaded from
-  ecc = "Q7Steane" # Error correction code that shall be applied to the quantum circuit
-  ecc_frequency = 100 # After how many times a qubit is used, error correction is applied
+  file = "path/to/qasm/file.qasm"  # Path to the openqasm file the quantum circuit shall be loaded from
+  ecc = "Q7Steane"  # Error correction code that shall be applied to the quantum circuit
+  ecc_frequency = 100  # After how many times a qubit is used, error correction is applied
 
   result = qecc.apply_ecc(file, ecc, ecc_frequency)
 
@@ -198,4 +198,4 @@ Available logical operations
 Q18Surface code
 ---------------
 
-This code follows the principle of :cite:labelpar:`FowlerSurfaceCodes` and is applied to 18 data qubits. 
+This code follows the principle of :cite:labelpar:`FowlerSurfaceCodes` and is applied to 18 data qubits.
