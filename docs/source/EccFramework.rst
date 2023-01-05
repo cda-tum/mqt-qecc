@@ -98,10 +98,58 @@ The script offers a help function, which displays available parameters:
     -mc MC      Only allow single controlled gates (Default=False)
     -cf CF      Only allow clifford operations (Default=False)
 
-Available error-correcting codes and operations
-###############################################
+Available error-correcting codes
+#####################################################
 
-.. list-table:: Available error-correcting codes and operations
+Properties
+----------
+
+.. list-table:: Properties of available error-correcting codes
+  :widths: 22 13 13 13 13 13 13
+  :header-rows: 1
+
+  * - Feature
+    - Q3Shor :cite:labelpar:`ShorCodes`
+    - Q5Laflamme :cite:labelpar:`LaflammeCodes`
+    - Q7Steane :cite:labelpar:`SteaneCode`
+    - Q9Shor :cite:labelpar:`ShorCodes`
+    - Q9Surface :cite:labelpar:`WoottonMinimalSurfaceCode`
+    - `Q18Surface <./EccFramework.rst#q18surface-code>`_
+  * - able to detect bit flips
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+  * - able to detect phase flips
+    - ✖️
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✔️
+    - ✖️*
+  * - #qubits for n logical qubits
+    - 3n+2
+    - 5n+4
+    - 7n+3
+    - 9n+8
+    - 9n+8
+    - 36n
+  * - #classical bits (total)
+    - 2
+    - 5
+    - 3
+    - 8
+    - 8
+    - 16
+
+\* Planned to work, but not fully implemented yet
+
+Available logical operations
+----------------------------
+
+.. list-table:: Available operations for each error-correcting code
   :widths: 22 13 13 13 13 13 13
   :header-rows: 1
 
@@ -143,47 +191,7 @@ Available error-correcting codes and operations
 
 ⚠️ = operation is applied without the scheme of the error-correcting code (i.e. decoding and encoding is performed before/afterwards, respectively, and the operation is encoded as-is)
 
-Properties of the implemented error-correcting codes
-####################################################
+Q18Surface code
+---------------
 
-.. list-table:: Available error-correcting codes and operations
-  :widths: 22 13 13 13 13 13 13
-  :header-rows: 1
-
-  * - Feature
-    - Q3Shor
-    - Q5Laflamme
-    - Q7Steane
-    - Q9Shor
-    - Q9Surface
-    - Q18Surface
-  * - able to detect bit flips
-    - ✔️
-    - ✔️
-    - ✔️
-    - ✔️
-    - ✔️
-    - ✔️
-  * - able to detect phase flips
-    - ✖️
-    - ✔️
-    - ✔️
-    - ✔️
-    - ✔️
-    - ✔️
-  * - #qubits for n logical qubits
-    - 3n+2
-    - 5n+4
-    - 7n+3
-    - 9n+8
-    - 9n+8
-    - 36n
-  * - #classical bits (total)
-    - 2
-    - 5
-    - 3
-    - 8
-    - 8
-    - 16
-
-More-detailed information about the error-correcting codes can be found in the README information TODO.
+This code follows the principle of :cite:labelpar:`FowlerSurfaceCodes` and is applied to 18 data qubits. 
