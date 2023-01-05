@@ -101,8 +101,6 @@ The script offers a help function, which displays available parameters:
                 QasmSimulator('qasm_simulator'), StatevectorSimulator('statevector_simulator'), UnitarySimulator('unitary_simulator'), PulseSimulator('pulse_simulator')]
     -ecc ECC    Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)
     -fq FQ      Specify after how many qubit usages error correction is applied to it (Default=100)
-    -mc MC      Only allow single controlled gates (Default=False)
-    -cf CF      Only allow clifford operations (Default=False)
 
 Available error-correcting codes
 #####################################################
