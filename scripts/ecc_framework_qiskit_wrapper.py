@@ -85,7 +85,7 @@ def main() -> None:
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
     parser.add_argument(
@@ -99,22 +99,22 @@ def main() -> None:
         required=False,
         default=None,
         help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
-        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="none",
         help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="none",
         help="Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, "
-        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
+             "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)",
     )
     parser.add_argument(
         "-fq",
@@ -147,7 +147,7 @@ def main() -> None:
     if number_of_shots > 0:
         n_shots = number_of_shots
     else:
-        n_shots = 100000
+        n_shots = 2000
 
     # Creating the noise model
     if error_probability > 0:
@@ -155,16 +155,21 @@ def main() -> None:
     else:
         noise_model = NoiseModel()
 
+    circ = QuantumCircuit.from_qasm_file(open_qasm_file)
+
+    if not any(gate[0].name == "measure" for gate in circ.data):
+        print("Warning: The provided circuit does not contain any measurements. "
+              "I am adding a measureAll at the end of the circuit.")
+        circ.measure_all()
+
     # Initializing the quantum circuit
     if ecc is not None:
         # Applying error correction to the circuit
-        result = qecc.apply_ecc(open_qasm_file, ecc, ecc_frequency)
+        result = qecc.applyEcc(circ, ecc, ecc_frequency)
         if "error" in result:
             print("Something went wrong when I tried to apply the ecc. Error message:\n" + result["error"])
             exit(1)
         circ = QuantumCircuit().from_qasm_str(result["circ"])
-    else:
-        circ = QuantumCircuit().from_qasm_file(open_qasm_file)
 
     if ecc_export_filename is not None:
         print("Exporting circuit to: " + str(ecc_export_filename))
@@ -172,7 +177,6 @@ def main() -> None:
         exit(0)
 
     size = circ.num_qubits
-    result_counts = None
     simulator_backend = None
     print(
         "_____Trying to simulate with "
