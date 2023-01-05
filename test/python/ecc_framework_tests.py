@@ -20,7 +20,7 @@ import mqt.qecc.ecc_framework_qiskit_wrapper
         fq=0,
     ),
 )
-def test_command(mock_args) -> None:
+def test_command(mock_args: str) -> None:
     mqt.qecc.ecc_framework_qiskit_wrapper.main()
 
 
