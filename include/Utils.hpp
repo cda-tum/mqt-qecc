@@ -56,20 +56,20 @@ public:
 
         for (slong i = 0; i < nmod_mat_nrows(mat); i++) {
             for (slong j = 0; j < nmod_mat_ncols(mat); j++) {
-                nmod_mat_set_entry(mat, i, j, inmat.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j)) ? 1U : 0U);
+                nmod_mat_set_entry(mat, i, j, inmat.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j)) ? 1U : 0U);
             }
         }
         slong bColIdx = nmod_mat_ncols(b) - 1;
         for (slong i = 0; i < nmod_mat_nrows(b); i++) {
-            nmod_mat_set_entry(b, i, bColIdx, vec.at(static_cast<std::int64_t>(i)) ? 1U : 0U);
+            nmod_mat_set_entry(b, i, bColIdx, vec.at(static_cast<std::uint64_t>(i)) ? 1U : 0U);
         }
         int const sol = nmod_mat_can_solve(x, mat, b);
 
         if (sol == 1) {
-            result       = gf2Vec(static_cast<std::int64_t>(nmod_mat_nrows(x)));
+            result       = gf2Vec(static_cast<std::uint64_t>(nmod_mat_nrows(x)));
             auto xColIdx = nmod_mat_ncols(x) - 1;
             for (auto i = 0; i < nmod_mat_nrows(x); i++) {
-                result.at(i) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
+                result.at(static_cast<std::uint64_t>(i)) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
             }
         } else {
             // no solution
@@ -97,7 +97,7 @@ public:
         auto            result  = flint::nmod_matxx(matrix.size(), matrix.front().size(), modulus);
         for (slong i = 0; i < rows; i++) {
             for (slong j = 0; j < cols; j++) {
-                if (matrix.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j))) {
+                if (matrix.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j))) {
                     const mp_limb_t one = 1U;
                     result.at(i, j)     = flint::nmodxx::red(one, ctxx);
                 } else {
@@ -111,16 +111,16 @@ public:
 
     static gf2Mat getMatrixFromFlint(const flint::nmod_matxx& matrix) {
         const auto& ctxx = flint::nmodxx_ctx(2);
-        gf2Mat      result(static_cast<std::int64_t>(matrix.rows()));
+        gf2Mat      result(static_cast<std::uint64_t>(matrix.rows()));
         const auto& a = flint::nmodxx::red(1, ctxx);
 
         for (slong i = 0; i < matrix.rows(); i++) {
-            result.at(static_cast<std::int64_t>(i)) = gf2Vec(static_cast<std::int64_t>(matrix.cols()));
+            result.at(static_cast<std::uint64_t>(i)) = gf2Vec(static_cast<std::uint64_t>(matrix.cols()));
             for (slong j = 0; j < matrix.cols(); j++) {
                 if (matrix.at(i, j) == a) {
-                    result.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j)) = true;
+                    result.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j)) = true;
                 } else {
-                    result.at(static_cast<std::int64_t>(i)).at(static_cast<std::int64_t>(j)) = false;
+                    result.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j)) = false;
                 }
             }
         }
