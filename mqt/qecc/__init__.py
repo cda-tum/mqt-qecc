@@ -26,5 +26,5 @@ __all__ = [
     "DecodingResultStatus",
     "DecodingRunInformation",
     "sample_iid_pauli_err",
-    "applyEcc",
+    "apply_ecc",
 ]

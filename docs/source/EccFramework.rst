@@ -1,25 +1,33 @@
 ECC Framework: Automatic Implementation and Evaluation of Error-Correcting Codes for Quantum Computing
 ======================================================================================================
 
-The QFR library offers means for automatic implementation and evaluation of error-correcting codes for quantum computing. More precisely, the library allows to automatically apply different error correction schemes to quantum circuits provided as openqasm files. The "protected" quantum circuits can then be exported again in the form of openqasm files or can be directly used for noise-aware quantum circuit simulation. For the latter case, we also provide a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using qiskit.
-
-**Note: The ECC framework is only available within the current branch and can only be installed directly from source**
+The QECC library offers means for automatic implementation and evaluation of error-correcting codes for quantum computing. More precisely, the library allows to automatically apply different error correction schemes to quantum circuits provided as openqasm files. The "protected" quantum circuits can then be exported again in the form of openqasm files or can be directly used for noise-aware quantum circuit simulation. For the latter case, we also provide a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using qiskit.
 
 Installation
 ############
+
+Installation for Users
+----------
+
+.. code-block:: console
+
+  (venv) $ pip install mqt.qecc
+
+
+Installation for Developers
+----------
 
 If you have not done so already, clone the repository using:
 
 .. code-block:: console
 
-  git clone --recurse-submodules -j8 https://github.com/pichristoph/qfr.git
+  git clone --recurse-submodules https://github.com/cda-tum/qecc
 
-Make sure you are in the main project directory for the next steps. Switch to the branch feature/ecc,
+Make sure you are in the main project directory for the next steps.
 
 .. code-block:: console
 
-  cd qfr
-  git switch feature/ecc
+  cd qecc
 
 and (if necessary), update the submodules.
 
@@ -42,19 +50,17 @@ If you want to use Qiskit for quantum circuit simulation, you need to install it
 Usage
 #####
 
-Having the Python module installed, error correcting codes can be applied using apply_ecc of module qfr, like so
+Having the Python module installed, error correcting codes can be applied using apply_ecc of module qecc, like so
 
-.. code-block:: file
+.. code-block:: python
 
-  from mqt import qfr
+  from mqt import qecc
 
   file = "path/to/qasm/file.qasm" # Path to the openqasm file the quantum circuit shall be loaded from
   ecc = "Q7Steane" # Error correction code that shall be applied to the quantum circuit
   ecc_frequency = 100 # After how many times a qubit is used, error correction is applied
-  ecc_mc = False # Only allow single controlled gates in the created quantum circuit
-  ecc_cf = False # Only allow single clifford gates in the created quantum circuit
 
-  result = qfr.apply_ecc(file, ecc, ecc_frequency, ecc_mc, ecc_cf)
+  result = qecc.apply_ecc(file, ecc, ecc_frequency)
 
   # print the resulting circuit
   print(result["circ"])
