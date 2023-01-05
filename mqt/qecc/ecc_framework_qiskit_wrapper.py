@@ -114,7 +114,7 @@ def main() -> None:
         type=str,
         default="Q7Steane",
         help="Specify a ecc to be applied to the circuit. Currently available are none, Q3Shor, Q5Laflamme, "
-             "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
+        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
     )
     parser.add_argument(
         "-fq",
