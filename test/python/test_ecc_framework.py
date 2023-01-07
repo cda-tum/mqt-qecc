@@ -1,4 +1,3 @@
-import os
 from typing import Any, cast
 import pathlib
 import pytest
