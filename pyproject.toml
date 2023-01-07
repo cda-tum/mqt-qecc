@@ -4,6 +4,7 @@ requires = [
     "setuptools_scm[toml]>=7",
     "ninja>=1.10; sys_platform != 'win32'",
     "cmake>=3.14",
+    "pytest_console_scripts >=1.3",
 ]
 build-backend = "setuptools.build_meta"
 
