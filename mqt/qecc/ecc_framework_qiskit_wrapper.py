@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import argparse
-
+import sys
 import numpy as np
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
 from qiskit.result import counts
-from qiskit_aer.noise import NoiseModel, QuantumError, depolarizing_error
+from qiskit_aer.noise import NoiseModel, QuantumError, depolarizing_error, amplitude_damping_error
 from qiskit_aer.noise.errors import kraus_error, pauli_error
+
+import os
 
 
 def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:
@@ -34,11 +36,7 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
             error = compose_error(error, new_error)
         elif char == "A":
             # simple amplitude damping error channel which mimics energy loss to the environment (T1-error)
-            ap_error = p_error
-            A0 = np.array([[1, 0], [0, np.sqrt(1 - 2 * ap_error)]], dtype=complex)
-            A1 = np.array([[0, np.sqrt(2 * ap_error)], [0, 0]], dtype=complex)
-            noise_ops = [a for a in [A0, A1] if np.linalg.norm(a) > 1e-10]
-            new_error = kraus_error(noise_ops, canonical_kraus=True)
+            new_error = amplitude_damping_error(p_error)
             error = compose_error(error, new_error)
         elif char == "P":
             # Add a phase flip error channel
@@ -85,7 +83,7 @@ def main() -> None:
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
     parser.add_argument(
@@ -99,22 +97,22 @@ def main() -> None:
         required=False,
         default=None,
         help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
-        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="none",
         help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="Q7Steane",
         help="Specify a ecc to be applied to the circuit. Currently available are none, Q3Shor, Q5Laflamme, "
-        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
+             "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
     )
     parser.add_argument(
         "-fq",
@@ -169,14 +167,13 @@ def main() -> None:
         # Applying error correction to the circuit
         result = qecc.apply_ecc(circ, ecc, ecc_frequency)
         if "error" in result:
-            print("Something went wrong when I tried to apply the ecc. Error message:\n" + result["error"])
-            exit(1)
+            sys.exit("Something went wrong when I tried to apply the ecc. Error message:\n" + result["error"])
         circ = QuantumCircuit().from_qasm_str(result["circ"])
 
     if ecc_export_filename is not None:
         print("Exporting circuit to: " + str(ecc_export_filename))
         circ.qasm(filename=ecc_export_filename)
-        exit(0)
+        return
 
     size = circ.num_qubits
     simulator_backend = None
@@ -189,6 +186,8 @@ def main() -> None:
         + str(n_shots)
         + ", n_qubits="
         + str(size)
+        + ", error correction="
+        + str(ecc)
         + ") Error______",
         flush=True,
     )
@@ -198,8 +197,7 @@ def main() -> None:
         try:
             simulator_backend = Aer.get_backend(forced_simulator)
         except providers.exceptions.QiskitBackendNotFoundError:
-            print("Unknown backend specified.\nAvailable backends are " + str(Aer.backends()))
-            exit(1)
+            sys.exit("Unknown backend specified.\nAvailable backends are " + str(Aer.backends()))
     elif error_probability == 0:
         # Statevector simulation method
         simulator_backend = Aer.get_backend("statevector_simulator")
@@ -219,8 +217,7 @@ def main() -> None:
     )
 
     if result.result().status != "COMPLETED":
-        print("Simulation exited with status: " + str(result.result().status))
-        exit(1)
+        sys.exit("Simulation exited with status: " + str(result.result().status))
 
     result_counts = result.result().get_counts()
     print_simulation_results(result_counts, n_shots)
