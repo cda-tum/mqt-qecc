@@ -152,4 +152,3 @@ Available logical operations
     - ✖️
 
 ⚠️ = operation is applied without the scheme of the error-correcting code (i.e. decoding and encoding is performed before/afterwards, respectively, and the operation is encoded as-is)
-
