@@ -80,22 +80,22 @@ print(code.is_x_stabilizer(residual_err))
 ```python3
 from mqt import qecc
 
-file = "path/to/qasm/file.qasm"  # Path to the openqasm file the quantum circuit shall be loaded from
+file = "path/to/qasm/file.qasm"  # Path to the OpenQASM file the quantum circuit shall be loaded from
 ecc = "Q7Steane"  # Error correction code that shall be applied to the quantum circuit
 ecc_frequency = 100  # After how many times a qubit is used, error correction is applied
 
 result = qecc.apply_ecc(file, ecc, ecc_frequency)
 
-# print the resulting circuit
+# print the resulting circuit as OpenQASM string
 print(result["circ"])
 ```
 
-We provide a wrapper script for applying error correction to quantum circuits (provided as openQasm) and followed by a
-noise-aware quantum circuit simulation (using qiskit). The script can be used like this:
+We provide a wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and followed by a
+noise-aware quantum circuit simulation (using Qiskit). The script can be used like this:
 
 ```bash
-$ (venv) ecc_qiskit_wrapper.py -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
-_____Trying to simulate with D(prob=0.0001, shots=2000, n_qubits=17) Error______
+$ (venv) ecc_framework_qiskit_wrapper -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
+_____Trying to simulate with D (prob=0.0001, shots=2000, n_qubits=17, error correction=Q7Steane) Error______
 State |00> probability 0.515
 State |01> probability 0.0055
 State |10> probability 0.0025

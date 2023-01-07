@@ -1,23 +1,26 @@
+# add MQT::QFR library
+add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr" EXCLUDE_FROM_ALL)
+
 # main project library
 add_library(
-  ${PROJECT_NAME}_lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/UFHeuristic.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/UFDecoder.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DecodingSimulator.cpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingSimulator.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/TreeNode.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/Codes.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/UFHeuristic.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/UFDecoder.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp
-  ${${PROJECT_NAME}_SOURCE_DIR}/include/QeccException.hpp)
+        ${PROJECT_NAME}_lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/UFHeuristic.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/UFDecoder.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/DecodingSimulator.cpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Decoder.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingSimulator.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Code.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/TreeNode.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Codes.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/Utils.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/UFHeuristic.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/UFDecoder.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/DecodingRunInformation.hpp
+        ${${PROJECT_NAME}_SOURCE_DIR}/include/QeccException.hpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME}_lib
-                           PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)
+        PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>)
 
 # set required C++ standard and disable compiler specific extensions
 target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_20)
@@ -59,8 +62,6 @@ if(GENERATE_POSITION_INDEPENDENT_CODE OR BINDINGS)
 endif()
 
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
-# add MQT::QFR library
-add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr" EXCLUDE_FROM_ALL)
 
 # add coverage compiler and linker flag to the library and all targets that link against it, if
 # COVERAGE is set

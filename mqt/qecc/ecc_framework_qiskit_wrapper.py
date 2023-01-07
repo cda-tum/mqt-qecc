@@ -93,13 +93,13 @@ def main() -> None:
         "-n", type=int, default=2000, help="Set the number of shots. 0 for deterministic simulation (" "Default=2000)"
     )
     parser.add_argument("-s", type=int, default=0, help="Set a seed (Default=0)")
-    parser.add_argument("-f", type=str, required=True, help="Path to a openqasm file")
+    parser.add_argument("-f", type=str, required=True, help="Path to a OpenQASM file")
     parser.add_argument(
         "-e",
         type=str,
         required=False,
         default=None,
-        help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
+        help="Export circuit, with error correcting code applied, as OpenQASM circuit instead of "
              'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
@@ -203,7 +203,7 @@ def main() -> None:
             sys.exit("Unknown backend specified.\nAvailable backends are " + str(Aer.backends()))
     else:
         print(
-            "Warning: No backend specified. Setting backend to \"aer_simulator_statevector\", which is fast but does "
+            'Warning: No backend specified. Setting backend to "aer_simulator_statevector", which is fast but does '
             "not support non clifford gates."
         )
         simulator_backend = Aer.get_backend("aer_simulator_statevector")

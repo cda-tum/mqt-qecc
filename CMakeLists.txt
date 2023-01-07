@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19...3.24)
+cmake_minimum_required(VERSION 3.19)
 
 # This avoids googletest complaining that this (IPO) policy is not set
 cmake_policy(SET CMP0069 NEW)

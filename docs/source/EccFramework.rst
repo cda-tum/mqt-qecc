@@ -1,51 +1,9 @@
-ECC Framework: Automatic Implementation and Evaluation of Error-Correcting Codes for Quantum Computing
+ECC Framework
 ======================================================================================================
 
-The QECC library offers means for automatic implementation and evaluation of error-correcting codes for quantum computing. More precisely, the library allows to automatically apply different error correction schemes to quantum circuits provided as openqasm files. The "protected" quantum circuits can then be exported again in the form of openqasm files or can be directly used for noise-aware quantum circuit simulation. For the latter case, we also provide a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using qiskit.
-
-Installation
-############
-
-Installation for Users
-----------
-
-.. code-block:: console
-
-  (venv) $ pip install mqt.qecc
-
-
-Installation for Developers
-----------
-
-If you have not done so already, clone the repository using:
-
-.. code-block:: console
-
-  git clone --recurse-submodules https://github.com/cda-tum/qecc
-
-Make sure you are in the main project directory for the next steps.
-
-.. code-block:: console
-
-  cd qecc
-
-and (if necessary), update the submodules.
-
-.. code-block:: console
-
-  git submodule update --init --recursive
-
-Then, the ECC framework can be installed using pip
-
-.. code-block:: console
-
-  (venv) pip install --editable .
-
-If you want to use Qiskit for quantum circuit simulation, you need to install it as well
-
-.. code-block:: console
-
-  (venv) pip install qiskit
+The QECC library offers means for automatic implementation and evaluation of error-correcting codes for quantum
+computing. More precisely, the library allows to automatically apply different error correction schemes to quantum
+circuits provided as OpenQASM files or Qiskit QuantumCircuit objects. The "protected" quantum circuits can then be exported again in the form of OpenQASM files or can be directly used for noise-aware quantum circuit simulation. For the latter case, we also provide a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using qiskit.
 
 Usage
 #####
@@ -56,7 +14,7 @@ Having the Python module installed, error correcting codes can be applied using 
 
   from mqt import qecc
 
-  file = "path/to/qasm/file.qasm"  # Path to the openqasm file the quantum circuit shall be loaded from
+  file = "path/to/qasm/file.qasm"  # Path to the OpenQASM file the quantum circuit shall be loaded from
   ecc = "Q7Steane"  # Error correction code that shall be applied to the quantum circuit
   ecc_frequency = 100  # After how many times a qubit is used, error correction is applied
 
@@ -67,7 +25,7 @@ Having the Python module installed, error correcting codes can be applied using 
 
 Currently, the error correction schemes Q3Shor, Q5Laflamme, Q7Steane, Q9Shor, Q9Surface, and Q18Surface are supported.
 
-We provide a wrapper script for applying error correction to quantum circuits (provided as openQasm) and followed by a noise-aware quantum circuit simulation (using qiskit). The script can be used like this:
+We provide a wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and followed by a noise-aware quantum circuit simulation (using qiskit). The script can be used like this:
 
 .. code-block:: file
 
@@ -93,8 +51,8 @@ The script offers a help function, which displays available parameters:
     -p P        Set the noise probability (Default=0.001)
     -n N        Set the number of shots. 0 for deterministic simulation (Default=2000)
     -s S        Set a seed (Default=0)
-    -f F        Path to a openqasm file
-    -e E        Export circuit, with error correcting code applied, as openqasm circuit instead of simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)
+    -f F        Path to a OpenQASM file
+    -e E        Export circuit, with error correcting code applied, as OpenQASM circuit instead of simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)
     -fs FS      Specify a simulator (Default: "statevector_simulator" for simulation without noise, "aer_simulator_density_matrix", for deterministic noise-aware simulation"aer_simulator_statevector", for stochastic noise-
                 aware simulation). Available: [AerSimulator('aer_simulator'), AerSimulator('aer_simulator_statevector'), AerSimulator('aer_simulator_density_matrix'), AerSimulator('aer_simulator_stabilizer'),
                 AerSimulator('aer_simulator_matrix_product_state'), AerSimulator('aer_simulator_extended_stabilizer'), AerSimulator('aer_simulator_unitary'), AerSimulator('aer_simulator_superop'),
@@ -118,7 +76,7 @@ Properties
     - Q7Steane :cite:labelpar:`SteaneCode`
     - Q9Shor :cite:labelpar:`ShorCodes`
     - Q9Surface :cite:labelpar:`WoottonMinimalSurfaceCode`
-    - `Q18Surface <./EccFramework.rst#q18surface-code>`_
+    - Q18Surface (based on :cite:labelpar:`FowlerSurfaceCodes`)
   * - able to detect bit flips
     - ✔️
     - ✔️
@@ -195,7 +153,3 @@ Available logical operations
 
 ⚠️ = operation is applied without the scheme of the error-correcting code (i.e. decoding and encoding is performed before/afterwards, respectively, and the operation is encoded as-is)
 
-Q18Surface code
----------------
-
-This code follows the principle of :cite:labelpar:`FowlerSurfaceCodes` and is applied to 18 data qubits.
