@@ -86,7 +86,7 @@ def main() -> None:
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
     parser.add_argument(
@@ -100,22 +100,22 @@ def main() -> None:
         required=False,
         default=None,
         help="Export circuit, with error correcting code applied, as openqasm circuit instead of "
-        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+             'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="none",
         help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+             '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
+             '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="Q7Steane",
         help="Specify a ecc to be applied to the circuit. Currently available are none, Q3Shor, Q5Laflamme, "
-        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
+             "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
     )
     parser.add_argument(
         "-fq",
@@ -201,14 +201,11 @@ def main() -> None:
             simulator_backend = Aer.get_backend(forced_simulator)
         except providers.exceptions.QiskitBackendNotFoundError:
             sys.exit("Unknown backend specified.\nAvailable backends are " + str(Aer.backends()))
-    elif error_probability == 0:
-        # Statevector simulation method
-        simulator_backend = Aer.get_backend("statevector_simulator")
-    elif number_of_shots == 0:
-        # Run the noisy density matrix (deterministic) simulation
-        simulator_backend = Aer.get_backend("aer_simulator_density_matrix")
     else:
-        # Stochastic statevector simulation method
+        print(
+            "Warning: No backend specified. Setting backend to \"aer_simulator_statevector\", which is fast but does "
+            "not support non clifford gates."
+        )
         simulator_backend = Aer.get_backend("aer_simulator_statevector")
 
     result = execute(
