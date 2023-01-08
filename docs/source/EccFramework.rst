@@ -20,7 +20,6 @@ Having the Python module installed, error correcting codes can be applied using 
 
   result = qecc.apply_ecc(file, ecc, ecc_frequency)
 
-  # print the resulting circuit
   print(result["circ"])
 
 Currently, the error correction schemes Q3Shor, Q5Laflamme, Q7Steane, Q9Shor, Q9Surface, and Q18Surface are supported.
