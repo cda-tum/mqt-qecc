@@ -141,7 +141,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
     assert ret.success
 
 
-def test_statevector_simulators(script_runner: ScriptRunner) -> None:
+def test_save_circuit(script_runner: ScriptRunner) -> None:
     """Testing the script with another backend."""
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
