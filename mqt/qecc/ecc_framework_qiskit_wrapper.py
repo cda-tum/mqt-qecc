@@ -47,7 +47,8 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
             error = compose_error(error, new_error)
 
         else:
-            print("Warning unknown error")
+            sys.exit("Unknown error typ provided \"" + str(char) + "\"")
+
     assert error is not None
 
     # single qubit and multi qubit operations are treated the same at the moment
