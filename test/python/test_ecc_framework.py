@@ -148,7 +148,8 @@ def test_save_circuit(script_runner: ScriptRunner) -> None:
     ret = script_runner.run(
         "ecc_framework_qiskit_wrapper",
         "-e",
-        "dummyCircuitWithEcc.qasm" "-f",
+        "dummyCircuitWithEcc.qasm",
+        "-f",
         "dummyCircuit.qasm",
     )
     for circuit_to_delete in ["dummyCircuit.qasm", "dummyCircuitWithEcc.qasm"]:
