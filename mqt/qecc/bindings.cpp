@@ -59,22 +59,22 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
 
     auto test = std::make_unique<ecc::Id>(qc, eccFrequency);
 
-    [[maybe_unused]] ecc::Ecc* mapper{};
+    [[maybe_unused]] std::unique_ptr<ecc::Ecc> mapper{};
 
     if (eccName == "Id") {
-        mapper = new ecc::Id(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Id>(qc, eccFrequency);
     } else if (eccName == "Q3Shor") {
-        mapper = new ecc::Q3Shor(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Q3Shor>(qc, eccFrequency);
     } else if ((eccName == "Q5Laflamme")) {
-        mapper = new ecc::Q5Laflamme(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Q5Laflamme>(qc, eccFrequency);
     } else if ((eccName == "Q7Steane")) {
-        mapper = new ecc::Q7Steane(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Q7Steane>(qc, eccFrequency);
     } else if ((eccName == "Q9Shor")) {
-        mapper = new ecc::Q9Shor(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Q9Shor>(qc, eccFrequency);
     } else if ((eccName == "Q9Surface")) {
-        mapper = new ecc::Q9Surface(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Q9Surface>(qc, eccFrequency);
     } else if ((eccName == "Q18Surface")) {
-        mapper = new ecc::Q18Surface(qc, eccFrequency);
+        mapper = std::make_unique<ecc::Q18Surface>(qc, eccFrequency);
     } else {
         std::stringstream ss{};
         ss << "No ECC found for " << eccName << " ";
