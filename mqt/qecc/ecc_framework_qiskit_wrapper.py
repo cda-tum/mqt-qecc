@@ -47,7 +47,7 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
             error = compose_error(error, new_error)
 
         else:
-            sys.exit("Unknown error typ provided \"" + str(char) + "\"")
+            sys.exit('Unknown error typ provided "' + str(char) + '"')
 
     assert error is not None
 

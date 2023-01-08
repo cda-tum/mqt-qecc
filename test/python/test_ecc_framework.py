@@ -6,12 +6,12 @@ from pytest_console_scripts import ScriptRunner
 from qiskit import QuantumCircuit
 
 qasm_circuit = (
-        "OPENQASM 2.0;\n"
-        + 'include "qelib1.inc";\n'
-        + "qreg q[1];\n"
-        + "creg c[1];\n"
-        + "x q[0];\n"
-        + "measure q[0] -> c[0];\n"
+    "OPENQASM 2.0;\n"
+    + 'include "qelib1.inc";\n'
+    + "qreg q[1];\n"
+    + "creg c[1];\n"
+    + "x q[0];\n"
+    + "measure q[0] -> c[0];\n"
 )
 
 
@@ -148,8 +148,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
     ret = script_runner.run(
         "ecc_framework_qiskit_wrapper",
         "-e",
-        "dummyCircuitWithEcc.qasm"
-        "-f",
+        "dummyCircuitWithEcc.qasm" "-f",
         "dummyCircuit.qasm",
     )
     for circuit_to_delete in ["dummyCircuit.qasm", "dummyCircuitWithEcc.qasm"]:
