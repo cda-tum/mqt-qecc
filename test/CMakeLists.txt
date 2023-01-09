@@ -28,6 +28,6 @@ package_add_test(
 
 # files containing codes for tests
 file(
-  COPY "${CMAKE_SOURCE_DIR}/examples/test/"
-  DESTINATION "${CMAKE_BINARY_DIR}/test/resources/codes/"
+  COPY "${PROJECT_SOURCE_DIR}/examples/test/"
+  DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/resources/codes/"
   PATTERN "*")
