@@ -30,7 +30,7 @@ struct ParityCheckMatrix {
     ParityCheckMatrix(const ParityCheckMatrix& m)          = delete;
     ParityCheckMatrix& operator=(const ParityCheckMatrix&) = delete;
 
-    explicit ParityCheckMatrix(gf2Mat& pcm) : pcm(std::make_unique<gf2Mat>(pcm)) {}
+    explicit ParityCheckMatrix(gf2Mat& mat) : pcm(std::make_unique<gf2Mat>(mat)) {}
 
     explicit ParityCheckMatrix(const std::string& filePath) {
         if (filePath.empty()) {
@@ -277,7 +277,7 @@ public:
     }
 
     [[nodiscard]] CodeProperties getProperties() const {
-        CodeProperties res{.n = n, .k = getK(), .d = d};
+        CodeProperties res{n, getK(), d};
         return res;
     }
 

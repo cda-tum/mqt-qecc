@@ -11,10 +11,10 @@ namespace std {
 template <>
 struct hash<std::pair<std::size_t, std::size_t>> {
     std::size_t operator()(const std::pair<std::size_t, std::size_t>& k) const {
-        std::size_t hash = 17;
-        hash             = hash * 31 + std::hash<std::size_t>()(k.first);
-        hash             = hash * 31 + std::hash<std::size_t>()(k.second);
-        return hash;
+        std::size_t h = 17;
+        h             = h * 31 + std::hash<std::size_t>()(k.first);
+        h             = h * 31 + std::hash<std::size_t>()(k.second);
+        return h;
     }
 };
 

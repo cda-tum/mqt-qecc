@@ -7,7 +7,6 @@
 #include "Decoder.hpp"
 #include "TreeNode.hpp"
 
-#include <cassert>
 #include <chrono>
 #include <queue>
 #include <random>
@@ -18,7 +17,7 @@
  * @return
  */
 std::unordered_set<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2Vec& syndrome) {
-    std::unordered_set<std::size_t> result{};
+    std::unordered_set<std::size_t> res{};
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
             const auto idx       = i + getCode()->getN();
@@ -26,10 +25,10 @@ std::unordered_set<std::size_t> UFHeuristic::computeInitTreeComponents(const gf2
             syndrNode->isCheck   = true;
             syndrNode->checkVertices.emplace_back(syndrNode->vertexIdx);
             nodeMap.try_emplace(syndrNode->vertexIdx, std::move(syndrNode));
-            result.insert(idx);
+            res.insert(idx);
         }
     }
-    return result;
+    return res;
 }
 
 /**
@@ -162,8 +161,8 @@ void UFHeuristic::doDecoding(const gf2Vec& syndrome, const std::unique_ptr<Parit
         res = erasureDecoder(erasure, syndrComponents, pcm);
     }
     auto decodingTimeEnd   = std::chrono::high_resolution_clock::now();
-    this->result           = DecodingResult();
-    result.decodingTime    = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
+    result                 = DecodingResult();
+    result.decodingTime    = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count());
     result.estimBoolVector = gf2Vec(getCode()->getN());
     for (const auto& re : res) {
         result.estimBoolVector.at(re) = true;
@@ -218,12 +217,11 @@ void UFHeuristic::singleClusterRandomFirstGrowth(std::vector<std::pair<std::size
                                                  const std::unique_ptr<ParityCheckMatrix>&         pcm) {
     std::random_device rd;
     std::mt19937       gen(rd());
-    gf2Vec             result;
     if (components.size() > std::numeric_limits<int>::max()) {
         throw QeccException("cannot setup distribution, size too large for function");
     }
     std::uniform_int_distribution d(static_cast<std::size_t>(0U), components.size() - 1);
-    std::size_t                   chosenIdx = d(gen);
+    const std::size_t             chosenIdx = d(gen);
     auto                          it        = components.begin();
     std::advance(it, chosenIdx);
     auto        chosenComponent = *it;
@@ -348,25 +346,23 @@ bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_
         }
         i++;
     }
-    return std::all_of(valid.begin(), valid.end(), [](bool i) { return i; });
+    return std::all_of(valid.begin(), valid.end(), [](bool v) { return v; });
 }
 
 // return raw ptr to leave ownership in list
 TreeNode* UFHeuristic::getNodeFromIdx(const std::size_t idx) {
-    TreeNode* res = nullptr;
     if (auto nodeIt = nodeMap.find(idx); nodeIt != nodeMap.end()) {
-        res = nodeIt->second.get();
-    } else {
-        auto treeNode = std::make_unique<TreeNode>(idx);
-        // determine if idx is a check
-        if (idx >= getCode()->getN()) {
-            treeNode->isCheck = true;
-            treeNode->checkVertices.emplace_back(treeNode->vertexIdx);
-        }
-        const auto ins = nodeMap.try_emplace(idx, std::move(treeNode));
-        res            = ins.first->second.get();
+        return nodeIt->second.get();
     }
-    return res;
+
+    auto treeNode = std::make_unique<TreeNode>(idx);
+    // determine if idx is a check
+    if (idx >= getCode()->getN()) {
+        treeNode->isCheck = true;
+        treeNode->checkVertices.emplace_back(treeNode->vertexIdx);
+    }
+    const auto ins = nodeMap.try_emplace(idx, std::move(treeNode));
+    return ins.first->second.get();
 }
 
 void UFHeuristic::reset() {

@@ -16,15 +16,13 @@ enum DecodingResultStatus {
 };
 
 [[maybe_unused]] static DecodingResultStatus decodingResultStatusFromString(const std::string& status) {
-    DecodingResultStatus result = {};
     if (status == "SUCCESS" || status == "0") {
-        result = DecodingResultStatus::SUCCESS;
-    } else if (status == "FAILURE" || status == "1") {
-        result = DecodingResultStatus::FAILURE;
-    } else {
-        throw std::invalid_argument("Invalid decoding result status: " + status);
+        return DecodingResultStatus::SUCCESS;
     }
-    return result;
+    if (status == "FAILURE" || status == "1") {
+        return DecodingResultStatus::FAILURE;
+    }
+    throw std::invalid_argument("Invalid decoding result status: " + status);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
@@ -35,21 +33,20 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"}, // NOL
  * result contains information obtained from the decoder
  */
 struct DecodingRunInformation {
-    DecodingRunInformation(double               physicalErrR,
-                           std::size_t          codeSize,
-                           gf2Vec               error,
-                           gf2Vec               syndrome,
-                           DecodingResultStatus status,
-                           DecodingResult       result) : physicalErrR(physicalErrR),
-                                                    codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), status(status), result(std::move(result)) {}
-    DecodingRunInformation(double         physicalErrR,
-                           std::size_t    codeSize,
-                           gf2Vec         error,
-                           gf2Vec         syndrome,
-                           DecodingResult result) : physicalErrR(physicalErrR),
-                                                    codeSize(codeSize), error(std::move(error)), syndrome(std::move(syndrome)), result(std::move(result)) {}
+    DecodingRunInformation(double               physicalErrorRate,
+                           std::size_t          size,
+                           gf2Vec               err,
+                           gf2Vec               syn,
+                           DecodingResultStatus resultStatus,
+                           DecodingResult       res) : physicalErrR(physicalErrorRate),
+                                                 codeSize(size), error(std::move(err)), syndrome(std::move(syn)), status(resultStatus), result(std::move(res)) {}
+    DecodingRunInformation(double         physicalErrorRate,
+                           std::size_t    size,
+                           gf2Vec         err,
+                           gf2Vec         syn,
+                           DecodingResult res) : physicalErrR(physicalErrorRate),
+                                                 codeSize(size), error(std::move(err)), syndrome(std::move(syn)), result(std::move(res)) {}
     DecodingRunInformation() = default;
-    ;
 
     double               physicalErrR = 0.0;
     std::size_t          codeSize     = 0U;
@@ -76,12 +73,10 @@ struct DecodingRunInformation {
     }
 
     [[nodiscard]] std::string toString() const {
-        std::stringstream ss{};
-        return this->to_json().dump(2U);
+        return to_json().dump(2U);
     }
     void print() const {
-        nlohmann::json json = this->to_json();
-        std::cout << json.dump(2U);
+        std::cout << toString() << std::endl;
     }
 };
 #endif // QUNIONFIND_DECODINGRUNINFORMATION_HPP

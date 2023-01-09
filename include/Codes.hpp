@@ -26,12 +26,12 @@ public:
 
 class HGPcode : public Code {
 public:
-    HGPcode(const std::string& inFile, const std::size_t k) : Code(inFile) { this->k = k; };
+    HGPcode(const std::string& inFile, const std::size_t size) : Code(inFile) { k = size; };
     HGPcode() : Code("./resources/codes/hgp_(4,7)-[[900,36,10]]_hz.txt") {
         k = 36;
         n = 900;
     }
-    HGPcode(const std::string& hxIn, const std::string& hzIn, const std::size_t k) : Code(hxIn, hzIn) { this->k = k; };
+    HGPcode(const std::string& hxIn, const std::string& hzIn, const std::size_t size) : Code(hxIn, hzIn) { k = size; };
 };
 
 class ToricCode8 : public Code {

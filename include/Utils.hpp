@@ -69,7 +69,7 @@ public:
             result       = gf2Vec(static_cast<std::uint64_t>(nmod_mat_nrows(x)));
             auto xColIdx = nmod_mat_ncols(x) - 1;
             for (auto i = 0; i < nmod_mat_nrows(x); i++) {
-                result.at(static_cast<std::uint64_t>(i)) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
+                result.at(static_cast<std::size_t>(i)) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
             }
         } else {
             // no solution
@@ -335,7 +335,7 @@ public:
         return result;
     }
     [[maybe_unused]] static void printTimePerSampleRun(const std::map<std::string, std::size_t, std::less<>>& avgSampleRuns) {
-        nlohmann::json avgData = avgSampleRuns;
+        const nlohmann::json avgData = avgSampleRuns;
         std::cout << "trial:timesum = " << avgData.dump(2U) << std::endl;
     }
 
