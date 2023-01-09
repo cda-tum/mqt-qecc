@@ -77,7 +77,7 @@ Properties
     - Q7Steane :cite:labelpar:`SteaneCode`
     - Q9Shor :cite:labelpar:`ShorCodes`
     - Q9Surface :cite:labelpar:`WoottonMinimalSurfaceCode`
-    - Q18Surface (based on :cite:labelpar:`FowlerSurfaceCodes`)
+    - Q18Surface :cite:labelpar:`FowlerSurfaceCodes`
   * - able to detect bit flips
     - ✔️
     - ✔️
