@@ -38,28 +38,22 @@ std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physi
 py::dict applyEcc(const py::object& circ, const std::string& eccName, const size_t eccFrequency) {
     auto qc = std::make_shared<qc::QuantumComputation>();
 
-    try {
-        if (py::isinstance<py::str>(circ)) {
-            auto&& file = circ.cast<std::string>();
-            qc->import(file);
-        } else {
-            py::object const quantumCircuit       = py::module::import("qiskit").attr("QuantumCircuit");
-            py::object const pyQasmQobjExperiment = py::module::import("qiskit.qobj").attr("QasmQobjExperiment");
-            if (py::isinstance(circ, quantumCircuit)) {
-                qc::qiskit::QuantumCircuit::import(*qc, circ);
-            } else if (py::isinstance(circ, pyQasmQobjExperiment)) {
-                qc::qiskit::QasmQobjExperiment::import(*qc, circ);
-            }
+    if (py::isinstance<py::str>(circ)) {
+        auto&& file = circ.cast<std::string>();
+        qc->import(file);
+    } else {
+        py::object const quantumCircuit       = py::module::import("qiskit").attr("QuantumCircuit");
+        py::object const pyQasmQobjExperiment = py::module::import("qiskit.qobj").attr("QasmQobjExperiment");
+        if (py::isinstance(circ, quantumCircuit)) {
+            qc::qiskit::QuantumCircuit::import(*qc, circ);
+        } else if (py::isinstance(circ, pyQasmQobjExperiment)) {
+            qc::qiskit::QasmQobjExperiment::import(*qc, circ);
         }
-    } catch (std::exception const& e) {
-        std::stringstream ss{};
-        ss << "Could not import circuit: " << e.what();
-        return py::dict("error"_a = ss.str());
     }
 
     auto test = std::make_unique<ecc::Id>(qc, eccFrequency);
 
-    [[maybe_unused]] std::unique_ptr<ecc::Ecc> mapper{};
+    std::unique_ptr<ecc::Ecc> mapper{};
 
     if (eccName == "Id") {
         mapper = std::make_unique<ecc::Id>(qc, eccFrequency);
@@ -92,7 +86,7 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
         ss << "Q9Surface"
            << ", ";
         ss << "Q18Surface";
-        return py::dict("error"_a = ss.str());
+        throw std::invalid_argument(ss.str());
     }
 
     std::shared_ptr<qc::QuantumComputation> const qcECC = mapper->apply();
