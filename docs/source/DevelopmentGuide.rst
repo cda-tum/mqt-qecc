@@ -86,7 +86,7 @@ Initial Setup
 Working on the core C++ library
 ###############################
 
-Building the project requires a C++ compiler supporting *C++17* and CMake with a minimum version of *3.14*.
+Building the project requires a C++ compiler supporting *C++17* and CMake with a minimum version of *3.19*.
 
     .. note::
         We noticed some issues when compiling with Microsoft's *MSCV* compiler toolchain.

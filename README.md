@@ -110,7 +110,7 @@ at [ReadTheDocs](https://qecc.readthedocs.io/en/latest/).**
 
 ## System Requirements and Building
 
-The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.14.
+The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.19.
 Please refer to the [documentation](https://qecc.readthedocs.io/en/latest/) on how to build the project.
 
 Building (and running) is continuously tested under Linux, macOS, and Windows using the
