@@ -1,8 +1,7 @@
-#!/bin/python3
 from __future__ import annotations
 
 import argparse
-import sys
+import warnings
 
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
@@ -47,7 +46,7 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
             error = compose_error(error, new_error)
 
         else:
-            sys.exit('Unknown error typ provided "' + str(char) + '"')
+            raise ValueError("Unknown error type in noise model: " + char)
 
     assert error is not None
 
@@ -160,18 +159,13 @@ def main() -> None:
     circ = QuantumCircuit.from_qasm_file(open_qasm_file)
 
     if not any(gate[0].name == "measure" for gate in circ.data):
-        print(
-            "Warning: The provided circuit does not contain any measurements. "
-            "I am adding a measureAll at the end of the circuit."
-        )
+        warnings.warn("No measurement gates found in circuit. Adding measurement gates to all qubits.", RuntimeWarning)
         circ.measure_all()
 
     # Initializing the quantum circuit
     if ecc is not None:
         # Applying error correction to the circuit
         result = qecc.apply_ecc(circ, ecc, ecc_frequency)
-        if "error" in result:
-            sys.exit("Something went wrong when I tried to apply the ecc. Error message:\n" + result["error"])
         circ = QuantumCircuit().from_qasm_str(result["circ"])
 
     if ecc_export_filename is not None:
@@ -201,11 +195,13 @@ def main() -> None:
         try:
             simulator_backend = Aer.get_backend(forced_simulator)
         except providers.exceptions.QiskitBackendNotFoundError:
-            sys.exit("Unknown backend specified.\nAvailable backends are " + str(Aer.backends()))
+            raise ValueError(
+                "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
+            ) from None
     else:
-        print(
-            'Warning: No backend specified. Setting backend to "aer_simulator_statevector", which is fast but does '
-            "not support non clifford gates."
+        warnings.warn(
+            "No backend specified. Setting backend to `aer_simulator_statevector`, which is fast but does not support non-Clifford gates.",
+            RuntimeWarning,
         )
         simulator_backend = Aer.get_backend("aer_simulator_statevector")
 
@@ -218,11 +214,7 @@ def main() -> None:
     )
 
     if result.result().status != "COMPLETED":
-        sys.exit("Simulation exited with status: " + str(result.result().status))
+        raise RuntimeError("Simulation exited with status: " + str(result.result().status))
 
     result_counts = result.result().get_counts()
     print_simulation_results(result_counts, n_shots)
-
-
-if __name__ == "__main__":
-    main()
