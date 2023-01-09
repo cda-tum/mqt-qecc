@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import warnings
 
 from mqt import qecc
 from qiskit import Aer, QuantumCircuit, execute, providers
@@ -159,7 +158,7 @@ def main() -> None:
     circ = QuantumCircuit.from_qasm_file(open_qasm_file)
 
     if not any(gate[0].name == "measure" for gate in circ.data):
-        warnings.warn("No measurement gates found in circuit. Adding measurement gates to all qubits.", RuntimeWarning)
+        print("No measurement gates found in circuit. Adding measurement gates to all qubits.")
         circ.measure_all()
 
     # Initializing the quantum circuit
@@ -199,9 +198,8 @@ def main() -> None:
                 "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
             ) from None
     else:
-        warnings.warn(
-            "No backend specified. Setting backend to `aer_simulator_statevector`, which is fast but does not support non-Clifford gates.",
-            RuntimeWarning,
+        print(
+            "No backend specified. Setting backend to `aer_simulator_statevector`, which is fast but does not support non-Clifford gates."
         )
         simulator_backend = Aer.get_backend("aer_simulator_statevector")
 
