@@ -46,7 +46,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
-    std::vector<bool> err = GetParam();
+    const std::vector<bool> err = GetParam();
 
     auto syndr = code.getXSyndrome(err);
     std::cout << "syndrome: " << Utils::getStringFrom(syndr) << std::endl;
@@ -61,7 +61,7 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
         std::cout << idx;
     }
     std::cout << std::endl;
-    gf2Vec sol = GetParam();
+    const gf2Vec sol = GetParam();
 
     std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
     std::cout << "Sol: " << std::endl;
@@ -187,7 +187,7 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     decoder.setCode(code);
     std::cout << "Adj lists code: " << std::endl
               << Utils::getStringFrom(*code.gethZ()->pcm) << std::endl;
-    std::vector<bool> err = GetParam();
+    const std::vector<bool> err = GetParam();
     std::cout << "error: ";
     Utils::printGF2vector(err);
     std::cout << std::endl;

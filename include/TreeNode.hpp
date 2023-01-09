@@ -5,6 +5,7 @@
 #ifndef QUNIONFIND_TREENODE_HPP
 #define QUNIONFIND_TREENODE_HPP
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <unordered_set>
@@ -19,16 +20,16 @@ public:
     bool                            isCheck   = false;
     TreeNode*                       parent    = nullptr;
     std::vector<TreeNode*>          children{};
-    size_t                          clusterSize = 1U;
+    std::size_t                     clusterSize = 1U;
     std::unordered_set<std::size_t> boundaryVertices{};
     std::vector<std::size_t>        checkVertices{};
     bool                            marked  = false;
     bool                            deleted = false;
 
-    TreeNode() : TreeNode(-1) {}
+    TreeNode() : TreeNode(std::numeric_limits<std::size_t>::max()) {}
 
-    explicit TreeNode(const std::size_t& vertexIdx) : vertexIdx(vertexIdx) {
-        boundaryVertices.emplace(vertexIdx);
+    explicit TreeNode(const std::size_t& idx) : vertexIdx(idx) {
+        boundaryVertices.emplace(idx);
     }
 
     /*

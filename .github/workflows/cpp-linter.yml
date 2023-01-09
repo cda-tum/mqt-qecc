@@ -9,7 +9,7 @@ on:
       - main
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -27,7 +27,7 @@ jobs:
         run: sudo apt-get install libflint-dev
       - name: Generate compilation database
         run: |
-          cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON
       - name: Run cpp-linter
         id: linter
         env:

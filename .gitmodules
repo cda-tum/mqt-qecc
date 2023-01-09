@@ -1,20 +1,4 @@
-[submodule "extern/googletest"]
-	path = extern/googletest
-	url = https://github.com/google/googletest.git
+[submodule "extern/qfr"]
+	path = extern/qfr
+	url = https://github.com/cda-tum/qfr.git
 	branch = main
-	shallow = true
-[submodule "extern/json"]
-	path = extern/json
-	url = https://github.com/nlohmann/json.git
-	branch = develop
-	shallow = true
-[submodule "extern/pybind11"]
-	path = extern/pybind11
-	url = https://github.com/pybind/pybind11.git
-	branch = master
-	shallow = true
-[submodule "extern/pybind11_json"]
-	path = extern/pybind11_json
-	url = https://github.com/pybind/pybind11_json.git
-	branch = master
-	shallow = true

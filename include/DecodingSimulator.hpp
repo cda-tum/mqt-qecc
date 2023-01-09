@@ -17,15 +17,13 @@ enum DecoderType {
     UfDecoder
 };
 [[maybe_unused]] static DecoderType decoderTypeFromString(const std::string& status) {
-    DecoderType res = {};
     if (status == "UF_HEURISTIC" || status == "0") {
-        res = DecoderType::UfHeuristic;
-    } else if (status == "ORIGINAL_UF" || status == "1") {
-        res = DecoderType::UfDecoder;
-    } else {
-        throw std::invalid_argument("Invalid decodinger type: " + status);
+        return DecoderType::UfHeuristic;
     }
-    return res;
+    if (status == "ORIGINAL_UF" || status == "1") {
+        return DecoderType::UfDecoder;
+    }
+    throw std::invalid_argument("Invalid decodinger type: " + status);
 }
 NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UfHeuristic, "UF_HEURISTIC"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
                                            {UfDecoder, "UF_DECODER"}})

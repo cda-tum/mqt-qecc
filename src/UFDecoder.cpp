@@ -6,7 +6,6 @@
 
 #include "Decoder.hpp"
 
-#include <cassert>
 #include <chrono>
 #include <queue>
 #include <random>
@@ -87,7 +86,7 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
     std::vector<std::size_t> res(tmp.begin(), tmp.end());
 
     const auto decodingTimeEnd = std::chrono::high_resolution_clock::now();
-    result.decodingTime        = std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count();
+    result.decodingTime        = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count());
     result.estimBoolVector     = std::vector<bool>(getCode()->getN());
     for (auto re : res) {
         result.estimBoolVector.at(re) = true;
@@ -106,7 +105,7 @@ bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>&
                                           const std::unique_ptr<ParityCheckMatrix>&     pcm) const {
     auto ccomps = getConnectedComps(nodeSet);
     return std::any_of(ccomps.begin(), ccomps.end(), [&](const auto& comp) {
-        bool res = isValidComponent(comp, syndrome, pcm);
+        bool const res = isValidComponent(comp, syndrome, pcm);
         if (!res) {
             invalidComps.emplace_back(comp.begin(), comp.end());
         }
@@ -163,8 +162,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
         return std::unordered_set<std::size_t>{};
     }
     gf2Mat            redHz;
-    std::size_t       idxCnt = 0;
-    gf2Vec            redSyndr(idxCnt);
+    gf2Vec            redSyndr(0);
     std::vector<bool> used(pcm->pcm->size());
 
     for (const auto it : nodeSet) {
@@ -193,8 +191,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto                            estim = Utils::solveSystem(redHz, redSyndr); // solves the system redHz*x=redSyndr by x to see if a solution can be found
-    std::unordered_set<std::size_t> estIdx;
+    auto estim = Utils::solveSystem(redHz, redSyndr); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
         if (estim.at(i)) {
             res.insert(i);
@@ -221,7 +218,6 @@ void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
  */
 void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
     auto                            ccomps = getConnectedComps(nodeSet);
-    std::unordered_set<std::size_t> compNbrs;
     std::unordered_set<std::size_t> smallestComponent;
     std::size_t                     smallestSize = SIZE_MAX;
     for (const auto& cId : ccomps) {
@@ -247,7 +243,7 @@ void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& 
     std::random_device              rd;
     std::mt19937                    gen(rd());
     std::uniform_int_distribution   d(static_cast<std::size_t>(0U), ccomps.size() - 1);
-    std::size_t                     chosenIdx = d(gen);
+    const std::size_t               chosenIdx = d(gen);
     auto                            it        = ccomps.begin();
     std::advance(it, chosenIdx);
     chosenComponent = *it;
@@ -272,12 +268,11 @@ void UFDecoder::reset() {
  */
 void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& comps) {
     auto                            ccomps = getConnectedComps(comps);
-    std::unordered_set<std::size_t> compNbrs;
     std::unordered_set<std::size_t> chosenComponent;
     std::random_device              rd;
     std::mt19937                    gen(rd());
     std::uniform_int_distribution   d(static_cast<std::size_t>(0U), ccomps.size());
-    std::size_t                     chosenIdx = d(gen);
+    const std::size_t               chosenIdx = d(gen);
     auto                            it        = ccomps.begin();
     std::advance(it, chosenIdx);
     chosenComponent = *it;
@@ -292,7 +287,7 @@ void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& co
  */
 std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const std::unordered_set<std::size_t>& nodes) const {
     std::unordered_set<std::size_t>              visited;
-    std::vector<std::unordered_set<std::size_t>> result;
+    std::vector<std::unordered_set<std::size_t>> res;
 
     for (auto c : nodes) {
         if (visited.find(c) == visited.end()) {
@@ -315,8 +310,8 @@ std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const 
                     }
                 }
             }
-            result.emplace_back(ccomp);
+            res.emplace_back(ccomp);
         }
     }
-    return result;
+    return res;
 }

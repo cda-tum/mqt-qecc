@@ -6,11 +6,22 @@
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
+#include "QuantumComputation.hpp"
 #include "UFDecoder.hpp"
 #include "UFHeuristic.hpp"
+#include "ecc/Ecc.hpp"
+#include "ecc/Id.hpp"
+#include "ecc/Q18Surface.hpp"
+#include "ecc/Q3Shor.hpp"
+#include "ecc/Q5Laflamme.hpp"
+#include "ecc/Q7Steane.hpp"
+#include "ecc/Q9Shor.hpp"
+#include "ecc/Q9Surface.hpp"
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
+#include "qiskit/QasmQobjExperiment.hpp"
+#include "qiskit/QuantumCircuit.hpp"
 
 #include <pybind11/stl.h>
 
@@ -24,7 +35,69 @@ std::vector<bool> sampleIidPauliErr(const std::size_t length, const double physi
     return Utils::sampleErrorIidPauliNoise(length, physicalErrRate);
 }
 
+py::dict applyEcc(const py::object& circ, const std::string& eccName, const size_t eccFrequency) {
+    auto qc = std::make_shared<qc::QuantumComputation>();
+
+    if (py::isinstance<py::str>(circ)) {
+        auto&& file = circ.cast<std::string>();
+        qc->import(file);
+    } else {
+        py::object const quantumCircuit       = py::module::import("qiskit").attr("QuantumCircuit");
+        py::object const pyQasmQobjExperiment = py::module::import("qiskit.qobj").attr("QasmQobjExperiment");
+        if (py::isinstance(circ, quantumCircuit)) {
+            qc::qiskit::QuantumCircuit::import(*qc, circ);
+        } else if (py::isinstance(circ, pyQasmQobjExperiment)) {
+            qc::qiskit::QasmQobjExperiment::import(*qc, circ);
+        }
+    }
+
+    std::unique_ptr<ecc::Ecc> mapper{};
+
+    if (eccName == "Id") {
+        mapper = std::make_unique<ecc::Id>(qc, eccFrequency);
+    } else if (eccName == "Q3Shor") {
+        mapper = std::make_unique<ecc::Q3Shor>(qc, eccFrequency);
+    } else if ((eccName == "Q5Laflamme")) {
+        mapper = std::make_unique<ecc::Q5Laflamme>(qc, eccFrequency);
+    } else if ((eccName == "Q7Steane")) {
+        mapper = std::make_unique<ecc::Q7Steane>(qc, eccFrequency);
+    } else if ((eccName == "Q9Shor")) {
+        mapper = std::make_unique<ecc::Q9Shor>(qc, eccFrequency);
+    } else if ((eccName == "Q9Surface")) {
+        mapper = std::make_unique<ecc::Q9Surface>(qc, eccFrequency);
+    } else if ((eccName == "Q18Surface")) {
+        mapper = std::make_unique<ecc::Q18Surface>(qc, eccFrequency);
+    } else {
+        std::stringstream ss{};
+        ss << "No ECC found for " << eccName << " ";
+        ss << "Available ECCs: ";
+        ss << "Id"
+           << ", ";
+        ss << "Q3Shor"
+           << ", ";
+        ss << "Q5Laflamme"
+           << ", ";
+        ss << "Q7Steane"
+           << ", ";
+        ss << "Q9Shor"
+           << ", ";
+        ss << "Q9Surface"
+           << ", ";
+        ss << "Q18Surface";
+        throw std::invalid_argument(ss.str());
+    }
+
+    std::shared_ptr<qc::QuantumComputation> const qcECC = mapper->apply();
+
+    std::ostringstream oss{};
+    qcECC->dump(oss, qc::Format::OpenQASM);
+
+    return py::dict("circ"_a = oss.str());
+}
+
 PYBIND11_MODULE(pyqecc, m) {
+    // In this function the exposed python functions are defined.
+    // Additionally, the required parameters are described.
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";
     m.def("sample_iid_pauli_err", &sampleIidPauliErr, "Sample a iid pauli error represented as binary string");
 
@@ -116,6 +189,12 @@ PYBIND11_MODULE(pyqecc, m) {
             .value("ORIGINAL_UF", DecoderType::UfDecoder)
             .export_values()
             .def(py::init([](const std::string& str) -> DecoderType { return decoderTypeFromString(str); }));
+
+    // Function signature for applying an error correction scheme
+    m.def("apply_ecc", &applyEcc, "apply an ECC to a circuit and return the resulting circuit as an OpenQASM string",
+          "circuit_name"_a,
+          "ecc_name"_a,
+          "ecc_frequency"_a = 100);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

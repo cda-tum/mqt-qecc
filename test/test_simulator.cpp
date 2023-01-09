@@ -13,11 +13,11 @@ class DecodingSimulatorTest : public testing::TestWithParam<std::string> {
 };
 
 TEST(DecodingSimulatorTest, TestRuntimeSim) {
-    std::string       rawOut          = "./testRawFile";
-    std::string       testOut         = "./testStatFile";
+    const std::string rawOut          = "./testRawFile";
+    const std::string testOut         = "./testStatFile";
     const double      physicalErrRate = 0.01;
-    std::size_t       nrRuns          = 1;
-    std::size_t       nrSamples       = 1;
+    const std::size_t nrRuns          = 1;
+    const std::size_t nrSamples       = 1;
     const std::string codePath        = "./resources/codes/inCodes";
     auto              code            = SteaneXCode();
     try {
@@ -32,13 +32,13 @@ TEST(DecodingSimulatorTest, TestRuntimeSim) {
 }
 
 TEST(DecodingSimulatorTest, TestPerformanceSim) {
-    std::string rawOut      = "./testRawFile";
-    std::string testOut     = "./testStatFile";
-    double      minErate    = 0.01;
-    double      maxErate    = 0.03;
-    double      stepSize    = 0.01;
-    std::size_t runsPerRate = 2;
-    auto        code        = SteaneCode();
+    const std::string rawOut      = "./testRawFile";
+    const std::string testOut     = "./testStatFile";
+    const double      minErate    = 0.01;
+    const double      maxErate    = 0.03;
+    const double      stepSize    = 0.01;
+    const std::size_t runsPerRate = 2;
+    auto              code        = SteaneCode();
     try {
         DecodingSimulator::simulateWER(rawOut, testOut, minErate, maxErate, runsPerRate, code, stepSize, DecoderType::UfDecoder);
     } catch (QeccException& e) {

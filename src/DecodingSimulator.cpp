@@ -23,8 +23,8 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
                                     Code&              code,
                                     const double       perStepSize,
                                     const DecoderType& decoderType) {
-    bool                                       rawOut   = !rawDataOutputFilepath.empty();
-    bool                                       statsOut = !statsOutputFilepath.empty();
+    const bool                                 rawOut   = !rawDataOutputFilepath.empty();
+    const bool                                 statsOut = !statsOutputFilepath.empty();
     std::ofstream                              statisticsOutstr;
     std::ofstream                              rawDataOutput;
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
@@ -87,7 +87,7 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
     }
 
     statisticsOutstr << "}";
-    json dataj = wordErrRatePerPhysicalErrRate;
+    const json dataj = wordErrRatePerPhysicalErrRate;
     rawDataOutput << dataj.dump(2U);
     statisticsOutstr.close();
     rawDataOutput.close();
@@ -101,8 +101,8 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
                                                const std::string& codesPath,
                                                const std::size_t  nrSamples,
                                                const DecoderType& decoderType) {
-    bool          rawOut  = !rawDataOutputFilepath.empty();
-    bool          infoOut = !decodingInfoOutfilePath.empty();
+    const bool    rawOut  = !rawDataOutputFilepath.empty();
+    const bool    infoOut = !decodingInfoOutfilePath.empty();
     std::ofstream finalRawOut;
     std::ofstream dataOutStream;
 
@@ -118,22 +118,19 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
         dataOutStream.rdbuf()->pubsetbuf(nullptr, 0);
     }
 
-    std::map<std::string, std::map<std::string, double, std::less<>>, std::less<>> dataPerRate;
-    std::map<std::string, double, std::less<>>                                     tmp;
-    std::vector<std::string>                                                       codePaths{};
-    std::map<std::string, std::size_t, std::less<>>                                avgSampleRuns;
-    std::map<std::string, std::map<std::string, std::size_t, std::less<>>>         avgSampleRunsPerCode;
+    std::vector<std::string>                                               codePaths{};
+    std::map<std::string, std::size_t, std::less<>>                        avgSampleRuns;
+    std::map<std::string, std::map<std::string, std::size_t, std::less<>>> avgSampleRunsPerCode;
 
     DecodingRunInformation info;
     for (const auto& file : std::filesystem::directory_iterator(codesPath)) {
         codePaths.emplace_back(file.path());
     }
-    std::map<std::string, double, std::less<>> avgTimePerSizeData;
     try {
         for (const auto& currPath : codePaths) {
-            auto       avgDecodingTimeAcc = 0U;
-            auto       code               = Code(currPath);
-            const auto codeN              = code.getN();
+            std::size_t avgDecodingTimeAcc = 0U;
+            auto        code               = Code(currPath);
+            const auto  codeN              = code.getN();
             for (std::size_t j = 0; j < nrRuns; j++) {
                 for (std::size_t i = 0; i < nrSamples; i++) {
                     std::unique_ptr<Decoder> decoder;
@@ -170,7 +167,7 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
         std::cerr << "Exception occurred " << e.what() << std::endl;
     }
     if (rawOut) {
-        json j = avgSampleRunsPerCode;
+        const json j = avgSampleRunsPerCode;
         finalRawOut << j.dump(2U);
         finalRawOut.close();
     }

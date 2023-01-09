@@ -4,6 +4,7 @@ Library
 .. toctree::
     :maxdepth: 4
 
+    EccFramework
     Code
     Decoder
     UFHeuristic

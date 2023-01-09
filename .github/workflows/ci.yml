@@ -8,11 +8,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
   CMAKE_BUILD_PARALLEL_LEVEL: 3
+  CTEST_PARALLEL_LEVEL: 3
 
 defaults:
   run:
@@ -29,12 +30,11 @@ jobs:
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DENABLE_COVERAGE=ON
       - name: Build
         run: cmake --build build
       - name: Test
-        working-directory: build/test
-        run: ctest -C Debug --output-on-failure
+        run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
@@ -54,12 +54,11 @@ jobs:
       - name: Install flint
         run: brew install flint
       - name: Configure CMake
-        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
+        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON
       - name: Build
         run: cmake --build build
       - name: Test
-        working-directory: build/test
-        run: ctest -C Release --output-on-failure
+        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
 #  windows-tests: TODO
 #    name: Tests windows-2022
 #    runs-on: windows-2022

@@ -21,14 +21,21 @@ A tool for quantum error correcting codes and numerical simulations developed by
 [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/)
 based on methods proposed in [[1]](https://arxiv.org/abs/2209.01180). QECC is part of the Munich Quantum Toolkit (MQT).
 
-The tool can be used to decode quantum LDPC codes and conduct respective numerical simulations.
+The tool can be used to:
 
-At the moment the general QLDPC
-decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
-and a heuristic (which improves the runtime of the algorithm) [[1]](https://arxiv.org/abs/2209.01180) are implemented.
-Currently, open-source software by Joschka Roffe et
-al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product and
-hypergraph product).
+- Decode quantum LDPC codes and conduct respective numerical simulations.
+  - At the moment the general QLDPC
+    decoder [[2]](https://ieeexplore.ieee.org/abstract/document/9682738)
+    and a heuristic (which improves the runtime of the algorithm) [[1]](https://arxiv.org/abs/2209.01180) are
+    implemented.
+    Currently, open-source software by Joschka Roffe et
+    al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product
+    and
+    hypergraph product).
+- Apply error correction to quantum circuits.
+  - The framework allows to apply different ECC schemes to quantum circuits and either exports the resulting
+    circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, 6 different ECCs are supported
+    with varying extend of functionality.
 
 <p align="center">
   <a href="https://qecc.readthedocs.io/en/latest/">
@@ -48,6 +55,8 @@ QECC is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux, macO
 ```
 
 The following code gives an example on the usage:
+
+### Example for decoding quantum LDPC codes
 
 ```python3
 from mqt.qecc import *
@@ -69,12 +78,39 @@ residual_err = np.array(x_err) ^ np.array(result.estimate)
 print(code.is_x_stabilizer(residual_err))
 ```
 
+### Example for applying error correction to a circuit
+
+```python3
+from mqt import qecc
+
+file = "path/to/qasm/file.qasm"  # Path to the OpenQASM file the quantum circuit shall be loaded from
+ecc = "Q7Steane"  # Error correction code that shall be applied to the quantum circuit
+ecc_frequency = 100  # After how many times a qubit is used, error correction is applied
+
+result = qecc.apply_ecc(file, ecc, ecc_frequency)
+
+# print the resulting circuit as OpenQASM string
+print(result["circ"])
+```
+
+A wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and performing a
+noise-aware quantum circuit simulation (using Qiskit) is provided. The script can be used like this:
+
+```bash
+$ (venv) ecc_qiskit_wrapper -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
+_____Trying to simulate with D (prob=0.0001, shots=2000, n_qubits=17, error correction=Q7Steane) Error______
+State |00> probability 0.515
+State |01> probability 0.0055
+State |10> probability 0.0025
+State |11> probability 0.477
+```
+
 **Detailed documentation on all available methods, options, and input formats is available
 at [ReadTheDocs](https://qecc.readthedocs.io/en/latest/).**
 
 ## System Requirements and Building
 
-The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.14.
+The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.19.
 Please refer to the [documentation](https://qecc.readthedocs.io/en/latest/) on how to build the project.
 
 Building (and running) is continuously tested under Linux, macOS, and Windows using the
@@ -83,6 +119,10 @@ Building (and running) is continuously tested under Linux, macOS, and Windows us
 ## Reference
 
 If you use our tool for your research, we will be thankful if you refer to it by citing the appropriate publication:
+
+T. Grurl, C. Pichler, J. Fuss and R. Wille, "Automatic Implementation and Evaluation of Error-Correcting Codes for
+Quantum Computing: An Open-Source Framework for Quantum Error-Correction," in International Conference on VLSI
+Design and International Conference on Embedded Systems (VLSID), 2023
 
 [![a](https://img.shields.io/static/v1?label=arXiv&message=2011.07288&color=inactive&style=flat-square)](https://arxiv.org/abs/2209.01180)
 L. Berent, L. Burgholzer, and R.

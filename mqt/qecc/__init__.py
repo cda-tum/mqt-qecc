@@ -12,6 +12,7 @@ from mqt.qecc.pyqecc import (
     GrowthVariant,
     UFDecoder,
     UFHeuristic,
+    apply_ecc,
     sample_iid_pauli_err,
 )
 
@@ -25,4 +26,5 @@ __all__ = [
     "DecodingResultStatus",
     "DecodingRunInformation",
     "sample_iid_pauli_err",
+    "apply_ecc",
 ]

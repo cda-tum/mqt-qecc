@@ -43,7 +43,7 @@ TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     decoder.setCode(code);
     std::cout << "code: " << std::endl
               << code << std::endl;
-    std::vector<bool> err = GetParam();
+    const std::vector<bool> err = GetParam();
 
     auto syndr = code.getXSyndrome(err);
     std::cout << "syndrome: ";
@@ -59,7 +59,7 @@ TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
         std::cout << idx;
     }
     std::cout << std::endl;
-    gf2Vec sol = GetParam();
+    const gf2Vec sol = GetParam();
 
     std::cout << "Estim: " << std::endl;
     Utils::printGF2vector(estim);
@@ -98,7 +98,7 @@ TEST_P(InCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
         residualErr.at(i) = (err[i] != estim[i]);
     }
 
-    gf2Vec sol = GetParam();
+    const gf2Vec sol = GetParam();
 
     std::cout << "Estim: " << std::endl;
     Utils::printGF2vector(estim);
