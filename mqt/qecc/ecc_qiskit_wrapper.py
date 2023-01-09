@@ -80,7 +80,7 @@ def print_simulation_results(result_counts: counts, n_shots: int, threshold_prob
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="QiskitWrapper interface with error correction support!")
+    parser = argparse.ArgumentParser(description="Error correcting codes Qiskit wrapper")
     parser.add_argument(
         "-m",
         type=str,

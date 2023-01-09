@@ -97,7 +97,7 @@ We provide a wrapper script for applying error correction to quantum circuits (p
 noise-aware quantum circuit simulation (using Qiskit). The script can be used like this:
 
 ```bash
-$ (venv) ecc_framework_qiskit_wrapper -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
+$ (venv) ecc_qiskit_wrapper -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
 _____Trying to simulate with D (prob=0.0001, shots=2000, n_qubits=17, error correction=Q7Steane) Error______
 State |00> probability 0.515
 State |01> probability 0.0055

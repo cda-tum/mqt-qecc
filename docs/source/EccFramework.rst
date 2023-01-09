@@ -44,7 +44,7 @@ The script offers a help function, which displays available parameters:
   $ ecc_qiskit_wrapper --help
   usage: ecc_qiskit_wrapper [-h] [-m M] [-p P] [-n N] [-s S] -f F [-e E] [-fs FS] [-ecc ECC] [-fq FQ] [-mc MC] [-cf CF]
 
-  QiskitWrapper interface with error correction support!
+  Error correcting codes Qiskit wrapper
 
   optional arguments:
     -h, --help  show this help message and exit
