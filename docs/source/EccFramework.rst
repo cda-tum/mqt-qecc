@@ -8,9 +8,10 @@ circuits provided as OpenQASM files or Qiskit :code:`QuantumCircuit` objects. Th
 Usage
 #####
 
-Having the Python module installed, error correction can be applied to a quantum circuit using :func:`~mqt.qecc.apply_ecc`, like so
+Having the Python package installed, error correction can be applied to a quantum circuit using :func:`~mqt.qecc.apply_ecc`, like so
 
 .. code-block:: python
+
   from mqt import qecc
   from qiskit import QuantumCircuit
 

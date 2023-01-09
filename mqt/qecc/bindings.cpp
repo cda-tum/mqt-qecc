@@ -3,8 +3,6 @@
  * See file README.md for more information.
  */
 
-#include "../mqt/qfr/qiskit/QasmQobjExperiment.hpp"
-#include "../mqt/qfr/qiskit/QuantumCircuit.hpp"
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
@@ -22,6 +20,8 @@
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
+#include "qiskit/QasmQobjExperiment.hpp"
+#include "qiskit/QuantumCircuit.hpp"
 
 #include <pybind11/stl.h>
 
@@ -50,8 +50,6 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
             qc::qiskit::QasmQobjExperiment::import(*qc, circ);
         }
     }
-
-    auto test = std::make_unique<ecc::Id>(qc, eccFrequency);
 
     std::unique_ptr<ecc::Ecc> mapper{};
 
