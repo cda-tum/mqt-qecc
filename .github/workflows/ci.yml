@@ -29,7 +29,7 @@ jobs:
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DCOVERAGE=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DENABLE_COVERAGE=ON
       - name: Build
         run: cmake --build build
       - name: Test
@@ -54,7 +54,7 @@ jobs:
       - name: Install flint
         run: brew install flint
       - name: Configure CMake
-        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON -DBINDINGS=ON
+        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON
       - name: Build
         run: cmake --build build
       - name: Test
