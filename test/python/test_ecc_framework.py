@@ -37,7 +37,7 @@ def test_with_stab_simulator(simulator: str, noise_models: str, script_runner: S
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
-        "ecc_framework_qiskit_wrapper",
+        "ecc_qiskit_wrapper",
         "-m",
         noise_models,
         "-p",
@@ -59,7 +59,7 @@ def test_failing_simulators(script_runner: ScriptRunner) -> None:
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
-        "ecc_framework_qiskit_wrapper",
+        "ecc_qiskit_wrapper",
         "-m",
         "D",
         "-p",
@@ -86,7 +86,7 @@ def test_unavailable_backend(script_runner: ScriptRunner) -> None:
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
-        "ecc_framework_qiskit_wrapper",
+        "ecc_qiskit_wrapper",
         "-fs",
         "dummyBackedn",
         "-f",
@@ -103,7 +103,7 @@ def test_unavailable_error(script_runner: ScriptRunner) -> None:
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
-        "ecc_framework_qiskit_wrapper",
+        "ecc_qiskit_wrapper",
         "-m",
         "K",
         "-f",
@@ -120,7 +120,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
-        "ecc_framework_qiskit_wrapper",
+        "ecc_qiskit_wrapper",
         "-m",
         "BAPD",
         "-p",
@@ -146,7 +146,7 @@ def test_save_circuit(script_runner: ScriptRunner) -> None:
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
-        "ecc_framework_qiskit_wrapper",
+        "ecc_qiskit_wrapper",
         "-e",
         "dummyCircuitWithEcc.qasm",
         "-f",
