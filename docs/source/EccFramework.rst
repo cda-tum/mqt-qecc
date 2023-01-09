@@ -3,7 +3,7 @@ ECC Framework
 
 The QECC library offers means for automatic implementation and evaluation of error-correcting codes for quantum
 computing :cite:labelpar:`grurl2023eccframework`. More precisely, the library allows to automatically apply different error correction schemes to quantum
-circuits provided as OpenQASM files or Qiskit :code:`QuantumCircuit` objects. The "protected" quantum circuits can then be exported again in the form of OpenQASM files or can be directly used for noise-aware quantum circuit simulation. For the latter case, we also provide a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using qiskit.
+circuits provided as OpenQASM files or Qiskit :code:`QuantumCircuit` objects. The "protected" quantum circuits can then be exported again in the form of OpenQASM files or can be directly used for noise-aware quantum circuit simulation. For the latter case, a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using Qiskit is provided.
 
 Usage
 #####
@@ -26,7 +26,7 @@ Having the Python package installed, error correction can be applied to a quantu
 
 Currently, the error correction schemes Q3Shor, Q5Laflamme, Q7Steane, Q9Shor, Q9Surface, and Q18Surface are supported.
 
-We provide a wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and followed by a noise-aware quantum circuit simulation (using Qiskit). The script can be used like this:
+A wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and performing a noise-aware quantum circuit simulation (using Qiskit) is provided. The script can be used like this:
 
 .. code-block:: console
 
@@ -117,12 +117,12 @@ Available logical operations
   :header-rows: 1
 
   * - Operation
-    - Q3Shor
-    - Q5Laflamme
-    - Q7Steane
-    - Q9Shor
-    - Q9Surface
-    - Q18Surface
+    - Q3Shor :cite:labelpar:`ShorCodes`
+    - Q5Laflamme :cite:labelpar:`LaflammeCodes`
+    - Q7Steane :cite:labelpar:`SteaneCode`
+    - Q9Shor :cite:labelpar:`ShorCodes`
+    - Q9Surface :cite:labelpar:`WoottonMinimalSurfaceCode`
+    - Q18Surface :cite:labelpar:`FowlerSurfaceCodes`
   * - Pauli (X, Y, Z)
     - ✔️
     - ✔️

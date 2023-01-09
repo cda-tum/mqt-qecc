@@ -93,8 +93,8 @@ result = qecc.apply_ecc(file, ecc, ecc_frequency)
 print(result["circ"])
 ```
 
-We provide a wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and followed by a
-noise-aware quantum circuit simulation (using Qiskit). The script can be used like this:
+A wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and performing a
+noise-aware quantum circuit simulation (using Qiskit) is provided. The script can be used like this:
 
 ```bash
 $ (venv) ecc_qiskit_wrapper -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
