@@ -1,8 +1,8 @@
 ECC Framework
-========================
+=============
 
 The QECC library offers means for automatic implementation and evaluation of error-correcting codes for quantum
-computing. More precisely, the library allows to automatically apply different error correction schemes to quantum
+computing :cite:labelpar:`grurl2023eccframework`. More precisely, the library allows to automatically apply different error correction schemes to quantum
 circuits provided as OpenQASM files or Qiskit :code:`QuantumCircuit` objects. The "protected" quantum circuits can then be exported again in the form of OpenQASM files or can be directly used for noise-aware quantum circuit simulation. For the latter case, we also provide a wrapper script which makes use of the provided framework to apply error correction schemes to circuits and directly simulate those circuits using qiskit.
 
 Usage
@@ -61,7 +61,7 @@ The script offers a help function, which displays available parameters:
     -fq FQ      Specify after how many qubit usages error correction is applied to it (Default=100)
 
 Supported ECCs
-#####
+##############
 
 Properties
 ----------

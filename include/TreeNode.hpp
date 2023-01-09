@@ -5,6 +5,7 @@
 #ifndef QUNIONFIND_TREENODE_HPP
 #define QUNIONFIND_TREENODE_HPP
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <unordered_set>
@@ -25,7 +26,7 @@ public:
     bool                            marked  = false;
     bool                            deleted = false;
 
-    TreeNode() : TreeNode(UINT64_MAX) {}
+    TreeNode() : TreeNode(std::numeric_limits<size_t>::max()) {}
 
     explicit TreeNode(const std::size_t& vertexIdx) : vertexIdx(vertexIdx) {
         boundaryVertices.emplace(vertexIdx);
