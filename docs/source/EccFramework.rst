@@ -117,12 +117,12 @@ Available logical operations
   :header-rows: 1
 
   * - Operation
-    - :class:`~extern/qfr/include/ecc/Q3Shor.hpp`
-    - :class:`~extern/qfr/include/ecc/Q5Laflamme`
-    - :class:`~extern/qfr/include/ecc/Q7Steane`
-    - :class:`~extern/qfr/include/ecc/Q9Shor`
-    - :class:`~extern/qfr/include/ecc/Q9Surface`
-    - :class:`~extern/qfr/include/ecc/Q18Surface`
+    - Q3Shor
+    - Q5Laflamme
+    - Q7Steane
+    - Q9Shor
+    - Q9Surface
+    - Q18Surface
   * - Pauli (X, Y, Z)
     - ✔️
     - ✔️
