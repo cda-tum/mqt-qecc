@@ -338,7 +338,8 @@ bool UFHeuristic::isValidComponent(const std::size_t& compId, const std::unique_
     gf2Vec      valid(compNode->checkVertices.size());
     std::size_t i = 0U;
     for (const auto& checkVertex : compNode->checkVertices) {
-        for (const auto& nbrs = pcm->getNbrs(checkVertex); const auto& nbr : nbrs) {
+        const auto& nbrs = pcm->getNbrs(checkVertex);
+        for (const auto& nbr : nbrs) {
             if (compNode->boundaryVertices.find(nbr) == compNode->boundaryVertices.end()) {
                 valid.at(i) = true;
                 break;
