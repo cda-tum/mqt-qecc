@@ -28,7 +28,7 @@ Currently, the error correction schemes Q3Shor, Q5Laflamme, Q7Steane, Q9Shor, Q9
 
 We provide a wrapper script for applying error correction to quantum circuits (provided as OpenQASM) and followed by a noise-aware quantum circuit simulation (using Qiskit). The script can be used like this:
 
-.. code-block:: file
+.. code-block:: console
 
   $ ecc_qiskit_wrapper -ecc Q7Steane -fq 100 -m D -p 0.0001 -n 2000 -fs aer_simulator_stabilizer -s 0 -f  ent_simple1000_n2.qasm
   _____Trying to simulate with D(prob=0.0001, shots=2000, n_qubits=17, error correction=Q7Steane) Error______
