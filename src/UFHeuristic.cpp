@@ -197,6 +197,7 @@ void UFHeuristic::singleClusterSmallestFirstGrowth(std::vector<std::pair<std::si
         const auto& comp = getNodeFromIdx(cId);
         if (comp->clusterSize < smallestSize) {
             smallestComponent = comp->vertexIdx;
+            smallestSize      = comp->clusterSize;
         }
     }
     const auto& smallestC = getNodeFromIdx(smallestComponent);
