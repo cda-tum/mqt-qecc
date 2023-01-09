@@ -95,7 +95,7 @@ def test_unavailable_backend(script_runner: ScriptRunner) -> None:
     file_to_remove = pathlib.Path("dummyCircuit.qasm")
     file_to_remove.unlink()
     assert not ret.success
-    assert "Unknown backend specified" in ret.stderr
+    assert "Available simulators are: " in ret.stderr
 
 
 def test_unavailable_error(script_runner: ScriptRunner) -> None:
@@ -112,7 +112,7 @@ def test_unavailable_error(script_runner: ScriptRunner) -> None:
     file_to_remove = pathlib.Path("dummyCircuit.qasm")
     file_to_remove.unlink()
     assert not ret.success
-    assert "Unknown error typ provided" in ret.stderr
+    assert "Unknown error type in noise model: " in ret.stderr
 
 
 def test_statevector_simulators(script_runner: ScriptRunner) -> None:
