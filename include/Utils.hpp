@@ -198,7 +198,6 @@ public:
         assertMatrixPresent(m1);
         assertVectorPresent(vec);
         if (m1.front().size() != vec.size() || m1.size() > result.capacity()) {
-            std::cerr << "Cannot multiply" << std::endl;
             throw QeccException("Cannot multiply, dimensions wrong");
         }
         for (std::size_t i = 0; i < m1.size(); i++) {
@@ -211,14 +210,12 @@ public:
 
     static void assertMatrixPresent(const gf2Mat& matrix) {
         if (matrix.empty() || matrix.at(0).empty()) {
-            std::cerr << "matrix empty" << std::endl;
             throw QeccException("Matrix is empty");
         }
     }
 
     static void assertVectorPresent(const gf2Vec& vector) {
         if (vector.empty()) {
-            std::cerr << "vector empty" << std::endl;
             throw QeccException("Vector is empty");
         }
     }
