@@ -143,7 +143,7 @@ def main() -> None:
 
     if "stabilizer" in forced_simulator and "A" in error_channels:
         print(
-            'Warning: Non unitary errors (such as for example amplitude damping ("A")) are not suited to simulated '
+            'Warning: Non unitary errors (such as for example amplitude damping ("A")) are not suited to be simulated '
             "with a stabilizer based simulator and may cause an error during the simulation."
         )
 
