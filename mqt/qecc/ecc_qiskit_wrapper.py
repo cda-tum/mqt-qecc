@@ -96,7 +96,7 @@ def main() -> None:
         type=str,
         required=False,
         default=None,
-        help="Export circuit with applied error correction code as OpenQASM circuit instead of "
+        help="Export circuit with applied ECC as OpenQASM circuit instead of "
         'simulating it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
@@ -110,7 +110,7 @@ def main() -> None:
         "-ecc",
         type=str,
         default="Q7Steane",
-        help='Specify an ecc to be applied to the circuit. Currently available are "none", "Q3Shor", "Q5Laflamme", '
+        help='Specify an ECC to be applied to the circuit. Currently available are "none", "Q3Shor", "Q5Laflamme", '
         '"Q7Steane", "Q9Shor", "Q9Surface", and "Q18Surface" (Default=Q7Steane)',
     )
     parser.add_argument(
@@ -143,7 +143,7 @@ def main() -> None:
 
     if "stabilizer" in forced_simulator and "A" in error_channels:
         print(
-            'Warning: Non unitary errors (such as for example amplitude damping ("A")) are not suited to be simulated '
+            'Warning: Non-unitary errors (such as for example amplitude damping ("A")) are not suitable for simulation '
             "with a stabilizer based simulator and may cause an error during the simulation."
         )
 
@@ -192,7 +192,7 @@ def main() -> None:
         simulator_backend = Aer.get_backend(forced_simulator)
     except providers.exceptions.QiskitBackendNotFoundError:
         raise ValueError(
-            "Error: Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
+            "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
         ) from None
 
     result = execute(
