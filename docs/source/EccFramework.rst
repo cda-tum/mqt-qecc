@@ -44,21 +44,27 @@ The script offers a help function, which displays available parameters:
   $ ecc_qiskit_wrapper --help
   usage: ecc_qiskit_wrapper [-h] [-m M] [-p P] [-n N] [-s S] -f F [-e E] [-fs FS] [-ecc ECC] [-fq FQ] [-mc MC] [-cf CF]
 
-  Error correcting codes Qiskit wrapper
+  Qiskit wrapper for the ECC Framework
 
-  optional arguments:
+  options:
     -h, --help  show this help message and exit
-    -m M        Define the error_channels (e.g., -m APD), available errors channels are amplitude damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")
+    -m M        Define the error_channels (e.g., -m APD), available errors channels are amplitude damping (A), phase
+                flip (P), bit flip (B), and depolarization (D) (Default="D")
     -p P        Set the noise probability (Default=0.001)
-    -n N        Set the number of shots. 0 for deterministic simulation (Default=2000)
+    -n N        Set the number of shots for the simulation (Default=2000)
     -s S        Set a seed (Default=0)
     -f F        Path to a OpenQASM file
-    -e E        Export circuit, with error correcting code applied, as OpenQASM circuit instead of simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)
-    -fs FS      Specify a simulator (Default: "statevector_simulator" for simulation without noise, "aer_simulator_density_matrix", for deterministic noise-aware simulation"aer_simulator_statevector", for stochastic noise-
-                aware simulation). Available: [AerSimulator('aer_simulator'), AerSimulator('aer_simulator_statevector'), AerSimulator('aer_simulator_density_matrix'), AerSimulator('aer_simulator_stabilizer'),
-                AerSimulator('aer_simulator_matrix_product_state'), AerSimulator('aer_simulator_extended_stabilizer'), AerSimulator('aer_simulator_unitary'), AerSimulator('aer_simulator_superop'),
-                QasmSimulator('qasm_simulator'), StatevectorSimulator('statevector_simulator'), UnitarySimulator('unitary_simulator'), PulseSimulator('pulse_simulator')]
-    -ecc ECC    Specify a ecc to be applied to the circuit. Currently available are Q3Shor, Q5Laflamme, Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=none)
+    -e E        Export circuit with applied ECC as OpenQASM circuit instead of simulating it (e.g., -e
+                "/path/to/new/openqasm_file") (Default=None)
+    -fs FS      Specify a simulator (Default="aer_simulator_stabilizer", which is fast but does not support non-Clifford
+                gates. Available: [AerSimulator('aer_simulator'), AerSimulator('aer_simulator_statevector'),
+                AerSimulator('aer_simulator_density_matrix'), AerSimulator('aer_simulator_stabilizer'),
+                AerSimulator('aer_simulator_matrix_product_state'), AerSimulator('aer_simulator_extended_stabilizer'),
+                AerSimulator('aer_simulator_unitary'), AerSimulator('aer_simulator_superop'),
+                QasmSimulator('qasm_simulator'), StatevectorSimulator('statevector_simulator'),
+                UnitarySimulator('unitary_simulator'), PulseSimulator('pulse_simulator')]
+    -ecc ECC    Specify an ECC to be applied to the circuit. Currently available are "none", "Q3Shor", "Q5Laflamme",
+                "Q7Steane", "Q9Shor", "Q9Surface", and "Q18Surface" (Default=Q7Steane)
     -fq FQ      Specify after how many qubit usages error correction is applied to it (Default=100)
 
 Supported ECCs

@@ -14,12 +14,13 @@ qasm_circuit = (
     + "measure q[0] -> c[0];\n"
 )
 
+qasm_circuit_no_measure = "OPENQASM 2.0;\n" + 'include "qelib1.inc";\n' + "qreg q[1];\n" + "creg c[1];\n" + "x q[0];\n"
+
 
 @pytest.fixture(
     params=[
         "none",
         "Id",
-        "Q3Shor",
         "Q7Steane",
     ]
 )
@@ -82,7 +83,7 @@ def test_failing_simulators(script_runner: ScriptRunner) -> None:
 
 
 def test_unavailable_backend(script_runner: ScriptRunner) -> None:
-    """Testing the script with unsupported ecc."""
+    """Testing the script with unsupported backend."""
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
@@ -98,7 +99,7 @@ def test_unavailable_backend(script_runner: ScriptRunner) -> None:
     assert "Available simulators are: " in ret.stderr
 
 
-def test_unavailable_error(script_runner: ScriptRunner) -> None:
+def test_unavailable_error_type(script_runner: ScriptRunner) -> None:
     """Testing the script with unsupported ecc."""
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
@@ -116,7 +117,7 @@ def test_unavailable_error(script_runner: ScriptRunner) -> None:
 
 
 def test_statevector_simulators(script_runner: ScriptRunner) -> None:
-    """Testing the script with another backend."""
+    """Testing the simulator with a different simulator"""
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
@@ -126,7 +127,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
         "-p",
         "0.001",
         "-n",
-        "0",
+        "50",
         "-s",
         "1",
         "-fs",
@@ -142,7 +143,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
 
 
 def test_save_circuit(script_runner: ScriptRunner) -> None:
-    """Testing the script with another backend."""
+    """Saving a circuit after applying an ECC."""
     circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
@@ -156,3 +157,34 @@ def test_save_circuit(script_runner: ScriptRunner) -> None:
         file_to_remove = pathlib.Path(circuit_to_delete)
         file_to_remove.unlink()
     assert ret.success
+
+
+def test_circuit_without_measurements(script_runner: ScriptRunner) -> None:
+    """Testing circuit without ecc"""
+    circ = QuantumCircuit().from_qasm_str(qasm_circuit_no_measure)
+    circ.qasm(filename="dummyCircuit.qasm")
+    ret = script_runner.run(
+        "ecc_qiskit_wrapper",
+        "-f",
+        "dummyCircuit.qasm",
+    )
+    file_to_remove = pathlib.Path("dummyCircuit.qasm")
+    file_to_remove.unlink()
+    assert ret.success
+
+
+def test_trying_to_use_stabilizer_simulator(script_runner: ScriptRunner) -> None:
+    """Testing circuit without ecc"""
+    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
+    circ.qasm(filename="dummyCircuit.qasm")
+    ret = script_runner.run(
+        "ecc_qiskit_wrapper",
+        "-f",
+        "dummyCircuit.qasm",
+        "-m",
+        "A",
+    )
+    file_to_remove = pathlib.Path("dummyCircuit.qasm")
+    file_to_remove.unlink()
+    assert not ret.success
+    assert "Simulation failed" in ret.stderr

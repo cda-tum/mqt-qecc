@@ -79,7 +79,7 @@ def print_simulation_results(result_counts: counts, n_shots: int, threshold_prob
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Error correcting codes Qiskit wrapper")
+    parser = argparse.ArgumentParser(description="Qiskit wrapper for the ECC Framework")
     parser.add_argument(
         "-m",
         type=str,
@@ -88,9 +88,7 @@ def main() -> None:
         'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
-    parser.add_argument(
-        "-n", type=int, default=2000, help="Set the number of shots. 0 for deterministic simulation (" "Default=2000)"
-    )
+    parser.add_argument("-n", type=int, default=2000, help="Set the number of shots for the simulation (Default=2000)")
     parser.add_argument("-s", type=int, default=0, help="Set a seed (Default=0)")
     parser.add_argument("-f", type=str, required=True, help="Path to a OpenQASM file")
     parser.add_argument(
@@ -98,29 +96,28 @@ def main() -> None:
         type=str,
         required=False,
         default=None,
-        help="Export circuit, with error correcting code applied, as OpenQASM circuit instead of "
-        'simulation it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+        help="Export circuit with applied ECC as OpenQASM circuit instead of "
+        'simulating it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
-        default="none",
-        help='Specify a simulator (Default: "statevector_simulator" for simulation without noise, '
-        '"aer_simulator_density_matrix", for deterministic noise-aware simulation'
-        '"aer_simulator_statevector", for stochastic noise-aware simulation). Available: ' + str(Aer.backends()),
+        default="aer_simulator_stabilizer",
+        help='Specify a simulator (Default="aer_simulator_stabilizer", which is fast but does not support '
+        "non-Clifford gates. Available: " + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="Q7Steane",
-        help="Specify a ecc to be applied to the circuit. Currently available are none, Q3Shor, Q5Laflamme, "
-        "Q7Steane, Q9Shor, Q9Surface, and Q18Surface (Default=Q7Steane)",
+        help='Specify an ECC to be applied to the circuit. Currently available are "none", "Q3Shor", "Q5Laflamme", '
+        '"Q7Steane", "Q9Shor", "Q9Surface", and "Q18Surface" (Default=Q7Steane)',
     )
     parser.add_argument(
         "-fq",
         type=int,
         default=100,
-        help="Specify after how many qubit usages error correction is " "applied to it (Default=100)",
+        help="Specify after how many qubit usages error correction is applied to it (Default=100)",
     )
 
     args = parser.parse_args()
@@ -144,10 +141,11 @@ def main() -> None:
     ecc_frequency = args.fq
     ecc_export_filename = args.e
 
-    if number_of_shots > 0:
-        n_shots = number_of_shots
-    else:
-        n_shots = 2000
+    if "stabilizer" in forced_simulator and "A" in error_channels:
+        print(
+            'Warning: Non-unitary errors (such as for example amplitude damping ("A")) are not suitable for simulation '
+            "with a stabilizer based simulator and may cause an error during the simulation."
+        )
 
     # Creating the noise model
     if error_probability > 0:
@@ -158,7 +156,7 @@ def main() -> None:
     circ = QuantumCircuit.from_qasm_file(open_qasm_file)
 
     if not any(gate[0].name == "measure" for gate in circ.data):
-        print("No measurement gates found in circuit. Adding measurement gates to all qubits.")
+        print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")
         circ.measure_all()
 
     # Initializing the quantum circuit
@@ -180,7 +178,7 @@ def main() -> None:
         + " (prob="
         + str(error_probability)
         + ", shots="
-        + str(n_shots)
+        + str(number_of_shots)
         + ", n_qubits="
         + str(size)
         + ", error correction="
@@ -189,24 +187,18 @@ def main() -> None:
         flush=True,
     )
 
-    if forced_simulator is not None:
-        # Setting the simulator backend to the requested one
-        try:
-            simulator_backend = Aer.get_backend(forced_simulator)
-        except providers.exceptions.QiskitBackendNotFoundError:
-            raise ValueError(
-                "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
-            ) from None
-    else:
-        print(
-            "No backend specified. Setting backend to `aer_simulator_statevector`, which is fast but does not support non-Clifford gates."
-        )
-        simulator_backend = Aer.get_backend("aer_simulator_statevector")
+    # Setting the simulator backend to the requested one
+    try:
+        simulator_backend = Aer.get_backend(forced_simulator)
+    except providers.exceptions.QiskitBackendNotFoundError:
+        raise ValueError(
+            "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
+        ) from None
 
     result = execute(
         circ,
         backend=simulator_backend,
-        shots=n_shots,
+        shots=number_of_shots,
         seed_simulator=seed,
         noise_model=noise_model,
     )
@@ -215,4 +207,4 @@ def main() -> None:
         raise RuntimeError("Simulation exited with status: " + str(result.result().status))
 
     result_counts = result.result().get_counts()
-    print_simulation_results(result_counts, n_shots)
+    print_simulation_results(result_counts, number_of_shots)
