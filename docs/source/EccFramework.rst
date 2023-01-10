@@ -45,7 +45,7 @@ The script offers a help function, which displays available parameters:
   usage: ecc_qiskit_wrapper [-h] [-m M] [-p P] [-n N] [-s S] -f F [-e E] [-fs FS] [-ecc ECC] [-fq FQ] [-mc MC] [-cf CF]
 
   Qiskit wrapper for the ECC Framework
-  
+
   options:
     -h, --help  show this help message and exit
     -m M        Define the error_channels (e.g., -m APD), available errors channels are amplitude damping (A), phase flip (P), bit

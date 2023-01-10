@@ -85,12 +85,10 @@ def main() -> None:
         type=str,
         default="D",
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
-             'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
+        'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
     parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
-    parser.add_argument(
-        "-n", type=int, default=2000, help="Set the number of shots for the simulation (Default=2000)"
-    )
+    parser.add_argument("-n", type=int, default=2000, help="Set the number of shots for the simulation (Default=2000)")
     parser.add_argument("-s", type=int, default=0, help="Set a seed (Default=0)")
     parser.add_argument("-f", type=str, required=True, help="Path to a OpenQASM file")
     parser.add_argument(
@@ -99,21 +97,21 @@ def main() -> None:
         required=False,
         default=None,
         help="Export circuit with applied error correction code as OpenQASM circuit instead of "
-             'simulating it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
+        'simulating it (e.g., -e "/path/to/new/openqasm_file") (Default=None)',
     )
     parser.add_argument(
         "-fs",
         type=str,
         default="aer_simulator_stabilizer",
         help='Specify a simulator (Default="aer_simulator_stabilizer", which is fast but does not support '
-             'non-Clifford gates. Available: ' + str(Aer.backends()),
+        "non-Clifford gates. Available: " + str(Aer.backends()),
     )
     parser.add_argument(
         "-ecc",
         type=str,
         default="Q7Steane",
         help='Specify an ecc to be applied to the circuit. Currently available are "none", "Q3Shor", "Q5Laflamme", '
-             '"Q7Steane", "Q9Shor", "Q9Surface", and "Q18Surface" (Default=Q7Steane)',
+        '"Q7Steane", "Q9Shor", "Q9Surface", and "Q18Surface" (Default=Q7Steane)',
     )
     parser.add_argument(
         "-fq",
@@ -144,8 +142,10 @@ def main() -> None:
     ecc_export_filename = args.e
 
     if "stabilizer" in forced_simulator and "A" in error_channels:
-        print("Warning: Non unitary errors (such as for example amplitude damping (\"A\")) are not suited to simulated "
-              "with a stabilizer based simulator and may cause an error during the simulation.")
+        print(
+            'Warning: Non unitary errors (such as for example amplitude damping ("A")) are not suited to simulated '
+            "with a stabilizer based simulator and may cause an error during the simulation."
+        )
 
     # Creating the noise model
     if error_probability > 0:
