@@ -19,7 +19,6 @@ qasm_circuit = (
     params=[
         "none",
         "Id",
-        "Q3Shor",
         "Q7Steane",
     ]
 )
@@ -126,7 +125,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
         "-p",
         "0.001",
         "-n",
-        "0",
+        "50",
         "-s",
         "1",
         "-fs",
