@@ -11,7 +11,6 @@ def Identity(n):
 
 class lifted_hgp(css_code):
     def __init__(self, lift_parameter, a, b=None):
-
         """
         Generates the lifted hypergraph product of the protographs a and b
         """
