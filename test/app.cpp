@@ -89,7 +89,7 @@ void decodingPerformance(const double per) {
     }
     // compute word error rate WER
     const auto logicalErrRate = 1 - static_cast<double>(nrSuccessfulRuns) / static_cast<double>(nrRuns);
-    const auto wordErrRate    = 1.0 - pow(1 - logicalErrRate, (1.0 / codeK)); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
+    const auto wordErrRate    = 1.0 - std::pow(1 - logicalErrRate, (1.0 / codeK)); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
     std::cout << "per:wer = " << per << ":" << wordErrRate << std::endl;
     std::cout.flush();
     flint_cleanup();
