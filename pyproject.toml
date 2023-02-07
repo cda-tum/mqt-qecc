@@ -20,7 +20,6 @@ license = { file = "LICENSE" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -34,9 +33,9 @@ classifiers = [
     "Natural Language :: English",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
-    "qiskit-aer>=0.11",
+    "qiskit-aer>=0.11"
 ]
 dynamic = ["version"]
 
@@ -89,7 +88,7 @@ manylinux-x86_64-image = "manylinux_2_28"
 [tool.cibuildwheel.linux]
 before-all = [
     "yum -y install mpfr-devel",
-    "git clone --branch trunk --depth 1 https://github.com/wbhart/flint2.git",
+    "git clone --branch trunk --depth 1 https://github.com/flintlib/flint2.git",
     "cd flint2 && ./configure && make -j 3 && make install"
 ]
 
@@ -143,7 +142,7 @@ src_paths = ["mqt/qecc", "test/python"]
 
 [tool.mypy]
 files = ["mqt/qecc", "test/python", "setup.py"]
-python_version = "3.7"
+python_version = "3.8"
 strict = true
 warn_unused_configs = true
 check_untyped_defs = true
@@ -153,7 +152,7 @@ warn_unreachable = true
 explicit_package_bases = true
 
 [tool.pylint]
-master.py-version = "3.7"
+master.py-version = "3.8"
 master.jobs = "0"
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
