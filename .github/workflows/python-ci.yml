@@ -50,12 +50,9 @@ jobs:
           ${{ matrix.flint-inst-cmd }}
       - name: Setup nox
         uses: excitedleigh/setup-nox@v2.1.0
-      - name: Test on 3.7
-        run: nox -s tests-3.7
-      # Python 3.8 and 3.9 are only tested on Linux.
-      - if: runner.os == 'Linux'
-        name: Test on 3.8
+      - name: Test on 3.8
         run: nox -s tests-3.8
+      # Python 3.9 are only tested on Linux.
       - if: runner.os == 'Linux'
         name: Test on 3.9
         run: nox -s tests-3.9
