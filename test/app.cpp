@@ -63,7 +63,6 @@ void decodingPerformance(const double per) {
     std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
 
     auto       code = HGPcode(rootPath, rootPath2, codeK);
-    const auto k    = code.getK();
     const auto n    = code.getN();
 
     std::size_t nrOfFailedRuns   = 0U;
