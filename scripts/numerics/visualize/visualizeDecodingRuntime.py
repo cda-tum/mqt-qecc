@@ -114,7 +114,6 @@ def runtime_comparison():
         y_data.append(per_y_data)
 
     for per in data2:
-
         for c in data2[per]:
             x_data2.append(float(c))
             y_data2.append(float(data2[per][c]) / 1000.0)
