@@ -32,6 +32,8 @@ The tool can be used to:
     al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product
     and
     hypergraph product).
+  - Decode Triangular Color Codes [[4]](todo) and conduct respective numerical
+    simulations.
 - Apply error correction to quantum circuits.
   - The framework allows to apply different ECC schemes to quantum circuits and either exports the resulting
     circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, 6 different ECCs are supported
@@ -76,6 +78,20 @@ result = decoder.result
 print(result)
 residual_err = np.array(x_err) ^ np.array(result.estimate)
 print(code.is_x_stabilizer(residual_err))
+```
+
+## Example for the MaxSAT-based Color Code decoder using Z3:
+
+```bash
+export NJOBS=8
+parallel -j $NJOBS mqt.qecc.cc-decoder {1} {2} --nr_sims 10000 --results_dir ./results/maxsat --decoder maxsat ::: $(seq 3 2 23) ::: $(seq 0.001 0.001 0.175)
+```
+
+MaxSAT-based decoder using any other MaxSAT solver given as binary lying in /path/to/solver/executable
+
+```bash
+export NJOBS=8
+parallel -j $NJOBS mqt.qecc.cc-decoder {1} {2} --nr_sims 10000 --results_dir ./results/maxsat --decoder maxsat --solver /path/to/solver/executable ::: $(seq 3 2 23) ::: $(seq 0.001 0.001 0.175)
 ```
 
 ### Example for applying error correction to a circuit
