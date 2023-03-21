@@ -33,11 +33,12 @@ The tool can be used to:
     and
     hypergraph product).
   - Decode Triangular Color Codes [[4]](todo) and conduct respective numerical
-    simulations.
+    simulations. We use open-source software by Peter-Jan Derks to construct hexagonal layouts for the codes
+    [[5]](https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code).
 - Apply error correction to quantum circuits.
-  - The framework allows to apply different ECC schemes to quantum circuits and either exports the resulting
-    circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, 6 different ECCs are supported
-    with varying extend of functionality.
+  - The framework allows to apply different QECC schemes to quantum circuits and either exports the resulting
+    circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, six different ECCs are supported
+    with varying extent of functionality.
 
 <p align="center">
   <a href="https://qecc.readthedocs.io/en/latest/">
