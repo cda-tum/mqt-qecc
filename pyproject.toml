@@ -65,7 +65,7 @@ docs = [
     "qiskit-terra[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
-dev = ["mqt.qecc[coverage, docs]", "mqt.qecc.cc_decoder[visualization]"]
+dev = ["mqt.qecc[coverage, docs, visualization]"]
 
 [project.scripts]
 "ecc_qiskit_wrapper" = "mqt.qecc.ecc_qiskit_wrapper:main"

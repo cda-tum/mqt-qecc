@@ -91,16 +91,16 @@ class LightsOut:
         self.optimizer.push()
 
         # add the problem specific constraints
-        constr_time = datetime.datetime.now()
+        start = datetime.datetime.now()
         for light, val in enumerate(lights):
             self.complete_parity_constraint(light, self.lights_to_switches[light], val)
-        constr_time = datetime.datetime.now() - constr_time
+        constr_time = datetime.datetime.now() - start
 
         if solver_path == "z3":
             # solve the problem
-            solve_time = datetime.datetime.now()
+            start = datetime.datetime.now()
             result = self.optimizer.check()
-            solve_time = datetime.datetime.now() - solve_time
+            solve_time = datetime.datetime.now() - start
             assert str(result) == "sat", "No solution found"
 
             # validate the model
@@ -130,13 +130,13 @@ def simulate_error_rate(distance: int, error_rate: float, nr_sims: int, solver_p
     code = HexagonalColorCode(distance=distance)
     problem = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
 
-    preconstr_time = datetime.datetime.now()
+    start = datetime.datetime.now()
     problem.preconstruct_z3_instance()
-    preconstr_time = datetime.datetime.now() - preconstr_time
+    preconstr_time = datetime.datetime.now() - start
     min_wt_logical = 0
     logical_errors = 0
-    avg_constr_time = 0
-    avg_solve_time = 0
+    avg_constr_time = 0.0
+    avg_solve_time = 0.0
     rng = np.random.default_rng()
     for i in range(nr_sims):
         # sample error

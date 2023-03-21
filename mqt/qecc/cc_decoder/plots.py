@@ -4,13 +4,15 @@ import argparse
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from scipy.optimize import curve_fit
 
 
-def plot_ler_vs_distance(code_dict, ax, pers):
+def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float]) -> None:
     for p in pers:
         ds = []
         lers = []
@@ -24,20 +26,20 @@ def plot_ler_vs_distance(code_dict, ax, pers):
     ax.set_xlabel(r"Code distance $\it{d}$")
 
 
-def threshold_fit(variables, B0, B1, B2, mu, pth):
+def threshold_fit(variables: tuple[float, float], B0: float, B1: float, B2: float, mu: float, pth: float) -> None:
     p, L = variables
     return B0 + B1 * (p - pth) * pow(L, 1 / mu) + B2 * pow((p - pth) * pow(L, 1 / mu), 2)
 
 
 def calculate_threshold(
-    code_dict,
-    min_distance=1,
-    max_distance=100,
-    distances=None,
-    min_per=0.06,
-    max_per=0.13,
-    title=None,
-    ax=None,
+    code_dict: dict[int, Any],
+    min_distance: int = 1,
+    max_distance: int = 100,
+    distances: list[int] = None,
+    min_per: float = 0.06,
+    max_per: float = 0.13,
+    title: str = None,
+    ax: Axes = None,
 ) -> None:
     ler_data = []
     ler_eb_data = []
@@ -85,13 +87,6 @@ def calculate_threshold(
 
         if per_array != [] and ax is not None:
             ax.errorbar(per_array, ler_array, yerr=ler_eb, label="d = " + str(distance), fmt="|")
-        # start = 70
-        # if calculate_threshold and ax is not None:
-        #     ax.plot(
-        #         per_array[start:],
-        #         threshold_fit((per_array[start:], [int(distance) for _ in range(len(per_array[start:]))]), *popt),
-        #         color="grey", linestyle="dashed"
-        #     )
 
     if ax is not None:
         ax.legend()
@@ -113,8 +108,8 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
             data.append(json.loads(f.read()))
 
     fig, ax = plt.subplots(3, 2, figsize=(12, 12))
-    metrics = {}
-    per_metrics = {}
+    metrics: dict[int, Any] = {}
+    per_metrics: dict[float, Any] = {}
 
     for result in data:
         d = result["distance"]
@@ -142,30 +137,23 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
             else:
                 metrics[d]["min_wt_logical_err"] = min(metrics[d]["min_wt_logical_err"], result["min_wt_logical_err"])
         per_metrics[p][d] = result["logical_error_rate"]
-    for d, data in sorted(metrics.items()):
+    for d, mdata in sorted(metrics.items()):
         (
-            data["p"],
-            data["logical_error_rate"],
-            data["avg_total_time"],
-            data["logical_error_rate_eb"],
+            mdata["p"],
+            mdata["logical_error_rate"],
+            mdata["avg_total_time"],
+            mdata["logical_error_rate_eb"],
         ) = zip(
             *sorted(
-                zip(
-                    data["p"],
-                    data["logical_error_rate"],
-                    data["avg_total_time"],
-                    data["logical_error_rate_eb"],
-                    strict=True,
-                )
-            ),
-            strict=True,
+                zip(mdata["p"], mdata["logical_error_rate"], mdata["avg_total_time"], mdata["logical_error_rate_eb"])
+            )
         )
-        ax[0][0].errorbar(data["p"], data["logical_error_rate"], data["logical_error_rate_eb"], label=f"d={d}")
+        ax[0][0].errorbar(mdata["p"], mdata["logical_error_rate"], mdata["logical_error_rate_eb"], label=f"d={d}")
         ax[0][0].set_xlabel("Physical error rate")
         ax[0][0].set_ylabel("Logical error rate")
         ax[0][0].legend()
 
-        ax[1][0].plot(data["p"], data["avg_total_time"], label="d=" + str(d))
+        ax[1][0].plot(mdata["p"], mdata["avg_total_time"], label="d=" + str(d))
         ax[1][0].set_xlabel("Physical error rate")
         ax[1][0].set_ylabel("Average time per run (µs)")
         ax[1][0].legend()
@@ -173,18 +161,18 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
 
     # plot the average time per run over the distance
     ds = []
-    p_data = {}
+    p_data: dict[float, Any] = {}
     pers = [0.001, 0.02, 0.05, 0.08, 0.13]
-    for d, data in sorted(metrics.items()):
+    for d, mdata in sorted(metrics.items()):
         ds.append(d)
-        for i, p in enumerate(data["p"]):
+        for i, p in enumerate(mdata["p"]):
             if p in pers:
                 if p not in p_data:
                     p_data[p] = {"d": [], "t": []}
                 p_data[p]["d"].append(d)
-                p_data[p]["t"].append(data["avg_total_time"][i])
-    for p, data in sorted(p_data.items()):
-        ax[1][1].plot(ds, data["t"], label="p=" + str(p))
+                p_data[p]["t"].append(mdata["avg_total_time"][i])
+    for p, pdata in sorted(p_data.items()):
+        ax[1][1].plot(ds, pdata["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
     ax[1][1].set_ylabel("Average time per run (µs)")
@@ -205,7 +193,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
             data.append(json.loads(f.read()))
 
     # prepare code to per,ler map and print
-    code_to_xys = {}
+    code_to_xys: dict[float, Any] = {}
     for run in data:
         xys = code_to_xys.setdefault(run["n_k_d"][-1], [])
         xys.append((run["physical_error_rate"], run["logical_failure_rate"]))
@@ -216,7 +204,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     fig, ax = plt.subplots(2, 2, figsize=(12, 10))
     # add data
     for code, xys in sorted(code_to_xys.items()):
-        ax[0][0].plot(*zip(*xys, strict=True), "x-", label=f"d={code}")
+        ax[0][0].plot(*zip(*xys), "x-", label=f"d={code}")
     ax[0][0].set_xlabel("Physical error rate")
     ax[0][0].set_ylabel("Logical error rate")
     ax[0][0].legend()
@@ -232,25 +220,25 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         xys.sort(key=lambda xy: xy[0])
 
     for code, xys in sorted(code_to_xys.items()):
-        ax[1][0].plot(*zip(*xys, strict=True), "x-", label=f"d={code}")
+        ax[1][0].plot(*zip(*xys), "x-", label=f"d={code}")
     ax[1][0].set_xlabel("Physical error rate")
     ax[1][0].set_ylabel("Average time per run (µs)")
     ax[1][0].legend()
     ax[1][0].set_ylim(0, 300000)
 
     ds = []
-    p_data = {}
+    p_data: dict[float, Any] = {}
     pers = [0.001, 0.021, 0.051, 0.081, 0.111]
-    for d, data in sorted(code_to_xys.items()):
+    for d, cdata in sorted(code_to_xys.items()):
         ds.append(d)
-        for _, (p, t) in enumerate(data):
+        for _, (p, t) in enumerate(cdata):
             if p in pers:
                 if p not in p_data:
                     p_data[p] = {"d": [], "t": []}
                 p_data[p]["d"].append(d)
                 p_data[p]["t"].append(t)
-    for p, data in sorted(p_data.items()):
-        ax[1][1].plot(ds, data["t"], label="p=" + str(p))
+    for p, pdata in sorted(p_data.items()):
+        ax[1][1].plot(ds, pdata["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
     ax[1][1].set_ylabel("Average time per run (µs)")
@@ -281,7 +269,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             with Path(fp).open() as ff:
                 data.append(json.loads(ff.read()))
 
-        metrics = {}
+        metrics: dict[int, dict[str, list[Any]]] = {}
         for result in data:
             d = result["distance"]
             p = result["p"]
@@ -291,36 +279,36 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             metrics[d]["p"].append(p)
             metrics[d]["avg_total_time"].append(result["avg_total_time"])
 
-        for d, data in sorted(metrics.items()):
+        for d, mdata in sorted(metrics.items()):
             if d == 21 or d == 17:
                 (
-                    data["p"],
-                    data["avg_total_time"],
-                ) = zip(*sorted(zip(data["p"], data["avg_total_time"], strict=True)), strict=True)
+                    mdata["p"],
+                    mdata["avg_total_time"],
+                ) = zip(*sorted(zip(mdata["p"], mdata["avg_total_time"])))
                 ax[0].plot(
-                    data["p"],
-                    data["avg_total_time"],
+                    mdata["p"],
+                    mdata["avg_total_time"],
                     label="solver=" + solver + ", d=" + str(d),
                     color=solverToCol[solver],
                 )
         ds = []
         idx = 0
-        p_data = {}
+        p_data: dict[float, dict[str, list[Any]]] = {}
         pers = [0.001, 0.051, 0.131]
-        for d, data in sorted(metrics.items()):
+        for d, pdata in sorted(metrics.items()):
             ds.append(d)
-            for i, p in enumerate(data["p"]):
+            for i, p in enumerate(pdata["p"]):
                 if p in pers:
                     if p not in p_data:
                         p_data[p] = {"d": [], "t": []}
                         pToCol[p] = cols[idx]
                         idx += 1
                     p_data[p]["d"].append(d)
-                    p_data[p]["t"].append(data["avg_total_time"][i])
-        for p, data in sorted(p_data.items()):
+                    p_data[p]["t"].append(pdata["avg_total_time"][i])
+        for p, ppdata in sorted(p_data.items()):
             ax[1].plot(
                 ds,
-                data["t"],
+                ppdata["t"],
                 label="p=" + str(p) + ", " + (solver if solver == "z3" else "CASHWMaxSAT‑CorePlus"),
                 color=pToCol[p],
                 marker="x" if solver == "z3" else "o",

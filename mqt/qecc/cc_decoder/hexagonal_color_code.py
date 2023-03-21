@@ -34,7 +34,7 @@ class HexagonalColorCode:
         self.construct_layout()
         self.n = len(self.qubits_to_faces)
 
-    def red_row(self, x_max: int, y: int):
+    def red_row(self, x_max: int, y: int) -> None:
         """
         create red ancilla qubits
         """
@@ -49,7 +49,7 @@ class HexagonalColorCode:
             i += 1
             x_row += 2
 
-    def blue_row(self, x_max: int, y: int):
+    def blue_row(self, x_max: int, y: int) -> None:
         """
         create blue ancilla qubits
         """
@@ -64,7 +64,7 @@ class HexagonalColorCode:
             i += 1
             x_row += 2
 
-    def green_row(self, x_max: int, y: int):
+    def green_row(self, x_max: int, y: int) -> None:
         """
         create green ancilla qubits
         """
@@ -90,7 +90,7 @@ class HexagonalColorCode:
         self.L = log_stack[log_op_indices]
 
     def construct_layout(self) -> None:
-        coords_to_idx = {}
+        coords_to_idx: dict[tuple[int, int], int] = {}
         # builds a map: {(x,y): index} for each qubit with coordinates (x,y)
         # initializes the {qubit_index: [faces]} adjacency list
         for idx, q in enumerate(self.data_qubits):
@@ -98,15 +98,15 @@ class HexagonalColorCode:
             self.qubits_to_faces[idx] = []
 
         for idx, (x, y) in enumerate(self.ancilla_qubits):
-            qbts = []
+            qbts: list[int] = []
             for coord in [(x - 1, y + 1), (x - 2, y), (x - 1, y - 1), (x + 1, y - 1), (x + 2, y), (x + 1, y + 1)]:
                 if coord in coords_to_idx:
                     qubit_idx = coords_to_idx[coord]
                     qbts.append(qubit_idx)
                     self.qubits_to_faces[qubit_idx].append(idx)
             self.faces_to_qubits[idx] = qbts
-            for q in qbts:
-                self.H[idx, q] = 1
+            for qb in qbts:
+                self.H[idx, qb] = 1
 
         # L is the matrix of logicals of the code
         self.compute_logical()
