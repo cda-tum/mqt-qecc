@@ -100,7 +100,7 @@ repos:
 
   # Check static types with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.0.1"
+    rev: "v1.1.1"
     hooks:
       - id: mypy
         stages: [manual]
@@ -111,7 +111,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.2.2"
+    rev: "v2.2.4"
     hooks:
       - id: codespell
         args: ["-L", "wille,linz", "--skip", "*.ipynb"]
@@ -134,7 +134,7 @@ repos:
 
   # Format configuration files with prettier
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0-alpha.4"
+    rev: "v3.0.0-alpha.6"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
