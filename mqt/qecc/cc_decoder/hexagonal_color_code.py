@@ -1,4 +1,5 @@
-# Adapted from Peter-Jan Derks https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
+# Created by Peter-Jan Derks
+# Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
 from __future__ import annotations
 
 import numpy as np
