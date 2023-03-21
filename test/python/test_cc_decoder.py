@@ -18,3 +18,13 @@ def test_lo() -> None:
     assert len(lo.lights_to_switches) == 3
     assert len(lo.lights_to_switches[0]) == 4
     assert lo.optimizer is not None
+
+
+def test_maxsat_construction() -> None:
+    code = hexagonal_color_code.HexagonalColorCode(distance=3)
+    lo = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
+    lo.preconstruct_z3_instance()
+    lights = [True, False, False]
+    est, _, _ = lo.solve(lights=lights, solver_path="z3")
+    assert len(est) == 7
+    assert est[1] == 1

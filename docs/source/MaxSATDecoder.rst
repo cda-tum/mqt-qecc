@@ -20,7 +20,8 @@ The decoder is implemented in ``mqt.qecc.cc_decoder`` and simulations can be run
 
 Currently the only supported error model is bit-flip errors with perfect syndrome measurements.
 
-Furthermore, a command-line interface is provided to run simulations in parallel (e.g. using GNU Parallel)
+Furthermore, a command-line interface is provided to run simulations in parallel (e.g. using GNU Parallel):
+
 .. code-block:: console
 
-  $ parallel -j 8 mqt.qecc.cc-decoder {1} {2} --nr_sims 10000 --results_dir ./results/maxsat --decoder maxsat ::: $(seq 3 2 23) ::: $(seq 0.001 0.001 0.175)
+    $ parallel -j 8 mqt.qecc.cc-decoder {1} {2} --nr_sims 10000 --results_dir ./results/maxsat --decoder maxsat ::: $(seq 3 2 23) ::: $(seq 0.001 0.001 0.175)
