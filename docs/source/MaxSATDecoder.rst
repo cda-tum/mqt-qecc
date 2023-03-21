@@ -1,13 +1,13 @@
 MaxSAT Decoder
-=============
+================
 
-The MaxSAT package provides a MaxSAT decoder for decoding quantum codes. Currently the automatic simulation of
+The QECC package provides a MaxSAT decoder for decoding quantum codes. Currently the automatic simulation of
 triangular color codes is supported. The decoder is based on the Z3 MaxSAT solver.
 
 Usage
 #####
 
-The decoder is implemented in :func:`~mqt.qecc.cc_decoder` and simulations can be run automatically with the run method:
+The decoder is implemented in ``mqt.qecc.cc_decoder`` and simulations can be run automatically with the :func:`~mqt.qecc.cc_decoder.run` method:
 
 .. code-block:: python
 
