@@ -1,5 +1,5 @@
 MaxSAT Decoder
-================
+==============
 
 The QECC package provides a MaxSAT decoder for decoding quantum codes. Currently the automatic simulation of
 triangular color codes is supported. The decoder is based on the Z3 MaxSAT solver.
