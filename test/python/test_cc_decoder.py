@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 from mqt.qecc.cc_decoder import hexagonal_color_code
 from mqt.qecc.cc_decoder.decoder import LightsOut, simulate_error_rate
 
@@ -40,3 +42,17 @@ def test_simulate() -> None:
     assert res is not None
     assert res["distance"] == 3
     assert res["p"] == 0.1
+
+
+@patch("mqt.qecc.cc_decoder.decoder.subprocess.run")
+def test_solve_non_z3(mock_run):
+    mock_stdout = MagicMock()
+    mock_stdout.configure_mock(**{"stdout.decode.return_value": "solved"})
+
+    mock_run.return_value = mock_stdout
+    code = hexagonal_color_code.HexagonalColorCode(distance=3)
+    lo = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
+    lo.preconstruct_z3_instance()
+    lights = [True, False, False]
+    lo.solve(lights=lights, solver_path="exact")
+    assert True
