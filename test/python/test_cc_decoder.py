@@ -1,5 +1,5 @@
 from mqt.qecc.cc_decoder import hexagonal_color_code
-from mqt.qecc.cc_decoder.decoder import LightsOut
+from mqt.qecc.cc_decoder.decoder import LightsOut, simulate_error_rate
 
 
 def test_hex_layout() -> None:
@@ -28,3 +28,15 @@ def test_maxsat_construction() -> None:
     est, _, _ = lo.solve(lights=lights, solver_path="z3")
     assert len(est) == 7
     assert est[1] == 1
+
+
+def test_simulate() -> None:
+    distance = 3
+    p = 0.1
+    nr_sims = 1
+    solver_path = "z3"
+
+    res = simulate_error_rate(distance, p, nr_sims, solver_path)
+    assert res is not None
+    assert res["distance"] == 3
+    assert res["p"] == 0.1
