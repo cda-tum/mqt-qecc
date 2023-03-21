@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from mqt.qecc.cc_decoder import hexagonal_color_code
@@ -45,7 +46,7 @@ def test_simulate() -> None:
 
 
 @patch("mqt.qecc.cc_decoder.decoder.subprocess.run")
-def test_solve_non_z3(mock_run):
+def test_solve_non_z3(mock_run: Any) -> None:
     mock_stdout = MagicMock()
     mock_stdout.configure_mock(**{"stdout.decode.return_value": "solved"})
 
