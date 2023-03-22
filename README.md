@@ -145,3 +145,6 @@ Design and International Conference on Embedded Systems (VLSID), 2023
 L. Berent, L. Burgholzer, and R.
 Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
 in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
+
+The dataset used in the paper evaluation on decoding quantum color codes is available on Zenodo:
+[![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.5522029&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.5522029)
