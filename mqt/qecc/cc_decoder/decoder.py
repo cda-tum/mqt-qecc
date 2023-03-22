@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
+
 from z3 import Bool, Not, Optimize, Xor, simplify
 
 if TYPE_CHECKING:
