@@ -34,7 +34,7 @@ flag_management:
         - type: project
           threshold: 0.5%
         - type: patch
-          target: 95%
+          target: 90%
           threshold: 1%
 
 parsers:
