@@ -14,5 +14,4 @@ exclude =
     .nox,
     venv,
     .venv,
-    mqt/qecc/cc-decoder/__init__.py
 application-import-names = mqt.qecc
