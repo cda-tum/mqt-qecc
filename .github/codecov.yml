@@ -32,10 +32,10 @@ flag_management:
         - "mqt/**/*.py"
       statuses:
         - type: project
-          threshold: 2.6%
+          threshold: 0.5%
         - type: patch
-          target: 90%
-          threshold: 2.6%
+          target: 95%
+          threshold: 1%
 
 parsers:
   gcov:
