@@ -358,6 +358,3 @@ def main() -> None:
     else:
         msg = "Unknown mode: " + args.mode
         raise ValueError(msg)
-
-
-main()
