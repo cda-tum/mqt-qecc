@@ -42,13 +42,11 @@ dependencies = [
     "qecsim",
     "ldpc>=0.1.50",
     "numpy",
-    "pytest_mock"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7",
-    "pytest-console-scripts>=1.3"]
+test = ["pytest>=7", "pytest-console-scripts>=1.3", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "coverage[toml]>=6.3", "pytest-cov>=3"]
 docs = [
     "sphinx>=5",
