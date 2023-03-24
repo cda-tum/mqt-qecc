@@ -128,7 +128,7 @@ class LightsOut:
         return switches, constr_time, solve_time
 
 
-def simulate_error_rate(distance: int, error_rate: float, nr_sims: int, solver_path: str) -> dict[str, Any]:
+def simulate_error_rate(distance: int, error_rate: float, nr_sims: int, solver_path: str = "z3") -> dict[str, Any]:
     code = HexagonalColorCode(distance=distance)
     problem = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
 
