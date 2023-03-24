@@ -41,7 +41,8 @@ dependencies = [
     "z3-solver~=4.11.0",
     "qecsim",
     "ldpc>=0.1.50",
-    "numpy"
+    "numpy",
+    "pytest_mock"
 ]
 dynamic = ["version"]
 
