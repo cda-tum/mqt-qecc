@@ -65,4 +65,4 @@ def test_solve_non_z3(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch("mqt.qecc.cc_decoder.decoder.run", return_value=None)
 
     cli()
-    cc_decoder.decoder.run.assert_called_once_with(distance, error_rate, nr_sims, results_dir, solver)
+    cc_decoder.decoder.run.assert_called_once_with(distance, error_rate, nr_sims, results_dir, solver)  # type: ignore[attr-defined]
