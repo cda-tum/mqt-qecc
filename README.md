@@ -32,9 +32,9 @@ The tool can be used to:
     al.: [[3]](https://github.com/quantumgizmos/bias_tailored_qldpc) is used to construct codes (toric, lifted product
     and
     hypergraph product).
-  - Decode Triangular Color Codes [[4]](todo) and conduct respective numerical
-    simulations. We use open-source software by Peter-Jan Derks to construct hexagonal layouts for the codes
-    [[5]](https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code).
+- Decode (triangular) color codes and conduct respective numerical simulations.
+  - The decoder is based on an analogy to the classical LightsOut puzzle and formulated as a MaxSAT problem. The SMT solver
+    Z3 is used to determine minimal solutions of the MaxSAT problem, resulting in minimum-weight decoding estimates.
 - Apply error correction to quantum circuits.
   - The framework allows to apply different QECC schemes to quantum circuits and either exports the resulting
     circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, six different ECCs are supported
@@ -81,19 +81,22 @@ residual_err = np.array(x_err) ^ np.array(result.estimate)
 print(code.is_x_stabilizer(residual_err))
 ```
 
-## Example for the MaxSAT-based Color Code decoder using Z3:
+### Example for decoding color codes
 
-```bash
-export NJOBS=8
-parallel -j $NJOBS mqt.qecc.cc-decoder {1} {2} --nr_sims 10000 --results_dir ./results/maxsat --decoder maxsat ::: $(seq 3 2 23) ::: $(seq 0.001 0.001 0.175)
+Simply running the following code will perform a numerical analysis of the MaxSAT color code decoder for an instance of
+the distance-21 triangular color code with a bit-flip error rate of 0.01 and 1000 simulations.
+
+```python3
+from mqt.qecc.cc_decoder import decoder
+
+d = 21  # distance of the triangular code to simulate
+p = 0.01  # (bit-flip) error rate
+nr_sims = 1000  # number of simulations to run
+decoder.run(distance=d, error_rate=p, nr_sims=nr_sims)
 ```
 
-MaxSAT-based decoder using any other MaxSAT solver given as binary lying in /path/to/solver/executable
-
-```bash
-export NJOBS=8
-parallel -j $NJOBS mqt.qecc.cc-decoder {1} {2} --nr_sims 10000 --results_dir ./results/maxsat --decoder maxsat --solver /path/to/solver/executable ::: $(seq 3 2 23) ::: $(seq 0.001 0.001 0.175)
-```
+The dataset used in the paper evaluation on decoding quantum color codes is available on Zenodo:
+[![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.5522029&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.5522029)
 
 ### Example for applying error correction to a circuit
 
@@ -130,8 +133,9 @@ at [ReadTheDocs](https://qecc.readthedocs.io/en/latest/).**
 The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.19.
 Please refer to the [documentation](https://qecc.readthedocs.io/en/latest/) on how to build the project.
 
-Building (and running) is continuously tested under Linux, macOS, and Windows using the
+Building (and running) is continuously tested under Linux and macOS using the
 [latest available system versions for GitHub Actions](https://github.com/actions/virtual-environments).
+Windows support is currently experimental.
 
 ## Reference
 
@@ -145,6 +149,3 @@ Design and International Conference on Embedded Systems (VLSID), 2023
 L. Berent, L. Burgholzer, and R.
 Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
 in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
-
-The dataset used in the paper evaluation on decoding quantum color codes is available on Zenodo:
-[![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.5522029&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.5522029)

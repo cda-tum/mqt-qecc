@@ -82,7 +82,9 @@ class LightsOut:
         """
         return sum(1 for var in self.switch_vars if model[var])
 
-    def solve(self, lights: list[bool], solver_path: str) -> tuple[list[int], datetime.timedelta, datetime.timedelta]:
+    def solve(
+        self, lights: list[bool], solver_path: str = "z3"
+    ) -> tuple[list[int], datetime.timedelta, datetime.timedelta]:
         """
         Solve the lights-out problem for a given pattern.
         Assumes that the z3 instance has already been pre-constructed.
