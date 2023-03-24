@@ -3,8 +3,6 @@ ignore:
   - "mqt/**/*.cpp"
   - "test/**/*"
   - "mqt/qecc/cc_decoder/plots.py"
-  - "mqt/qecc/cc_decoder/comparison/tn_decoder.py"
-  - "mqt/qecc/cc_decoder/cli.py"
 
 coverage:
   range: 60..90
