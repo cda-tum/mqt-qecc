@@ -96,7 +96,7 @@ decoder.run(distance=d, error_rate=p, nr_sims=nr_sims)
 ```
 
 The dataset used in the paper evaluation on decoding quantum color codes is available on Zenodo:
-[![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.5522029&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.5522029)
+[![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.7760135&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.7760135)
 
 ### Example for applying error correction to a circuit
 
