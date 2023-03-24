@@ -114,13 +114,12 @@ class LightsOut:
             switches = []
             self.optimizer.set("pp.wcnf", True)
             wcnf = str(self.optimizer)
-            out = Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
-                "a"
-            )  # output of solver, can be commented out for rt sims
-            start = datetime.datetime.now()
-            subprocess.run([solver_path, wcnf], stdout=out)
-            solve_time = datetime.datetime.now() - start
-            out.close()
+            # Note: This merely calls the solver. It does not interpret the output.
+            #       This is just to measure the time it takes to solve the problem.
+            with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open("a+") as out:
+                start = datetime.datetime.now()
+                subprocess.run([solver_path, wcnf], stdout=out)
+                solve_time = datetime.datetime.now() - start
 
         # pop the context from the optimizer
         self.optimizer.pop()
