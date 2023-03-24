@@ -29,6 +29,12 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
+  # Clean jupyter notebooks
+  - repo: https://github.com/srstevenson/nb-clean
+    rev: 2.4.0
+    hooks:
+      - id: nb-clean
+
   # Handling unwanted unicode characters
   - repo: https://github.com/sirosen/texthooks
     rev: "0.5.0"

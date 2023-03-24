@@ -79,7 +79,7 @@ Properties
 
   * - Feature
     - Q3Shor :cite:labelpar:`ShorCodes`
-    - Q5Laflamme :cite:labelpar:`LaflammeCodes`
+    - Q5Laflamme :cite:labelpar:`LaflammeCode`
     - Q7Steane :cite:labelpar:`SteaneCode`
     - Q9Shor :cite:labelpar:`ShorCodes`
     - Q9Surface :cite:labelpar:`WoottonMinimalSurfaceCode`
@@ -124,7 +124,7 @@ Available logical operations
 
   * - Operation
     - Q3Shor :cite:labelpar:`ShorCodes`
-    - Q5Laflamme :cite:labelpar:`LaflammeCodes`
+    - Q5Laflamme :cite:labelpar:`LaflammeCode`
     - Q7Steane :cite:labelpar:`SteaneCode`
     - Q9Shor :cite:labelpar:`ShorCodes`
     - Q9Surface :cite:labelpar:`WoottonMinimalSurfaceCode`

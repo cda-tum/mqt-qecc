@@ -12,9 +12,11 @@ name = "mqt.qecc"
 description = "QECC - An MQT Tool for Quantum Error Correcting Codes"
 readme = "README.md"
 authors = [
-    { name = "Lucas Berent", email = "lucas.berent@tum.de" }
+    { name = "Lucas Berent", email = "lucas.berent@tum.de" },
+    { name = "Lukas Burgholzer", email = "lukas.burgholzer@jku.at" },
+    { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" }
 ]
-keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "algorithms"]
+keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "color codes", "MaxSAT", "QLDPC", "QEC", "Z3"]
 license = { file = "LICENSE" }
 
 classifiers = [
@@ -35,13 +37,16 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "qiskit-aer>=0.11, <0.12"
+    "qiskit-aer>=0.11, <0.12",
+    "z3-solver~=4.11.0",
+    "qecsim",
+    "ldpc>=0.1.50",
+    "numpy",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7",
-    "pytest-console-scripts>=1.3"]
+test = ["pytest>=7", "pytest-console-scripts>=1.3", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "coverage[toml]>=6.3", "pytest-cov>=3"]
 docs = [
     "sphinx>=5",
@@ -58,10 +63,13 @@ docs = [
     "sphinxext-opengraph",
     "qiskit-terra[visualization]",
 ]
-dev = ["mqt.qecc[coverage, docs]"]
+visualization = ["matplotlib", "scipy"]
+dev = ["mqt.qecc[coverage, docs, visualization]"]
 
 [project.scripts]
 "ecc_qiskit_wrapper" = "mqt.qecc.ecc_qiskit_wrapper:main"
+"mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder:cli"
+"mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
 
 [project.urls]
 Homepage = "https://github.com/cda-tum/qecc"

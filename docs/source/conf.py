@@ -1,5 +1,8 @@
 import sys
 
+from pybtex.database import Entry
+from pybtex.richtext import HRef
+
 if sys.version_info < (3, 10, 0):
     import importlib_metadata as metadata
 else:
@@ -36,15 +39,12 @@ extensions = [
     "sphinx_rtd_dark_mode",
 ]
 
-nbsphinx_execute = "auto"  # auto, never
-
+nbsphinx_execute = "auto"
 highlight_language = "python3"
-
 nbsphinx_execute_arguments = [
-    "--InlineBackend.figure_formats={'png2x'}",
-    "--InlineBackend.rc=figure.dpi=96",
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc=figure.dpi=200",
 ]
-
 nbsphinx_kernel_name = "python3"
 
 autosectionlabel_prefix_document = True
@@ -65,9 +65,17 @@ hoverxref_role_types = {
 }
 exclude_patterns = ["_build", "build", "**.ipynb_checkpoints", "Thumbs.db", ".DS_Store", ".env"]
 
+typehints_use_signature = True
+typehints_use_signature_return = True
+typehints_use_rtype = False
+napoleon_use_rtype = False
+
 
 class CDAStyle(UnsrtStyle):
-    def format_url(self, e):
+    """Custom style for including PDF links."""
+
+    def format_url(self, _e: Entry) -> HRef:
+        """Format URL field as a link to the PDF."""
         url = field("url", raw=True)
         return href()[url, "[PDF]"]
 

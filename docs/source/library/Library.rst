@@ -14,3 +14,4 @@ Library
     DecodingResultStatus
     DecodingRunInformation
     SamplePauliError
+    LightsOutDecoder

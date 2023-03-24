@@ -27,6 +27,7 @@ please let us know at our :doc:`Support <Support>` page or by reaching out to us
     :glob:
 
     Installation
+    LightsOutDecoder
     EccFramework
     Publications
 

@@ -1,6 +1,6 @@
 [flake8]
 extend-select = B9
-extend-ignore = E203, E231, E501, E722, W503, B950, B014, W504, E123, E126, E226, E121
+extend-ignore = E203, E231, E501, E722, W503, B950, B014, W504, E123, E126, E226, E121, B905
 max-line-length = 120
 show-source = true
 exclude =
@@ -13,5 +13,5 @@ exclude =
     build,
     .nox,
     venv,
-    .venv
+    .venv,
 application-import-names = mqt.qecc
