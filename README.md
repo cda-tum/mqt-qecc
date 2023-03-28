@@ -141,11 +141,15 @@ Windows support is currently experimental.
 
 If you use our tool for your research, we will be thankful if you refer to it by citing the appropriate publication:
 
-T. Grurl, C. Pichler, J. Fuss and R. Wille, "Automatic Implementation and Evaluation of Error-Correcting Codes for
-Quantum Computing: An Open-Source Framework for Quantum Error-Correction," in International Conference on VLSI
-Design and International Conference on Embedded Systems (VLSID), 2023
+- [![a](https://img.shields.io/static/v1?label=arXiv&message=2303.14237&color=inactive&style=flat-square)](https://arxiv.org/abs/2303.14237)
+  L. Berent, L. Burgholzer, P.J. Derks, J. Eisert, and R. Wille, "Decoding quantum color codes with MaxSAT".
 
-[![a](https://img.shields.io/static/v1?label=arXiv&message=2011.07288&color=inactive&style=flat-square)](https://arxiv.org/abs/2209.01180)
-L. Berent, L. Burgholzer, and R.
-Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
-in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
+- [![a](https://img.shields.io/static/v1?label=arXiv&message=2301.05731&color=inactive&style=flat-square)](https://arxiv.org/pdf/2301.05731)
+  T. Grurl, C. Pichler, J. Fuss and R. Wille, "Automatic Implementation and Evaluation of Error-Correcting Codes for
+  Quantum Computing: An Open-Source Framework for Quantum Error-Correction," in International Conference on VLSI
+  Design and International Conference on Embedded Systems (VLSID), 2023
+
+- [![a](https://img.shields.io/static/v1?label=arXiv&message=2011.07288&color=inactive&style=flat-square)](https://arxiv.org/abs/2209.01180)
+  L. Berent, L. Burgholzer, and R.
+  Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
+  in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
