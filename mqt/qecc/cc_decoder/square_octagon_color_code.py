@@ -18,17 +18,17 @@ class SquareOctagonColorCode:
         y = 1
         x_max = self.distance
 
-        while y <= (self.distance+self.distance//2):
+        while y <= (self.distance + self.distance // 2):
             self.even_data_qubit_row(x_max, y)
             if y == 1:
                 x_max -= 1
             else:
                 x_max -= 2
             y += 1
-            if y <= (self.distance+self.distance//2):
+            if y <= (self.distance + self.distance // 2):
                 self.odd_data_qubit_row(x_max, y)
                 y += 1
-            if y <= (self.distance+self.distance//2):
+            if y <= (self.distance + self.distance // 2):
                 if y % 2 == 0:
                     self.even_ancilla_qubit_row(x_max, y)
                 else:
@@ -38,7 +38,7 @@ class SquareOctagonColorCode:
         self.ancilla_qubits = self.square_ancilla_qubits.union(self.octagon_ancilla_qubits)
 
     def even_ancilla_qubit_row(self, x_max, y):
-        x = y+1
+        x = y + 1
         n_qubits = 0
         while True:
             if n_qubits >= x_max:
@@ -53,7 +53,7 @@ class SquareOctagonColorCode:
             x += 3
 
     def odd_ancilla_qubit_row(self, x_max, y):
-        x = y-2
+        x = y - 2
         n_qubits = 0
         while True:
             if n_qubits >= x_max:
@@ -68,7 +68,7 @@ class SquareOctagonColorCode:
             x += 3
 
     def even_data_qubit_row(self, x_max, y):
-        x = y-1
+        x = y - 1
         n_qubits = 0
         while True:
             if n_qubits >= x_max:
@@ -83,7 +83,7 @@ class SquareOctagonColorCode:
             x += 4
 
     def odd_data_qubit_row(self, x_max, y):
-        x = y+1
+        x = y + 1
         n_qubits = 0
         while True:
             if n_qubits >= x_max:
@@ -98,7 +98,7 @@ class SquareOctagonColorCode:
             x += 4
 
     def bottom_row_ancillas(self):
-        for x in range(4, self.distance//2*6, 6):
+        for x in range(4, self.distance // 2 * 6, 6):
             self.octagon_ancilla_qubits.add((x, 0))
 
     def construct_layout(self) -> None:
@@ -111,7 +111,7 @@ class SquareOctagonColorCode:
 
         for idx, (x, y) in enumerate(self.square_ancilla_qubits):
             qbts: list[int] = []
-            for coord in [(x-1, y-1), (x+1, y-1), (x+1, y+1), (x-1, y+1)]:
+            for coord in [(x - 1, y - 1), (x + 1, y - 1), (x + 1, y + 1), (x - 1, y + 1)]:
                 if coord in coords_to_idx:
                     qubit_idx = coords_to_idx[coord]
                     qbts.append(qubit_idx)
@@ -124,7 +124,16 @@ class SquareOctagonColorCode:
         for idx, (x, y) in enumerate(self.octagon_ancilla_qubits):
             idx += len(self.square_ancilla_qubits)
             qbts: list[int] = []
-            for coord in [(x-2, y-1), (x-1, y-2), (x+1, y-2), (x+2, y-1), (x+2, y+1), (x+1, y+2), (x-1, y+2), (x-2, y+1)]:
+            for coord in [
+                (x - 2, y - 1),
+                (x - 1, y - 2),
+                (x + 1, y - 2),
+                (x + 2, y - 1),
+                (x + 2, y + 1),
+                (x + 1, y + 2),
+                (x - 1, y + 2),
+                (x - 2, y + 1),
+            ]:
                 if coord in coords_to_idx:
                     qubit_idx = coords_to_idx[coord]
                     qbts.append(qubit_idx)
