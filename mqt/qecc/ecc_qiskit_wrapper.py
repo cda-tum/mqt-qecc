@@ -10,7 +10,8 @@ from qiskit.providers.aer import AerSimulator
 from mqt import qecc
 
 if TYPE_CHECKING:
-    from qiskit.result import counts
+    from qiskit.result import Result
+
 from qiskit_aer.noise import (
     NoiseModel,
     QuantumError,
@@ -63,10 +64,11 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
     return noise_model
 
 
-def print_simulation_results(result_counts: counts, n_shots: int, threshold_probability: float = 0) -> None:
+def print_simulation_results(result: Result, n_shots: int, threshold_probability: float = 0) -> None:
     """Print the simulation results."""
     printed_results = 0
     summarized_counts: dict[str, int] = {}
+    result_counts = result.get_counts()
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
@@ -169,7 +171,6 @@ def main() -> None:
         return
 
     size = circ.num_qubits
-    simulator_backend = None
     print(
         "_____Trying to simulate with "
         + str(error_channels)
@@ -188,7 +189,7 @@ def main() -> None:
     # Setting the simulator backend to the requested one
     simulator_backend = AerSimulator(method=forced_simulator, noise_model=noise_model)
 
-    result = execute(
+    job = execute(
         circ,
         backend=simulator_backend,
         shots=number_of_shots,
@@ -196,8 +197,9 @@ def main() -> None:
         noise_model=noise_model,
     )
 
-    if result.result().status != "COMPLETED":
-        raise RuntimeError("Simulation exited with status: " + str(result.result().status))
+    job_result: Result = job.result()
 
-    result_counts = result.result().get_counts()
-    print_simulation_results(result_counts, number_of_shots)
+    if job_result.status != "COMPLETED":
+        raise RuntimeError("Simulation exited with status: " + str(job_result.status))
+
+    print_simulation_results(job_result, number_of_shots)
