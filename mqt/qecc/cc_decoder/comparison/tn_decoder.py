@@ -1,3 +1,4 @@
+"""Decoding simulation using the tensor network implementation of the qecsim package."""
 import json
 from pathlib import Path
 
@@ -7,6 +8,13 @@ from qecsim.models.generic import BitFlipErrorModel
 
 
 def run(distance: int, error_rate: float, nr_sims: int = 10000, results_dir: str = "./results_tn") -> None:
+    """Run the decoder for the hexagonal color code.
+
+    :param distance: distance to run
+    :param error_rate: error rate to run
+    :param nr_sims: number of samples to run
+    :param results_dir: directory to store results.
+    """
     code = Color666Code(distance)
     error_model = BitFlipErrorModel()
     decoder = Color666MPSDecoder(chi=8)

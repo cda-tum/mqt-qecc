@@ -1,18 +1,21 @@
+"""Plotting functions for the paper."""
 from __future__ import annotations
 
 import argparse
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.axes import Axes
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 from scipy.optimize import curve_fit
 
 
 def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float]) -> None:
+    """Plot the logical error rate vs distance for different err rates."""
     for p in pers:
         ds = []
         lers = []
@@ -26,21 +29,16 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_xlabel(r"Code distance $\it{d}$")
 
 
-def threshold_fit(variables: tuple[float, float], B0: float, B1: float, B2: float, mu: float, pth: float) -> None:
-    p, L = variables
-    return B0 + B1 * (p - pth) * pow(L, 1 / mu) + B2 * pow((p - pth) * pow(L, 1 / mu), 2)
+def threshold_fit(variables: tuple[float, float], b0: float, b1: float, b2: float, mu: float, pth: float) -> float:
+    """Compute standard fit function for the threshold."""
+    p, ell = variables
+    return b0 + b1 * (p - pth) * pow(ell, 1 / mu) + b2 * pow((p - pth) * pow(ell, 1 / mu), 2)
 
 
 def calculate_threshold(
-    code_dict: dict[int, Any],
-    min_distance: int = 1,
-    max_distance: int = 100,
-    distances: list[int] = None,
-    min_per: float = 0.06,
-    max_per: float = 0.13,
-    title: str = None,
-    ax: Axes = None,
+    ax: Axes, code_dict: dict[int, Any], min_per: float = 0.06, max_per: float = 0.13, title: str | None = None
 ) -> None:
+    """Calculate the threshold for the given results."""
     ler_data = []
     ler_eb_data = []
     per_data = []
@@ -49,11 +47,6 @@ def calculate_threshold(
         per_array = []
         ler_array = []
         ler_eb = []
-        if distances is None:
-            if not min_distance < int(distance) < max_distance:
-                continue
-        elif int(distance) not in distances:
-            continue
 
         for index, per in enumerate(code_dict[distance]["p"]):
             if min_per < per < max_per:
@@ -69,16 +62,10 @@ def calculate_threshold(
     if ax is not None:
         ax.axvline(x=popt[-1], color="black", linestyle="dashed")
         print("threshold: ", popt[-1])
-    error = np.sqrt(np.diag(pcov))[-1]
-    print("error: " + str(error))
 
-    distance_array = []
+    distance_array: list[int] = []
     for distance in code_dict:
-        if distances is None:
-            if min_distance < int(distance) < max_distance:
-                distance_array.append(int(distance))
-        elif int(distance) in distances:
-            distance_array.append(int(distance))
+        distance_array.append(int(distance))
     distance_array.sort()
     for distance in distance_array:
         per_array = code_dict[distance]["p"]
@@ -88,19 +75,16 @@ def calculate_threshold(
         if per_array != [] and ax is not None:
             ax.errorbar(per_array, ler_array, yerr=ler_eb, label="d = " + str(distance), fmt="|")
 
-    if ax is not None:
-        ax.legend()
-        ax.set_xlabel("Physical error rate")
-        ax.set_ylabel("Logical error rate")
-        ax.set_title(title)
-        ax.set_yscale("log")
-        ax.set_xlim(min_per, max_per)
+    ax.legend()
+    ax.set_xlabel("Physical error rate")
+    ax.set_ylabel("Logical error rate")
+    ax.set_title(title)
+    ax.set_yscale("log")
+    ax.set_xlim(min_per, max_per)
 
 
-def generate_plots(results_dir: Path, results_file: Path) -> None:
-    """
-    Generates the plots for the paper
-    """
+def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0912,PLR0915
+    """Generate the plots for the paper."""
     # read in all generated data
     data = []
     for file in results_dir.glob("*.json"):
@@ -179,13 +163,14 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
     ax[1][1].legend()
     ax[1][1].set_xticks(ds)
     ax[1][1].set_ylim(0, 185000)
-    calculate_threshold(metrics, ax=ax[0][1], title="Threshold")
+    calculate_threshold(code_dict=metrics, ax=ax[0][1], title="Threshold")
     plot_ler_vs_distance(per_metrics, ax=ax[2][0], pers=[0.02, 0.05, 0.08, 0.11, 0.13])
     # save plot as vector graphic
     plt.savefig(results_file, bbox_inches="tight")
 
 
 def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
+    """Generate the plots for the tensor network decoder."""
     # read in all generated data
     data = []
     for file in results_dir.glob("*.json"):
@@ -250,19 +235,20 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     plt.savefig(results_file, bbox_inches="tight")
 
 
-def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
+def generate_plots_comp(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0912
+    """Generate plots for the comparison of the different solvers."""
     fig, ax = plt.subplots(2, figsize=(12, 12))
-    cols = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]
-    idx = 0
-    solverToCol = {}
-    pToCol = {}
+    cols: list[str] = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]
+    idx: int = 0
+    solver_to_col: dict[str, str] = {}
+    p_to_col: dict[float, str] = {}
     for subdir, _, files in os.walk(results_dir):
         if not files:
             continue
         data = []
         solver = subdir.split("/")[-1]
-        if solver not in solverToCol:
-            solverToCol[solver] = cols[idx]
+        if solver not in solver_to_col:
+            solver_to_col[solver] = cols[idx]
             idx += 1
         for f in files:
             fp = subdir + "/" + f
@@ -289,19 +275,19 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
                     mdata["p"],
                     mdata["avg_total_time"],
                     label="solver=" + solver + ", d=" + str(d),
-                    color=solverToCol[solver],
+                    color=solver_to_col[solver],
                 )
-        ds = []
+        ds: list[int] = []
         idx = 0
         p_data: dict[float, dict[str, list[Any]]] = {}
-        pers = [0.001, 0.051, 0.131]
+        pers: list[float] = [0.001, 0.051, 0.131]
         for d, pdata in sorted(metrics.items()):
             ds.append(d)
             for i, p in enumerate(pdata["p"]):
                 if p in pers:
                     if p not in p_data:
                         p_data[p] = {"d": [], "t": []}
-                        pToCol[p] = cols[idx]
+                        p_to_col[p] = cols[idx]
                         idx += 1
                     p_data[p]["d"].append(d)
                     p_data[p]["t"].append(pdata["avg_total_time"][i])
@@ -309,8 +295,8 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             ax[1].plot(
                 ds,
                 ppdata["t"],
-                label="p=" + str(p) + ", " + (solver if solver == "z3" else "CASHWMaxSAT‑CorePlus"),
-                color=pToCol[p],
+                label="p=" + str(p) + ", " + (solver if solver == "z3" else "CASHWMaxSAT-CorePlus"),
+                color=p_to_col[p],
                 marker="x" if solver == "z3" else "o",
             )
 
@@ -321,7 +307,6 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
 
         ax[0].set_xlabel("Physical error rate")
         ax[0].set_ylabel("Average time per run (µs)")
-        ax[0].legend()
         ax[0].legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     # save plot as vector graphic
@@ -329,6 +314,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
 
 
 def main() -> None:
+    """Run main CLI function."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "results_dir",

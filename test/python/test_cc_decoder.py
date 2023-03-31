@@ -1,41 +1,45 @@
+"""Test the decoder for the hexagonal color code."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-import pytest_mock
+
+if TYPE_CHECKING:
+    import pytest_mock
+    from pytest_console_scripts import ScriptRunner
+
 from mqt.qecc import cc_decoder
 from mqt.qecc.cc_decoder.decoder import LightsOut, simulate_error_rate
-from pytest_console_scripts import ScriptRunner
 
 
-@pytest.fixture
+@pytest.fixture()
 def distance() -> int:
-    """Distance of the hexagonal color code."""
+    """Return distance of the hexagonal color code."""
     return 3
 
 
-@pytest.fixture
+@pytest.fixture()
 def p() -> float:
-    """Error rate."""
+    """Return error rate."""
     return 0.1
 
 
-@pytest.fixture
+@pytest.fixture()
 def nr_sims() -> int:
-    """Number of simulations."""
+    """Return number of simulations."""
     return 1
 
 
-@pytest.fixture
+@pytest.fixture()
 def results_dir() -> str:
-    """Directory to store results."""
+    """Return directory to store results."""
     return "./results"
 
 
-@pytest.fixture
+@pytest.fixture()
 def code(distance: int) -> cc_decoder.HexagonalColorCode:
     """Hexagonal color code."""
     return cc_decoder.HexagonalColorCode(distance=distance)
@@ -87,7 +91,7 @@ def check_and_load_json(file_name: str, results_dir: str) -> dict[str, Any]:
     assert result_file.exists()
     assert result_file.is_file()
     with result_file.open("r") as f:
-        result = json.load(f)
+        result: dict[str, Any] = json.load(f)
 
     for file in results_path.iterdir():
         file.unlink()
@@ -108,7 +112,7 @@ def test_z3_solver(script_runner: ScriptRunner, distance: int, p: float, nr_sims
         results_dir,
     )
     assert ret.success
-    assert ret.stderr == ""
+    assert not ret.stderr
 
     result = check_and_load_json(f"distance={distance},p={round(p, 4)},solver=z3.json", results_dir)
     assert result is not None
@@ -151,7 +155,7 @@ def test_external_solver(
         decoder,
     )
     assert ret.success
-    assert ret.stderr == ""
+    assert not ret.stderr
 
     result = check_and_load_json(f"distance={distance},p={round(p, 4)},solver={solver}.json", results_dir)
 
@@ -187,7 +191,7 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
         decoder,
     )
     assert ret.success
-    assert ret.stderr == ""
+    assert not ret.stderr
 
     result = check_and_load_json(f"distance={distance},p={round(p, 4)}.json", results_dir)
     assert result is not None

@@ -1,3 +1,6 @@
+"""Compute average runtimes for the UF heuristic on toric codes."""
+from __future__ import annotations
+
 from pathlib import Path
 
 from mqt import qecc
@@ -13,28 +16,28 @@ codes = [
     "../../examples/toricCodes/toric_(nan,nan)-[[162,2,9]]_hz.txt",
     "../../examples/toricCodes/toric_(nan,nan)-[[200,2,10]]_hz.txt",
 ]
-outpath = "./rt-sims-bindings.out"
+outpath: str = "./rt-sims-bindings.out"
 
-nrSamples = 1
-nrRuns = 1
-per = 0.01
+nr_samples: int = 1
+nr_runs: int = 1
+per: float = 0.01
 
 with Path(outpath).open("w") as outfile:
-    for codePath in codes:
-        sampleSum = 0.0
-        for _ in range(nrSamples):
-            runsSum = 0.0
-            for _ in range(nrRuns):
-                code = qecc.Code(codePath)
+    for code_path in codes:
+        sample_sum = 0.0
+        for _ in range(nr_samples):
+            runs_sum = 0.0
+            for _ in range(nr_runs):
+                code = qecc.Code(code_path)
                 err = qecc.sample_iid_pauli_err(code.N, per)
                 decoder = qecc.UFHeuristic()
                 decoder.set_code(code)
                 syndr = code.get_x_syndrome(err)
                 decoder.decode(syndr)
                 time = decoder.result.decoding_time
-                runsSum += time
-            sampleSum += runsSum
-        outp = codePath + ":" + str(sampleSum / nrSamples)
+                runs_sum += time
+            sample_sum += runs_sum
+        outp = code_path + ":" + str(sample_sum / nr_samples)
         print(outp)
         outfile.write(outp + "\n")
         outfile.flush()

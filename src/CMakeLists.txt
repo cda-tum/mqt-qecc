@@ -1,6 +1,6 @@
 # add MQT::QFR library
-add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr" EXCLUDE_FROM_ALL)
-
+add_subdirectory("${PROJECT_SOURCE_DIR}/extern/qfr" "extern/qfr"
+                 EXCLUDE_FROM_ALL)
 # main project library
 add_library(
   ${PROJECT_NAME}_lib
@@ -19,11 +19,13 @@ add_library(
   UFHeuristic.cpp)
 
 # set include directories
-target_include_directories(${PROJECT_NAME}_lib PUBLIC ${PROJECT_SOURCE_DIR}/include
-                                                      ${PROJECT_BINARY_DIR}/include)
+target_include_directories(
+  ${PROJECT_NAME}_lib PUBLIC ${PROJECT_SOURCE_DIR}/include
+                             ${PROJECT_BINARY_DIR}/include)
 
 # add options and warnings to the library
-target_link_libraries(${PROJECT_NAME}_lib PUBLIC project_options project_warnings)
+target_link_libraries(${PROJECT_NAME}_lib PUBLIC project_options
+                                                 project_warnings)
 
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 
