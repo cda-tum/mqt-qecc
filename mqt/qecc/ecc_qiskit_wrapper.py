@@ -3,7 +3,8 @@ from __future__ import annotations
 import argparse
 
 from mqt import qecc
-from qiskit import Aer, QuantumCircuit, execute, providers
+from qiskit import QuantumCircuit, execute
+from qiskit.providers.aer import AerSimulator
 from qiskit.result import counts
 from qiskit_aer.noise import (
     NoiseModel,
@@ -102,9 +103,8 @@ def main() -> None:
     parser.add_argument(
         "-fs",
         type=str,
-        default="aer_simulator_stabilizer",
-        help='Specify a simulator (Default="aer_simulator_stabilizer", which is fast but does not support '
-        "non-Clifford gates. Available: " + str(Aer.backends()),
+        default="stabilizer",
+        help='Specify a simulator (Default="stabilizer", which is fast but does not support "non-Clifford gates"',
     )
     parser.add_argument(
         "-ecc",
@@ -188,12 +188,7 @@ def main() -> None:
     )
 
     # Setting the simulator backend to the requested one
-    try:
-        simulator_backend = Aer.get_backend(forced_simulator)
-    except providers.exceptions.QiskitBackendNotFoundError:
-        raise ValueError(
-            "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
-        ) from None
+    simulator_backend = AerSimulator(method=forced_simulator, noise_model=noise_model)
 
     result = execute(
         circ,

@@ -37,7 +37,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "qiskit-aer>=0.11, <0.12",
+    "qiskit>=0.42.0",
     "z3-solver~=4.11.0",
     "qecsim",
     "ldpc>=0.1.50",
@@ -116,11 +116,6 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = ["error",
-    'ignore:__package__ != __spec__.parent:ImportWarning',
-    'ignore:The `QasmSimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.:PendingDeprecationWarning',
-    'ignore:The `StatevectorSimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.:PendingDeprecationWarning',
-    'ignore:The `UnitarySimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.:PendingDeprecationWarning',
-    'ignore:The qiskit.Aer entry point will be deprecated in a future release and subsequently removed.:PendingDeprecationWarning',
 ]
 
 
