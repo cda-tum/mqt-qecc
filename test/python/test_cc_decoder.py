@@ -6,10 +6,9 @@ from typing import Any
 
 import pytest
 import pytest_mock
-from pytest_console_scripts import ScriptRunner
-
 from mqt.qecc import cc_decoder
 from mqt.qecc.cc_decoder.decoder import LightsOut, simulate_error_rate
+from pytest_console_scripts import ScriptRunner
 
 
 @pytest.fixture

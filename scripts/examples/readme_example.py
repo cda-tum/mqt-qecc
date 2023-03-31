@@ -1,5 +1,4 @@
 import numpy as np
-
 from mqt import qecc
 
 code = qecc.Code("/path/to/Hx", "path/to/Hz")
