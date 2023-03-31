@@ -2,17 +2,14 @@ from __future__ import annotations
 
 import argparse
 
-from mqt import qecc
 from qiskit import QuantumCircuit, execute
 from qiskit.providers.aer import AerSimulator
 from qiskit.result import counts
-from qiskit_aer.noise import (
-    NoiseModel,
-    QuantumError,
-    amplitude_damping_error,
-    depolarizing_error,
-)
+from qiskit_aer.noise import (NoiseModel, QuantumError,
+                              amplitude_damping_error, depolarizing_error)
 from qiskit_aer.noise.errors import pauli_error
+
+from mqt import qecc
 
 
 def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:

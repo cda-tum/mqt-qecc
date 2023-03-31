@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+
 from mqt.qecc import Code, UFHeuristic, sample_iid_pauli_err
 
 
