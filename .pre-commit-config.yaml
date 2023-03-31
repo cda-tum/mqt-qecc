@@ -50,7 +50,7 @@ repos:
 
   # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.256
+    rev: v0.0.259
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -80,7 +80,7 @@ repos:
 
   # Clang-format the C++ part of the code base automatically
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v15.0.6
+    rev: v16.0.0
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda]
@@ -104,7 +104,8 @@ repos:
           - numpy
           - pytest
           - types-setuptools
-          - pytest_mock
+          - pytest_mock]
+
   # Check for spelling
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.4
