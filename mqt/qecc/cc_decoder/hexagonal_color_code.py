@@ -119,7 +119,7 @@ class HexagonalColorCode:
 
     def get_syndrome(self, error: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
         """Compute the syndrome of the error."""
-        return np.ndarray(self.H @ error % 2)
+        return self.H @ error % 2
 
     def check_if_logical_error(self, residual: npt.NDArray[np.int_]) -> bool:
         """Check if the residual is a logical error."""
