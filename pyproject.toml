@@ -156,7 +156,7 @@ explicit_package_bases = true
 pretty = true
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qecsim.*" , "matplotlib.*", "scipy.*", "ldpc.*", "qiskit.*", "qiskit_aer.*", "pytest_console_scripts.*", "z3.*"]
+module = ["qiskit.*", "qecsim.*" , "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*", "z3.*"]
 ignore_missing_imports = true
 
 [tool.ruff]

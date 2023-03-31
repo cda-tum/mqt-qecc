@@ -13,10 +13,10 @@ def test_basic() -> None:
         [False, True, False, True, True, False, True],
         [False, False, True, False, True, True, True],
     ]
-    code: Code = Code(h, h)
-    decoder: UFHeuristic = UFHeuristic()
+    code = Code(h, h)
+    decoder = UFHeuristic()
     decoder.set_code(code)
-    x_err: list[bool] = sample_iid_pauli_err(code.n, 0.05)
+    x_err = sample_iid_pauli_err(code.n, 0.05)
     decoder.decode(code.get_x_syndrome(x_err))
     result = decoder.result
     residual_err = np.array(x_err) ^ np.array(result.estimate)

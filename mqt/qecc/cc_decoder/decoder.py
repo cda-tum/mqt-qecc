@@ -34,12 +34,12 @@ class LightsOut:
         """
         helper_vars = self.helper_vars[light]
 
+        assert self.switch_vars is not None
         for i in range(1, len(indices) - 1):
-            assert self.switch_vars is not None
             constraint = Xor(self.switch_vars[indices[i]], helper_vars[i]) == helper_vars[i - 1]
             self.optimizer.add(simplify(constraint))
 
-        constraint = self.switch_vars[indices[-1]] == helper_vars[-1] if self.switch_vars else None
+        constraint = self.switch_vars[indices[-1]] == helper_vars[-1]
         self.optimizer.add(simplify(constraint))
 
     def complete_parity_constraint(self, light: int, indices: list[int], val: bool) -> None:
@@ -59,7 +59,7 @@ class LightsOut:
         Soft constraints are added to the optimizer with default weights.
         """
         if self.switch_vars is None:
-            self.switch_vars: list[Bool] = [Bool(f"switch_{i}") for i in range(len(self.switches_to_lights))]
+            self.switch_vars = [Bool(f"switch_{i}") for i in range(len(self.switches_to_lights))]
 
         for light, switches in self.lights_to_switches.items():
             if light not in self.helper_vars:
@@ -82,8 +82,7 @@ class LightsOut:
 
     def count_switches(self, model: ModelRef) -> int:
         """Count the number of switches that are set to true."""
-        if self.switch_vars is None:
-            return 0
+        assert self.switch_vars is not None
         return sum(1 for var in self.switch_vars if model[var])
 
     def solve(

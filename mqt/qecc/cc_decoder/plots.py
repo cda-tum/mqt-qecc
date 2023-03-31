@@ -239,8 +239,8 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
 def generate_plots_comp(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0912
     """Generate plots for the comparison of the different solvers."""
     fig, ax = plt.subplots(2, figsize=(12, 12))
-    cols: list[str] = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]
-    idx: int = 0
+    cols = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]
+    idx = 0
     solver_to_col: dict[str, str] = {}
     p_to_col: dict[float, str] = {}
     for subdir, _, files in os.walk(results_dir):
@@ -281,7 +281,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:  # noqa:
         ds: list[int] = []
         idx = 0
         p_data: dict[float, dict[str, list[Any]]] = {}
-        pers: list[float] = [0.001, 0.051, 0.131]
+        pers = [0.001, 0.051, 0.131]
         for d, pdata in sorted(metrics.items()):
             ds.append(d)
             for i, p in enumerate(pdata["p"]):

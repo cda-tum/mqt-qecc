@@ -7,14 +7,14 @@ from mqt import qecc
 
 code = qecc.Code("../../examples/lp_(4,8)-[[1024,18,nan]]_hx.txt", "../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt")
 code.K = 18
-outpath: str = "./dp-sims-bindings.out"
+outpath = "./dp-sims-bindings.out"
 
-runs_per_p: int = 1
-curr_p: float = 0.00001
-max_per: float = 0.00003
-step_size: float = 0.00001
-nr_failed_runs: int = 0
-code_k: int = code.K
+runs_per_p = 1
+curr_p = 0.00001
+max_per = 0.00003
+step_size = 0.00001
+nr_failed_runs = 0
+code_k = code.K
 
 with Path(outpath).open("w") as outfile:
     while curr_p < max_per:
