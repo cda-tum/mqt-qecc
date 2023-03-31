@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from qiskit import QuantumCircuit, execute
 from qiskit.providers.aer import AerSimulator
-from qiskit.result import counts
 
 from mqt import qecc
 

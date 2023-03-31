@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 import pytest
-
 from pytest_console_scripts import ScriptRunner
 from qiskit import QuantumCircuit
 

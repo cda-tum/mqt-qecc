@@ -104,7 +104,7 @@ repos:
           - numpy
           - pytest
           - types-setuptools
-          - pytest_mock]
+          - pytest_mock
 
   # Check for spelling
   - repo: https://github.com/codespell-project/codespell
