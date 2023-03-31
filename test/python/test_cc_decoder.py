@@ -9,7 +9,7 @@ import pytest
 
 if TYPE_CHECKING:
     import pytest_mock
-    from pytest_console_scripts import ScriptRunner
+from pytest_console_scripts import ScriptRunner
 
 from mqt.qecc import cc_decoder
 from mqt.qecc.cc_decoder.decoder import LightsOut, simulate_error_rate

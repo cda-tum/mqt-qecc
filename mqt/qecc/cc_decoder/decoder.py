@@ -112,7 +112,8 @@ class LightsOut:
             # validate the model
             model = self.optimizer.model()
             assert self.validate_model(model, lights), "Model is invalid"
-            switches = [(1 if var and model[var] else 0) for var in self.switch_vars] if self.switch_vars else []
+            assert self.switch_vars is not None
+            switches = [1 if model[var] else 0 for var in self.switch_vars]
         else:
             self.optimizer.set("pp.wcnf", True)
             wcnf = str(self.optimizer)
