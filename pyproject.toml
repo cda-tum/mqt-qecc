@@ -37,7 +37,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "qiskit-aer>=0.11, <0.12",
+    "qiskit>=0.42.0"
     "z3-solver~=4.11.0",
     "qecsim",
     "ldpc>=0.1.50",
