@@ -5,7 +5,7 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from matplotlib import pyplot as plt
 
@@ -32,7 +32,8 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
 def threshold_fit(variables: tuple[float, float], b0: float, b1: float, b2: float, mu: float, pth: float) -> float:
     """Compute standard fit function for the threshold."""
     p, ell = variables
-    return b0 + b1 * (p - pth) * pow(ell, 1 / mu) + b2 * pow((p - pth) * pow(ell, 1 / mu), 2)
+    expr = (p - pth) * (ell ** (1 / mu))
+    return cast(float, b0 + b1 * expr + b2 * (expr**2))
 
 
 def calculate_threshold(
