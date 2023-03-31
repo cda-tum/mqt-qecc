@@ -4,7 +4,11 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from qiskit import Aer, QuantumCircuit, execute, providers
+from qiskit import QuantumCircuit, execute
+from qiskit.providers.aer import AerSimulator
+from qiskit.result import counts
+
+from mqt import qecc
 
 if TYPE_CHECKING:
     from qiskit.result import counts
@@ -15,8 +19,6 @@ from qiskit_aer.noise import (
     depolarizing_error,
 )
 from qiskit_aer.noise.errors import pauli_error
-
-from mqt import qecc
 
 
 def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:
@@ -82,7 +84,7 @@ def print_simulation_results(result_counts: counts, n_shots: int, threshold_prob
                 break
 
 
-def main() -> None:  # noqa: PLR0915
+def main() -> None:
     """Run main function of the Qiskit wrapper for the ECC Framework."""
     parser = argparse.ArgumentParser(description="Qiskit wrapper for the ECC Framework")
     parser.add_argument(
@@ -107,9 +109,8 @@ def main() -> None:  # noqa: PLR0915
     parser.add_argument(
         "-fs",
         type=str,
-        default="aer_simulator_stabilizer",
-        help='Specify a simulator (Default="aer_simulator_stabilizer", which is fast but does not support '
-        "non-Clifford gates. Available: " + str(Aer.backends()),
+        default="stabilizer",
+        help='Specify a simulator (Default="stabilizer", which is fast but does not support "non-Clifford gates"',
     )
     parser.add_argument(
         "-ecc",
@@ -186,12 +187,7 @@ def main() -> None:  # noqa: PLR0915
     )
 
     # Setting the simulator backend to the requested one
-    try:
-        simulator_backend = Aer.get_backend(forced_simulator)
-    except providers.exceptions.QiskitBackendNotFoundError:
-        raise ValueError(
-            "Simulator " + str(forced_simulator) + " not found! Available simulators are: " + str(Aer.backends())
-        ) from None
+    simulator_backend = AerSimulator(method=forced_simulator, noise_model=noise_model)
 
     result = execute(
         circ,
