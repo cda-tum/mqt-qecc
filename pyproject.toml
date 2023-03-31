@@ -117,10 +117,6 @@ log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = ["error",
     'ignore:__package__ != __spec__.parent:ImportWarning',
-    'ignore:The `QasmSimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.:PendingDeprecationWarning',
-    'ignore:The `StatevectorSimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.:PendingDeprecationWarning',
-    'ignore:The `UnitarySimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.:PendingDeprecationWarning',
-    'ignore:The qiskit.Aer entry point will be deprecated in a future release and subsequently removed.:PendingDeprecationWarning',
 ]
 
 

@@ -70,7 +70,7 @@ def test_failing_simulators(script_runner: ScriptRunner) -> None:
         "-s",
         "1",
         "-fs",
-        "aer_simulator_extended_stabilizer",
+        "extended_stabilizer",
         "-ecc",
         "UnsupportedEcc",
         "-f",
@@ -96,7 +96,7 @@ def test_unavailable_backend(script_runner: ScriptRunner) -> None:
     file_to_remove = pathlib.Path("dummyCircuit.qasm")
     file_to_remove.unlink()
     assert not ret.success
-    assert "Available simulators are: " in ret.stderr
+    assert "Available methods are" in ret.stderr
 
 
 def test_unavailable_error_type(script_runner: ScriptRunner) -> None:
@@ -131,7 +131,7 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
         "-s",
         "1",
         "-fs",
-        "aer_simulator_statevector",
+        "statevector",
         "-ecc",
         "Id",
         "-f",
