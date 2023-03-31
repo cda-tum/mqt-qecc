@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,32 +10,27 @@ if TYPE_CHECKING:
     from pytest_console_scripts import ScriptRunner
 from qiskit import QuantumCircuit
 
-qasm_circuit = "OPENQASM 2.0;\n include qelib1.inc;\n qreg q[1];\n creg c[1];\n x q[0];\n measure q[0] -> c[0];\n"
 
-qasm_circuit_no_measure = "OPENQASM 2.0;\n include qelib1.inc;\n qreg q[1];\n creg c[1];\n x q[0];\n"
-
-
-@pytest.fixture(
-    params=[
-        "none",
-        "Id",
-        "Q7Steane",
-    ]
-)
-def simulator(request: Any) -> str:
-    """Fixture for the simulators."""
-    return cast(str, request.param)
+@pytest.fixture()
+def circ() -> QuantumCircuit:
+    """Fixture for a quantum circuit."""
+    qasm_circuit = 'OPENQASM 2.0;\n include "qelib1.inc";\n qreg q[1];\n creg c[1];\n x q[0];\n measure q[0] -> c[0];\n'
+    return QuantumCircuit().from_qasm_str(qasm_circuit)
 
 
-@pytest.fixture(params=["B", "P", "D"])
-def noise_models(request: Any) -> str:
-    """Fixture for the noise models."""
-    return cast(str, request.param)
+@pytest.fixture()
+def circ_no_measure() -> QuantumCircuit:
+    """Fixture for a quantum circuit without measure."""
+    qasm_circuit_no_measure = 'OPENQASM 2.0;\n include "qelib1.inc";\n qreg q[1];\n creg c[1];\n x q[0];\n'
+    return QuantumCircuit().from_qasm_str(qasm_circuit_no_measure)
 
 
-def test_with_stab_simulator(simulator: str, noise_models: str, script_runner: ScriptRunner) -> None:
+@pytest.mark.parametrize("simulator", ["none", "Id", "Q7Steane"])
+@pytest.mark.parametrize("noise_models", ["B", "P", "D"])
+def test_with_stab_simulator(
+    circ: QuantumCircuit, simulator: str, noise_models: str, script_runner: ScriptRunner
+) -> None:
     """Testing the script with different parameters."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
@@ -55,9 +50,8 @@ def test_with_stab_simulator(simulator: str, noise_models: str, script_runner: S
     assert ret.success
 
 
-def test_failing_simulators(script_runner: ScriptRunner) -> None:
+def test_failing_simulators(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Testing the script with unsupported ecc."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
@@ -82,9 +76,8 @@ def test_failing_simulators(script_runner: ScriptRunner) -> None:
     assert "No ECC found for" in ret.stderr
 
 
-def test_unavailable_backend(script_runner: ScriptRunner) -> None:
+def test_unavailable_backend(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Testing the script with unsupported backend."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
@@ -99,9 +92,8 @@ def test_unavailable_backend(script_runner: ScriptRunner) -> None:
     assert "Available methods are" in ret.stderr
 
 
-def test_unavailable_error_type(script_runner: ScriptRunner) -> None:
+def test_unavailable_error_type(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Testing the script with unsupported ecc."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
@@ -116,9 +108,8 @@ def test_unavailable_error_type(script_runner: ScriptRunner) -> None:
     assert "Unknown error type in noise model: " in ret.stderr
 
 
-def test_statevector_simulators(script_runner: ScriptRunner) -> None:
+def test_statevector_simulators(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Testing the simulator with a different simulator."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
@@ -142,9 +133,8 @@ def test_statevector_simulators(script_runner: ScriptRunner) -> None:
     assert ret.success
 
 
-def test_save_circuit(script_runner: ScriptRunner) -> None:
+def test_save_circuit(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Saving a circuit after applying an ECC."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
@@ -159,10 +149,9 @@ def test_save_circuit(script_runner: ScriptRunner) -> None:
     assert ret.success
 
 
-def test_circuit_without_measurements(script_runner: ScriptRunner) -> None:
+def test_circuit_without_measurements(circ_no_measure: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Testing circuit without ecc."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit_no_measure)
-    circ.qasm(filename="dummyCircuit.qasm")
+    circ_no_measure.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
         "-f",
@@ -173,9 +162,8 @@ def test_circuit_without_measurements(script_runner: ScriptRunner) -> None:
     assert ret.success
 
 
-def test_trying_to_use_stabilizer_simulator(script_runner: ScriptRunner) -> None:
+def test_trying_to_use_stabilizer_simulator(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Testing circuit without ecc."""
-    circ = QuantumCircuit().from_qasm_str(qasm_circuit)
     circ.qasm(filename="dummyCircuit.qasm")
     ret = script_runner.run(
         "ecc_qiskit_wrapper",
