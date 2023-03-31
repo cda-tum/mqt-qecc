@@ -148,7 +148,7 @@ def simulate_error_rate(distance: int, error_rate: float, nr_sims: int, solver_p
 
         # get syndrome
         syndrome = code.get_syndrome(error)
-        lights = [bool(b == 1) for b in syndrome]
+        lights = [bool(b) for b in syndrome]
 
         # compute estimate
         estimate, constr_time, solve_time = problem.solve(lights, solver_path=solver_path)
