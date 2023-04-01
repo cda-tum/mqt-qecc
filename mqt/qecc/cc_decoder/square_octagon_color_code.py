@@ -1,7 +1,10 @@
-import numpy as np
+""" Square Octagon Color Code. Created by Peter-Jan Derks."""
+from __future__ import annotations
+
+from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
 
 
-class SquareOctagonColorCode:
+class SquareOctagonColorCode(ColorCode):
     def __init__(self, distance: int):
         """4.8.8 triangular colour code.
 
@@ -11,17 +14,13 @@ class SquareOctagonColorCode:
         Args:
             distance: Distance of the code to generate. Must be an odd integer.
         """
-        self.distance = distance
-        self.square_ancilla_qubits: set[tuple[int, int]] = set()
+        # additionally to ancilla_qubits (on squares) we have the ones on octagons
         self.octagon_ancilla_qubits: set[tuple[int, int]] = set()
-        self.data_qubits: set[tuple[int, int]] = set()
-        self.qubits_to_faces: dict[int, list[int]] = {}
-        self.faces_to_qubits: dict[int, list[int]] = {}
-        self.add_qubits()
-        self.H = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-        self.construct_layout()
+        self.square_ancilla_qubits: set[tuple[int, int]] = set()
+        ColorCode.__init__(self, distance=distance, type=LatticeType.SQUARE_OCTAGON)
 
     def add_qubits(self):
+        print("square add qubits")
         self.bottom_row_ancillas()
         y = 1
         x_max = self.distance
@@ -110,6 +109,7 @@ class SquareOctagonColorCode:
             self.octagon_ancilla_qubits.add((x, 0))
 
     def construct_layout(self) -> None:
+        print("square construct layout")
         coords_to_idx: dict[tuple[int, int], int] = {}
         # builds a map: {(x,y): index} for each qubit with coordinates (x,y)
         # initializes the {qubit_index: [faces]} adjacency list

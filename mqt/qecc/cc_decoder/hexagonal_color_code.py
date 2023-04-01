@@ -2,19 +2,17 @@
 # Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
 from __future__ import annotations
 
-import numpy as np
-from ldpc import mod2
+from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
 
 
-class HexagonalColorCode:
+class HexagonalColorCode(ColorCode):
     def __init__(self, distance: int):
-        self.distance = distance
-        self.ancilla_qubits: set[tuple[int, int]] = set()
-        self.data_qubits: set[tuple[int, int]] = set()
+        ColorCode.__init__(self, distance=distance, type=LatticeType.HEXAGONAL)
 
+    def add_qubits(self):
         colour = ["r", "b", "g"]
         y = 0
-        x_max = distance + distance // 2
+        x_max = self.distance + self.distance // 2
         while x_max > 0:
             ancilla_colour = colour[y % 3]
             if ancilla_colour == "r":
@@ -25,15 +23,6 @@ class HexagonalColorCode:
                 self.green_row(x_max, y)
             x_max -= 1
             y += 1
-
-        self.qubits_to_faces: dict[int, list[int]] = {}
-        self.faces_to_qubits: dict[int, list[int]] = {}
-
-        self.H = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-        self.L = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-
-        self.construct_layout()
-        self.n = len(self.qubits_to_faces)
 
     def red_row(self, x_max: int, y: int) -> None:
         """
@@ -80,16 +69,6 @@ class HexagonalColorCode:
             x_row += 2
             i += 1
 
-    def compute_logical(self) -> None:
-        # lz logical operators
-        # lz\in ker{hx} AND \notin Im(Hz.T)
-        ker_hx = mod2.nullspace(self.H)  # compute the kernel basis of hx
-        im_hz_transp = mod2.row_basis(self.H)  # compute the image basis of hz.T
-        log_stack = np.vstack([im_hz_transp, ker_hx])
-        pivots = mod2.row_echelon(log_stack.T)[3]
-        log_op_indices = [i for i in range(im_hz_transp.shape[0], log_stack.shape[0]) if i in pivots]
-        self.L = log_stack[log_op_indices]
-
     def construct_layout(self) -> None:
         coords_to_idx: dict[tuple[int, int], int] = {}
         # builds a map: {(x,y): index} for each qubit with coordinates (x,y)
@@ -111,9 +90,3 @@ class HexagonalColorCode:
 
         # L is the matrix of logicals of the code
         self.compute_logical()
-
-    def get_syndrome(self, error: np.ndarray) -> np.ndarray:
-        return self.H @ error % 2
-
-    def check_if_logical_error(self, residual: np.ndarray) -> bool:
-        return (self.L @ residual % 2).any()
