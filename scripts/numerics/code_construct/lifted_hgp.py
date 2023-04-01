@@ -13,7 +13,7 @@ from bposd.css import css_code
 from bposd.stab import stab_code
 
 
-def identity(n: int) -> np.ndarray[int, int]:
+def identity(n: int) -> npt.NDArray[np.int_]:
     """Return the identity matrix of size n."""
     return pt.identity(n)
 
@@ -47,14 +47,14 @@ class LiftedHgp(css_code):
         super().__init__(self.hx_proto.to_binary(lift_parameter), self.hz_proto.to_binary(lift_parameter))
 
     @property
-    def protograph(self) -> np.ndarray[int, int]:
+    def protograph(self) -> npt.NDArray[np.int_]:
         """Returns the protograph of the lifted hypergraph product."""
         px = pt.vstack([pt.zeros(self.hz_proto.shape), self.hx_proto])
         pz = pt.vstack([self.hz_proto, pt.zeros(self.hx_proto.shape)])
         return pt.hstack([px, pz])
 
     @property
-    def hx1(self) -> np.ndarray[int, int]:
+    def hx1(self) -> npt.NDArray[np.int_]:
         """Returns the first horizontal protograph of the lifted hypergraph product."""
         return self.hx1_proto.to_binary(self.lift_parameter)
 

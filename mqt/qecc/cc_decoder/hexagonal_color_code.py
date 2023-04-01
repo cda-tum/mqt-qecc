@@ -1,6 +1,9 @@
-"""Hexagonal Color Code class."""
-# Created by Peter-Jan Derks
-# Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
+"""Hexagonal Color Code class.
+
+Created by Peter-Jan Derks
+Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
