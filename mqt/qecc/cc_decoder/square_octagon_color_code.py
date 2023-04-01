@@ -2,13 +2,14 @@ import numpy as np
 
 
 class SquareOctagonColorCode:
-    def __init__(self, distance: int):
+    def __init__(self, distance: int) -> None:
         """4.8.8 triangular colour code.
 
         This class can be used to generate the parity check matrix of 4.8.8 triangular colour code.
         This code has parameters [n, k, d] = [1/2*d**2 + d - 1/2, 1, d].
 
         Args:
+        ----
             distance: Distance of the code to generate. Must be an odd integer.
         """
         self.distance = distance

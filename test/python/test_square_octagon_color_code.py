@@ -1,15 +1,14 @@
-"""
-Test the square octagon color code. Created by Peter-Jan Derks.
-"""
+"""Test the square octagon color code. Created by Peter-Jan Derks."""
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
+
 from mqt.qecc.cc_decoder.square_octagon_color_code import SquareOctagonColorCode
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def code(request) -> SquareOctagonColorCode:
     """Color code on 4.8.8 lattice."""
     return SquareOctagonColorCode(distance=request.param)
