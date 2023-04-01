@@ -1,0 +1,25 @@
+name: mypy
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: my[py] linter
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
+      - name: Setup nox
+        uses: excitedleigh/setup-nox@v2.1.0
+      - name: Run mypy via nox
+        run: nox -s mypy
