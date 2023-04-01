@@ -1,11 +1,17 @@
+"""Qiskit wrapper for the ECC Framework."""
 from __future__ import annotations
 
 import argparse
+from typing import TYPE_CHECKING
 
-from mqt import qecc
 from qiskit import QuantumCircuit, execute
 from qiskit.providers.aer import AerSimulator
-from qiskit.result import counts
+
+from mqt import qecc
+
+if TYPE_CHECKING:  # pragma: no cover
+    from qiskit.result import Result
+
 from qiskit_aer.noise import (
     NoiseModel,
     QuantumError,
@@ -16,14 +22,12 @@ from qiskit_aer.noise.errors import pauli_error
 
 
 def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:
-    if error is None:
-        error = new_error
-    else:
-        error = error.compose(new_error)
-    return error
+    """Compose two quantum errors."""
+    return new_error if error is None else error.compose(new_error)
 
 
 def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
+    """Create a noise model for a given error rate and error model."""
     # Create an empty noise model
     noise_model = NoiseModel()
     error = None
@@ -60,9 +64,11 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
     return noise_model
 
 
-def print_simulation_results(result_counts: counts, n_shots: int, threshold_probability: float = 0) -> None:
+def print_simulation_results(result: Result, n_shots: int, threshold_probability: float = 0) -> None:
+    """Print the simulation results."""
     printed_results = 0
     summarized_counts: dict[str, int] = {}
+    result_counts = result.get_counts()
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
         if sub_result not in summarized_counts.keys():
@@ -80,6 +86,7 @@ def print_simulation_results(result_counts: counts, n_shots: int, threshold_prob
 
 
 def main() -> None:
+    """Run main function of the Qiskit wrapper for the ECC Framework."""
     parser = argparse.ArgumentParser(description="Qiskit wrapper for the ECC Framework")
     parser.add_argument(
         "-m",
@@ -121,27 +128,20 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-
+    assert args is not None
     error_channels = args.m
     error_probability = args.p
     number_of_shots = args.n
     seed = args.s
     open_qasm_file = args.f
 
-    if args.fs.lower() == "none":
-        forced_simulator = None
-    else:
-        forced_simulator = args.fs
+    forced_simulator = None if args.fs.lower() == "none" else args.fs
 
-    if args.ecc.lower() == "none":
-        ecc = None
-    else:
-        ecc = args.ecc
+    ecc = None if args.ecc.lower() == "none" else args.ecc
 
     ecc_frequency = args.fq
     ecc_export_filename = args.e
-
-    if "stabilizer" in forced_simulator and "A" in error_channels:
+    if forced_simulator is not None and "stabilizer" in forced_simulator and "A" in error_channels:
         print(
             'Warning: Non-unitary errors (such as for example amplitude damping ("A")) are not suitable for simulation '
             "with a stabilizer based simulator and may cause an error during the simulation."
@@ -171,7 +171,6 @@ def main() -> None:
         return
 
     size = circ.num_qubits
-    simulator_backend = None
     print(
         "_____Trying to simulate with "
         + str(error_channels)
@@ -190,7 +189,7 @@ def main() -> None:
     # Setting the simulator backend to the requested one
     simulator_backend = AerSimulator(method=forced_simulator, noise_model=noise_model)
 
-    result = execute(
+    job = execute(
         circ,
         backend=simulator_backend,
         shots=number_of_shots,
@@ -198,8 +197,9 @@ def main() -> None:
         noise_model=noise_model,
     )
 
-    if result.result().status != "COMPLETED":
-        raise RuntimeError("Simulation exited with status: " + str(result.result().status))
+    job_result: Result = job.result()
 
-    result_counts = result.result().get_counts()
-    print_simulation_results(result_counts, number_of_shots)
+    if job_result.status != "COMPLETED":
+        raise RuntimeError("Simulation exited with status: " + str(job_result.status))
+
+    print_simulation_results(job_result, number_of_shots)

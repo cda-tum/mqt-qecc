@@ -1,13 +1,25 @@
-# Created by Peter-Jan Derks
-# Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
+"""Hexagonal Color Code class.
+
+Created by Peter-Jan Derks
+Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
+"""
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:  # pragma: no cover
+    import numpy.typing as npt
 from ldpc import mod2
 
 
 class HexagonalColorCode:
-    def __init__(self, distance: int):
+    """Class for the hexagonal color code."""
+
+    def __init__(self, distance: int) -> None:
+        """Construct the hexagonal color code."""
         self.distance = distance
         self.ancilla_qubits: set[tuple[int, int]] = set()
         self.data_qubits: set[tuple[int, int]] = set()
@@ -36,9 +48,7 @@ class HexagonalColorCode:
         self.n = len(self.qubits_to_faces)
 
     def red_row(self, x_max: int, y: int) -> None:
-        """
-        create red ancilla qubits
-        """
+        """Create red ancilla qubits."""
         i = 0
         x_row = y
         while i < x_max:
@@ -51,9 +61,7 @@ class HexagonalColorCode:
             x_row += 2
 
     def blue_row(self, x_max: int, y: int) -> None:
-        """
-        create blue ancilla qubits
-        """
+        """Create blue ancilla qubits."""
         i = 0
         x_row = y
         while i < x_max:
@@ -66,9 +74,7 @@ class HexagonalColorCode:
             x_row += 2
 
     def green_row(self, x_max: int, y: int) -> None:
-        """
-        create green ancilla qubits
-        """
+        """Create green ancilla qubits."""
         i = 0
         x_row = y
         while i < x_max:
@@ -81,6 +87,7 @@ class HexagonalColorCode:
             i += 1
 
     def compute_logical(self) -> None:
+        """Compute the logical operators."""
         # lz logical operators
         # lz\in ker{hx} AND \notin Im(Hz.T)
         ker_hx = mod2.nullspace(self.H)  # compute the kernel basis of hx
@@ -91,6 +98,7 @@ class HexagonalColorCode:
         self.L = log_stack[log_op_indices]
 
     def construct_layout(self) -> None:
+        """Construct the layout of the hexagonal color code."""
         coords_to_idx: dict[tuple[int, int], int] = {}
         # builds a map: {(x,y): index} for each qubit with coordinates (x,y)
         # initializes the {qubit_index: [faces]} adjacency list
@@ -112,8 +120,10 @@ class HexagonalColorCode:
         # L is the matrix of logicals of the code
         self.compute_logical()
 
-    def get_syndrome(self, error: np.ndarray) -> np.ndarray:
+    def get_syndrome(self, error: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
+        """Compute the syndrome of the error."""
         return self.H @ error % 2
 
-    def check_if_logical_error(self, residual: np.ndarray) -> bool:
-        return (self.L @ residual % 2).any()
+    def check_if_logical_error(self, residual: npt.NDArray[np.int_]) -> bool:
+        """Check if the residual is a logical error."""
+        return (self.L @ residual % 2).any() is True

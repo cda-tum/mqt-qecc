@@ -80,7 +80,8 @@ if(NOT FLINT_INCLUDE_DIR OR NOT FLINT_LIBRARY)
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(FLINT DEFAULT_MSG FLINT_LIBRARY FLINT_INCLUDE_DIR)
+find_package_handle_standard_args(FLINT DEFAULT_MSG FLINT_LIBRARY
+                                  FLINT_INCLUDE_DIR)
 
 if(NOT TARGET flint)
   add_library(flint UNKNOWN IMPORTED)

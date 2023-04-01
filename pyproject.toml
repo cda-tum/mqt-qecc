@@ -3,7 +3,7 @@ requires = [
     "setuptools>=61",
     "setuptools_scm[toml]>=7",
     "ninja>=1.10; sys_platform != 'win32'",
-    "cmake>=3.14",
+    "cmake>=3.19",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -46,8 +46,8 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-console-scripts>=1.3", "pytest-mock"]
-coverage = ["mqt.qecc[test]", "coverage[toml]>=6.3", "pytest-cov>=3"]
+test = ["pytest>=7.2", "pytest-console-scripts>=1.3", "pytest-mock"]
+coverage = ["mqt.qecc[test]", "pytest-cov[toml]"]
 docs = [
     "sphinx>=5",
     "sphinx-rtd-theme",
@@ -110,7 +110,7 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "10.15", DEPLOY = "ON" }
 #environment = { DEPLOY = "ON", CC = "clang", CXX = "clang++", FLINT_ROOT = "/clang64" }
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "7.2"
 testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
@@ -153,27 +153,79 @@ show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 explicit_package_bases = true
+pretty = true
 
-[tool.pylint]
-master.py-version = "3.8"
-master.jobs = "0"
-reports.output-format = "colorized"
-similarities.ignore-imports = "yes"
-messages_control.enable = [
-    "useless-suppression",
+[[tool.mypy.overrides]]
+module = ["qiskit.*", "qiskit_aer.*", "qecsim.*" , "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*", "z3.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+select = [
+    "E", "F", "W", # flake8
+    "A", # flake8-builtins
+    "ANN", # flake8-annotations
+    "ARG", # flake8-unused-arguments
+    "B", "B904", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "D", # pydocstyle
+    "EM", # flake8-errmsg
+    "EXE", # flake8-executable
+    "I", # isort
+    "ICN", # flake8-import-conventions
+    "ISC", # flake8-implicit-str-concat
+    "N", # flake8-naming
+    "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "PL", # pylint
+    "PT", # flake8-pytest-style
+    "PTH", # flake8-use-pathlib
+    "PYI", # flake8-pyi
+    "Q", # flake8-quotes
+    "RET", # flake8-return
+    "RSE", # flake8-raise
+    "RUF", # Ruff-specific
+    "SLF", # flake8-self
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "TRY", # tryceratops
+    "UP", # pyupgrade
+    "YTT", # flake8-2020
 ]
-messages_control.disable = [
-    "invalid-name",
-    "line-too-long",
-    "missing-module-docstring",
-    "no-member",
-    "protected-access",
-    "too-few-public-methods",
-    "too-many-arguments",
-    "too-many-branches",
-    "too-many-locals",
-    "too-many-statements",
-    "ungrouped-imports",
-    "wrong-import-order",
-    "wrong-import-position",
+ignore = [
+    "ANN101", # Missing type annotation for self in method
+    "D203", # 1 blank line required before class docstring
+    "D213", # Multi-line docstring summary should start at the second line
+    "E501", # Line too long (Black is enough)
+    "PLR2004", # Magic values
+    "PLR0913", # Too many arguments
+]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+line-length = 120
+[tool.ruff.per-file-ignores]
+"*.pyi" = [
+    "D", # pydocstyle
 ]

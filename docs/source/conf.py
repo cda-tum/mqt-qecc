@@ -1,3 +1,4 @@
+"""Configuration file for the Sphinx documentation builder."""
 import sys
 
 from pybtex.database import Entry
@@ -19,7 +20,7 @@ author = "Lucas Berent"
 release = metadata.version("mqt.qecc")
 version = ".".join(release.split(".")[:3])
 language = "en"
-copyright = "Chair for Design Automation, Technical University of Munich"
+project_copyright = "Chair for Design Automation, Technical University of Munich"
 
 # -- General configuration ---------------------------------------------------
 extensions = [
