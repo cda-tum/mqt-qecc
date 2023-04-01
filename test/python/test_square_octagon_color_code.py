@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from mqt.qecc.cc_decoder.square_octagon_color_code import SquareOctagonColorCode
 
 

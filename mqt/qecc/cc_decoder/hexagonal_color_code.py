@@ -7,7 +7,7 @@ from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
 
 class HexagonalColorCode(ColorCode):
     def __init__(self, distance: int):
-        ColorCode.__init__(self, distance=distance, type=LatticeType.HEXAGONAL)
+        ColorCode.__init__(self, distance=distance, type=LatticeType.HEXAGON)
 
     def add_qubits(self):
         colour = ["r", "b", "g"]

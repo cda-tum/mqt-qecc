@@ -9,8 +9,8 @@ from ldpc import mod2
 
 
 class LatticeType(Enum):
-    HEXAGONAL = 1
-    SQUARE_OCTAGON = 2
+    HEXAGON = "hexagon"
+    SQUARE_OCTAGON = "square_octagon"
 
 
 class ColorCode:
