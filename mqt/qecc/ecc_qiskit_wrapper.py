@@ -9,7 +9,7 @@ from qiskit.providers.aer import AerSimulator
 
 from mqt import qecc
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from qiskit.result import Result
 
 from qiskit_aer.noise import (

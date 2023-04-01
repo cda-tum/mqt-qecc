@@ -13,7 +13,7 @@ from z3 import Bool, Not, Optimize, Xor, simplify
 
 from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from z3 import ModelRef
 
 
