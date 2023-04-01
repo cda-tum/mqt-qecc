@@ -20,7 +20,6 @@ class SquareOctagonColorCode(ColorCode):
         ColorCode.__init__(self, distance=distance, type=LatticeType.SQUARE_OCTAGON)
 
     def add_qubits(self):
-        print("square add qubits")
         self.bottom_row_ancillas()
         y = 1
         x_max = self.distance
@@ -109,7 +108,6 @@ class SquareOctagonColorCode(ColorCode):
             self.octagon_ancilla_qubits.add((x, 0))
 
     def construct_layout(self) -> None:
-        print("square construct layout")
         coords_to_idx: dict[tuple[int, int], int] = {}
         # builds a map: {(x,y): index} for each qubit with coordinates (x,y)
         # initializes the {qubit_index: [faces]} adjacency list
