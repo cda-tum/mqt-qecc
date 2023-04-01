@@ -149,7 +149,7 @@ If you use our tool for your research, we will be thankful if you refer to it by
   Quantum Computing: An Open-Source Framework for Quantum Error-Correction," in International Conference on VLSI
   Design and International Conference on Embedded Systems (VLSID), 2023
 
-- [![a](https://img.shields.io/static/v1?label=arXiv&message=2011.07288&color=inactive&style=flat-square)](https://arxiv.org/abs/2209.01180)
+- [![a](https://img.shields.io/static/v1?label=arXiv&message=2209.01180&color=inactive&style=flat-square)](https://arxiv.org/abs/2209.01180)
   L. Berent, L. Burgholzer, and R.
   Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
   in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
