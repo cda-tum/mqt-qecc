@@ -1,35 +1,43 @@
+"""Plot the decoding runtime for different code lengths and different error probabilities."""
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize as opt
 
-matplotlib.rcParams["mathtext.fontset"] = "custom"
-matplotlib.rcParams["mathtext.rm"] = "Bitstream Vera Sans"
-matplotlib.rcParams["mathtext.it"] = "Bitstream Vera Sans:italic"
-matplotlib.rcParams["mathtext.bf"] = "Bitstream Vera Sans:bold"
+mpl.rcParams["mathtext.fontset"] = "custom"
+mpl.rcParams["mathtext.rm"] = "Bitstream Vera Sans"
+mpl.rcParams["mathtext.it"] = "Bitstream Vera Sans:italic"
+mpl.rcParams["mathtext.bf"] = "Bitstream Vera Sans:bold"
 
 
-def lin_fun(x, a, b):
+def lin_fun(x: float, a: float, b: float) -> float:
+    """Return the value of a*x + b."""
     return np.multiply(a, x) + b
 
 
-def quad_fun(x, a, b):
+def quad_fun(x: float, a: float, b: float) -> float:
+    """Return the value of a*x^2 + b."""
     return np.multiply(a, np.power(x, 2)) + b
 
 
-def pow_three_fun(x, a, b):
+def pow_three_fun(x: float, a: float, b: float) -> float:
+    """Return the value of a*x^3 + b."""
     return np.multiply(a, np.power(x, 3)) + b
 
 
-def pow_four_fun(x, a, b):
+def pow_four_fun(x: float, a: float, b: float) -> float:
+    """Return the value of a*x^4 + b."""
     return np.multiply(a, np.power(x, 4)) + b
 
 
-def runtime():
+def runtime() -> None:
+    """Plot the runtime."""
     plt.rcParams.update({"font.size": 15})
     input_filen = "/home/luca/Documents/codeRepos/qecc/scripts/numerics/data/runtime/rt-original-1k-01.json"
     x_data = []
@@ -68,15 +76,6 @@ def runtime():
         xfinal.append(np.array(x_data[i])[orders[i]])
         yfinal.append(np.array(y_data[i])[orders[i]])
         plt.plot(xfinal[i], yfinal[i], "o", label="p=" + label, color=col)
-        # start = 5
-        # optimizedParameters, pcov = opt.curve_fit(LinFun, xfinal[i][start:], yfinal[i][start:])
-        # plt.plot(xfinal[i][start:], LinFun(xfinal[i][start:], *optimizedParameters), '--', color=col, label='O(n)')
-        print(xfinal)
-        print(yfinal)
-
-    # start2 = 7
-    # optimizedParameters2, pcov = opt.curve_fit(LinFun, xfinal[1][start2:], yfinal[1][start2:])
-    # plt.plot(xfinal[1][start2:], LinFun(xfinal[1][start2:], *optimizedParameters2),'--', color='m', label='O(n)')
 
     plt.legend()
     plt.ylabel("avg runtime (s) to decode 1k samples")
@@ -85,7 +84,8 @@ def runtime():
     plt.show()
 
 
-def runtime_comparison():
+def runtime_comparison() -> None:  # noqa: PLR0915
+    """Compare the runtime of the original and the heuristic decoding algorithm."""
     plt.rcParams.update({"font.size": 14})
     input_filen = ""
     input_filen2 = ""
@@ -139,8 +139,6 @@ def runtime_comparison():
         start = 0
         optimized_parameters, pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
         plt.plot(xfinal[i][start:], lin_fun(xfinal[i][start:], *optimized_parameters), "--", color=col, label=r"$O(n)$")
-        print(xfinal)
-        print(yfinal)
 
     # general qlpd decoder data
     label = "%2.2f" % pers2
@@ -159,6 +157,3 @@ def runtime_comparison():
     plt.xlabel("code length n")
     plt.grid()
     plt.show()
-
-
-runtime_comparison()

@@ -1,3 +1,4 @@
+"""Toric code construction."""
 # using tools from https://github.com/quantumgizmos/bp_osd
 import numpy as np
 from bposd.hgp import hgp

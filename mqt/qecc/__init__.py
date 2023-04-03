@@ -1,7 +1,8 @@
-#
-# This file is part of MQT QECC library which is released under the MIT license.
-# See file README.md for more information.
-#
+"""MQT QECC library.
+
+This file is part of the MQT QECC library released under the MIT license.
+See README.md or go to https://github.com/cda-tum/qecc for more information.
+"""
 
 from mqt.qecc.pyqecc import (
     Code,

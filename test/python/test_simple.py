@@ -1,16 +1,19 @@
+"""Test simple example with hamming code."""
 from __future__ import annotations
 
 import numpy as np
+
 from mqt.qecc import Code, UFHeuristic, sample_iid_pauli_err
 
 
 def test_basic() -> None:
-    H = [
-        [1, 0, 0, 1, 0, 1, 1],
-        [0, 1, 0, 1, 1, 0, 1],
-        [0, 0, 1, 0, 1, 1, 1],
+    """Test basic functionality with Hamming code."""
+    h = [
+        [True, False, False, True, False, True, True],
+        [False, True, False, True, True, False, True],
+        [False, False, True, False, True, True, True],
     ]
-    code = Code(H, H)
+    code = Code(h, h)
     decoder = UFHeuristic()
     decoder.set_code(code)
     x_err = sample_iid_pauli_err(code.n, 0.05)

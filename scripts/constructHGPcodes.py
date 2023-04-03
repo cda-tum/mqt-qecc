@@ -1,3 +1,6 @@
+"""Construction of HGP codes."""
+from __future__ import annotations
+
 import numpy as np
 from bposd.hgp import hgp
 

@@ -30,6 +30,7 @@ var/
 .coverage
 .coverage*
 .tox
+.nox
 coverage.xml
 htmlcov
 
@@ -42,3 +43,5 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.ruff_cache/
+.mypy_cache/

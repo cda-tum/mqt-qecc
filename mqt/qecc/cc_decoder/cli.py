@@ -1,3 +1,4 @@
+"""Command line interface for the CC decoder."""
 import argparse
 
 from mqt.qecc.cc_decoder import decoder
@@ -5,6 +6,7 @@ from mqt.qecc.cc_decoder.comparison import tn_decoder
 
 
 def cli() -> None:
+    """Run the CC decoder as cli."""
     parser = argparse.ArgumentParser()
     parser.add_argument("distance", type=int, help="the distance of the code")
     parser.add_argument("error_rate", type=float, help="the error rate")

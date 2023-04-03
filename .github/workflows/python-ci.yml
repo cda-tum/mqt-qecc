@@ -15,18 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    name: my[py] linter
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
-      - name: Setup nox
-        uses: excitedleigh/setup-nox@v2.1.0
-      - name: Run mypy via nox
-        run: nox -s mypy
-
   python-tests:
     name: Tests ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}

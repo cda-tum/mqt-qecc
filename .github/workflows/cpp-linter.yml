@@ -33,10 +33,10 @@ jobs:
         run: |
           pipx run cpp-linter \
           --version=14 \
-          --style="file" \
+          --style="" \
           --tidy-checks="" \
           --thread-comments=true \
-          --files-changed-only=false \
+          --files-changed-only=true \
           --ignore="build|flint2" \
           --database=build
       - name: Fail if linter found errors

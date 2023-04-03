@@ -1,3 +1,6 @@
+"""Visualize the word error rate plots."""
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -5,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def wer():
+def wer() -> None:
+    """Plot the word error rate."""
     plt.rcParams.update({"font.size": 14})
     input_filename = ""
     input_filename2 = ""
@@ -51,9 +55,6 @@ def wer():
     ax.plot(x_dataf, y_dataf, "-x", label="heuristic SSG", color="b")
     ax.plot(x_data2f, y_data2f, "-o", label="GD", color="g")
     ax.plot(x_data3f, y_data3f, "-x", label="heuristic AG", color="r")
-    print(y_data)
-    print(y_data2)
-    print(y_data3)
 
     ax.set_xlabel("physical X-error rate")
     ax.set_ylabel("WER")
@@ -61,7 +62,6 @@ def wer():
     ax.grid()
     ax.set_xscale("log")
     ax.set_yscale("log")
-    # ax.gca().set_position([0, 0, 1, 1])
     handles, labels = ax.get_legend_handles_labels()
 
     handles = [handles[1], handles[2], handles[0]]
@@ -71,7 +71,8 @@ def wer():
     plt.show()
 
 
-def wer_comp():
+def wer_comp() -> None:
+    """Visualize WER comparison."""
     plt.rcParams.update({"font.size": 15})
     input_filename = ""
     input_filename2 = ""

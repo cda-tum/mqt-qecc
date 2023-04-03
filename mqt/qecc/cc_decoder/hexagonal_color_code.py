@@ -1,13 +1,25 @@
-# Created by Peter-Jan Derks
-# Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
-from __future__ import annotations
+"""Hexagonal Color Code class.
 
+Created by Peter-Jan Derks
+Hexagonal Color Code layout construction adapted from https://github.com/peter-janderks/restriction_decoder_domain_wall_colour_code
+"""
+
+from __future__ import annotations
 from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
+
+from typing import TYPE_CHECKING
+
+import numpy as np
+
+if TYPE_CHECKING:  # pragma: no cover
+    import numpy.typing as npt
+from ldpc import mod2
 
 
 class HexagonalColorCode(ColorCode):
     def __init__(self, distance: int):
         ColorCode.__init__(self, distance=distance, type=LatticeType.HEXAGON)
+
 
     def add_qubits(self):
         colour = ["r", "b", "g"]
@@ -25,9 +37,7 @@ class HexagonalColorCode(ColorCode):
             y += 1
 
     def red_row(self, x_max: int, y: int) -> None:
-        """
-        create red ancilla qubits
-        """
+        """Create red ancilla qubits."""
         i = 0
         x_row = y
         while i < x_max:
@@ -40,9 +50,7 @@ class HexagonalColorCode(ColorCode):
             x_row += 2
 
     def blue_row(self, x_max: int, y: int) -> None:
-        """
-        create blue ancilla qubits
-        """
+        """Create blue ancilla qubits."""
         i = 0
         x_row = y
         while i < x_max:
@@ -55,9 +63,7 @@ class HexagonalColorCode(ColorCode):
             x_row += 2
 
     def green_row(self, x_max: int, y: int) -> None:
-        """
-        create green ancilla qubits
-        """
+        """Create green ancilla qubits."""
         i = 0
         x_row = y
         while i < x_max:
@@ -70,6 +76,7 @@ class HexagonalColorCode(ColorCode):
             i += 1
 
     def construct_layout(self) -> None:
+        """Construct the layout of the hexagonal color code."""
         coords_to_idx: dict[tuple[int, int], int] = {}
         # builds a map: {(x,y): index} for each qubit with coordinates (x,y)
         # initializes the {qubit_index: [faces]} adjacency list
