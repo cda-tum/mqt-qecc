@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
+
+if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureRequest
+
 from mqt.qecc.cc_decoder.square_octagon_color_code import SquareOctagonColorCode
 
 
 @pytest.fixture()
-def code(request) -> SquareOctagonColorCode:
+def code(request: FixtureRequest) -> SquareOctagonColorCode:
     """Color code on 4.8.8 lattice."""
     return SquareOctagonColorCode(distance=request.param)
 
@@ -28,6 +34,6 @@ def test_d3(code: SquareOctagonColorCode) -> None:
 
 
 @pytest.mark.parametrize("code", [3], indirect=True)
-def test_H(code: SquareOctagonColorCode) -> None:
+def test_h(code: SquareOctagonColorCode) -> None:
     """Test the parity check matrix for distance 3."""
     assert np.array_equal(code.H, np.array([[0, 0, 1, 0, 1, 1, 1], [0, 1, 0, 1, 0, 1, 1], [1, 1, 1, 0, 0, 1, 0]]))

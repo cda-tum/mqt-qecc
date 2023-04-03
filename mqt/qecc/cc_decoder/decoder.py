@@ -9,12 +9,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from z3 import Bool, Not, Optimize, Xor, simplify
+
 from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
 from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
 from mqt.qecc.cc_decoder.square_octagon_color_code import SquareOctagonColorCode
-from z3 import Bool, Not, Optimize, Xor, simplify
-
-from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
 
 if TYPE_CHECKING:  # pragma: no cover
     from z3 import ModelRef
@@ -190,7 +189,7 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
 
 
 def run(
-    type: LatticeType,
+    lattice: str,
     distance: int,
     error_rate: float,
     nr_sims: int = 10000,
@@ -198,12 +197,14 @@ def run(
     solver: str = "z3",
 ) -> None:
     """Run the decoding simulation for a given distance and error rate."""
-    if type is LatticeType.HEXAGON.value:
+    code: ColorCode
+    if lattice == str(LatticeType.HEXAGON.value):
         code = HexagonalColorCode(distance)
-    elif type is LatticeType.SQUARE_OCTAGON.value:
+    elif lattice == str(LatticeType.SQUARE_OCTAGON.value):
         code = SquareOctagonColorCode(distance)
     else:
-        raise Exception("Unknown code lattice type: " + str(type))
+        print("Unknown code lattice type: " + str(lattice))
+        return
     data = simulate_error_rate(code, error_rate, nr_sims, solver)
     strg = solver.split("/")[-1]
     filename = f"./code={str(code.lattice.value)},distance={code.distance},p={round(error_rate, 4)},solver={strg}.json"

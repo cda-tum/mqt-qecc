@@ -5,23 +5,19 @@ Hexagonal Color Code layout construction adapted from https://github.com/peter-j
 """
 
 from __future__ import annotations
+
 from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
-
-from typing import TYPE_CHECKING
-
-import numpy as np
-
-if TYPE_CHECKING:  # pragma: no cover
-    import numpy.typing as npt
-from ldpc import mod2
 
 
 class HexagonalColorCode(ColorCode):
-    def __init__(self, distance: int):
-        ColorCode.__init__(self, distance=distance, type=LatticeType.HEXAGON)
+    """Hexagonal Color Code."""
 
+    def __init__(self, distance: int) -> None:
+        """Hexagonal Color Code initialization from base class."""
+        ColorCode.__init__(self, distance=distance, lattice=LatticeType.HEXAGON)
 
-    def add_qubits(self):
+    def add_qubits(self) -> None:
+        """Add qubits to the code."""
         colour = ["r", "b", "g"]
         y = 0
         x_max = self.distance + self.distance // 2

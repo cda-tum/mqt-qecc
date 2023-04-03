@@ -46,7 +46,7 @@ def code(distance: int) -> cc_decoder.HexagonalColorCode:
     return cc_decoder.HexagonalColorCode(distance=distance)
 
 
-@pytest.fixture
+@pytest.fixture()
 def d3_hexcode() -> HexagonalColorCode:
     """Distance of the hexagonal color code."""
     return HexagonalColorCode(distance=3)
