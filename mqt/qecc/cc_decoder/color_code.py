@@ -39,11 +39,9 @@ class ColorCode:
 
     def add_qubits(self) -> None:
         """Compute the ancilla and data qubits lists from the lattice type."""
-        pass
 
     def construct_layout(self) -> None:
         """Construct the adjacency lists of the code from the qubits lists. Assumes add_qubits was called."""
-        pass
 
     def compute_logical(self) -> None:
         """Compute the logical matrix L."""
