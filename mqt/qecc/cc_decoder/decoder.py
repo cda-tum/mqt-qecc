@@ -179,7 +179,7 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
         "distance": code.distance,
         "p": error_rate,
         "logical_error_rates": logical_error_rates.tolist(),
-        "logical_error_rates_ebs": logical_error_rate_ebs.tolist(),
+        "logical_error_rate_ebs": logical_error_rate_ebs.tolist(),
         "preconstr_time": preconstr_time.microseconds,
         "avg_constr_time": avg_constr_time,
         "avg_solve_time": avg_solve_time,
