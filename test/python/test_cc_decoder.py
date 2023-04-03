@@ -1,11 +1,12 @@
 """Test the decoder for the hexagonal color code."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
+
+from .test_utils import check_and_load_json
 
 if TYPE_CHECKING:
     import pytest_mock
@@ -88,25 +89,6 @@ def test_simulate(d3_hexcode: HexagonalColorCode, distance: int, p: float, nr_si
     assert res["p"] == p
 
 
-def check_and_load_json(file_name: str, results_dir: str) -> dict[str, Any]:
-    """Check that the results directory contains exactly one file with the given name and load it as JSON."""
-    results_path = Path(results_dir)
-    assert results_path.exists()
-    assert results_path.is_dir()
-    assert len(list(results_path.iterdir())) == 1
-    result_file = results_path / file_name
-    assert result_file.exists()
-    assert result_file.is_file()
-    with result_file.open("r") as f:
-        result: dict[str, Any] = json.load(f)
-
-    for file in results_path.iterdir():
-        file.unlink()
-    results_path.rmdir()
-
-    return result
-
-
 def test_z3_solver(
     script_runner: ScriptRunner, d3_hexcode: HexagonalColorCode, p: float, nr_sims: int, results_dir: str
 ) -> None:
@@ -131,7 +113,7 @@ def test_z3_solver(
     assert result["distance"] == d3_hexcode.distance
     assert result["p"] == p
     assert result["logical_error_rates"] is not None
-    assert result["logical_error_rates_ebs"] is not None
+    assert result["logical_error_rate_ebs"] is not None
     assert result["min_wts_logical_err"] is not None
     assert result["preconstr_time"] > 0.0
     assert result["avg_constr_time"] > 0.0
@@ -183,7 +165,7 @@ def test_external_solver(
     assert result["distance"] == d3_hexcode.distance
     assert result["p"] == p
     assert result["logical_error_rates"] == [0.0]
-    assert result["logical_error_rates_ebs"] == [0.0]
+    assert result["logical_error_rate_ebs"] == [0.0]
     assert result["min_wts_logical_err"] == [-1]
     assert result["preconstr_time"] > 0.0
     assert result["avg_constr_time"] > 0.0

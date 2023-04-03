@@ -11,7 +11,7 @@ def cli() -> None:
     parser.add_argument("distance", type=int, help="the distance of the code")
     parser.add_argument("error_rate", type=float, help="the error rate")
     parser.add_argument(
-        "--type", type=str, default="hexagon", help="type of the code lattice (hex or square-oct). Default: hexagon"
+        "--type", type=str, default="hexagon", help="type of the code lattice (hex or square_octagon). Default: hexagon"
     )
     parser.add_argument("--nr_sims", type=int, default=10000, help="the number of simulations to run. Default: 10000")
     parser.add_argument(
