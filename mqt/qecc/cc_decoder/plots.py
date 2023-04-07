@@ -358,6 +358,3 @@ def main() -> None:
     else:
         msg = "Unknown mode: " + args.mode
         raise ValueError(msg)
-
-
-generate_plots(Path("/home/luca/Documents/codeRepos/mqt-qecc/qecc/results-4qb"), Path("./results.pdf"))

@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
 
 
-class LatticeType(Enum):
+class LatticeType(str, Enum):
     """The type of lattice used for the color code."""
 
     HEXAGON = "hexagon"
@@ -22,14 +22,14 @@ class LatticeType(Enum):
 class ColorCode:
     """A base class for color codes on a three-valent, three-colourable lattice."""
 
-    def __init__(self, distance: int, lattice: LatticeType) -> None:
+    def __init__(self, distance: int, lattice_type: LatticeType) -> None:
         """Initialize the color code."""
         self.distance = distance
         self.ancilla_qubits: set[tuple[int, int]] = set()
         self.data_qubits: set[tuple[int, int]] = set()
         self.qubits_to_faces: dict[int, list[int]] = {}
         self.faces_to_qubits: dict[int, list[int]] = {}
-        self.lattice = lattice
+        self.lattice_type = lattice_type
         self.add_qubits()
         self.H = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
         self.construct_layout()

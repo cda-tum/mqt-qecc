@@ -14,7 +14,7 @@ class HexagonalColorCode(ColorCode):
 
     def __init__(self, distance: int) -> None:
         """Hexagonal Color Code initialization from base class."""
-        ColorCode.__init__(self, distance=distance, lattice=LatticeType.HEXAGON)
+        ColorCode.__init__(self, distance=distance, lattice_type=LatticeType.HEXAGON)
 
     def add_qubits(self) -> None:
         """Add qubits to the code."""

@@ -11,12 +11,14 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from z3 import Bool, Not, Optimize, Xor, simplify
 
-from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
-from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
-from mqt.qecc.cc_decoder.square_octagon_color_code import SquareOctagonColorCode
+from mqt.qecc.cc_decoder import ColorCode, code_from_string
 
 if TYPE_CHECKING:  # pragma: no cover
     from z3 import ModelRef
+
+
+class IllegalArgumentError(ValueError):
+    """Custom exception for illegal arguments."""
 
 
 @dataclass
@@ -168,18 +170,16 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
         avg_constr_time = (avg_constr_time * i + constr_time.microseconds) / (i + 1)
         avg_solve_time = (avg_solve_time * i + solve_time.microseconds) / (i + 1)
 
-    logical_error_rates = np.full(len(code.L), 0.0)
-    logical_error_rate_ebs = np.full(len(code.L), 0.0)
-    for ler in range(len(logical_error_rates)):
-        logical_error_rates[ler] = logical_errors[ler] / nr_sims
-        logical_error_rate_ebs[ler] = np.sqrt((1 - logical_error_rates[ler]) * logical_error_rates[ler] / nr_sims)
+    logical_error_rates: list[float] = [nr_errors / nr_sims for nr_errors in logical_errors]
+    logical_error_rate_ebs: list[float] = [np.sqrt((1 - ler) * ler / nr_sims) for ler in logical_error_rates]
     avg_total_time = avg_constr_time + avg_solve_time
 
     return {
+        "lattice": code.lattice_type,
         "distance": code.distance,
         "p": error_rate,
-        "logical_error_rates": logical_error_rates.tolist(),
-        "logical_error_rate_ebs": logical_error_rate_ebs.tolist(),
+        "logical_error_rates": logical_error_rates,
+        "logical_error_rate_ebs": logical_error_rate_ebs,
         "preconstr_time": preconstr_time.microseconds,
         "avg_constr_time": avg_constr_time,
         "avg_solve_time": avg_solve_time,
@@ -189,7 +189,7 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
 
 
 def run(
-    lattice: str,
+    lattice_type: str,
     distance: int,
     error_rate: float,
     nr_sims: int = 10000,
@@ -197,17 +197,10 @@ def run(
     solver: str = "z3",
 ) -> None:
     """Run the decoding simulation for a given distance and error rate."""
-    code: ColorCode
-    if lattice == str(LatticeType.HEXAGON.value):
-        code = HexagonalColorCode(distance)
-    elif lattice == str(LatticeType.SQUARE_OCTAGON.value):
-        code = SquareOctagonColorCode(distance)
-    else:
-        print("Unknown code lattice type: " + str(lattice))
-        return
+    code = code_from_string(lattice_type, distance)
     data = simulate_error_rate(code, error_rate, nr_sims, solver)
     strg = solver.split("/")[-1]
-    filename = f"./code={str(code.lattice.value)},distance={code.distance},p={round(error_rate, 4)},solver={strg}.json"
+    filename = f"./code={str(code.lattice_type)},distance={code.distance},p={round(error_rate, 4)},solver={strg}.json"
     path = Path(results_dir)
     path.mkdir(parents=True, exist_ok=True)
     with (path / filename).open("w") as out:
