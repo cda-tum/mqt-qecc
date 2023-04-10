@@ -197,4 +197,4 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
 
 def test_get_code_from_str() -> None:
     """Test the construction of a color code from a string."""
-    assert code_from_string(lattice_type="hexagonal", distance=3) == HexagonalColorCode(distance=3)
+    assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(distance=3)
