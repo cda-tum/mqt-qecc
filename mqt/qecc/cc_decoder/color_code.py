@@ -37,6 +37,12 @@ class ColorCode:
         self.n = len(self.qubits_to_faces)
         self.k = self.L.shape[1]
 
+    def __eq__(self, other: object) -> bool:
+        """Check if two color codes are equal."""
+        if not isinstance(other, ColorCode):
+            return NotImplemented
+        return np.array_equal(self.H, other.H)
+
     def add_qubits(self) -> None:
         """Compute the ancilla and data qubits lists from the lattice type."""
 
