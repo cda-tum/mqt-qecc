@@ -11,7 +11,8 @@ def code_from_string(lattice_type: str, distance: int) -> ColorCode:
         return HexagonalColorCode(distance)
     if lattice_type == LatticeType.SQUARE_OCTAGON:
         return SquareOctagonColorCode(distance)
-    raise ValueError("Unknown lattice: " + lattice_type)
+    msg = f"Unknown lattice type {lattice_type}. Please choose either hexagon or square_octagon."
+    raise ValueError(msg)
 
 
 __all__ = [
