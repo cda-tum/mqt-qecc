@@ -10,16 +10,9 @@ import pytest
 from .test_utils import check_and_load_json
 
 if TYPE_CHECKING:
-    from _pytest.fixtures import FixtureRequest
     from pytest_console_scripts import ScriptRunner
 
 from mqt.qecc.cc_decoder import SquareOctagonColorCode
-
-
-@pytest.fixture()
-def code(request: FixtureRequest) -> SquareOctagonColorCode:
-    """Color code on 4.8.8 lattice."""
-    return SquareOctagonColorCode(distance=request.param)
 
 
 @pytest.fixture()
@@ -46,7 +39,7 @@ def results_dir() -> str:
     return "./results"
 
 
-@pytest.mark.parametrize("code", list(range(3, 23, 2)), indirect=True)
+@pytest.mark.parametrize("code", [SquareOctagonColorCode(distance=d) for d in range(3, 23, 2)])
 def test_number_of_qubits(code: SquareOctagonColorCode) -> None:
     """Test the number of qubits for larger distances."""
     assert len(code.data_qubits) == 1 / 2 * code.distance**2 + code.distance - 1 / 2
