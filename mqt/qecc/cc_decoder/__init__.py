@@ -1,5 +1,4 @@
 """Contains the implementation of the tensor network decoder for the hexagonal color code."""
-from mqt.qecc.cc_decoder import cli
 from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
 from mqt.qecc.cc_decoder.comparison import tn_decoder
 from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
@@ -16,7 +15,6 @@ def code_from_string(lattice_type: str, distance: int) -> ColorCode:
 
 
 __all__ = [
-    "cli",
     "tn_decoder",
     "HexagonalColorCode",
     "ColorCode",

@@ -11,14 +11,12 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from z3 import Bool, Not, Optimize, Xor, simplify
 
-from mqt.qecc.cc_decoder import ColorCode, code_from_string
+from mqt.qecc.cc_decoder import code_from_string
 
 if TYPE_CHECKING:  # pragma: no cover
     from z3 import ModelRef
 
-
-class IllegalArgumentError(ValueError):
-    """Custom exception for illegal arguments."""
+    from mqt.qecc.cc_decoder import ColorCode
 
 
 @dataclass
