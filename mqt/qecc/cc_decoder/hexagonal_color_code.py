@@ -6,27 +6,21 @@ Hexagonal Color Code layout construction adapted from https://github.com/peter-j
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import numpy as np
-
-if TYPE_CHECKING:  # pragma: no cover
-    import numpy.typing as npt
-from ldpc import mod2
+from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
 
 
-class HexagonalColorCode:
-    """Class for the hexagonal color code."""
+class HexagonalColorCode(ColorCode):
+    """Hexagonal Color Code."""
 
     def __init__(self, distance: int) -> None:
-        """Construct the hexagonal color code."""
-        self.distance = distance
-        self.ancilla_qubits: set[tuple[int, int]] = set()
-        self.data_qubits: set[tuple[int, int]] = set()
+        """Hexagonal Color Code initialization from base class."""
+        ColorCode.__init__(self, distance=distance, lattice_type=LatticeType.HEXAGON)
 
+    def add_qubits(self) -> None:
+        """Add qubits to the code."""
         colour = ["r", "b", "g"]
         y = 0
-        x_max = distance + distance // 2
+        x_max = self.distance + self.distance // 2
         while x_max > 0:
             ancilla_colour = colour[y % 3]
             if ancilla_colour == "r":
@@ -37,15 +31,6 @@ class HexagonalColorCode:
                 self.green_row(x_max, y)
             x_max -= 1
             y += 1
-
-        self.qubits_to_faces: dict[int, list[int]] = {}
-        self.faces_to_qubits: dict[int, list[int]] = {}
-
-        self.H = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-        self.L = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-
-        self.construct_layout()
-        self.n = len(self.qubits_to_faces)
 
     def red_row(self, x_max: int, y: int) -> None:
         """Create red ancilla qubits."""
@@ -86,17 +71,6 @@ class HexagonalColorCode:
             x_row += 2
             i += 1
 
-    def compute_logical(self) -> None:
-        """Compute the logical operators."""
-        # lz logical operators
-        # lz\in ker{hx} AND \notin Im(Hz.T)
-        ker_hx = mod2.nullspace(self.H)  # compute the kernel basis of hx
-        im_hz_transp = mod2.row_basis(self.H)  # compute the image basis of hz.T
-        log_stack = np.vstack([im_hz_transp, ker_hx])
-        pivots = mod2.row_echelon(log_stack.T)[3]
-        log_op_indices = [i for i in range(im_hz_transp.shape[0], log_stack.shape[0]) if i in pivots]
-        self.L = log_stack[log_op_indices]
-
     def construct_layout(self) -> None:
         """Construct the layout of the hexagonal color code."""
         coords_to_idx: dict[tuple[int, int], int] = {}
@@ -119,11 +93,3 @@ class HexagonalColorCode:
 
         # L is the matrix of logicals of the code
         self.compute_logical()
-
-    def get_syndrome(self, error: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
-        """Compute the syndrome of the error."""
-        return self.H @ error % 2
-
-    def check_if_logical_error(self, residual: npt.NDArray[np.int_]) -> bool:
-        """Check if the residual is a logical error."""
-        return (self.L @ residual % 2).any() is True

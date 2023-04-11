@@ -11,10 +11,12 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from z3 import Bool, Not, Optimize, Xor, simplify
 
-from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
+from mqt.qecc.cc_decoder import code_from_string
 
 if TYPE_CHECKING:  # pragma: no cover
     from z3 import ModelRef
+
+    from mqt.qecc.cc_decoder import ColorCode
 
 
 @dataclass
@@ -129,16 +131,15 @@ class LightsOut:
         return switches, constr_time, solve_time
 
 
-def simulate_error_rate(distance: int, error_rate: float, nr_sims: int, solver_path: str = "z3") -> dict[str, Any]:
+def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver_path: str = "z3") -> dict[str, Any]:
     """Simulate the logical error rate for a given distance and error rate."""
-    code = HexagonalColorCode(distance=distance)
     problem = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
 
     start = datetime.datetime.now()
     problem.preconstruct_z3_instance()
     preconstr_time = datetime.datetime.now() - start
-    min_wt_logical = 0
-    logical_errors = 0
+    min_wt_logicals = np.full(len(code.L), -1).astype(int)
+    logical_errors = np.zeros(len(code.L)).astype(int)
     avg_constr_time = 0.0
     avg_solve_time = 0.0
     rng = np.random.default_rng()
@@ -155,40 +156,49 @@ def simulate_error_rate(distance: int, error_rate: float, nr_sims: int, solver_p
         if len(estimate) > 0:
             # check if the estimate is correct
             residual = (error + np.array(estimate)) % 2
-            if code.check_if_logical_error(residual):
-                logical_errors += 1
-                wt = np.sum(residual)  # compute the min weight of a logical error
-                if min_wt_logical == 0 or wt < min_wt_logical:
-                    min_wt_logical = int(wt)
+            for logical in range(len(code.L)):
+                if (code.L[logical] @ residual % 2).any():
+                    logical_errors[logical] += 1
+                    wt = np.sum(residual)  # compute the min weight of a logical error
+                    if min_wt_logicals[logical] == -1 or wt < min_wt_logicals[logical]:
+                        min_wt_logicals[logical] = int(wt)
+                    break
 
         # compute rolling average of the times
         avg_constr_time = (avg_constr_time * i + constr_time.microseconds) / (i + 1)
         avg_solve_time = (avg_solve_time * i + solve_time.microseconds) / (i + 1)
 
+    logical_error_rates: list[float] = [nr_errors / nr_sims for nr_errors in logical_errors]
+    logical_error_rate_ebs: list[float] = [np.sqrt((1 - ler) * ler / nr_sims) for ler in logical_error_rates]
     avg_total_time = avg_constr_time + avg_solve_time
-    logical_error_rate = logical_errors / nr_sims
-    logical_error_rate_eb = np.sqrt((1 - logical_error_rate) * logical_error_rate / nr_sims)
 
     return {
-        "distance": distance,
+        "lattice": code.lattice_type,
+        "distance": code.distance,
         "p": error_rate,
-        "logical_error_rate": logical_error_rate,
-        "logical_error_rate_eb": logical_error_rate_eb,
+        "logical_error_rates": logical_error_rates,
+        "logical_error_rate_ebs": logical_error_rate_ebs,
         "preconstr_time": preconstr_time.microseconds,
         "avg_constr_time": avg_constr_time,
         "avg_solve_time": avg_solve_time,
         "avg_total_time": avg_total_time,
-        "min_wt_logical_err": min_wt_logical,
+        "min_wts_logical_err": min_wt_logicals.tolist(),
     }
 
 
 def run(
-    distance: int, error_rate: float, nr_sims: int = 10000, results_dir: str = "./results_maxsat", solver: str = "z3"
+    lattice_type: str,
+    distance: int,
+    error_rate: float,
+    nr_sims: int = 10000,
+    results_dir: str = "./results_maxsat",
+    solver: str = "z3",
 ) -> None:
     """Run the decoding simulation for a given distance and error rate."""
-    data = simulate_error_rate(distance, error_rate, nr_sims, solver)
+    code = code_from_string(lattice_type, distance)
+    data = simulate_error_rate(code, error_rate, nr_sims, solver)
     strg = solver.split("/")[-1]
-    filename = f"./distance={distance},p={round(error_rate, 4)},solver={strg}.json"
+    filename = f"./code={code.lattice_type},distance={code.distance},p={round(error_rate, 4)},solver={strg}.json"
     path = Path(results_dir)
     path.mkdir(parents=True, exist_ok=True)
     with (path / filename).open("w") as out:

@@ -1,18 +1,18 @@
 """Test the decoder for the hexagonal color code."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
+
+from .test_utils import check_and_load_json
 
 if TYPE_CHECKING:
     import pytest_mock
     from pytest_console_scripts import ScriptRunner
 
-from mqt.qecc import cc_decoder
-from mqt.qecc.cc_decoder.decoder import LightsOut, simulate_error_rate
+from mqt.qecc.cc_decoder import HexagonalColorCode, code_from_string, decoder
 
 
 @pytest.fixture()
@@ -40,12 +40,18 @@ def results_dir() -> str:
 
 
 @pytest.fixture()
-def code(distance: int) -> cc_decoder.HexagonalColorCode:
+def code(distance: int) -> HexagonalColorCode:
     """Hexagonal color code."""
-    return cc_decoder.HexagonalColorCode(distance=distance)
+    return HexagonalColorCode(distance=distance)
 
 
-def test_hex_layout(code: cc_decoder.HexagonalColorCode, distance: int) -> None:
+@pytest.fixture()
+def d3_hexcode() -> HexagonalColorCode:
+    """Distance of the hexagonal color code."""
+    return HexagonalColorCode(distance=3)
+
+
+def test_hex_layout(code: HexagonalColorCode, distance: int) -> None:
     """Test the construction of the hexagonal color code."""
     assert len(code.data_qubits) == 7
     code.compute_logical()
@@ -54,18 +60,18 @@ def test_hex_layout(code: cc_decoder.HexagonalColorCode, distance: int) -> None:
     assert code.distance == distance
 
 
-def test_lo(code: cc_decoder.HexagonalColorCode, distance: int) -> None:
+def test_lo(code: HexagonalColorCode, distance: int) -> None:
     """Test the construction of the lights out problem."""
-    lo = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
+    lo = decoder.LightsOut(code.faces_to_qubits, code.qubits_to_faces)
 
     assert len(lo.lights_to_switches) == distance
     assert len(lo.lights_to_switches[0]) == 4
     assert lo.optimizer is not None
 
 
-def test_maxsat_decoder(code: cc_decoder.HexagonalColorCode) -> None:
+def test_maxsat_decoder(code: HexagonalColorCode) -> None:
     """Test the MaxSAT decoder on a small example."""
-    lo = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
+    lo = decoder.LightsOut(code.faces_to_qubits, code.qubits_to_faces)
     lo.preconstruct_z3_instance()
     lights = [True, False, False]
     est, _, _ = lo.solve(lights=lights)
@@ -73,38 +79,21 @@ def test_maxsat_decoder(code: cc_decoder.HexagonalColorCode) -> None:
     assert est[1] == 1
 
 
-def test_simulate(distance: int, p: float, nr_sims: int) -> None:
+def test_simulate(d3_hexcode: HexagonalColorCode, p: float, nr_sims: int) -> None:
     """Test the general simulation function."""
-    res = simulate_error_rate(distance, p, nr_sims)
+    res = decoder.simulate_error_rate(d3_hexcode, p, nr_sims)
     assert res is not None
-    assert res["distance"] == distance
+    assert res["distance"] == d3_hexcode.distance
     assert res["p"] == p
 
 
-def check_and_load_json(file_name: str, results_dir: str) -> dict[str, Any]:
-    """Check that the results directory contains exactly one file with the given name and load it as JSON."""
-    results_path = Path(results_dir)
-    assert results_path.exists()
-    assert results_path.is_dir()
-    assert len(list(results_path.iterdir())) == 1
-    result_file = results_path / file_name
-    assert result_file.exists()
-    assert result_file.is_file()
-    with result_file.open("r") as f:
-        result: dict[str, Any] = json.load(f)
-
-    for file in results_path.iterdir():
-        file.unlink()
-    results_path.rmdir()
-
-    return result
-
-
-def test_z3_solver(script_runner: ScriptRunner, distance: int, p: float, nr_sims: int, results_dir: str) -> None:
+def test_z3_solver(
+    script_runner: ScriptRunner, d3_hexcode: HexagonalColorCode, p: float, nr_sims: int, results_dir: str
+) -> None:
     """Test the Z3 solver."""
     ret = script_runner.run(
         "mqt.qecc.cc-decoder",
-        str(distance),
+        str(d3_hexcode.distance),
         str(p),
         "--nr_sims",
         str(nr_sims),
@@ -114,13 +103,15 @@ def test_z3_solver(script_runner: ScriptRunner, distance: int, p: float, nr_sims
     assert ret.success
     assert not ret.stderr
 
-    result = check_and_load_json(f"distance={distance},p={round(p, 4)},solver=z3.json", results_dir)
+    result = check_and_load_json(
+        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p={round(p, 4)},solver=z3.json", results_dir
+    )
     assert result is not None
-    assert result["distance"] == distance
+    assert result["distance"] == d3_hexcode.distance
     assert result["p"] == p
-    assert result["logical_error_rate"] is not None
-    assert result["logical_error_rate_eb"] is not None
-    assert result["min_wt_logical_err"] is not None
+    assert result["logical_error_rates"] is not None
+    assert result["logical_error_rate_ebs"] is not None
+    assert result["min_wts_logical_err"] is not None
     assert result["preconstr_time"] > 0.0
     assert result["avg_constr_time"] > 0.0
     assert result["avg_solve_time"] > 0.0
@@ -128,9 +119,9 @@ def test_z3_solver(script_runner: ScriptRunner, distance: int, p: float, nr_sims
 
 
 def test_external_solver(
+    d3_hexcode: HexagonalColorCode,
     script_runner: ScriptRunner,
     mocker: pytest_mock.MockerFixture,
-    distance: int,
     p: float,
     nr_sims: int,
     results_dir: str,
@@ -143,7 +134,7 @@ def test_external_solver(
     mocker.patch("subprocess.run", return_value=None)
     ret = script_runner.run(
         "mqt.qecc.cc-decoder",
-        str(distance),
+        str(d3_hexcode.distance),
         str(p),
         "--nr_sims",
         str(nr_sims),
@@ -157,18 +148,21 @@ def test_external_solver(
     assert ret.success
     assert not ret.stderr
 
-    result = check_and_load_json(f"distance={distance},p={round(p, 4)},solver={solver}.json", results_dir)
+    result = check_and_load_json(
+        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p={round(p, 4)},solver={solver}.json",
+        results_dir,
+    )
 
     solver_output_file = Path(f"solver-out_{solver}.txt")
     if solver_output_file.exists():
         solver_output_file.unlink()
 
     assert result is not None
-    assert result["distance"] == distance
+    assert result["distance"] == d3_hexcode.distance
     assert result["p"] == p
-    assert result["logical_error_rate"] == 0.0
-    assert result["logical_error_rate_eb"] == 0.0
-    assert result["min_wt_logical_err"] == 0
+    assert result["logical_error_rates"] == [0.0]
+    assert result["logical_error_rate_ebs"] == [0.0]
+    assert result["min_wts_logical_err"] == [-1]
     assert result["preconstr_time"] > 0.0
     assert result["avg_constr_time"] > 0.0
     assert result["avg_solve_time"] > 0.0
@@ -199,3 +193,8 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
     assert result["error_probability"] == p
     assert result["n_run"] == nr_sims
     assert result["wall_time"] > 0.0
+
+
+def test_get_code_from_str() -> None:
+    """Test the construction of a color code from a string."""
+    assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(distance=3)

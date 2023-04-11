@@ -68,7 +68,7 @@ dev = ["mqt.qecc[coverage, docs, visualization]"]
 
 [project.scripts]
 "ecc_qiskit_wrapper" = "mqt.qecc.ecc_qiskit_wrapper:main"
-"mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder:cli"
+"mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
 "mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
 
 [project.urls]

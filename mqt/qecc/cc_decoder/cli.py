@@ -1,8 +1,7 @@
 """Command line interface for the CC decoder."""
 import argparse
 
-from mqt.qecc.cc_decoder import decoder
-from mqt.qecc.cc_decoder.comparison import tn_decoder
+from mqt.qecc.cc_decoder import decoder, tn_decoder
 
 
 def cli() -> None:
@@ -10,6 +9,12 @@ def cli() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("distance", type=int, help="the distance of the code")
     parser.add_argument("error_rate", type=float, help="the error rate")
+    parser.add_argument(
+        "--type",
+        type=str,
+        default="hexagon",
+        help="type of the code lattice (hexagon or square_octagon). Default: hexagon",
+    )
     parser.add_argument("--nr_sims", type=int, default=10000, help="the number of simulations to run. Default: 10000")
     parser.add_argument(
         "--results_dir", type=str, default="./results", help="the directory to save the results to. Default: ./results"
@@ -25,7 +30,7 @@ def cli() -> None:
     args = parser.parse_args()
 
     if args.decoder == "maxsat":
-        decoder.run(args.distance, args.error_rate, args.nr_sims, args.results_dir, args.solver)
+        decoder.run(args.type, args.distance, args.error_rate, args.nr_sims, args.results_dir, args.solver)
     elif args.decoder == "tn":
         tn_decoder.run(args.distance, args.error_rate, args.nr_sims, args.results_dir)
     else:

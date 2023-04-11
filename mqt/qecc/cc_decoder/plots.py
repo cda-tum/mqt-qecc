@@ -7,21 +7,26 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+import numpy as np
 from matplotlib import pyplot as plt
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 from scipy.optimize import curve_fit
 
+ler_k = "logical_error_rates"
+ler_eb_k = "logical_error_rate_ebs"
+min_wts_k = "min_wts_logical_err"
 
-def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float]) -> None:
+
+def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float], logical_idx: int = 0) -> None:
     """Plot the logical error rate vs distance for different err rates."""
     for p in pers:
         ds = []
         lers = []
         for d, ler in sorted(code_dict[p].items()):
             ds.append(int(d))
-            lers.append(ler)
+            lers.append(ler[logical_idx])
         ax.plot(ds, lers, label="p=" + str(round(p, 2)), marker="o", linestyle="-")
     ax.set_yscale("log")
     ax.legend()
@@ -37,7 +42,12 @@ def threshold_fit(variables: tuple[float, float], b0: float, b1: float, b2: floa
 
 
 def calculate_threshold(
-    ax: Axes, code_dict: dict[int, Any], min_per: float = 0.06, max_per: float = 0.13, title: str | None = None
+    ax: Axes,
+    code_dict: dict[int, Any],
+    min_per: float = 0.06,
+    max_per: float = 0.13,
+    title: str | None = None,
+    logical_idx: int = 0,
 ) -> None:
     """Calculate the threshold for the given results."""
     ler_data = []
@@ -52,8 +62,8 @@ def calculate_threshold(
         for index, per in enumerate(code_dict[distance]["p"]):
             if min_per < per < max_per:
                 per_array.append(per)
-                ler_array.append(code_dict[distance]["logical_error_rate"][index])
-                ler_eb.append(code_dict[distance]["logical_error_rate_eb"][index])
+                ler_array.append(code_dict[distance][ler_k][index][logical_idx])
+                ler_eb.append(code_dict[distance][ler_eb_k][index][logical_idx])
         per_data.extend(per_array)
         ler_data.extend(ler_array)
         ler_eb_data.extend(ler_eb)
@@ -70,11 +80,13 @@ def calculate_threshold(
     distance_array.sort()
     for distance in distance_array:
         per_array = code_dict[distance]["p"]
-        ler_array = code_dict[distance]["logical_error_rate"]
-        ler_eb = code_dict[distance]["logical_error_rate_eb"]
+        la = np.array(code_dict[distance][ler_k])
+        ler_arr = la[:, logical_idx]
+        ea = np.array(code_dict[distance][ler_eb_k])
+        ler_eb_ar = ea[:, logical_idx]
 
         if per_array != [] and ax is not None:
-            ax.errorbar(per_array, ler_array, yerr=ler_eb, label="d = " + str(distance), fmt="|")
+            ax.errorbar(per_array, ler_arr, yerr=ler_eb_ar, label="d = " + str(distance), fmt="|")
 
     ax.legend()
     ax.set_xlabel("Physical error rate")
@@ -84,7 +96,7 @@ def calculate_threshold(
     ax.set_xlim(min_per, max_per)
 
 
-def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0912,PLR0915
+def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0915
     """Generate the plots for the paper."""
     # read in all generated data
     data = []
@@ -92,7 +104,7 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0
         with file.open() as f:
             data.append(json.loads(f.read()))
 
-    fig, ax = plt.subplots(3, 2, figsize=(12, 12))
+    fig, ax = plt.subplots(4, 4, figsize=(12, 12))
     metrics: dict[int, Any] = {}
     per_metrics: dict[float, Any] = {}
 
@@ -103,37 +115,37 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0
         if d not in metrics:
             metrics[d] = {
                 "p": [],
-                "logical_error_rate": [],
-                "logical_error_rate_eb": [],
+                ler_k: [],
+                ler_eb_k: [],
                 "avg_total_time": [],
-                "min_wt_logical_err": -1,
+                min_wts_k: [],
             }
         if p not in per_metrics:
             per_metrics[p] = {}
 
         metrics[d]["p"].append(p)
-        metrics[d]["logical_error_rate"].append(result["logical_error_rate"])
-        metrics[d]["logical_error_rate_eb"].append(result["logical_error_rate_eb"])
+        metrics[d][ler_k].append(result[ler_k])
+        metrics[d][ler_eb_k].append(result[ler_eb_k])
         metrics[d]["avg_total_time"].append(result["avg_total_time"])
+        metrics[d][min_wts_k].append(result[min_wts_k])
 
-        if result["min_wt_logical_err"] > 0:
-            if metrics[d]["min_wt_logical_err"] == -1:
-                metrics[d]["min_wt_logical_err"] = result["min_wt_logical_err"]
-            else:
-                metrics[d]["min_wt_logical_err"] = min(metrics[d]["min_wt_logical_err"], result["min_wt_logical_err"])
-        per_metrics[p][d] = result["logical_error_rate"]
+        per_metrics[p][d] = result[ler_k]
     for d, mdata in sorted(metrics.items()):
-        (
-            mdata["p"],
-            mdata["logical_error_rate"],
-            mdata["avg_total_time"],
-            mdata["logical_error_rate_eb"],
-        ) = zip(
-            *sorted(
-                zip(mdata["p"], mdata["logical_error_rate"], mdata["avg_total_time"], mdata["logical_error_rate_eb"])
-            )
+        (mdata["p"], mdata[ler_k], mdata["avg_total_time"], mdata[ler_eb_k]) = zip(
+            *sorted(zip(mdata["p"], mdata[ler_k], mdata["avg_total_time"], mdata[ler_eb_k]))
         )
-        ax[0][0].errorbar(mdata["p"], mdata["logical_error_rate"], mdata["logical_error_rate_eb"], label=f"d={d}")
+
+        # sum over all logical to get overall ler+ebs
+        mdata["ler_sum"] = np.sum(mdata[ler_k], axis=1)
+        mdata["ler_eb_sum"] = np.sum(mdata[ler_eb_k], axis=1)
+
+        # plot lers for different logicals separately
+        for logical_idx in range(len(mdata[ler_k][0])):
+            y = np.array(mdata[ler_k])
+            y = y[:, logical_idx]
+            ebs = np.array(mdata[ler_eb_k])
+            ebs = ebs[:, logical_idx]
+            ax[0][logical_idx].errorbar(mdata["p"], y, ebs, label="d=" + str(d))
         ax[0][0].set_xlabel("Physical error rate")
         ax[0][0].set_ylabel("Logical error rate")
         ax[0][0].legend()
@@ -157,15 +169,16 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0
                 p_data[p]["d"].append(d)
                 p_data[p]["t"].append(mdata["avg_total_time"][i])
     for p, pdata in sorted(p_data.items()):
-        ax[1][1].plot(ds, pdata["t"], label="p=" + str(p))
+        ax[2][1].plot(ds, pdata["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
     ax[1][1].set_ylabel("Average time per run (µs)")
     ax[1][1].legend()
     ax[1][1].set_xticks(ds)
     ax[1][1].set_ylim(0, 185000)
-    calculate_threshold(code_dict=metrics, ax=ax[0][1], title="Threshold")
-    plot_ler_vs_distance(per_metrics, ax=ax[2][0], pers=[0.02, 0.05, 0.08, 0.11, 0.13])
+    for logical_idx in range(len(mdata[ler_k][0])):
+        calculate_threshold(code_dict=metrics, ax=ax[1][logical_idx], title="Threshold")
+    plot_ler_vs_distance(per_metrics, ax=ax[3][0], pers=[0.01])
     # save plot as vector graphic
     plt.savefig(results_file, bbox_inches="tight")
 
