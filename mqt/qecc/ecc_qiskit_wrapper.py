@@ -154,7 +154,7 @@ def main() -> None:
         noise_model = NoiseModel()
 
     circ = QuantumCircuit.from_qasm_file(open_qasm_file)
-
+    circ.metadata = {}
     if not any(gate[0].name == "measure" for gate in circ.data):
         print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")
         circ.measure_all()
