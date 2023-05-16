@@ -1,0 +1,54 @@
+name-template: "QECC $RESOLVED_VERSION Release"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  - title: "🚀 Features and Enhancements"
+    labels:
+      - "feature"
+      - "enhancement"
+      - "usability"
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "bug"
+      - "fix"
+  - title: "📄 Documentation"
+    labels:
+      - "documentation"
+  - title: "🤖 CI"
+    labels:
+      - "continuous integration"
+  - title: "📦 Packaging"
+    labels:
+      - "packaging"
+  - title: "🧹 Code Quality"
+    labels:
+      - "code quality"
+  - title: "⬆️ Dependencies"
+    collapse-after: 5
+    labels:
+      - "dependencies"
+      - "submodules"
+      - "github_actions"
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+change-title-escapes: '\<*_&'
+version-resolver:
+  major:
+    labels:
+      - "major"
+  minor:
+    labels:
+      - "minor"
+  patch:
+    labels:
+      - "patch"
+  default: patch
+autolabeler:
+  - label: "dependencies"
+    title:
+      - "/update pre-commit hooks/i"
+
+template: |
+  ## 👀 What Changed
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
