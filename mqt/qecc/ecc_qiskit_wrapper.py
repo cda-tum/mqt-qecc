@@ -4,21 +4,20 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from qiskit import QuantumCircuit, execute
-from qiskit.providers.aer import AerSimulator
-
-from mqt import qecc
-
-if TYPE_CHECKING:  # pragma: no cover
-    from qiskit.result import Result
-
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (
     NoiseModel,
     QuantumError,
     amplitude_damping_error,
     depolarizing_error,
+    pauli_error,
 )
-from qiskit_aer.noise.errors import pauli_error
+
+from mqt import qecc
+
+if TYPE_CHECKING:  # pragma: no cover
+    from qiskit.result import Result
 
 
 def compose_error(error: QuantumError, new_error: QuantumError) -> QuantumError:
@@ -189,15 +188,7 @@ def main() -> None:
     # Setting the simulator backend to the requested one
     simulator_backend = AerSimulator(method=forced_simulator, noise_model=noise_model)
 
-    job = execute(
-        circ,
-        backend=simulator_backend,
-        shots=number_of_shots,
-        seed_simulator=seed,
-        noise_model=noise_model,
-    )
-
-    job_result: Result = job.result()
+    job_result = simulator_backend.run(circ, shots=number_of_shots, seed_simulator=seed).result()
 
     if job_result.status != "COMPLETED":
         raise RuntimeError("Simulation exited with status: " + str(job_result.status))
