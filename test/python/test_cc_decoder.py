@@ -198,3 +198,34 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
 def test_get_code_from_str() -> None:
     """Test the construction of a color code from a string."""
     assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(distance=3)
+
+
+def test_scenario_with_logical_errors(
+    script_runner: ScriptRunner, d3_hexcode: HexagonalColorCode, results_dir: str
+) -> None:
+    """Test the Z3 solver."""
+    ret = script_runner.run(
+        "mqt.qecc.cc-decoder",
+        str(d3_hexcode.distance),
+        "0.2",
+        "--nr_sims",
+        "50",
+        "--results_dir",
+        results_dir,
+    )
+    assert ret.success
+    assert not ret.stderr
+
+    result = check_and_load_json(
+        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p=0.2,solver=z3.json", results_dir
+    )
+    assert result is not None
+    assert result["distance"] == d3_hexcode.distance
+    assert result["logical_error_rates"] is not None
+    assert any(result["logical_error_rates"])
+    assert result["logical_error_rate_ebs"] is not None
+    assert result["min_wts_logical_err"] is not None
+    assert result["preconstr_time"] > 0.0
+    assert result["avg_constr_time"] > 0.0
+    assert result["avg_solve_time"] > 0.0
+    assert result["avg_total_time"] > 0.0
