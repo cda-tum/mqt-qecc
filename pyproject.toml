@@ -44,7 +44,7 @@ dependencies = [
     # temporary workaround for a deprecation warning within qiskit-aer<=0.12.0 in combination with qiskit-terra>=0.24.0
     # once qiskit-aer>=0.12.1 is released, this can be removed completely
     # this should be triggered automatically by dependabot
-    "qiskit-terra>=0.23.0,<0.24.0",
+    "qiskit-terra>=0.23.0,<0.25.0",
     "qiskit-aer>=0.12.0,<0.12.1",
 ]
 dynamic = ["version"]
