@@ -44,7 +44,9 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DQECC_VERSION_INFO={version}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
-            "-DBINDINGS=ON",
+            f"-DBINDINGS=ON",
+            f"-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+            f"-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
         ]
         build_args = []
 

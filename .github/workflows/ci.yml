@@ -43,6 +43,13 @@ jobs:
           gcov: true
           gcov_ignore: "extern/**/*"
           token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: '${{matrix.os}}-${{matrix.compiler}}-${{matrix.build_type}}'
+          variant: ccache
+          save: true
+          max-size: 10G
 
   macos-tests:
     name: Tests macos-11
@@ -59,6 +66,13 @@ jobs:
         run: cmake --build build
       - name: Test
         run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: '${{matrix.os}}-${{matrix.compiler}}-${{matrix.build_type}}'
+          variant: ccache
+          save: true
+          max-size: 10G
 #  windows-tests: TODO
 #    name: Tests windows-2022
 #    runs-on: windows-2022
