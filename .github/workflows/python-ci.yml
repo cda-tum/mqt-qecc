@@ -33,13 +33,6 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "${{matrix.os}}-${{matrix.compiler}}-${{matrix.build_type}}"
-          variant: ccache
-          save: true
-          max-size: 10G
       - name: Install dependencies
         run: |
           ${{ matrix.flint-inst-cmd }}
