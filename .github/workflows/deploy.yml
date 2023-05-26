@@ -2,10 +2,10 @@ name: Python Packaging
 
 on:
   release:
-    types: [published]
+    types: [ published ]
   pull_request:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 concurrency:
@@ -23,19 +23,11 @@ jobs:
           - { os: ubuntu-latest }
           - { os: macos-11 }
     #          - { os: windows-2022 } TODO
-
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: recursive
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "${{matrix.os}}-${{matrix.compiler}}-${{matrix.build_type}}"
-          variant: ccache
-          save: true
-          max-size: 10G
       - if: runner.os == 'Windows'
         name: Install MSYS2
         uses: msys2/setup-msys2@v2
@@ -49,7 +41,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
-
   build_sdist:
     name: sdist
     runs-on: ubuntu-latest
@@ -61,13 +52,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.9"
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "${{matrix.os}}-${{matrix.compiler}}-${{matrix.build_type}}"
-          variant: ccache
-          save: true
-          max-size: 10G
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Build SDist
@@ -77,9 +61,8 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
-
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [ build_wheels, build_sdist ]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
