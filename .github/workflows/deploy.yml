@@ -2,10 +2,10 @@ name: Python Packaging
 
 on:
   release:
-    types: [ published ]
+    types: [published]
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -62,7 +62,7 @@ jobs:
         with:
           path: dist/*.tar.gz
   upload_pypi:
-    needs: [ build_wheels, build_sdist ]
+    needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
