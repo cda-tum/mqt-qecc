@@ -120,7 +120,7 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = ["error",
-    "ignore::DeprecationWarning: pkg_resources is deprecated as an API"
+    "ignore::DeprecationWarning:pkg_resources.*"
 ]
 
 
