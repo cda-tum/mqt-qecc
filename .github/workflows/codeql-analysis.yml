@@ -31,6 +31,11 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - if: matrix.language == 'cpp'
+        name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: "CodeQL"
 
       - name: Install flint
         run: sudo apt-get install libflint-dev
