@@ -92,13 +92,15 @@ def test_z3_solver(
 ) -> None:
     """Test the Z3 solver."""
     ret = script_runner.run(
-        "mqt.qecc.cc-decoder",
-        str(d3_hexcode.distance),
-        str(p),
-        "--nr_sims",
-        str(nr_sims),
-        "--results_dir",
-        results_dir,
+        [
+            "mqt.qecc.cc-decoder",
+            str(d3_hexcode.distance),
+            str(p),
+            "--nr_sims",
+            str(nr_sims),
+            "--results_dir",
+            results_dir,
+        ]
     )
     assert ret.success
     assert not ret.stderr
@@ -133,17 +135,19 @@ def test_external_solver(
     # mock the subprocess.run call in the `solve` method of the `LightsOut` class
     mocker.patch("subprocess.run", return_value=None)
     ret = script_runner.run(
-        "mqt.qecc.cc-decoder",
-        str(d3_hexcode.distance),
-        str(p),
-        "--nr_sims",
-        str(nr_sims),
-        "--results_dir",
-        results_dir,
-        "--solver",
-        solver,
-        "--decoder",
-        decoder,
+        [
+            "mqt.qecc.cc-decoder",
+            str(d3_hexcode.distance),
+            str(p),
+            "--nr_sims",
+            str(nr_sims),
+            "--results_dir",
+            results_dir,
+            "--solver",
+            solver,
+            "--decoder",
+            decoder,
+        ]
     )
     assert ret.success
     assert not ret.stderr
@@ -174,15 +178,17 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
     decoder = "tn"
 
     ret = script_runner.run(
-        "mqt.qecc.cc-decoder",
-        str(distance),
-        str(p),
-        "--nr_sims",
-        str(nr_sims),
-        "--results_dir",
-        results_dir,
-        "--decoder",
-        decoder,
+        [
+            "mqt.qecc.cc-decoder",
+            str(distance),
+            str(p),
+            "--nr_sims",
+            str(nr_sims),
+            "--results_dir",
+            results_dir,
+            "--decoder",
+            decoder,
+        ]
     )
     assert ret.success
     assert not ret.stderr
@@ -205,13 +211,7 @@ def test_scenario_with_logical_errors(
 ) -> None:
     """Test the Z3 solver."""
     ret = script_runner.run(
-        "mqt.qecc.cc-decoder",
-        str(d3_hexcode.distance),
-        "0.2",
-        "--nr_sims",
-        "50",
-        "--results_dir",
-        results_dir,
+        ["mqt.qecc.cc-decoder", str(d3_hexcode.distance), "0.2", "--nr_sims", "50", "--results_dir", results_dir]
     )
     assert ret.success
     assert not ret.stderr
