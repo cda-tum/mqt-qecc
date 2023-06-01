@@ -45,8 +45,8 @@ class CMakeBuild(build_ext):
             f"-DQECC_VERSION_INFO={version}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
             "-DBINDINGS=ON",
-            "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
-            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+            # "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+            # "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
         ]
         build_args = []
 
