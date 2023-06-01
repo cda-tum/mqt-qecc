@@ -21,13 +21,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "${{matrix.os}}-${{matrix.compiler}}-${{matrix.build_type}}"
-          variant: ccache
-          save: true
-          max-size: 10G
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Generate compilation database
