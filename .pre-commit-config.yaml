@@ -51,7 +51,7 @@ repos:
 
   # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.267
+    rev: v0.0.270
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -81,7 +81,7 @@ repos:
 
   # Clang-format the C++ part of the code base automatically
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v16.0.3
+    rev: v16.0.4
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda]
