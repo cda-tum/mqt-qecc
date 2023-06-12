@@ -22,14 +22,9 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ ubuntu-latest ]
-        python-version: [ "3.8", "3.11" ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        flint-inst-cmd: [ sudo apt-get install libflint-dev ]
         include:
-          - runs-on: ubuntu-latest
-            python-version: "3.9"
-            flint-inst-cmd: sudo apt-get install libflint-dev
-          - runs-on: ubuntu-latest
-            python-version: "3.10"
-            flint-inst-cmd: sudo apt-get install libflint-dev
           - runs-on: macos-latest
             flint-inst-cmd: brew install flint
     #          - runs-on: windows-latest
