@@ -21,8 +21,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        runs-on: [ ubuntu-latest ]
+        python-version: [ "3.8", "3.11" ]
         include:
           - runs-on: ubuntu-latest
+            python-version: "3.9"
+            flint-inst-cmd: sudo apt-get install libflint-dev
+          - runs-on: ubuntu-latest
+            python-version: "3.10"
             flint-inst-cmd: sudo apt-get install libflint-dev
           - runs-on: macos-latest
             flint-inst-cmd: brew install flint
@@ -33,27 +39,41 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           ${{ matrix.flint-inst-cmd }}
       - name: Setup nox
-        uses: excitedleigh/setup-nox@v2.1.0
-      - name: Test on 3.8
-        run: nox -s tests-3.8
-      # Python 3.9 are only tested on Linux.
-      - if: runner.os == 'Linux'
-        name: Test on 3.9
-        run: nox -s tests-3.9
-      # Python 3.10 under Linux is tested separately as part of the coverage job.
-      - if: runner.os != 'Linux'
-        name: Test on 3.10
-        run: nox -s tests-3.10
-      # Run the coverage job on Python 3.10 and upload the coverage data.
-      - if: runner.os == 'Linux'
-        name: Test and Coverage on 3.10
-        run: nox -s coverage-3.10 -- --cov-report=xml
-      - if: runner.os == 'Linux'
-        name: Upload Coverage to Codecov
+        run: pipx install nox
+      - name: Test on 🐍 ${{ matrix.python-version }}
+        run: nox -s tests-${{ matrix.python-version }}
+  coverage:
+    name: 🐍 ${{ matrix.python-version }} Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.8", "3.11" ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          ${{ matrix.flint-inst-cmd }}
+      - name: Setup nox
+        run: pipx install nox
+      - name: Run session
+        run: nox -s coverage-${{ matrix.python-version }} -- --cov-report=xml
+      - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3.1.4
         with:
           fail_ci_if_error: true
