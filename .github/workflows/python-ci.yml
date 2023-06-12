@@ -27,7 +27,7 @@ jobs:
         include:
           - runs-on: macos-latest
             flint-inst-cmd: brew install flint
-            python-version:  3.8
+            python-version: 3.8
           - runs-on: macos-latest
             flint-inst-cmd: brew install flint
             python-version: 3.11
