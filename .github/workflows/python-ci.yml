@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ ubuntu-latest ]
-        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        python-version: [ "3.8", "3.9",  "3.10", "3.11" ]
         flint-inst-cmd: [ sudo apt-get install libflint-dev ]
         include:
           - runs-on: macos-latest
