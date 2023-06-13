@@ -16,13 +16,13 @@ concurrency:
 
 jobs:
   python-tests:
-    name:  🐍 ${{ matrix.python-version }} Tests on ${{ matrix.runs-on }}
+    name: 🐍 ${{ matrix.python-version }} Tests on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ ubuntu-latest ]
-        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        runs-on: [ubuntu-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         flint-inst-cmd: sudo apt-get install libflint-dev
         include:
           - runs-on: macos-latest
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.8", "3.11" ]
+        python-version: ["3.8", "3.11"]
     steps:
       - uses: actions/checkout@v3
         with:
