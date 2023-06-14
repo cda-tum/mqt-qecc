@@ -53,9 +53,9 @@ class CMakeBuild(build_ext):
                 cmake_args += ["-GNinja"]
         else:
             # Single config generators are handled "normally"
-            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
+            single_config = any(x in cmake_generator for x in ("NMake", "Ninja"))
             # CMake allows an arch-in-generator style for backward compatibility
-            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
+            contains_arch = any(x in cmake_generator for x in ("ARM", "Win64"))
             # Convert distutils Windows platform specifiers to CMake -A arguments
             plat_to_cmake = {
                 "win32": "Win32",
