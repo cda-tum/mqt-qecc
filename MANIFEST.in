@@ -1,7 +1,7 @@
 prune docs
 prune test
 
-graft extern/qfr
+graft extern/mqt-core
 prune **/.github
 prune **/apps
 prune **/doc
@@ -11,12 +11,11 @@ prune **/plots
 prune **/test
 prune **/tests
 
-prune extern/qfr/extern/json/include
-prune extern/qfr/extern/dd_package/extern
-prune extern/qfr/extern/zx/extern/googletest
-prune extern/qfr/extern/zx/extern/boost/config/checks
-prune extern/qfr/extern/zx/extern/boost/config/tools
-prune extern/qfr/extern/zx/extern/boost/multiprecision/config
-prune extern/qfr/extern/zx/extern/boost/multiprecision/example
-prune extern/qfr/extern/zx/extern/boost/multiprecision/performance
-prune extern/qfr/extern/zx/extern/boost/multiprecision/tools
+prune extern/mqt-core/extern/json/include
+prune extern/mqt-core/extern/googletest
+prune extern/mqt-core/extern/boost/config/checks
+prune extern/mqt-core/extern/boost/config/tools
+prune extern/mqt-core/extern/boost/multiprecision/config
+prune extern/mqt-core/extern/boost/multiprecision/example
+prune extern/mqt-core/extern/boost/multiprecision/performance
+prune extern/mqt-core/extern/boost/multiprecision/tools
