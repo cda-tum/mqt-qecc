@@ -21,7 +21,7 @@ def identity(n: int) -> npt.NDArray[np.int_]:
 class LiftedHgp(css_code):
     """Lifted Hypergraph Product code."""
 
-    def __init__(self, lift_parameter: int, a: npt.NDArray[np.int_], b: npt.NDArray[np.int_] = None) -> None:
+    def __init__(self, lift_parameter: int, a: npt.NDArray[np.int_], b: npt.NDArray[np.int_] | None = None) -> None:
         """Generate the lifted hypergraph product of the protographs a and b."""
         self.a = a
 
@@ -77,7 +77,7 @@ class LiftedHgp(css_code):
 class BiasTailoredLiftedProduct(stab_code):
     """Generate the bias-tailored lifted hypergraph product of the protographs a and b. From Roffe's LDPC library."""
 
-    def __init__(self, lift_parameter: int, a: npt.NDArray[np.int_], b: npt.NDArray[np.int_] = None) -> None:
+    def __init__(self, lift_parameter: int, a: npt.NDArray[np.int_], b: npt.NDArray[np.int_] | None = None) -> None:
         """Generate the bias-tailored lifted hypergraph product of the protographs a and b."""
         lhgp = LiftedHgp(lift_parameter, a, b)
 

@@ -14,6 +14,7 @@ from z3 import Bool, Not, Optimize, Xor, simplify
 from mqt.qecc.cc_decoder import code_from_string
 
 if TYPE_CHECKING:  # pragma: no cover
+    import numpy.typing as npt
     from z3 import ModelRef
 
     from mqt.qecc.cc_decoder import ColorCode
@@ -138,8 +139,8 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
     start = datetime.datetime.now()
     problem.preconstruct_z3_instance()
     preconstr_time = datetime.datetime.now() - start
-    min_wt_logicals = np.full(len(code.L), -1).astype(int)
-    logical_errors = np.zeros(len(code.L)).astype(int)
+    min_wt_logicals: npt.NDArray[np.int_] = np.full(len(code.L), -1).astype(int)
+    logical_errors: npt.NDArray[np.int_] = np.zeros(len(code.L)).astype(int)
     avg_constr_time = 0.0
     avg_solve_time = 0.0
     rng = np.random.default_rng()
