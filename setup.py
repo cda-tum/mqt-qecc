@@ -44,6 +44,7 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DQECC_VERSION_INFO={version}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
+            "-DBUILD_MQT_CORE_TESTS=OFF",
             "-DBINDINGS=ON",
         ]
         build_args = []

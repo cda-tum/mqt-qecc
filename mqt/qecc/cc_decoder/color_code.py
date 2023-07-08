@@ -31,7 +31,7 @@ class ColorCode:
         self.faces_to_qubits: dict[int, list[int]] = {}
         self.lattice_type = lattice_type
         self.add_qubits()
-        self.H = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
+        self.H: npt.NDArray[np.int_] = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
         self.construct_layout()
         self.compute_logical()
         self.n = len(self.qubits_to_faces)

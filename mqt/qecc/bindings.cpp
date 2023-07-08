@@ -20,8 +20,8 @@
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
-#include "qiskit/QasmQobjExperiment.hpp"
-#include "qiskit/QuantumCircuit.hpp"
+#include "python/qiskit/QasmQobjExperiment.hpp"
+#include "python/qiskit/QuantumCircuit.hpp"
 
 #include <pybind11/stl.h>
 
