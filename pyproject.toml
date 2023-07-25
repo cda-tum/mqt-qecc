@@ -42,7 +42,7 @@ dependencies = [
     "ldpc>=0.1.50",
     "numpy",
     "qiskit-terra>=0.23.0",
-    "qiskit-aer>=0.12.1,<0.12.3",
+    "qiskit-aer>=0.12.1",
 ]
 dynamic = ["version"]
 
