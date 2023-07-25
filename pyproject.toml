@@ -119,9 +119,7 @@ testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
-filterwarnings = ["error",
-    "ignore::DeprecationWarning:pkg_resources.*"
-]
+filterwarnings = ["error", "ignore:pkg_resources.*:DeprecationWarning:"]
 
 
 
