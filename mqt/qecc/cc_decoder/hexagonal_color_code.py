@@ -38,7 +38,7 @@ class HexagonalColorCode(ColorCode):
         x_row = y
         while i < x_max:
             data_or_ancilla = i % 3
-            if data_or_ancilla == 0 or data_or_ancilla == 2:
+            if data_or_ancilla in (0, 2):
                 self.data_qubits.add((x_row, y))
             else:
                 self.ancilla_qubits.add((x_row, y))
@@ -51,7 +51,7 @@ class HexagonalColorCode(ColorCode):
         x_row = y
         while i < x_max:
             data_or_ancilla = i % 3
-            if data_or_ancilla == 0 or data_or_ancilla == 1:
+            if data_or_ancilla in (0, 1):
                 self.data_qubits.add((x_row, y))
             else:
                 self.ancilla_qubits.add((x_row, y))
@@ -64,7 +64,7 @@ class HexagonalColorCode(ColorCode):
         x_row = y
         while i < x_max:
             data_or_ancilla = i % 3
-            if data_or_ancilla == 1 or data_or_ancilla == 2:
+            if data_or_ancilla in (1, 2):
                 self.data_qubits.add((x_row, y))
             else:
                 self.ancilla_qubits.add((x_row, y))
