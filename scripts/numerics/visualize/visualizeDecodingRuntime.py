@@ -66,9 +66,9 @@ def runtime() -> None:
 
     for i in range(len(x_data)):
         col, val = colors.popitem()
-        if col == "w" or col == "k":
+        if col in ("w", "k"):
             col, val = colors.popitem()
-            if col == "w" or col == "k":
+            if col in ("w", "k"):
                 col, val = colors.popitem()
                 cols.append(col)
         label = "% 6.3f" % pers[i]
@@ -126,9 +126,9 @@ def runtime_comparison() -> None:  # noqa: PLR0915
 
     for i in range(len(x_data)):
         col, val = colors.popitem()
-        if col == "w" or col == "k":
+        if col in ("w", "k"):
             col, val = colors.popitem()
-            if col == "w" or col == "k":
+            if col in ("w", "k"):
                 col, val = colors.popitem()
                 cols.append(col)
         label = "%2.2f" % pers[i]

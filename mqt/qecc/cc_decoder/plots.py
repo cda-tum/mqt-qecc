@@ -280,7 +280,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:  # noqa:
             metrics[d]["avg_total_time"].append(result["avg_total_time"])
 
         for d, mdata in sorted(metrics.items()):
-            if d == 21 or d == 17:
+            if d in (17, 21):
                 (
                     mdata["p"],
                     mdata["avg_total_time"],
