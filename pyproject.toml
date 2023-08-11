@@ -26,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: C++",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
@@ -87,7 +88,7 @@ include = ["mqt.*"]
 build = "cp3*"
 archs = "auto64"
 skip = "*-musllinux*"
-test-skip = "*-macosx_arm64 *-musllinux* *aarch64"
+test-skip = "*-macosx_arm64 cp312-*"
 test-command = "python -c \"from mqt import qecc\""
 environment = { DEPLOY = "ON" }
 build-frontend = "build"
