@@ -13,7 +13,7 @@ description = "QECC - An MQT Tool for Quantum Error Correcting Codes"
 readme = "README.md"
 authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" },
-    { name = "Lukas Burgholzer", email = "lukas.burgholzer@jku.at" },
+    { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" }
 ]
 keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "color codes", "MaxSAT", "QLDPC", "QEC", "Z3"]
@@ -26,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: C++",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
@@ -87,7 +88,7 @@ include = ["mqt.*"]
 build = "cp3*"
 archs = "auto64"
 skip = "*-musllinux*"
-test-skip = "*-macosx_arm64 *-musllinux* *aarch64"
+test-skip = "*-macosx_arm64 cp312-*"
 test-command = "python -c \"from mqt import qecc\""
 environment = { DEPLOY = "ON" }
 build-frontend = "build"
