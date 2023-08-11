@@ -74,10 +74,10 @@ dev = ["mqt.qecc[coverage, docs, visualization]"]
 "mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
 
 [project.urls]
-Homepage = "https://github.com/cda-tum/qecc"
-Documentation = "https://github.com/cda-tum/qecc"
-"Bug Tracker" = "https://github.com/cda-tum/qecc/issues"
-Discussions = "https://github.com/cda-tum/qecc/discussions"
+Homepage = "https://github.com/cda-tum/mqt-qecc"
+Documentation = "https://github.com/cda-tum/mqt-qecc"
+"Bug Tracker" = "https://github.com/cda-tum/mqt-qecc/issues"
+Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 
 [tool.setuptools.packages.find]
 include = ["mqt.*"]

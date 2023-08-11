@@ -1,9 +1,7 @@
 Welcome to QECC's documentation
 ================================
 
-QECC is a tool for quantum error correcting codes developed as part of the
-*Munich Quantum Toolkit* (*MQT*) by the `Chair for Design Automation <https://www.cda.cit.tum.de/>`_ at the
-`Technical University of Munich <https://www.tum.de>`_.
+QECC is a tool for quantum error correcting codes developed as part of the `Munich Quantum Toolkit <https://mqt.readthedocs.io>`_ (*MQT*) by the `Chair for Design Automation <https://www.cda.cit.tum.de/>`_ at the `Technical University of Munich <https://www.tum.de>`_. It builds upon `MQT Core <https://github.com/cda-tum/mqt-core>`_, which forms the backbone of the MQT.
 
 We recommend you to start with the :doc:`installation instructions <Installation>`.
 Then proceed to read the :doc:`reference documentation <library/Library>`.
@@ -46,7 +44,3 @@ please let us know at our :doc:`Support <Support>` page or by reaching out to us
     :glob:
 
     library/Library
-
-----
-
-.. rubric:: Footnotes

@@ -6,7 +6,7 @@ Ready to contribute to the project? Here is how to set up a local development en
 Initial Setup
 #############
 
-1. Fork the `cda-tum/qecc <https://github.com/cda-tum/qecc>`_ repository on GitHub (see https://docs.github.com/en/get-started/quickstart/fork-a-repo).
+1. Fork the `cda-tum/mqt-qecc <https://github.com/cda-tum/mqt-qecc>`_ repository on GitHub (see https://docs.github.com/en/get-started/quickstart/fork-a-repo).
 
 2. Clone your fork locally
 
