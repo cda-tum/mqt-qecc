@@ -90,7 +90,7 @@ In order to get the best performance out of QECC and enable platform-specific co
 This requires a `C++ compiler <https://en.wikipedia.org/wiki/List_of_compilers#C++_compilers>`_ compiler supporting *C++17* and a minimum `CMake <https://cmake.org/>`_ version of *3.19*.
 
 The library is continuously tested under Linux, MacOS, and Windows using the `latest available system versions for GitHub Actions <https://github.com/actions/virtual-environments>`_.
-In order to access the latest build logs, visit `qecc/actions/workflows/ci.yml <https://github.com/cda-tum/qecc/actions/workflows/ci.yml>`_.
+In order to access the latest build logs, visit `qecc/actions/workflows/ci.yml <https://github.com/cda-tum/mqt-qecc/actions/workflows/ci.yml>`_.
 
 .. note::
     We noticed some issues when compiling with Microsoft's *MSCV* compiler toolchain. If you want to start development on this project under Windows, consider using the *clang* compiler toolchain. A detailed description of how to set this up can be found `here <https://docs.microsoft.com/en-us/cpp/build/clang-support-msbuild?view=msvc-160>`_.
