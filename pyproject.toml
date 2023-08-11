@@ -116,7 +116,11 @@ testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
-filterwarnings = ["error", "ignore:pkg_resources.*:DeprecationWarning:"]
+filterwarnings = [
+    "error",
+    "ignore:pkg_resources.*:DeprecationWarning:",
+    'ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:',
+]
 
 [tool.coverage.run]
 source = ["mqt.qecc"]
