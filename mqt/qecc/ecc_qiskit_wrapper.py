@@ -70,7 +70,7 @@ def print_simulation_results(result: Result, n_shots: int, threshold_probability
     result_counts = result.get_counts()
     for result_id in result_counts:
         sub_result = result_id.split(" ")[-1]
-        if sub_result not in summarized_counts.keys():
+        if sub_result not in summarized_counts:
             summarized_counts[sub_result] = 0
         summarized_counts[sub_result] += result_counts[result_id]
 
