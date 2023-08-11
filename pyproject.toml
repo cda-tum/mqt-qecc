@@ -13,7 +13,7 @@ description = "QECC - An MQT Tool for Quantum Error Correcting Codes"
 readme = "README.md"
 authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" },
-    { name = "Lukas Burgholzer", email = "lukas.burgholzer@jku.at" },
+    { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" }
 ]
 keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "color codes", "MaxSAT", "QLDPC", "QEC", "Z3"]
