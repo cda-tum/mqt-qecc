@@ -51,7 +51,7 @@ repos:
 
   # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.282
+    rev: v0.0.284
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -95,7 +95,7 @@ repos:
 
   # Check static types with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
+    rev: v1.5.0
     hooks:
       - id: mypy
         files: ^(mqt/qecc|test/python|setup.py)
