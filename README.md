@@ -60,11 +60,7 @@ The following code gives an example on the usage:
 from mqt.qecc import *
 import numpy as np
 
-H = [
-    [1, 0, 0, 1, 0, 1, 1],
-    [0, 1, 0, 1, 1, 0, 1],
-    [0, 0, 1, 0, 1, 1, 1]
-]
+H = [[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]]
 code = Code(H, H)
 decoder = UFHeuristic()
 decoder.set_code(code)
