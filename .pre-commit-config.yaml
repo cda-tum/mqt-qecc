@@ -30,7 +30,7 @@ repos:
 
   # Clean jupyter notebooks
   - repo: https://github.com/srstevenson/nb-clean
-    rev: 2.4.0
+    rev: 3.0.0
     hooks:
       - id: nb-clean
 
@@ -51,14 +51,14 @@ repos:
 
   # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.285
+    rev: v0.0.288
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
 
   # Run code formatting with Black
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.7.0 # Keep in sync with blacken-docs
+    rev: 23.9.1 # Keep in sync with blacken-docs
     hooks:
       - id: black-jupyter
 
@@ -88,7 +88,7 @@ repos:
 
   # Format configuration files with prettier
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.2
+    rev: v3.0.3
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
