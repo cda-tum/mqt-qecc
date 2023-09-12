@@ -24,7 +24,7 @@ jobs:
     name: Tests ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup ccache
@@ -52,7 +52,7 @@ jobs:
     name: Tests macos-11
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup ccache
@@ -74,7 +74,7 @@ jobs:
 #      run:
 #        shell: msys2 {0}
 #    steps:
-#      - uses: actions/checkout@v3
+#      - uses: actions/checkout@v4
 #        with:
 #          submodules: recursive
 #      - uses: msys2/setup-msys2@v2
