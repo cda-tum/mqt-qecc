@@ -51,7 +51,7 @@ dynamic = ["version"]
 test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "pytest-cov"]
 docs = [
-    "sphinx>=5, <7",
+    "sphinx>=5, <8",
     "sphinx-rtd-theme",
     "sphinx-rtd-dark-mode",
     "sphinxcontrib-bibtex>=2.4.2",
