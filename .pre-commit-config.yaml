@@ -30,7 +30,7 @@ repos:
 
   # Clean jupyter notebooks
   - repo: https://github.com/srstevenson/nb-clean
-    rev: 3.0.0
+    rev: 3.0.1
     hooks:
       - id: nb-clean
 
@@ -51,7 +51,7 @@ repos:
 
   # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.290
+    rev: v0.0.291
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
