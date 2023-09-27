@@ -180,73 +180,90 @@ pretty = true
 module = ["qiskit.*", "qiskit_aer.*", "qecsim.*" , "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*", "z3.*"]
 ignore_missing_imports = true
 
+
 [tool.ruff]
+include = ["*.py", "*.pyi", "**/pyproject.toml", "*.ipynb"]
 select = [
     "E", "F", "W", # flake8
-    "A", # flake8-builtins
-    "ANN", # flake8-annotations
-    "ARG", # flake8-unused-arguments
-    "B", "B904", # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "D", # pydocstyle
-    "EM", # flake8-errmsg
-    "EXE", # flake8-executable
-    "I", # isort
-    "ICN", # flake8-import-conventions
-    "ISC", # flake8-implicit-str-concat
-    "N", # flake8-naming
-    "PGH", # pygrep-hooks
-    "PIE", # flake8-pie
-    "PL", # pylint
-    "PT", # flake8-pytest-style
-    "PTH", # flake8-use-pathlib
-    "PYI", # flake8-pyi
-    "Q", # flake8-quotes
-    "RET", # flake8-return
-    "RSE", # flake8-raise
-    "RUF", # Ruff-specific
-    "SLF", # flake8-self
-    "SIM", # flake8-simplify
-    "TCH", # flake8-type-checking
-    "TID", # flake8-tidy-imports
-    "TRY", # tryceratops
-    "UP", # pyupgrade
-    "YTT", # flake8-2020
+    "A",           # flake8-builtins
+    "ANN",         # flake8-annotations
+    "ARG",         # flake8-unused-arguments
+    "ASYNC",       # flake8-async
+    "B",  "B904",  # flake8-bugbear
+    "C4",          # flake8-comprehensions
+    "D",           # pydocstyle
+    "EM",          # flake8-errmsg
+    "EXE",         # flake8-executable
+    "FA",          # flake8-future-annotations
+    "FLY",         # flynt
+    "I",           # isort
+    "ICN",         # flake8-import-conventions
+    "ISC",         # flake8-implicit-str-concat
+    "N",           # flake8-naming
+    "NPY",         # numpy
+    "PERF",        # perflint
+    "PGH",         # pygrep-hooks
+    "PIE",         # flake8-pie
+    "PL",          # pylint
+    "PT",          # flake8-pytest-style
+    "PTH",         # flake8-use-pathlib
+    "PYI",         # flake8-pyi
+    "Q",           # flake8-quotes
+    "RET",         # flake8-return
+    "RSE",         # flake8-raise
+    "RUF",         # Ruff-specific
+    "SLF",         # flake8-self
+    "SLOT",        # flake8-slots
+    "SIM",         # flake8-simplify
+    "TCH",         # flake8-type-checking
+    "TID",         # flake8-tidy-imports
+    "TRY",         # tryceratops
+    "UP",          # pyupgrade
+    "YTT",         # flake8-2020
 ]
-ignore = [
-    "ANN101", # Missing type annotation for self in method
-    "D203", # 1 blank line required before class docstring
-    "D213", # Multi-line docstring summary should start at the second line
-    "E501", # Line too long (Black is enough)
-    "PLR2004", # Magic values
-    "PLR0913", # Too many arguments
+extend-ignore = [
+    "ANN101",  # Missing type annotation for self in method
+    "ANN102",  # Missing type annotation for cls in classmethod
+    "E501",    # Line too long (Black is enough)
+    "PLR",     # Design related pylint codes
 ]
-
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-]
-
+src = ["src"]
+flake8-unused-arguments.ignore-variadic-names = true
+isort.required-imports = ["from __future__ import annotations"]
 line-length = 120
+
 [tool.ruff.per-file-ignores]
-"*.pyi" = [
-    "D", # pydocstyle
+"*.pyi" = ["D"]  # pydocstyle
+"*.ipynb" = [
+    "D",    # pydocstyle
+    "E402", # Allow imports to appear anywhere in Jupyter notebooks
+    "I002", # Allow missing `from __future__ import annotations` import
 ]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+
+[tool.cibuildwheel]
+build = "cp3*"
+skip = "*-musllinux*"
+archs = "auto64"
+test-command = "python -c \"from mqt import qmap\""
+test-skip = "*-macosx_arm64 cp312-*"
+build-frontend = "build"
+
+[tool.cibuildwheel.linux]
+before-all = [
+    "yum -y install mpfr-devel",
+    "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
+    "cd flint2 && ./configure && make -j 3 && make install"
+]
+
+[tool.cibuildwheel.macos]
+archs = "x86_64"
+environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel}"
+environment = { CMAKE_GENERATOR = "Ninja" }
