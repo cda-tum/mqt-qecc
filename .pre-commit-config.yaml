@@ -63,12 +63,39 @@ repos:
       - id: black-jupyter
 
   # Also run Black on examples in the documentation
-  - repo: https://github.com/asottile/blacken-docs
+  - repo: https://github.com/adamchainz/blacken-docs
     rev: 1.16.0
     hooks:
       - id: blacken-docs
         additional_dependencies:
           - black==23.9.1 # keep in sync with black hook
+
+  # Check static types with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        files: ^(src/mqt|test/python)
+        args: []
+        additional_dependencies:
+          - importlib_resources
+          - numpy
+          - pytest
+          - pytest-mock
+
+  # Check for spelling
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.5
+    hooks:
+      - id: codespell
+        args: ["-L", "wille,linz,applys", "--skip", "*.ipynb"]
+
+  # Clang-format the C++ part of the code base automatically
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v16.0.6
+    hooks:
+      - id: clang-format
+        types_or: [c++, c, cuda]
 
   # CMake format and lint the CMakeLists.txt files
   - repo: https://github.com/cheshirekow/cmake-format-precommit
@@ -79,13 +106,6 @@ repos:
       - id: cmake-lint
         additional_dependencies: [pyyaml]
 
-  # Clang-format the C++ part of the code base automatically
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v16.0.6
-    hooks:
-      - id: clang-format
-        types_or: [c++, c, cuda]
-
   # Format configuration files with prettier
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.0.3
@@ -93,23 +113,22 @@ repos:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
-  # Check static types with mypy
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+  # Catch common capitalization mistakes
+  - repo: local
     hooks:
-      - id: mypy
-        files: ^(mqt/qecc|test/python|setup.py)
-        args: []
-        additional_dependencies:
-          - importlib_resources
-          - numpy
-          - pytest
-          - types-setuptools
-          - pytest_mock
+      - id: disallow-caps
+        name: Disallow improper capitalization
+        language: pygrep
+        entry: PyBind|Numpy|Cmake|CCache|Github|PyTest|Mqt|Tum
+        exclude: .pre-commit-config.yaml
 
-  # Check for spelling
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+  # Checking sdist validity
+  - repo: https://github.com/henryiii/check-sdist
+    rev: v0.1.2
     hooks:
-      - id: codespell
-        args: ["-L", "wille,linz", "--skip", "*.ipynb"]
+      - id: check-sdist
+        args: [--inject-junk]
+        additional_dependencies:
+          - scikit-build-core[pyproject]>=0.5.0
+          - setuptools-scm>=7
+          - pybind11>=2.11
