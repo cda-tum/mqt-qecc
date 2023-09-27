@@ -1,17 +1,14 @@
 name: ✨ Feature request
 description: Suggest an idea
 title: "✨ <title>"
-labels: ["enhancement"]
-assignees:
-  - lucasberent
 body:
   - type: markdown
     attributes:
       value: >
         **Thank you for wanting to suggest a feature for this project!**
 
-        :warning:
-        Verify first that your idea is not [already requested on GitHub](https://github.com/cda-tum/qecc/issues).
+        ⚠
+        Verify first that your idea is not [already requested on GitHub](https://github.com/cda-tum/qecc/search?q=is%3Aissue&type=issues).
 
   - type: textarea
     attributes:

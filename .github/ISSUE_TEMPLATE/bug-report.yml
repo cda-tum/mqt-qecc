@@ -1,46 +1,28 @@
 name: 🐛 Bug report
 description: Something is not working correctly.
 title: "🐛 <title>"
-labels: ["bug"]
-assignees:
-  - lucasberent
 body:
   - type: markdown
     attributes:
       value: >-
         **Thank you for wanting to report a bug for this project!**
 
-        :warning:
-        Verify first that your issue is not [already reported on GitHub](https://github.com/cda-tum/qecc/issues).
+        ⚠
+        Verify first that your issue is not [already reported on GitHub](https://github.com/cda-tum/mqt-qecc/search?q=is%3Aissue&type=issues).
 
-  - type: markdown
-    attributes:
-      value: >-
-        **Environment**
-  - type: input
-    attributes:
-      label: mqt.qecc version
-      placeholder: For example, mqt.qecc===2.0.0
-    validations:
-      required: true
-  - type: input
-    attributes:
-      label: OS
-      placeholder: For example, Ubuntu 22.04, macOS Big Sur, Windows etc.
-    validations:
-      required: true
-  - type: input
-    attributes:
-      label: Python version
-      placeholder: For example, Python 3.10
-  - type: input
-    attributes:
-      label: C++ compiler
-      placeholder: For example, gcc-10
+        If you have general questions, please consider [starting a discussion](https://github.com/cda-tum/mqt-qecc/discussions).
   - type: textarea
     attributes:
-      label: Additional environment information
-      description: Feel free to add more information about your environment here.
+      label: Environment information
+      description: >-
+        Please provide information about your environment. For example, OS, C++ compiler, mqt.qecc version etc.
+      placeholder: |
+        - OS:
+        - C++ compiler:
+        - mqt.core version:
+        - Additional environment information:
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: Description
