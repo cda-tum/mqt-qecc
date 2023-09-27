@@ -1,6 +1,8 @@
 # add MQT::QFR library
-add_subdirectory("${PROJECT_SOURCE_DIR}/extern/mqt-core" "extern/mqt-core"
-                 EXCLUDE_FROM_ALL)
+set(BUILD_MQT_CORE_TESTS
+    OFF
+    CACHE BOOL "Build MQT Core tests")
+add_subdirectory("${PROJECT_SOURCE_DIR}/extern/mqt-core" "extern/mqt-core" EXCLUDE_FROM_ALL)
 # main project library
 add_library(
   ${PROJECT_NAME}_lib
@@ -19,13 +21,11 @@ add_library(
   UFHeuristic.cpp)
 
 # set include directories
-target_include_directories(
-  ${PROJECT_NAME}_lib PUBLIC ${PROJECT_SOURCE_DIR}/include
-                             ${PROJECT_BINARY_DIR}/include)
+target_include_directories(${PROJECT_NAME}_lib PUBLIC ${PROJECT_SOURCE_DIR}/include
+                                                      ${PROJECT_BINARY_DIR}/include)
 
 # add options and warnings to the library
-target_link_libraries(${PROJECT_NAME}_lib PUBLIC project_options
-                                                 project_warnings)
+target_link_libraries(${PROJECT_NAME}_lib PUBLIC project_options project_warnings)
 
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 
@@ -34,3 +34,7 @@ target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)
 
 # add MQT alias
 add_library(MQT::${PROJECT_NAME}_lib ALIAS ${PROJECT_NAME}_lib)
+
+if(BUILD_MQT_QECC_BINDINGS)
+  add_subdirectory(python)
+endif()

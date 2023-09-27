@@ -74,9 +74,7 @@ def calculate_threshold(
         ax.axvline(x=popt[-1], color="black", linestyle="dashed")
         print("threshold: ", popt[-1])
 
-    distance_array: list[int] = []
-    for distance in code_dict:
-        distance_array.append(int(distance))
+    distance_array = [int(distance) for distance in code_dict]
     distance_array.sort()
     for distance in distance_array:
         per_array = code_dict[distance]["p"]
@@ -96,7 +94,7 @@ def calculate_threshold(
     ax.set_xlim(min_per, max_per)
 
 
-def generate_plots(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0915
+def generate_plots(results_dir: Path, results_file: Path) -> None:
     """Generate the plots for the paper."""
     # read in all generated data
     data = []
@@ -249,7 +247,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     plt.savefig(results_file, bbox_inches="tight")
 
 
-def generate_plots_comp(results_dir: Path, results_file: Path) -> None:  # noqa: PLR0912
+def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
     """Generate plots for the comparison of the different solvers."""
     fig, ax = plt.subplots(2, figsize=(12, 12))
     cols = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]

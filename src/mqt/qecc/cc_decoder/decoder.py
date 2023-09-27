@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from z3 import Bool, Not, Optimize, Xor, simplify
 
-from mqt.qecc.cc_decoder import code_from_string
+from . import code_from_string
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from z3 import ModelRef
 
-    from mqt.qecc.cc_decoder import ColorCode
+    from . import ColorCode
 
 
 @dataclass

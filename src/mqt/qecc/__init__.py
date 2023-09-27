@@ -3,8 +3,10 @@
 This file is part of the MQT QECC library released under the MIT license.
 See README.md or go to https://github.com/cda-tum/qecc for more information.
 """
+from __future__ import annotations
 
-from mqt.qecc.pyqecc import (
+from ._version import version as __version__
+from .pyqecc import (
     Code,
     Decoder,
     DecodingResult,
@@ -18,6 +20,7 @@ from mqt.qecc.pyqecc import (
 )
 
 __all__ = [
+    "__version__",
     "Code",
     "Decoder",
     "UFHeuristic",

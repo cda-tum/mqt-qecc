@@ -1,5 +1,7 @@
 """Constructs the lifted parity check codes for the lifted parity check codes."""
 # using tools from https://github.com/quantumgizmos/bp_osd
+from __future__ import annotations
+
 import ldpc.protograph as pt
 import numpy as np
 from lifted_hgp import LiftedHgp

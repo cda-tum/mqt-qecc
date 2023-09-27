@@ -18,6 +18,27 @@ endmacro()
 
 check_submodule_present(mqt-core)
 
+option(BUILD_MQT_QECC_BINDINGS "Build the MQT QECC Python bindings" OFF)
+if(BUILD_MQT_QECC_BINDINGS)
+  # ensure that the BINDINGS option is set
+  set(BINDINGS
+      ON
+      CACHE BOOL "Enable settings related to Python bindings" FORCE)
+  # cmake-lint: disable=C0103
+  set(Python_FIND_VIRTUALENV
+      FIRST
+      CACHE STRING "Give precedence to virtualenvs when searching for Python")
+  # cmake-lint: disable=C0103
+  set(Python_ARTIFACTS_INTERACTIVE
+      ON
+      CACHE BOOL "Prevent multiple searches for Python and instead cache the results.")
+  # top-level call to find Python
+  find_package(
+    Python 3.8 REQUIRED
+    COMPONENTS Interpreter Development.Module
+    OPTIONAL_COMPONENTS Development.SABIModule)
+endif()
+
 # Add path for custom modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -25,15 +46,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 add_subdirectory(src)
 
 # add test code
-option(BUILD_QECC_TESTS "Also build tests for project")
-if(BUILD_QECC_TESTS)
+option(BUILD_MQT_QECC_TESTS "Also build tests for project" ON)
+if(BUILD_MQT_QECC_TESTS)
   enable_testing()
   include(GoogleTest)
   add_subdirectory(test)
-endif()
-
-# add Python binding code
-option(BINDINGS "Configure for building Python bindings")
-if(BINDINGS)
-  add_subdirectory(mqt/qecc)
 endif()

@@ -1,7 +1,7 @@
 """Square Octagon Color Code. Created by Peter-Jan Derks."""
 from __future__ import annotations
 
-from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
+from .color_code import ColorCode, LatticeType
 
 
 class SquareOctagonColorCode(ColorCode):

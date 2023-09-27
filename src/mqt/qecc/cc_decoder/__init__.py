@@ -1,8 +1,10 @@
 """Contains the implementation of the tensor network decoder for the hexagonal color code."""
-from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
-from mqt.qecc.cc_decoder.comparison import tn_decoder
-from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
-from mqt.qecc.cc_decoder.square_octagon_color_code import SquareOctagonColorCode
+from __future__ import annotations
+
+from .color_code import ColorCode, LatticeType
+from .comparison import tn_decoder
+from .hexagonal_color_code import HexagonalColorCode
+from .square_octagon_color_code import SquareOctagonColorCode
 
 
 def code_from_string(lattice_type: str, distance: int) -> ColorCode:

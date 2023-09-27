@@ -14,7 +14,7 @@ from qiskit_aer.noise import (
     pauli_error,
 )
 
-from mqt import qecc
+from . import apply_ecc
 
 if TYPE_CHECKING:  # pragma: no cover
     from qiskit.result import Result
@@ -161,7 +161,7 @@ def main() -> None:
     # Initializing the quantum circuit
     if ecc is not None:
         # Applying error correction to the circuit
-        result = qecc.apply_ecc(circ, ecc, ecc_frequency)
+        result = apply_ecc(circ, ecc, ecc_frequency)
         circ = QuantumCircuit().from_qasm_str(result["circ"])
 
     if ecc_export_filename is not None:
