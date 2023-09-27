@@ -1,35 +1,55 @@
-"""Configuration file for the Sphinx documentation builder."""
-import sys
+"""Sphinx configuration file."""
+from __future__ import annotations
 
-from pybtex.database import Entry
-from pybtex.richtext import HRef
-
-if sys.version_info < (3, 10, 0):
-    import importlib_metadata as metadata
-else:
-    from importlib import metadata
+import warnings
+from importlib import metadata
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pybtex.plugin
 from pybtex.style.formatting.unsrt import Style as UnsrtStyle
 from pybtex.style.template import field, href
 
+ROOT = Path(__file__).parent.parent.resolve()
+
+
+try:
+    from mqt.qecc import __version__ as version
+except ModuleNotFoundError:
+    try:
+        version = metadata.version("mqt.qecc")
+    except ModuleNotFoundError:
+        msg = (
+            "Package should be installed to produce documentation! "
+            "Assuming a modern git archive was used for version discovery."
+        )
+        warnings.warn(msg, stacklevel=1)
+
+        from setuptools_scm import get_version
+
+        version = get_version(root=str(ROOT), fallback_root=ROOT)
+
+# Filter git details from version
+release = version.split("+")[0]
+
+if TYPE_CHECKING:
+    from pybtex.database import Entry
+    from pybtex.richtext import HRef
+
 # -- Project information -----------------------------------------------------
 project = "QECC"
 author = "Lucas Berent"
-
-release = metadata.version("mqt.qecc")
-version = ".".join(release.split(".")[:3])
 language = "en"
 project_copyright = "Chair for Design Automation, Technical University of Munich"
 
 # -- General configuration ---------------------------------------------------
 extensions = [
+    "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosectionlabel",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinxcontrib.bibtex",
@@ -37,8 +57,26 @@ extensions = [
     "hoverxref.extension",
     "nbsphinx",
     "sphinxext.opengraph",
-    "sphinx_rtd_dark_mode",
+    "sphinx_autodoc_typehints",
 ]
+
+pygments_style = "colorful"
+
+add_module_names = False
+
+modindex_common_prefix = ["mqt.qecc."]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "typing_extensions": ("https://typing-extensions.readthedocs.io/en/latest/", None),
+    "qiskit": ("https://qiskit.org/documentation/", None),
+    "mqt": ("https://mqt.readthedocs.io/en/latest/", None),
+    "core": ("https://mqt.readthedocs.io/projects/core/en/latest/", None),
+    "ddsim": ("https://mqt.readthedocs.io/projects/ddsim/en/latest/", None),
+    "qcec": ("https://mqt.readthedocs.io/projects/qcec/en/latest/", None),
+    "qmap": ("https://mqt.readthedocs.io/projects/qmap/en/latest/", None),
+    "syrec": ("https://mqt.readthedocs.io/projects/syrec/en/latest/", None),
+}
 
 nbsphinx_execute = "auto"
 highlight_language = "python3"
@@ -66,11 +104,6 @@ hoverxref_role_types = {
 }
 exclude_patterns = ["_build", "build", "**.ipynb_checkpoints", "Thumbs.db", ".DS_Store", ".env"]
 
-typehints_use_signature = True
-typehints_use_signature_return = True
-typehints_use_rtype = False
-napoleon_use_rtype = False
-
 
 class CDAStyle(UnsrtStyle):
     """Custom style for including PDF links."""
@@ -86,16 +119,26 @@ pybtex.plugin.register_plugin("pybtex.style.formatting", "cda_style", CDAStyle)
 bibtex_bibfiles = ["refs.bib"]
 bibtex_default_style = "cda_style"
 
-copybutton_prompt_text = r"(?:\(venv\) )?(?:\[.*\] )?\$ "
+copybutton_prompt_text = r"(?:\(venv\) )?\$ "
 copybutton_prompt_is_regexp = True
 copybutton_line_continuation_character = "\\"
 
 autosummary_generate = True
 
+typehints_use_rtype = False
+napoleon_use_rtype = False
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
 # -- Options for HTML output -------------------------------------------------
-html_theme = "sphinx_rtd_theme"
-html_baseurl = "https://qecc.readthedocs.io/en/latest/"
-html_logo = "_static/mqt_light.png"
+html_theme = "furo"
+html_baseurl = "https://mqt.readthedocs.io/project/qecc/en/latest/"
 html_static_path = ["_static"]
-html_css_files = ["custom.css"]
-autodoc_member_order = "groupwise"
+html_theme_options = {
+    "light_logo": "mqt_dark.png",
+    "dark_logo": "mqt_light.png",
+    "source_repository": "https://github.com/cda-tum/mqt-qecc/",
+    "source_branch": "main",
+    "source_directory": "docs/source",
+    "navigation_with_keys": True,
+}

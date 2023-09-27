@@ -49,18 +49,18 @@ dynamic = ["version"]
 test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "pytest-cov"]
 docs = [
-    "sphinx>=5, <7",
-    "sphinx-rtd-theme",
-    "sphinx-rtd-dark-mode",
+    "furo>=2023.08.17",
+    "sphinx",
+    "setuptools-scm>=7",
     "sphinxcontrib-bibtex>=2.4.2",
     "sphinx-copybutton",
     "sphinx-hoverxref",
     "pybtex>=0.24",
-    "importlib_metadata>=4.4; python_version < '3.10'",
     "ipython",
     "ipykernel",
     "nbsphinx",
     "sphinxext-opengraph",
+    "sphinx-autodoc-typehints",
     "qiskit-terra[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
