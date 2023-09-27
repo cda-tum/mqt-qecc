@@ -46,7 +46,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock"]
+test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "pytest-cov"]
 docs = [
     "sphinx>=5, <7",
@@ -138,7 +138,7 @@ git-only = [
 write_to = "src/mqt/qecc/_version.py"
 
 [tool.pytest.ini_options]
-minversion = "7.2"
+minversion = "7.0"
 testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
@@ -146,23 +146,14 @@ xfail_strict = true
 filterwarnings = [
     "error",
     "ignore:pkg_resources.*:DeprecationWarning:",
-    'ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:',
+    "ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:",
 ]
 
-[tool.coverage.run]
-source = ["mqt.qecc"]
-
-[tool.coverage.report]
-show_missing = true
-skip_empty = true
-precision = 1
-
-[tool.check-manifest]
-ignore = [
-    "docs/**",
-    ".*",
-    ".*/**",
-    "noxfile.py"
+[tool.coverage]
+run.source = ["mqt.qecc"]
+report.exclude_also = [
+    '\.\.\.',
+    'if TYPE_CHECKING:',
 ]
 
 [tool.black]
