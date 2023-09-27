@@ -11,25 +11,28 @@ authors = [
     { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" }
 ]
-keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "color codes", "MaxSAT", "QLDPC", "QEC", "Z3"]
+keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
 
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: C++",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS",
-    "Operating System :: POSIX :: Linux",
-    "Intended Audience :: Science/Research",
-    "Natural Language :: English",
-    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Development Status :: 5 - Production/Stable",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -71,7 +74,7 @@ dev = ["mqt.qecc[coverage, docs, visualization]"]
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://github.com/cda-tum/mqt-qecc"
-"Bug Tracker" = "https://github.com/cda-tum/mqt-qecc/issues"
+Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 
 [tool.scikit-build]
