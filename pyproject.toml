@@ -159,17 +159,11 @@ report.exclude_also = [
 [tool.black]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-src_paths = ["mqt/qecc", "test/python"]
-
 [tool.mypy]
 files = ["src/mqt", "test/python"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 python_version = "3.8"
 strict = true
-warn_unused_configs = true
-check_untyped_defs = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
