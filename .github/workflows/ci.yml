@@ -28,67 +28,55 @@ jobs:
         with:
           submodules: recursive
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: Chocobo1/setup-ccache-action@v1
         with:
-          key: "ubuntu"
+          prepend_symlinks_to_path: false
+          override_cache_key: c++-tests-ubuntu-latest
+      - name: Set up mold as linker
+        uses: rui314/setup-mold@v1
+      - name: Install Ninja
+        run: pipx install ninja
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DENABLE_COVERAGE=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
       - name: Build
         run: cmake --build build
       - name: Test
         run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
+        # Coverage uploads can be flaky, so we retry them a few times.
+        uses: Wandalen/wretry.action@v1.3.0
         with:
-          fail_ci_if_error: true
-          flags: cpp
-          gcov: true
-          gcov_ignore: "extern/**/*"
-          token: ${{ secrets.CODECOV_TOKEN }}
+          action: codecov/codecov-action@v3
+          attempt_limit: 5
+          attempt_delay: 2000
+          with: |
+            fail_ci_if_error: true
+            flags: cpp
+            gcov: true
+            gcov_ignore: "extern/**/*"
+            token: ${{ secrets.token }}
 
   macos-tests:
-    name: Tests macos-11
-    runs-on: macos-11
+    name: Tests macos-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: Chocobo1/setup-ccache-action@v1
         with:
-          key: "macOS"
+          prepend_symlinks_to_path: false
+          override_cache_key: c++-tests-macos-latest
+      - name: Install Ninja
+        run: pipx install ninja
       - name: Install flint
         run: brew install flint
       - name: Configure CMake
-        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON
+        run: cmake -S . -B build
       - name: Build
         run: cmake --build build
       - name: Test
         run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
-#  windows-tests: TODO
-#    name: Tests windows-2022
-#    runs-on: windows-2022
-#    defaults:
-#      run:
-#        shell: msys2 {0}
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          submodules: recursive
-#      - uses: msys2/setup-msys2@v2
-#        with:
-#          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
-#      - name: Debug flint location
-#        run: pacman -Ql mingw-w64-clang-x86_64-flint
-#      - name: Configure CMake
-#        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
-#        env:
-#          CC: clang
-#          CXX: clang++
-#      - name: Build
-#        run: cmake --build build --config Release --parallel 3
-#      - name: Test
-#        working-directory: build\Release\test
-#        run: ctest -C Release --output-on-failure

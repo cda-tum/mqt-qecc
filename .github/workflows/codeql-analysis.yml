@@ -49,7 +49,7 @@ jobs:
 
       - if: matrix.language == 'cpp'
         name: Configure CMake
-        run: cmake -S . -B build -DBINDINGS=ON -DBUILD_QECC_TESTS=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
       - if: matrix.language == 'cpp'
         name: Build

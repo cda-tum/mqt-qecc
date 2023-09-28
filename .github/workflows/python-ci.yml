@@ -31,8 +31,6 @@ jobs:
           - runs-on: macos-latest
             flint-inst-cmd: brew install flint
             python-version: 3.11
-    #          - runs-on: windows-latest
-    #            flint-inst-cmd:
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,10 +42,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: ${{ matrix.flint-inst-cmd }}
-      - name: Setup nox
-        run: pipx install nox
       - name: Test on 🐍 ${{ matrix.python-version }}
-        run: nox -s tests-${{ matrix.python-version }}
+        run: pipx run nox -s tests-${{ matrix.python-version }} --verbose
   coverage:
     name: 🐍 ${{ matrix.python-version }} Coverage
     runs-on: ubuntu-latest
@@ -69,10 +65,15 @@ jobs:
       - name: Setup nox
         run: pipx install nox
       - name: Run session
-        run: nox -s coverage-${{ matrix.python-version }} -- --cov-report=xml
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
+        run: pipx run nox -s tests-${{ matrix.python-version }} -- --cov --cov-report=xml
+      - name: Upload coverage to Codecov
+        # Coverage uploads can be flaky, so we retry them a few times.
+        uses: Wandalen/wretry.action@v1.3.0
         with:
-          fail_ci_if_error: true
-          flags: python
-          token: ${{ secrets.CODECOV_TOKEN }}
+          action: codecov/codecov-action@v3
+          attempt_limit: 5
+          attempt_delay: 2000
+          with: |
+            fail_ci_if_error: true
+            flags: python
+            token: ${{ secrets.token }}

@@ -22,17 +22,11 @@ jobs:
         config:
           - { os: ubuntu-latest }
           - { os: macos-11 }
-    #          - { os: windows-2022 } TODO
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
-      - if: runner.os == 'Windows'
-        name: Install MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
       - if: runner.os == 'macOS'
         name: Install flint
         run: brew install flint
@@ -63,15 +57,17 @@ jobs:
           path: dist/*.tar.gz
   upload_pypi:
     needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
+    name: 🚀 Deploy to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/mqt.qecc
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: artifact
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.pypi_password }}
-          skip-existing: true
-          verbose: true
