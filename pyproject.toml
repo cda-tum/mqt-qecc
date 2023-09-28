@@ -242,7 +242,7 @@ convention = "google"
 build = "cp3*"
 skip = "*-musllinux*"
 archs = "auto64"
-test-command = "python -c \"from mqt import qmap\""
+test-command = "python -c \"from mqt import qecc\""
 test-skip = "*-macosx_arm64 cp312-*"
 build-frontend = "build"
 
