@@ -84,7 +84,7 @@ def runtime() -> None:
     plt.show()
 
 
-def runtime_comparison() -> None:  # noqa: PLR0915
+def runtime_comparison() -> None:
     """Compare the runtime of the original and the heuristic decoding algorithm."""
     plt.rcParams.update({"font.size": 14})
     input_filen = ""

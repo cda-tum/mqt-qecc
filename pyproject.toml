@@ -1,11 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=61",
-    "setuptools_scm[toml]>=7",
-    "ninja>=1.10; sys_platform != 'win32'",
-    "cmake>=3.19",
-]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.5.0", "setuptools-scm>=7", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "mqt.qecc"
@@ -16,25 +11,28 @@ authors = [
     { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" }
 ]
-keywords = ["MQT", "quantum computing", "quantum error correction", "error-correcting codes", "decoding", "color codes", "MaxSAT", "QLDPC", "QEC", "Z3"]
+keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
 
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: C++",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS",
-    "Operating System :: POSIX :: Linux",
-    "Intended Audience :: Science/Research",
-    "Natural Language :: English",
-    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Development Status :: 5 - Production/Stable",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -48,21 +46,21 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock"]
+test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "pytest-cov"]
 docs = [
-    "sphinx>=5, <7",
-    "sphinx-rtd-theme",
-    "sphinx-rtd-dark-mode",
+    "furo>=2023.08.17",
+    "sphinx",
+    "setuptools-scm>=7",
     "sphinxcontrib-bibtex>=2.4.2",
     "sphinx-copybutton",
     "sphinx-hoverxref",
     "pybtex>=0.24",
-    "importlib_metadata>=4.4; python_version < '3.10'",
     "ipython",
     "ipykernel",
     "nbsphinx",
     "sphinxext-opengraph",
+    "sphinx-autodoc-typehints",
     "qiskit-terra[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
@@ -76,43 +74,71 @@ dev = ["mqt.qecc[coverage, docs, visualization]"]
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://github.com/cda-tum/mqt-qecc"
-"Bug Tracker" = "https://github.com/cda-tum/mqt-qecc/issues"
+Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 
-[tool.setuptools.packages.find]
-include = ["mqt.*"]
+[tool.scikit-build]
+# Protect the configuration against future changes in scikit-build-core
+minimum-version = "0.5.0"
 
-[tool.setuptools_scm]
+# Set the target to build
+cmake.targets = ["pyqecc"]
 
-[tool.cibuildwheel]
-build = "cp3*"
-archs = "auto64"
-skip = "*-musllinux*"
-test-skip = "*-macosx_arm64 cp312-*"
-test-command = "python -c \"from mqt import qecc\""
-environment = { DEPLOY = "ON" }
-build-frontend = "build"
-build-verbosity = 3
-manylinux-x86_64-image = "manylinux_2_28"
+# Set required CMake and Ninja versions
+cmake.minimum-version = "3.19"
+ninja.minimum-version = "1.10"
 
-[tool.cibuildwheel.linux]
-before-all = [
-    "yum -y install mpfr-devel",
-    "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
-    "cd flint2 && ./configure && make -j 3 && make install"
+# Setuptools-style build caching in a local directory
+build-dir = "build/{wheel_tag}"
+
+# Build stable ABI wheels for CPython 3.12+
+wheel.py-api = "cp312"
+
+# Explicitly set the package directory
+wheel.packages = ["src/mqt"]
+
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/mqt/qecc/_version.py"]
+sdist.exclude = [
+    "**/.github",
+    "**/doc",
+    "**/docs",
+    "**/meta",
+    "**/plots",
+    "**/test",
+    "**/tests",
+    "extern/mqt-core/extern/json/include",
+    "extern/mqt-core/extern/googletest",
+    "extern/mqt-core/extern/boost/config/checks",
+    "extern/mqt-core/extern/boost/config/tools",
+    "extern/mqt-core/extern/boost/multiprecision/config",
+    "extern/mqt-core/extern/boost/multiprecision/example",
+    "extern/mqt-core/extern/boost/multiprecision/performance",
+    "extern/mqt-core/extern/boost/multiprecision/tools"
 ]
 
-[tool.cibuildwheel.macos]
-archs = "x86_64"
-environment = { MACOSX_DEPLOYMENT_TARGET = "10.15", DEPLOY = "ON" }
+[tool.scikit-build.cmake.define]
+BUILD_MQT_QECC_TESTS = "OFF"
+BUILD_MQT_QECC_BINDINGS = "ON"
+ENABLE_IPO = "ON"
 
-#[tool.cibuildwheel.windows] TODO
-#before-build = "pip install delvewheel"
-#repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel}"
-#environment = { DEPLOY = "ON", CC = "clang", CXX = "clang++", FLINT_ROOT = "/clang64" }
+
+[tool.check-sdist]
+sdist-only = ["src/mqt/qecc/_version.py"]
+git-only = [
+    "docs/*",
+    "extern/*",
+    "examples/*",
+    "test/*",
+    ".idea/*",
+]
+
+
+[tool.setuptools_scm]
+write_to = "src/mqt/qecc/_version.py"
 
 [tool.pytest.ini_options]
-minversion = "7.2"
+minversion = "7.0"
 testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
@@ -120,38 +146,24 @@ xfail_strict = true
 filterwarnings = [
     "error",
     "ignore:pkg_resources.*:DeprecationWarning:",
-    'ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:',
+    "ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:",
 ]
 
-[tool.coverage.run]
-source = ["mqt.qecc"]
-
-[tool.coverage.report]
-show_missing = true
-skip_empty = true
-precision = 1
-
-[tool.check-manifest]
-ignore = [
-    "docs/**",
-    ".*",
-    ".*/**",
-    "noxfile.py"
+[tool.coverage]
+run.source = ["mqt.qecc"]
+report.exclude_also = [
+    '\.\.\.',
+    'if TYPE_CHECKING:',
 ]
 
 [tool.black]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-src_paths = ["mqt/qecc", "test/python"]
-
 [tool.mypy]
-files = ["mqt/qecc", "test/python", "setup.py"]
+files = ["src/mqt", "test/python"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 python_version = "3.8"
 strict = true
-warn_unused_configs = true
-check_untyped_defs = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
@@ -162,73 +174,91 @@ pretty = true
 module = ["qiskit.*", "qiskit_aer.*", "qecsim.*" , "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*", "z3.*"]
 ignore_missing_imports = true
 
+
 [tool.ruff]
+include = ["*.py", "*.pyi", "**/pyproject.toml", "*.ipynb"]
 select = [
     "E", "F", "W", # flake8
-    "A", # flake8-builtins
-    "ANN", # flake8-annotations
-    "ARG", # flake8-unused-arguments
-    "B", "B904", # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "D", # pydocstyle
-    "EM", # flake8-errmsg
-    "EXE", # flake8-executable
-    "I", # isort
-    "ICN", # flake8-import-conventions
-    "ISC", # flake8-implicit-str-concat
-    "N", # flake8-naming
-    "PGH", # pygrep-hooks
-    "PIE", # flake8-pie
-    "PL", # pylint
-    "PT", # flake8-pytest-style
-    "PTH", # flake8-use-pathlib
-    "PYI", # flake8-pyi
-    "Q", # flake8-quotes
-    "RET", # flake8-return
-    "RSE", # flake8-raise
-    "RUF", # Ruff-specific
-    "SLF", # flake8-self
-    "SIM", # flake8-simplify
-    "TCH", # flake8-type-checking
-    "TID", # flake8-tidy-imports
-    "TRY", # tryceratops
-    "UP", # pyupgrade
-    "YTT", # flake8-2020
+    "A",           # flake8-builtins
+    "ANN",         # flake8-annotations
+    "ARG",         # flake8-unused-arguments
+    "ASYNC",       # flake8-async
+    "B",  "B904",  # flake8-bugbear
+    "C4",          # flake8-comprehensions
+    "D",           # pydocstyle
+    "EM",          # flake8-errmsg
+    "EXE",         # flake8-executable
+    "FA",          # flake8-future-annotations
+    "FLY",         # flynt
+    "I",           # isort
+    "ICN",         # flake8-import-conventions
+    "ISC",         # flake8-implicit-str-concat
+    "N",           # flake8-naming
+    "NPY",         # numpy
+    "PERF",        # perflint
+    "PGH",         # pygrep-hooks
+    "PIE",         # flake8-pie
+    "PL",          # pylint
+    "PT",          # flake8-pytest-style
+    "PTH",         # flake8-use-pathlib
+    "PYI",         # flake8-pyi
+    "Q",           # flake8-quotes
+    "RET",         # flake8-return
+    "RSE",         # flake8-raise
+    "RUF",         # Ruff-specific
+    "SLF",         # flake8-self
+    "SLOT",        # flake8-slots
+    "SIM",         # flake8-simplify
+    "TCH",         # flake8-type-checking
+    "TID",         # flake8-tidy-imports
+    "TRY",         # tryceratops
+    "UP",          # pyupgrade
+    "YTT",         # flake8-2020
 ]
-ignore = [
-    "ANN101", # Missing type annotation for self in method
-    "D203", # 1 blank line required before class docstring
-    "D213", # Multi-line docstring summary should start at the second line
-    "E501", # Line too long (Black is enough)
-    "PLR2004", # Magic values
-    "PLR0913", # Too many arguments
+extend-ignore = [
+    "ANN101",  # Missing type annotation for self in method
+    "ANN102",  # Missing type annotation for cls in classmethod
+    "E501",    # Line too long (Black is enough)
+    "PLR",     # Design related pylint codes
 ]
-
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-]
-
+src = ["src"]
+flake8-unused-arguments.ignore-variadic-names = true
+isort.required-imports = ["from __future__ import annotations"]
 line-length = 120
+
 [tool.ruff.per-file-ignores]
-"*.pyi" = [
-    "D", # pydocstyle
+"*.pyi" = ["D"]  # pydocstyle
+"*.ipynb" = [
+    "D",    # pydocstyle
+    "E402", # Allow imports to appear anywhere in Jupyter notebooks
+    "I002", # Allow missing `from __future__ import annotations` import
 ]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+
+[tool.cibuildwheel]
+build = "cp3*"
+skip = "*-musllinux*"
+archs = "auto64"
+test-command = "python -c \"from mqt import qecc\""
+test-skip = "*-macosx_arm64 cp312-*"
+build-frontend = "build"
+
+[tool.cibuildwheel.linux]
+before-all = [
+    "yum -y install mpfr-devel",
+    "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
+    "cd flint2 && ./configure && make -j 3 && make install"
+]
+environment = { DEPLOY="ON" }
+
+[tool.cibuildwheel.macos]
+archs = "x86_64"
+environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel}"
+environment = { CMAKE_GENERATOR = "Ninja" }

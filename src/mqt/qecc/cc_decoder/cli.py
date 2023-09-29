@@ -1,7 +1,9 @@
 """Command line interface for the CC decoder."""
+from __future__ import annotations
+
 import argparse
 
-from mqt.qecc.cc_decoder import decoder, tn_decoder
+from . import decoder, tn_decoder
 
 
 def cli() -> None:

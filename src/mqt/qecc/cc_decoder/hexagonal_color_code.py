@@ -6,7 +6,7 @@ Hexagonal Color Code layout construction adapted from https://github.com/peter-j
 
 from __future__ import annotations
 
-from mqt.qecc.cc_decoder.color_code import ColorCode, LatticeType
+from .color_code import ColorCode, LatticeType
 
 
 class HexagonalColorCode(ColorCode):
