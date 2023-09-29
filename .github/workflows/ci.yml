@@ -20,13 +20,15 @@ defaults:
     shell: bash
 
 jobs:
-  ubuntu-tests:
-    name: Tests ubuntu-latest
+  cpp-tests-ubuntu:
+    name: 🐧 Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
       - name: Setup ccache
         uses: Chocobo1/setup-ccache-action@v1
         with:
@@ -36,14 +38,60 @@ jobs:
         uses: rui314/setup-mold@v1
       - name: Install Ninja
         run: pipx install ninja
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
+
+  cpp-tests-macos:
+    name: 🍎 Release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install flint
+        run: brew install flint
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          prepend_symlinks_to_path: false
+          override_cache_key: c++-tests-macos-latest
+      - name: Install Ninja
+        run: pipx install ninja
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
+
+  coverage:
+    name: 📈 Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Install flint
         run: sudo apt-get install libflint-dev
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          prepend_symlinks_to_path: false
+          override_cache_key: c++-coverage
+      - name: Set up mold as linker
+        uses: rui314/setup-mold@v1
+      - name: Install Ninja
+        run: pipx install ninja
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --config Debug
       - name: Test
-        run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
+        run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
       - name: Upload coverage to Codecov
         # Coverage uploads can be flaky, so we retry them a few times.
         uses: Wandalen/wretry.action@v1.3.0
@@ -57,26 +105,3 @@ jobs:
             gcov: true
             gcov_ignore: "extern/**/*"
             token: ${{ secrets.token }}
-
-  macos-tests:
-    name: Tests macos-latest
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
-          prepend_symlinks_to_path: false
-          override_cache_key: c++-tests-macos-latest
-      - name: Install Ninja
-        run: pipx install ninja
-      - name: Install flint
-        run: brew install flint
-      - name: Configure CMake
-        run: cmake -S . -B build
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
