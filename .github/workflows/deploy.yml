@@ -19,9 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - { os: ubuntu-latest }
-          - { os: macos-11 }
+        runs-on: [ubuntu-latest, macos-11]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,11 +28,22 @@ jobs:
       - if: runner.os == 'macOS'
         name: Install flint
         run: brew install flint
+      - if: matrix.runs-on != 'ubuntu-latest'
+        name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          prepend_symlinks_to_path: false
+          windows_compile_environment: msvc
+          override_cache_key: wheels-${{ matrix.runs-on }}
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16
+      - name: Verify clean directory
+        run: git diff --exit-code
+        shell: bash
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
+
   build_sdist:
     name: sdist
     runs-on: ubuntu-latest
@@ -43,18 +52,16 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
       - name: Install flint
         run: sudo apt-get install libflint-dev
       - name: Build SDist
         run: pipx run build --sdist
-      - name: Install sdist
-        run: python -m pip install --verbose dist/*.tar.gz
+      - name: Check metadata
+        run: pipx run twine check dist/*
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
+
   upload_pypi:
     needs: [build_wheels, build_sdist]
     if: github.event_name == 'release' && github.event.action == 'published'
