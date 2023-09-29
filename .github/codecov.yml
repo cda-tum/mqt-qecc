@@ -2,7 +2,7 @@ ignore:
   - "extern/**/*"
   - "**/python"
   - "test/**/*"
-  - "mqt/qecc/cc_decoder/plots.py"
+  - "src/mqt/qecc/cc_decoder/plots.py"
 
 coverage:
   range: 60..90
