@@ -1,6 +1,6 @@
 ignore:
   - "extern/**/*"
-  - "mqt/**/*.cpp"
+  - "**/python"
   - "test/**/*"
   - "mqt/qecc/cc_decoder/plots.py"
 
@@ -13,10 +13,12 @@ coverage:
 
 flag_management:
   default_rules:
+    carryforward: true
     statuses:
       - type: project
         target: auto
         threshold: 0.5%
+        removed_code_behavior: adjust_base
       - type: patch
         target: 90%
         threshold: 1%
@@ -25,12 +27,15 @@ flag_management:
       paths:
         - "include"
         - "src"
+      after_n_builds: 1
     - name: python
       paths:
-        - "mqt/**/*.py"
+        - "src/mqt/**/*.py"
+      after_n_builds: 1
       statuses:
         - type: project
           threshold: 0.5%
+          removed_code_behavior: adjust_base
         - type: patch
           target: 95%
           threshold: 1%
@@ -41,6 +46,7 @@ parsers:
       conditional: no
       loop: no
 
-codecov:
-  notify:
-    after_n_builds: 2
+comment:
+  layout: "reach, diff, flags, files"
+  require_changes: true
+  show_carryforward_flags: true
