@@ -252,6 +252,7 @@ before-all = [
     "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
     "cd flint2 && ./configure && make -j 3 && make install"
 ]
+environment = { DEPLOY="ON" }
 
 [tool.cibuildwheel.macos]
 archs = "x86_64"
