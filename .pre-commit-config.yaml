@@ -15,7 +15,7 @@ ci:
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -85,7 +85,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.2.6
     hooks:
       - id: codespell
         args: ["-L", "wille,linz,applys", "--skip", "*.ipynb"]
@@ -124,7 +124,7 @@ repos:
 
   # Checking sdist validity
   - repo: https://github.com/henryiii/check-sdist
-    rev: v0.1.2
+    rev: v0.1.3
     hooks:
       - id: check-sdist
         args: [--inject-junk]
