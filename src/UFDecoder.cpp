@@ -255,7 +255,7 @@ void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& 
 }
 
 /**
- * Reset temporaily computed data
+ * Reset temporarily computed data
  */
 void UFDecoder::reset() {
     this->result = {};
