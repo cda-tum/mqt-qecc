@@ -1,5 +1,6 @@
 [build-system]
-requires = ["scikit-build-core>=0.5.0", "setuptools-scm>=7", "pybind11>=2.11"]
+# TODO: remove upper cap once scikit-build-core is updated
+requires = ["scikit-build-core>=0.5.0,<0.6.0", "setuptools-scm>=7", "pybind11>=2.11"]
 build-backend = "scikit_build_core.build"
 
 [project]
