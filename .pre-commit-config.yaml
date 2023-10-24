@@ -30,13 +30,13 @@ repos:
 
   # Clean jupyter notebooks
   - repo: https://github.com/srstevenson/nb-clean
-    rev: 3.0.1
+    rev: 3.1.0
     hooks:
       - id: nb-clean
 
   # Handling unwanted unicode characters
   - repo: https://github.com/sirosen/texthooks
-    rev: 0.5.0
+    rev: 0.6.2
     hooks:
       - id: fix-ligatures
       - id: fix-smartquotes
@@ -51,14 +51,14 @@ repos:
 
   # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.292
+    rev: v0.1.1
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
 
   # Run code formatting with Black
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1 # Keep in sync with blacken-docs
+    rev: 23.10.0 # Keep in sync with blacken-docs
     hooks:
       - id: black-jupyter
 
@@ -68,11 +68,11 @@ repos:
     hooks:
       - id: blacken-docs
         additional_dependencies:
-          - black==23.9.1 # keep in sync with black hook
+          - black==23.10.0 # keep in sync with black hook
 
   # Check static types with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.6.0
+    rev: v1.6.1
     hooks:
       - id: mypy
         files: ^(src/mqt|test/python)
@@ -92,7 +92,7 @@ repos:
 
   # Clang-format the C++ part of the code base automatically
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v17.0.2
+    rev: v17.0.3
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda]
