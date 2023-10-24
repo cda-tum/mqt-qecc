@@ -129,6 +129,6 @@ repos:
       - id: check-sdist
         args: [--inject-junk]
         additional_dependencies:
-          - scikit-build-core[pyproject]>=0.5.0
+          - scikit-build-core[pyproject]>=0.5.0,<0.6 # TODO: remove upper cap once scikit-build-core is updated
           - setuptools-scm>=7
           - pybind11>=2.11
