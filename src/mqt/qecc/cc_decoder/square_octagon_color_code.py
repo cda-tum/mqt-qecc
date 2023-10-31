@@ -18,7 +18,9 @@ class SquareOctagonColorCode(ColorCode):
         # additionally to ancilla_qubits (on squares) we have the ones on octagons
         self.octagon_ancilla_qubits: set[tuple[int, int]] = set()
         self.square_ancilla_qubits: set[tuple[int, int]] = set()
-        ColorCode.__init__(self, distance=distance, lattice_type=LatticeType.SQUARE_OCTAGON)
+        ColorCode.__init__(
+            self, distance=distance, lattice_type=LatticeType.SQUARE_OCTAGON
+        )
 
     def add_qubits(self) -> None:
         """Add qubits to the code."""
@@ -43,7 +45,9 @@ class SquareOctagonColorCode(ColorCode):
                     self.odd_ancilla_qubit_row(x_max, y)
                 y += 1
 
-        self.ancilla_qubits = self.square_ancilla_qubits.union(self.octagon_ancilla_qubits)
+        self.ancilla_qubits = self.square_ancilla_qubits.union(
+            self.octagon_ancilla_qubits
+        )
 
     def even_ancilla_qubit_row(self, x_max: int, y: int) -> None:
         """Create even ancilla qubits."""
@@ -125,7 +129,12 @@ class SquareOctagonColorCode(ColorCode):
 
         for idx, (x, y) in enumerate(self.square_ancilla_qubits):
             qbts: list[int] = []
-            for coord in [(x - 1, y - 1), (x + 1, y - 1), (x + 1, y + 1), (x - 1, y + 1)]:
+            for coord in [
+                (x - 1, y - 1),
+                (x + 1, y - 1),
+                (x + 1, y + 1),
+                (x - 1, y + 1),
+            ]:
                 if coord in coords_to_idx:
                     qubit_idx = coords_to_idx[coord]
                     qbts.append(qubit_idx)

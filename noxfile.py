@@ -59,7 +59,11 @@ def _run_tests(
         posargs.append("--cov-config=pyproject.toml")
 
     session.install(
-        "scikit-build-core[pyproject]<0.6", "setuptools_scm", "pybind11", *install_args, env=env
+        "scikit-build-core[pyproject]<0.6",
+        "setuptools_scm",
+        "pybind11",
+        *install_args,
+        env=env,
     )  # TODO: remove upper cap once scikit-build-core is updated
     install_arg = f"-ve.[{','.join(_extras)}]"
     session.install("--no-build-isolation", install_arg, *install_args, env=env)
@@ -88,7 +92,9 @@ def docs(session: nox.Session) -> None:
     """Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--serve", action="store_true", help="Serve after building")
-    parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
+    parser.add_argument(
+        "-b", dest="builder", default="html", help="Build target (default: html)"
+    )
     args, posargs = parser.parse_known_args(session.posargs)
 
     if args.builder != "html" and args.serve:
@@ -105,7 +111,9 @@ def docs(session: nox.Session) -> None:
     session.chdir("docs")
 
     if args.builder == "linkcheck":
-        session.run("sphinx-build", "-b", "linkcheck", "source", "_build/linkcheck", *posargs)
+        session.run(
+            "sphinx-build", "-b", "linkcheck", "source", "_build/linkcheck", *posargs
+        )
         return
 
     shared_args = (

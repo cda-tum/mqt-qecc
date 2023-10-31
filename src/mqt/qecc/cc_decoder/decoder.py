@@ -39,13 +39,17 @@ class LightsOut:
 
         assert self.switch_vars is not None
         for i in range(1, len(indices) - 1):
-            constraint = Xor(self.switch_vars[indices[i]], helper_vars[i]) == helper_vars[i - 1]
+            constraint = (
+                Xor(self.switch_vars[indices[i]], helper_vars[i]) == helper_vars[i - 1]
+            )
             self.optimizer.add(simplify(constraint))
 
         constraint = self.switch_vars[indices[-1]] == helper_vars[-1]
         self.optimizer.add(simplify(constraint))
 
-    def complete_parity_constraint(self, light: int, indices: list[int], val: bool) -> None:
+    def complete_parity_constraint(
+        self, light: int, indices: list[int], val: bool
+    ) -> None:
         """Completes the parity constraints for a light.
 
         Adds the constraint that is dependent on the value of the light.
@@ -62,11 +66,15 @@ class LightsOut:
         Soft constraints are added to the optimizer with default weights.
         """
         if self.switch_vars is None:
-            self.switch_vars = [Bool(f"switch_{i}") for i in range(len(self.switches_to_lights))]
+            self.switch_vars = [
+                Bool(f"switch_{i}") for i in range(len(self.switches_to_lights))
+            ]
 
         for light, switches in self.lights_to_switches.items():
             if light not in self.helper_vars:
-                self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches) - 1)]
+                self.helper_vars[light] = [
+                    Bool(f"helper_{light}_{i}") for i in range(len(switches) - 1)
+                ]
             self.preconstruct_parity_constraint(light, switches)
 
         for switch in self.switch_vars:
@@ -121,7 +129,9 @@ class LightsOut:
             wcnf = str(self.optimizer)
             # Note: This merely calls the solver. It does not interpret the output.
             #       This is just to measure the time it takes to solve the problem.
-            with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open("a+") as out:
+            with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
+                "a+"
+            ) as out:
                 start = datetime.datetime.now()
                 subprocess.run([solver_path, wcnf], stdout=out, check=False)
                 solve_time = datetime.datetime.now() - start
@@ -132,7 +142,9 @@ class LightsOut:
         return switches, constr_time, solve_time
 
 
-def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver_path: str = "z3") -> dict[str, Any]:
+def simulate_error_rate(
+    code: ColorCode, error_rate: float, nr_sims: int, solver_path: str = "z3"
+) -> dict[str, Any]:
     """Simulate the logical error rate for a given distance and error rate."""
     problem = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
 
@@ -153,7 +165,9 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
         lights = [bool(b) for b in syndrome]
 
         # compute estimate
-        estimate, constr_time, solve_time = problem.solve(lights, solver_path=solver_path)
+        estimate, constr_time, solve_time = problem.solve(
+            lights, solver_path=solver_path
+        )
         if len(estimate) > 0:
             # check if the estimate is correct
             residual = (error + np.array(estimate)) % 2
@@ -169,8 +183,12 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
         avg_constr_time = (avg_constr_time * i + constr_time.microseconds) / (i + 1)
         avg_solve_time = (avg_solve_time * i + solve_time.microseconds) / (i + 1)
 
-    logical_error_rates: list[float] = [nr_errors / nr_sims for nr_errors in logical_errors]
-    logical_error_rate_ebs: list[float] = [np.sqrt((1 - ler) * ler / nr_sims) for ler in logical_error_rates]
+    logical_error_rates: list[float] = [
+        nr_errors / nr_sims for nr_errors in logical_errors
+    ]
+    logical_error_rate_ebs: list[float] = [
+        np.sqrt((1 - ler) * ler / nr_sims) for ler in logical_error_rates
+    ]
     avg_total_time = avg_constr_time + avg_solve_time
 
     return {
