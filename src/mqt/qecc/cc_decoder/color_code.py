@@ -37,7 +37,7 @@ class ColorCode:
         self.n = len(self.qubits_to_faces)
         self.k = self.L.shape[1]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Compute a hash for the color code."""
         return hash(self.H.tobytes())
 
