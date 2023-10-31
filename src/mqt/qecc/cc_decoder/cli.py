@@ -17,22 +17,43 @@ def cli() -> None:
         default="hexagon",
         help="type of the code lattice (hexagon or square_octagon). Default: hexagon",
     )
-    parser.add_argument("--nr_sims", type=int, default=10000, help="the number of simulations to run. Default: 10000")
     parser.add_argument(
-        "--results_dir", type=str, default="./results", help="the directory to save the results to. Default: ./results"
+        "--nr_sims",
+        type=int,
+        default=10000,
+        help="the number of simulations to run. Default: 10000",
     )
     parser.add_argument(
-        "--decoder", type=str, default="maxsat", help="the decoder to use (maxsat or tn). Default: maxsat"
+        "--results_dir",
+        type=str,
+        default="./results",
+        help="the directory to save the results to. Default: ./results",
+    )
+    parser.add_argument(
+        "--decoder",
+        type=str,
+        default="maxsat",
+        help="the decoder to use (maxsat or tn). Default: maxsat",
     )
 
     parser.add_argument(
-        "--solver", type=str, default="z3", help="maxsat solver to use (path to a executable). Default: z3"
+        "--solver",
+        type=str,
+        default="z3",
+        help="maxsat solver to use (path to a executable). Default: z3",
     )
 
     args = parser.parse_args()
 
     if args.decoder == "maxsat":
-        decoder.run(args.type, args.distance, args.error_rate, args.nr_sims, args.results_dir, args.solver)
+        decoder.run(
+            args.type,
+            args.distance,
+            args.error_rate,
+            args.nr_sims,
+            args.results_dir,
+            args.solver,
+        )
     elif args.decoder == "tn":
         tn_decoder.run(args.distance, args.error_rate, args.nr_sims, args.results_dir)
     else:

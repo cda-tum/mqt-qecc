@@ -9,7 +9,12 @@ from qecsim.models.color import Color666Code, Color666MPSDecoder
 from qecsim.models.generic import BitFlipErrorModel
 
 
-def run(distance: int, error_rate: float, nr_sims: int = 10000, results_dir: str = "./results_tn") -> None:
+def run(
+    distance: int,
+    error_rate: float,
+    nr_sims: int = 10000,
+    results_dir: str = "./results_tn",
+) -> None:
     """Run the decoder for the hexagonal color code.
 
     :param distance: distance to run

@@ -102,7 +102,14 @@ hoverxref_role_types = {
     "attr": "tooltip",
     "property": "tooltip",
 }
-exclude_patterns = ["_build", "build", "**.ipynb_checkpoints", "Thumbs.db", ".DS_Store", ".env"]
+exclude_patterns = [
+    "_build",
+    "build",
+    "**.ipynb_checkpoints",
+    "Thumbs.db",
+    ".DS_Store",
+    ".env",
+]
 
 
 class CDAStyle(UnsrtStyle):

@@ -95,7 +95,14 @@ class DecodingRunInformation:
     @overload
     def __init__(self) -> None: ...
     @overload
-    def __init__(self, arg0: float, arg1: int, arg2: list[bool], arg3: list[bool], arg4: DecodingResult) -> None: ...
+    def __init__(
+        self,
+        arg0: float,
+        arg1: int,
+        arg2: list[bool],
+        arg3: list[bool],
+        arg4: DecodingResult,
+    ) -> None: ...
     @overload
     def __init__(
         self,
@@ -121,7 +128,14 @@ class DecodingSimulator:
         self, arg0: str, arg1: float, arg2: int, arg3: str, arg4: int, arg5: DecoderType
     ) -> None: ...
     def simulate_wer(
-        self, arg0: str, arg1: float, arg2: float, arg3: int, arg4: Code, arg5: float, arg6: DecoderType
+        self,
+        arg0: str,
+        arg1: float,
+        arg2: float,
+        arg3: int,
+        arg4: Code,
+        arg5: float,
+        arg6: DecoderType,
     ) -> None: ...
 
 class GrowthVariant:
@@ -175,5 +189,7 @@ class UFHeuristic(Decoder):
     @result.setter
     def result(self, arg0: DecodingResult) -> None: ...
 
-def apply_ecc(circuit_name: object, ecc_name: str, ecc_frequency: int = 100) -> dict[str, str]: ...
+def apply_ecc(
+    circuit_name: object, ecc_name: str, ecc_frequency: int = 100
+) -> dict[str, str]: ...
 def sample_iid_pauli_err(arg0: int, arg1: float) -> list[bool]: ...

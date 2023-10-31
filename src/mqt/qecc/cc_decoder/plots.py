@@ -19,7 +19,9 @@ ler_eb_k = "logical_error_rate_ebs"
 min_wts_k = "min_wts_logical_err"
 
 
-def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float], logical_idx: int = 0) -> None:
+def plot_ler_vs_distance(
+    code_dict: dict[float, Any], ax: Axes, pers: list[float], logical_idx: int = 0
+) -> None:
     """Plot the logical error rate vs distance for different err rates."""
     for p in pers:
         ds = []
@@ -34,7 +36,14 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_xlabel(r"Code distance $\it{d}$")
 
 
-def threshold_fit(variables: tuple[float, float], b0: float, b1: float, b2: float, mu: float, pth: float) -> float:
+def threshold_fit(
+    variables: tuple[float, float],
+    b0: float,
+    b1: float,
+    b2: float,
+    mu: float,
+    pth: float,
+) -> float:
     """Compute standard fit function for the threshold."""
     p, ell = variables
     expr = (p - pth) * (ell ** (1 / mu))
@@ -69,7 +78,9 @@ def calculate_threshold(
         ler_eb_data.extend(ler_eb)
         distance_data.extend([int(distance) for _ in range(len(per_array))])
 
-    popt, pcov = curve_fit(threshold_fit, (per_data, distance_data), ler_data, maxfev=10000)
+    popt, pcov = curve_fit(
+        threshold_fit, (per_data, distance_data), ler_data, maxfev=10000
+    )
     if ax is not None:
         ax.axvline(x=popt[-1], color="black", linestyle="dashed")
         print("threshold: ", popt[-1])
@@ -84,7 +95,13 @@ def calculate_threshold(
         ler_eb_ar = ea[:, logical_idx]
 
         if per_array != [] and ax is not None:
-            ax.errorbar(per_array, ler_arr, yerr=ler_eb_ar, label="d = " + str(distance), fmt="|")
+            ax.errorbar(
+                per_array,
+                ler_arr,
+                yerr=ler_eb_ar,
+                label="d = " + str(distance),
+                fmt="|",
+            )
 
     ax.legend()
     ax.set_xlabel("Physical error rate")
@@ -130,7 +147,9 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
         per_metrics[p][d] = result[ler_k]
     for d, mdata in sorted(metrics.items()):
         (mdata["p"], mdata[ler_k], mdata["avg_total_time"], mdata[ler_eb_k]) = zip(
-            *sorted(zip(mdata["p"], mdata[ler_k], mdata["avg_total_time"], mdata[ler_eb_k]))
+            *sorted(
+                zip(mdata["p"], mdata[ler_k], mdata["avg_total_time"], mdata[ler_eb_k])
+            )
         )
 
         # sum over all logical to get overall ler+ebs
@@ -250,7 +269,18 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
 def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
     """Generate plots for the comparison of the different solvers."""
     fig, ax = plt.subplots(2, figsize=(12, 12))
-    cols = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]
+    cols = [
+        "blue",
+        "orange",
+        "green",
+        "red",
+        "purple",
+        "brown",
+        "pink",
+        "gray",
+        "cyan",
+        "olive",
+    ]
     idx = 0
     solver_to_col: dict[str, str] = {}
     p_to_col: dict[float, str] = {}
@@ -307,7 +337,10 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             ax[1].plot(
                 ds,
                 ppdata["t"],
-                label="p=" + str(p) + ", " + (solver if solver == "z3" else "CASHWMaxSAT-CorePlus"),
+                label="p="
+                + str(p)
+                + ", "
+                + (solver if solver == "z3" else "CASHWMaxSAT-CorePlus"),
                 color=p_to_col[p],
                 marker="x" if solver == "z3" else "o",
             )

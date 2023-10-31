@@ -88,7 +88,11 @@ def test_simulate(d3_hexcode: HexagonalColorCode, p: float, nr_sims: int) -> Non
 
 
 def test_z3_solver(
-    script_runner: ScriptRunner, d3_hexcode: HexagonalColorCode, p: float, nr_sims: int, results_dir: str
+    script_runner: ScriptRunner,
+    d3_hexcode: HexagonalColorCode,
+    p: float,
+    nr_sims: int,
+    results_dir: str,
 ) -> None:
     """Test the Z3 solver."""
     ret = script_runner.run(
@@ -106,7 +110,8 @@ def test_z3_solver(
     assert not ret.stderr
 
     result = check_and_load_json(
-        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p={round(p, 4)},solver=z3.json", results_dir
+        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p={round(p, 4)},solver=z3.json",
+        results_dir,
     )
     assert result is not None
     assert result["distance"] == d3_hexcode.distance
@@ -173,7 +178,9 @@ def test_external_solver(
     assert result["avg_total_time"] > 0.0
 
 
-def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sims: int, results_dir: str) -> None:
+def test_tn_decoder(
+    script_runner: ScriptRunner, distance: int, p: float, nr_sims: int, results_dir: str
+) -> None:
     """Test the TN decoder."""
     decoder = "tn"
 
@@ -193,7 +200,9 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
     assert ret.success
     assert not ret.stderr
 
-    result = check_and_load_json(f"distance={distance},p={round(p, 4)}.json", results_dir)
+    result = check_and_load_json(
+        f"distance={distance},p={round(p, 4)}.json", results_dir
+    )
     assert result is not None
     assert result["n_k_d"][-1] == distance
     assert result["error_probability"] == p
@@ -203,7 +212,9 @@ def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sim
 
 def test_get_code_from_str() -> None:
     """Test the construction of a color code from a string."""
-    assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(distance=3)
+    assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(
+        distance=3
+    )
 
 
 def test_scenario_with_logical_errors(
@@ -211,13 +222,22 @@ def test_scenario_with_logical_errors(
 ) -> None:
     """Test the Z3 solver."""
     ret = script_runner.run(
-        ["mqt.qecc.cc-decoder", str(d3_hexcode.distance), "0.2", "--nr_sims", "50", "--results_dir", results_dir]
+        [
+            "mqt.qecc.cc-decoder",
+            str(d3_hexcode.distance),
+            "0.2",
+            "--nr_sims",
+            "50",
+            "--results_dir",
+            results_dir,
+        ]
     )
     assert ret.success
     assert not ret.stderr
 
     result = check_and_load_json(
-        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p=0.2,solver=z3.json", results_dir
+        f"./code={d3_hexcode.lattice_type},distance={d3_hexcode.distance},p=0.2,solver=z3.json",
+        results_dir,
     )
     assert result is not None
     assert result["distance"] == d3_hexcode.distance
