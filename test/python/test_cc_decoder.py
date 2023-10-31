@@ -178,9 +178,7 @@ def test_external_solver(
     assert result["avg_total_time"] > 0.0
 
 
-def test_tn_decoder(
-    script_runner: ScriptRunner, distance: int, p: float, nr_sims: int, results_dir: str
-) -> None:
+def test_tn_decoder(script_runner: ScriptRunner, distance: int, p: float, nr_sims: int, results_dir: str) -> None:
     """Test the TN decoder."""
     decoder = "tn"
 
@@ -200,9 +198,7 @@ def test_tn_decoder(
     assert ret.success
     assert not ret.stderr
 
-    result = check_and_load_json(
-        f"distance={distance},p={round(p, 4)}.json", results_dir
-    )
+    result = check_and_load_json(f"distance={distance},p={round(p, 4)}.json", results_dir)
     assert result is not None
     assert result["n_k_d"][-1] == distance
     assert result["error_probability"] == p
@@ -212,9 +208,7 @@ def test_tn_decoder(
 
 def test_get_code_from_str() -> None:
     """Test the construction of a color code from a string."""
-    assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(
-        distance=3
-    )
+    assert code_from_string(lattice_type="hexagon", distance=3) == HexagonalColorCode(distance=3)
 
 
 def test_scenario_with_logical_errors(
