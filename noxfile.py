@@ -59,7 +59,11 @@ def _run_tests(
         posargs.append("--cov-config=pyproject.toml")
 
     session.install(
-        "scikit-build-core[pyproject]<0.6", "setuptools_scm", "pybind11", *install_args, env=env
+        "scikit-build-core[pyproject]<0.6",
+        "setuptools_scm",
+        "pybind11",
+        *install_args,
+        env=env,
     )  # TODO: remove upper cap once scikit-build-core is updated
     install_arg = f"-ve.[{','.join(_extras)}]"
     session.install("--no-build-isolation", install_arg, *install_args, env=env)

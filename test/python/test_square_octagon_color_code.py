@@ -48,17 +48,32 @@ def test_number_of_qubits(code: SquareOctagonColorCode) -> None:
 
 def test_d3(d3_so_code: SquareOctagonColorCode) -> None:
     """Test coordinates of qubits for distance 3."""
-    assert d3_so_code.data_qubits == {(0, 1), (2, 1), (6, 1), (3, 2), (5, 2), (3, 4), (5, 4)}
+    assert d3_so_code.data_qubits == {
+        (0, 1),
+        (2, 1),
+        (6, 1),
+        (3, 2),
+        (5, 2),
+        (3, 4),
+        (5, 4),
+    }
     assert d3_so_code.ancilla_qubits == {(4, 0), (1, 3), (4, 3)}
 
 
 def test_h(d3_so_code: SquareOctagonColorCode) -> None:
     """Test the parity check matrix for distance 3."""
-    assert np.array_equal(d3_so_code.H, np.array([[0, 0, 1, 0, 1, 1, 1], [0, 1, 0, 1, 0, 1, 1], [1, 1, 1, 0, 0, 1, 0]]))
+    assert np.array_equal(
+        d3_so_code.H,
+        np.array([[0, 0, 1, 0, 1, 1, 1], [0, 1, 0, 1, 0, 1, 1], [1, 1, 1, 0, 0, 1, 0]]),
+    )
 
 
 def test_z3_solver(
-    script_runner: ScriptRunner, d3_so_code: SquareOctagonColorCode, p: float, nr_sims: int, results_dir: str
+    script_runner: ScriptRunner,
+    d3_so_code: SquareOctagonColorCode,
+    p: float,
+    nr_sims: int,
+    results_dir: str,
 ) -> None:
     """Test the Z3 solver."""
     d = d3_so_code.distance
@@ -79,7 +94,8 @@ def test_z3_solver(
     assert not ret.stderr
 
     result = check_and_load_json(
-        f"./code={d3_so_code.lattice_type},distance={d3_so_code.distance},p={round(p, 4)},solver=z3.json", results_dir
+        f"./code={d3_so_code.lattice_type},distance={d3_so_code.distance},p={round(p, 4)},solver=z3.json",
+        results_dir,
     )
     assert result is not None
     assert result["distance"] == d3_so_code.distance

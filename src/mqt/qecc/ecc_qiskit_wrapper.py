@@ -94,8 +94,18 @@ def main() -> None:
         help="Define the error_channels (e.g., -m APD), available errors channels are amplitude "
         'damping (A), phase flip (P), bit flip (B), and depolarization (D) (Default="D")',
     )
-    parser.add_argument("-p", type=float, default=0.001, help="Set the noise probability (Default=0.001)")
-    parser.add_argument("-n", type=int, default=2000, help="Set the number of shots for the simulation (Default=2000)")
+    parser.add_argument(
+        "-p",
+        type=float,
+        default=0.001,
+        help="Set the noise probability (Default=0.001)",
+    )
+    parser.add_argument(
+        "-n",
+        type=int,
+        default=2000,
+        help="Set the number of shots for the simulation (Default=2000)",
+    )
     parser.add_argument("-s", type=int, default=0, help="Set a seed (Default=0)")
     parser.add_argument("-f", type=str, required=True, help="Path to a OpenQASM file")
     parser.add_argument(

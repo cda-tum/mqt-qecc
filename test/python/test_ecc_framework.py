@@ -130,7 +130,15 @@ def test_statevector_simulators(circ: QuantumCircuit, script_runner: ScriptRunne
 def test_save_circuit(circ: QuantumCircuit, script_runner: ScriptRunner) -> None:
     """Saving a circuit after applying an ECC."""
     circ.qasm(filename="dummyCircuit.qasm")
-    ret = script_runner.run(["ecc_qiskit_wrapper", "-e", "dummyCircuitWithEcc.qasm", "-f", "dummyCircuit.qasm"])
+    ret = script_runner.run(
+        [
+            "ecc_qiskit_wrapper",
+            "-e",
+            "dummyCircuitWithEcc.qasm",
+            "-f",
+            "dummyCircuit.qasm",
+        ]
+    )
     for circuit_to_delete in ["dummyCircuit.qasm", "dummyCircuitWithEcc.qasm"]:
         file_to_remove = pathlib.Path(circuit_to_delete)
         file_to_remove.unlink()

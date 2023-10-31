@@ -125,7 +125,12 @@ class SquareOctagonColorCode(ColorCode):
 
         for idx, (x, y) in enumerate(self.square_ancilla_qubits):
             qbts: list[int] = []
-            for coord in [(x - 1, y - 1), (x + 1, y - 1), (x + 1, y + 1), (x - 1, y + 1)]:
+            for coord in [
+                (x - 1, y - 1),
+                (x + 1, y - 1),
+                (x + 1, y + 1),
+                (x - 1, y + 1),
+            ]:
                 if coord in coords_to_idx:
                     qubit_idx = coords_to_idx[coord]
                     qbts.append(qubit_idx)

@@ -5,7 +5,10 @@ from pathlib import Path
 
 from mqt import qecc
 
-code = qecc.Code("../../examples/lp_(4,8)-[[1024,18,nan]]_hx.txt", "../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt")
+code = qecc.Code(
+    "../../examples/lp_(4,8)-[[1024,18,nan]]_hx.txt",
+    "../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt",
+)
 code.K = 18
 outpath = "./dp-sims-bindings.out"
 

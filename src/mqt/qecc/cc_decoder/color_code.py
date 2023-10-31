@@ -37,6 +37,10 @@ class ColorCode:
         self.n = len(self.qubits_to_faces)
         self.k = self.L.shape[1]
 
+    def __hash__(self) -> int:
+        """Compute a hash for the color code."""
+        return hash(self.H.tobytes())
+
     def __eq__(self, other: object) -> bool:
         """Check if two color codes are equal."""
         if not isinstance(other, ColorCode):

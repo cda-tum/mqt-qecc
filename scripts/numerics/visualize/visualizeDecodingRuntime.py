@@ -138,7 +138,13 @@ def runtime_comparison() -> None:
         plt.plot(xfinal[i], yfinal[i], "o", label="UFH, p=" + label, color=col)
         start = 0
         optimized_parameters, pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
-        plt.plot(xfinal[i][start:], lin_fun(xfinal[i][start:], *optimized_parameters), "--", color=col, label=r"$O(n)$")
+        plt.plot(
+            xfinal[i][start:],
+            lin_fun(xfinal[i][start:], *optimized_parameters),
+            "--",
+            color=col,
+            label=r"$O(n)$",
+        )
 
     # general qlpd decoder data
     label = "%2.2f" % pers2
@@ -149,7 +155,11 @@ def runtime_comparison() -> None:
     start = 0
     optimized_parameters2, pcov = opt.curve_fit(quad_fun, xfinal2[start:], yfinal2[start:])
     plt.plot(
-        xfinal2[start:], quad_fun(xfinal2[start:], *optimized_parameters2), "--", color="green", label=r"$O(n^{2})$"
+        xfinal2[start:],
+        quad_fun(xfinal2[start:], *optimized_parameters2),
+        "--",
+        color="green",
+        label=r"$O(n^{2})$",
     )
 
     plt.legend()

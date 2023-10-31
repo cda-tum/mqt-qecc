@@ -34,7 +34,14 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_xlabel(r"Code distance $\it{d}$")
 
 
-def threshold_fit(variables: tuple[float, float], b0: float, b1: float, b2: float, mu: float, pth: float) -> float:
+def threshold_fit(
+    variables: tuple[float, float],
+    b0: float,
+    b1: float,
+    b2: float,
+    mu: float,
+    pth: float,
+) -> float:
     """Compute standard fit function for the threshold."""
     p, ell = variables
     expr = (p - pth) * (ell ** (1 / mu))
@@ -84,7 +91,13 @@ def calculate_threshold(
         ler_eb_ar = ea[:, logical_idx]
 
         if per_array != [] and ax is not None:
-            ax.errorbar(per_array, ler_arr, yerr=ler_eb_ar, label="d = " + str(distance), fmt="|")
+            ax.errorbar(
+                per_array,
+                ler_arr,
+                yerr=ler_eb_ar,
+                label="d = " + str(distance),
+                fmt="|",
+            )
 
     ax.legend()
     ax.set_xlabel("Physical error rate")
@@ -250,7 +263,18 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
 def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
     """Generate plots for the comparison of the different solvers."""
     fig, ax = plt.subplots(2, figsize=(12, 12))
-    cols = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "cyan", "olive"]
+    cols = [
+        "blue",
+        "orange",
+        "green",
+        "red",
+        "purple",
+        "brown",
+        "pink",
+        "gray",
+        "cyan",
+        "olive",
+    ]
     idx = 0
     solver_to_col: dict[str, str] = {}
     p_to_col: dict[float, str] = {}
