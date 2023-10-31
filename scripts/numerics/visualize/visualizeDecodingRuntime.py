@@ -137,9 +137,7 @@ def runtime_comparison() -> None:
         yfinal.append(np.array(y_data[i])[orders[i]])
         plt.plot(xfinal[i], yfinal[i], "o", label="UFH, p=" + label, color=col)
         start = 0
-        optimized_parameters, pcov = opt.curve_fit(
-            lin_fun, xfinal[i][start:], yfinal[i][start:]
-        )
+        optimized_parameters, pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
         plt.plot(
             xfinal[i][start:],
             lin_fun(xfinal[i][start:], *optimized_parameters),
@@ -155,9 +153,7 @@ def runtime_comparison() -> None:
     yfinal2 = np.array(y_data2)[orders2]
     plt.plot(xfinal2, yfinal2, "d", label="GD, p=" + label, color="green")
     start = 0
-    optimized_parameters2, pcov = opt.curve_fit(
-        quad_fun, xfinal2[start:], yfinal2[start:]
-    )
+    optimized_parameters2, pcov = opt.curve_fit(quad_fun, xfinal2[start:], yfinal2[start:])
     plt.plot(
         xfinal2[start:],
         quad_fun(xfinal2[start:], *optimized_parameters2),

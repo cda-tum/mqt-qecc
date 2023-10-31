@@ -31,9 +31,7 @@ class ColorCode:
         self.faces_to_qubits: dict[int, list[int]] = {}
         self.lattice_type = lattice_type
         self.add_qubits()
-        self.H: npt.NDArray[np.int_] = np.zeros(
-            (len(self.ancilla_qubits), len(self.data_qubits)), dtype=int
-        )
+        self.H: npt.NDArray[np.int_] = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
         self.construct_layout()
         self.compute_logical()
         self.n = len(self.qubits_to_faces)
@@ -61,9 +59,7 @@ class ColorCode:
         im_hz_transp = mod2.row_basis(self.H)  # compute the image basis of hz.T
         log_stack = np.vstack([im_hz_transp, ker_hx])
         pivots = mod2.row_echelon(log_stack.T)[3]
-        log_op_indices = [
-            i for i in range(im_hz_transp.shape[0], log_stack.shape[0]) if i in pivots
-        ]
+        log_op_indices = [i for i in range(im_hz_transp.shape[0], log_stack.shape[0]) if i in pivots]
         self.L = log_stack[log_op_indices]
 
     def get_syndrome(self, error: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:

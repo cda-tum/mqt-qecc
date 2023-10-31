@@ -58,16 +58,12 @@ def create_noise_model(n_model: str, p_error: float) -> NoiseModel:
         error, ["u1", "u2", "u3", "h", "id", "t", "tdg", "sdg", "rx", "ry", "rz", "s"]
     )
     noise_model.add_all_qubit_quantum_error(error.tensor(error), ["cx", "swap"])
-    noise_model.add_all_qubit_quantum_error(
-        error.tensor(error).tensor(error), ["cswap"]
-    )
+    noise_model.add_all_qubit_quantum_error(error.tensor(error).tensor(error), ["cswap"])
 
     return noise_model
 
 
-def print_simulation_results(
-    result: Result, n_shots: int, threshold_probability: float = 0
-) -> None:
+def print_simulation_results(result: Result, n_shots: int, threshold_probability: float = 0) -> None:
     """Print the simulation results."""
     printed_results = 0
     summarized_counts: dict[str, int] = {}
@@ -80,17 +76,9 @@ def print_simulation_results(
 
     for result_id in sorted(summarized_counts.keys()):
         # Print all results > threshold_probability
-        if (
-            summarized_counts[result_id] / n_shots > threshold_probability
-            or printed_results == 0
-        ):
+        if summarized_counts[result_id] / n_shots > threshold_probability or printed_results == 0:
             result_string = str(result_id)
-            print(
-                "State |"
-                + result_string
-                + "> probability "
-                + str(summarized_counts[result_id] / n_shots)
-            )
+            print("State |" + result_string + "> probability " + str(summarized_counts[result_id] / n_shots))
             printed_results += 1
             if printed_results == 1000:
                 break
@@ -162,11 +150,7 @@ def main() -> None:
 
     ecc_frequency = args.fq
     ecc_export_filename = args.e
-    if (
-        forced_simulator is not None
-        and "stabilizer" in forced_simulator
-        and "A" in error_channels
-    ):
+    if forced_simulator is not None and "stabilizer" in forced_simulator and "A" in error_channels:
         print(
             'Warning: Non-unitary errors (such as for example amplitude damping ("A")) are not suitable for simulation '
             "with a stabilizer based simulator and may cause an error during the simulation."
@@ -174,18 +158,14 @@ def main() -> None:
 
     # Creating the noise model
     if error_probability > 0:
-        noise_model = create_noise_model(
-            n_model=error_channels, p_error=error_probability
-        )
+        noise_model = create_noise_model(n_model=error_channels, p_error=error_probability)
     else:
         noise_model = NoiseModel()
 
     circ = QuantumCircuit.from_qasm_file(open_qasm_file)
 
     if not any(gate[0].name == "measure" for gate in circ.data):
-        print(
-            "Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits."
-        )
+        print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")
         circ.measure_all()
 
     # Initializing the quantum circuit
@@ -218,9 +198,7 @@ def main() -> None:
     # Setting the simulator backend to the requested one
     simulator_backend = AerSimulator(method=forced_simulator, noise_model=noise_model)
 
-    job_result = simulator_backend.run(
-        circ, shots=number_of_shots, seed_simulator=seed
-    ).result()
+    job_result = simulator_backend.run(circ, shots=number_of_shots, seed_simulator=seed).result()
 
     if job_result.status != "COMPLETED":
         raise RuntimeError("Simulation exited with status: " + str(job_result.status))
