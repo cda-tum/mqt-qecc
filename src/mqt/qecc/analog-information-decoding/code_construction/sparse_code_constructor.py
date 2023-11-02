@@ -1,17 +1,20 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+
+import code_constructor
 import numpy as np
-from bposd.hgp import hgp
 import scipy.io as sio
+from bposd.hgp import hgp
 from ldpc import mod2
 from scipy import sparse
-import code_constructor
-import os
-import json
-import subprocess
 from scipy.sparse import coo_matrix, csr_matrix
 
 
 class HD_HGP:
-    def __init__(self, boundaries):
+    def __init__(self, boundaries) -> None:
         self.boundaries = boundaries
 
 
@@ -24,25 +27,18 @@ def sparse_all_zeros(mat: csr_matrix):
     return mat.sum() == 0
 
 
-def run_checks_scipy(
-        d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr_matrix
-):
-    if not (
-            sparse_all_zeros(d_1 @ d_2)
-            and sparse_all_zeros(d_2 @ d_3)
-            and sparse_all_zeros(d_3 @ d_4)
-    ):
-        raise Exception(
-            "Error generating 4D code, boundary maps do not square to zero"
-        )
+def run_checks_scipy(d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr_matrix):
+    if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3) and sparse_all_zeros(d_3 @ d_4)):
+        msg = "Error generating 4D code, boundary maps do not square to zero"
+        raise Exception(msg)
 
 
 def generate_4D_product_code(
-        A_1: csr_matrix,
-        A_2: csr_matrix,
-        A_3: csr_matrix,
-        P: csr_matrix,
-        checks=True,
+    A_1: csr_matrix,
+    A_2: csr_matrix,
+    A_3: csr_matrix,
+    P: csr_matrix,
+    checks=True,
 ):
     r, c = P.shape
 
@@ -97,9 +93,8 @@ def generate_3D_product_code(A_1: csr_matrix, A_2: csr_matrix, P: csr_matrix):
     d_3 = sparse.vstack((sparse.kron(id_n2, P), sparse.kron(A_2, id_c)))
 
     if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3)):
-        raise Exception(
-            "Error generating 3D code, boundary maps do not square to zero"
-        )
+        msg = "Error generating 3D code, boundary maps do not square to zero"
+        raise Exception(msg)
 
     return d_1, d_2, d_3  # mx, hx, hzT # hx, hzT, mzT
 
@@ -143,12 +138,9 @@ def _compute_distances(hx, hz, codename):
     code_dict = {}
     _, n = hx.shape
     codeK = n - mod2.rank(hx) - mod2.rank(hz)
-    with open(
-            f"/codes/generated_codes/{codename}/info.txt") as f:
+    with open(f"/codes/generated_codes/{codename}/info.txt") as f:
         code_dict = dict(
-            line[: line.rfind("#")].split(" = ")
-            for line in f
-            if not line.startswith("#") and line.strip()
+            line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
 
     code_dict["n"] = n
@@ -157,9 +149,7 @@ def _compute_distances(hx, hz, codename):
     code_dict["dZ"] = int(code_dict["dZ"])
 
     print("Code properties:", code_dict)
-    with open(
-            f"/codes/generated_codes/{codename}/code_params.txt",
-            "w") as file:
+    with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
         file.write(json.dumps(code_dict))
 
     return
@@ -172,29 +162,26 @@ def _store_code_params(hx, hz, codename):
     codeK = n - mod2.rank(hx) - mod2.rank(hz)
     code_dict["n"] = n
     code_dict["k"] = codeK
-    with open(
-            f"/codes/generated_codes/{codename}/code_params.txt",
-            "w") as file:
+    with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
         file.write(json.dumps(code_dict))
     return
 
 
 def create_code(
-        constructor: str,
-        seed_codes: list,
-        codename: str,
-        compute_distance: bool = False,
-        compute_logicals: bool = False,
-        lift_parameter=None,
-        checks: bool = False,
+    constructor: str,
+    seed_codes: list,
+    codename: str,
+    compute_distance: bool = False,
+    compute_logicals: bool = False,
+    lift_parameter=None,
+    checks: bool = False,
 ):
     # Construct initial 2 dim code
     if constructor == "hgp":
         code = hgp(seed_codes[0], seed_codes[1])
     else:
-        raise ValueError(
-            f"No constructor specified or the specified constructor {constructor} not implemented."
-        )
+        msg = f"No constructor specified or the specified constructor {constructor} not implemented."
+        raise ValueError(msg)
 
     # Extend to 3D HGP
     A1 = sparse.csr_matrix(code.hx)
@@ -223,4 +210,3 @@ def create_code(
     else:
         _store_code_params(hx.todense(), hz.todense(), codename)
     return
-

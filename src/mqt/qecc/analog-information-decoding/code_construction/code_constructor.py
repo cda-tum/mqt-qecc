@@ -1,18 +1,20 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+
 import ldpc.code_util
 import numpy as np
-from bposd.hgp import hgp
 import scipy.io as sio
-from scipy import sparse
-from ldpc import mod2
-from ldpc.codes import ring_code
-import os
-import json
-import subprocess
 import scipy.sparse as scs
+from bposd.hgp import hgp
+from ldpc import mod2
+from scipy import sparse
 
 
 class HD_HGP:
-    def __init__(self, boundaries):
+    def __init__(self, boundaries) -> None:
         self.boundaries = boundaries
 
 
@@ -31,9 +33,8 @@ def run_checks_scipy(d_1, d_2, d_3, d_4):
         and is_all_zeros((sd_2 * sd_3).todense() % 2)
         and is_all_zeros((sd_3 * sd_4).todense() % 2)
     ):
-        raise Exception(
-            "Error generating 4D code, boundary maps do not square to zero"
-        )
+        msg = "Error generating 4D code, boundary maps do not square to zero"
+        raise Exception(msg)
 
 
 def generate_4D_product_code(A_1, A_2, A_3, P, checks=True):
@@ -86,9 +87,8 @@ def generate_3D_product_code(A_1, A_2, P):
     d_3 = np.vstack((np.kron(id_n2, P), np.kron(A_2, id_c)))
 
     if not (is_all_zeros(d_1 @ d_2 % 2) and is_all_zeros(d_2 @ d_3 % 2)):
-        raise Exception(
-            "Error generating 3D code, boundary maps do not square to zero"
-        )
+        msg = "Error generating 3D code, boundary maps do not square to zero"
+        raise Exception(msg)
 
     return d_1, d_2, d_3
 
@@ -129,9 +129,7 @@ def _compute_distances(hx, hz, codename):
     codeK = n - mod2.rank(hx) - mod2.rank(hz)
     with open(f"generated_codes/{codename}/info.txt") as f:
         code_dict = dict(
-            line[: line.rfind("#")].split(" = ")
-            for line in f
-            if not line.startswith("#") and line.strip()
+            line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
 
     code_dict["n"] = n
@@ -159,11 +157,8 @@ def _compute_logicals(hx, hz):
         # in the below we row reduce to find vectors in kx that are not in the image of hz.T.
         log_stack = np.vstack([im_hzT, ker_hx])
         pivots = mod2.row_echelon(log_stack.T)[3]
-        log_op_indices = [
-            i for i in range(im_hzT.shape[0], log_stack.shape[0]) if i in pivots
-        ]
-        log_ops = log_stack[log_op_indices]
-        return log_ops
+        log_op_indices = [i for i in range(im_hzT.shape[0], log_stack.shape[0]) if i in pivots]
+        return log_stack[log_op_indices]
 
     lx = compute_lz(hz, hx)
     lz = compute_lz(hx, hz)
@@ -183,9 +178,8 @@ def create_code(
     if constructor == "hgp":
         code = hgp(seed_codes[0], seed_codes[1])
     else:
-        raise ValueError(
-            f"No constructor specified or the specified constructor {constructor} not implemented."
-        )
+        msg = f"No constructor specified or the specified constructor {constructor} not implemented."
+        raise ValueError(msg)
 
     # Extend to 3D HGP
     A1 = code.hx
@@ -193,16 +187,15 @@ def create_code(
     res = generate_3D_product_code(A1, A2, seed_codes[2])
 
     # Build 4D HGP code
-    mx, hx, hzT, mzT = generate_4D_product_code(
-        *res, seed_codes[3], checks=checks
-    )
+    mx, hx, hzT, mzT = generate_4D_product_code(*res, seed_codes[3], checks=checks)
 
     hz = hzT.T
     mz = mzT.T
 
     # Perform checks
     if np.any(hzT @ mzT % 2) or np.any(hx @ hzT % 2) or np.any(mx @ hx % 2):
-        raise Exception("err")
+        msg = "err"
+        raise Exception(msg)
     save_code(hx, hz, mx, mz, codename)
 
     if compute_logicals:
