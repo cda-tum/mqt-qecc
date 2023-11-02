@@ -1,47 +1,47 @@
-from typing import List, Optional
+from __future__ import annotations
+
 import numpy as np
-from utils.data_utils import _check_convergence, create_outpath, BpParams
-from simulators.memory_experiment_v2 import (
-    build_multiround_pcm,
-    move_syndrome, decode_multiround,
-)
 from bposd import bposd_decoder
 from pymatching import Matching
+from simulators.memory_experiment_v2 import (
+    build_multiround_pcm,
+    decode_multiround,
+    move_syndrome,
+)
+from utils.data_utils import BpParams, _check_convergence, create_outpath
 from utils.simulation_utils import (
-    is_logical_err,
-    save_results,
     error_channel_setup,
-    set_seed,
     generate_err,
     generate_syndr_err,
-    get_sigma_from_syndr_er,
-    get_noisy_analog_syndrome,
     get_binary_from_analog,
+    get_noisy_analog_syndrome,
+    get_sigma_from_syndr_er,
+    is_logical_err,
+    save_results,
+    set_seed,
 )
 
 
 class QSS_SimulatorV2:
     def __init__(
-            self,
-            H: np.ndarray,
-            per: float,
-            ser: float,
-            L: np.ndarray,
-            bias: List[float],
-            codename: str,
-            bp_params: Optional[BpParams],
-            decoding_method: str = "bposd",  # bposd or matching
-            check_side: str = "X",
-            seed: int = 666,
-            analog_tg: bool = False,
-            repetitions: int = 0,
-            rounds: int = 0,
-            experiment: str = "qss",
-            **kwargs,
+        self,
+        H: np.ndarray,
+        per: float,
+        ser: float,
+        L: np.ndarray,
+        bias: list[float],
+        codename: str,
+        bp_params: BpParams | None,
+        decoding_method: str = "bposd",  # bposd or matching
+        check_side: str = "X",
+        seed: int = 666,
+        analog_tg: bool = False,
+        repetitions: int = 0,
+        rounds: int = 0,
+        experiment: str = "qss",
+        **kwargs,
     ) -> None:
-        """
-
-        :param H: parity-check matrix of code
+        """:param H: parity-check matrix of code
         :param per: physical data error rate
         :param ser: syndrome error rate
         :param L: logical matrix
@@ -70,21 +70,22 @@ class QSS_SimulatorV2:
         self.analog_tg = analog_tg
         self.repetitions = repetitions
         if repetitions % 2 != 0:
-            raise ValueError("repetitions must be even")
+            msg = "repetitions must be even"
+            raise ValueError(msg)
 
         if self.decoding_method not in ["bposd", "matching"]:
-            raise ValueError("Decoding method must be either bposd or matching")
+            msg = "Decoding method must be either bposd or matching"
+            raise ValueError(msg)
 
         if self.repetitions % 2 != 0:
-            raise ValueError("Repetitions must be even!")
+            msg = "Repetitions must be even!"
+            raise ValueError(msg)
 
         self.rounds = rounds
         self.experiment = experiment
         set_seed(seed)
         # load code parameters
-        self.code_params = eval(
-            open(f"generated_codes/{codename}/code_params.txt").read()
-        )
+        self.code_params = eval(open(f"generated_codes/{codename}/code_params.txt").read())
         self.input_values = self.__dict__.copy()
 
         self.outfile = create_outpath(**self.input_values)
@@ -119,7 +120,8 @@ class QSS_SimulatorV2:
 
         # initialize the multiround parity-check matrix as described in the paper
         self.H3D = build_multiround_pcm(
-            self.H, self.repetitions - 1,
+            self.H,
+            self.repetitions - 1,
         )
 
         # the number of columns of the diagonal check matrix of the H3D matrix
@@ -127,14 +129,10 @@ class QSS_SimulatorV2:
 
         channel_probs = np.zeros(self.H3D.shape[1])
         # The bits corresponding to the columns of the diagonal H-bock of H3D are initialized with the bit channel
-        channel_probs[: self.check_block_size] = np.array(
-            self.data_err_channel.tolist() * (self.repetitions)
-        )
+        channel_probs[: self.check_block_size] = np.array(self.data_err_channel.tolist() * (self.repetitions))
 
         # The remaining bits (corresponding to the identity block of H3D) are initialized with the syndrome error channel
-        channel_probs[self.check_block_size:] = np.array(
-            self.syndr_err_channel.tolist() * (self.repetitions)
-        )
+        channel_probs[self.check_block_size :] = np.array(self.syndr_err_channel.tolist() * (self.repetitions))
 
         # If we do ATG decoding, initialize sigma (syndrome noise strength)
         if self.analog_tg:
@@ -160,10 +158,10 @@ class QSS_SimulatorV2:
         self.channel_probs = channel_probs
 
     def _decode_multiround(
-            self,
-            syndrome_mat: np.ndarray,
-            analog_syndr_mat: np.ndarray,
-            last_round: bool = False,
+        self,
+        syndrome_mat: np.ndarray,
+        analog_syndr_mat: np.ndarray,
+        last_round: bool = False,
     ) -> np.ndarray:
         return decode_multiround(
             syndrome=syndrome_mat,
@@ -182,15 +180,11 @@ class QSS_SimulatorV2:
     def _single_sample(self) -> int:
         # prepare fresh syndrome matrix and error vector
         # each column == measurement result of a single timestep
-        syndrome_mat = np.zeros(
-            (self.num_checks, self.repetitions), dtype=np.int32
-        )
+        syndrome_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.int32)
         analog_syndr_mat = None
 
         if self.analog_tg:
-            analog_syndr_mat = np.zeros(
-                (self.num_checks, self.repetitions), dtype=np.float64
-            )
+            analog_syndr_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.float64)
 
         err = np.zeros(self.num_qubits, dtype=np.int32)
         cnt = 0  # counter for syndrome_mat
@@ -211,20 +205,14 @@ class QSS_SimulatorV2:
             # add syndrome error
             if round != (self.rounds - 1):
                 if self.analog_tg:
-                    analog_syndrome = get_noisy_analog_syndrome(
-                        noiseless_syndrome, self.sigma
-                    )
-                    syndrome = get_binary_from_analog(
-                        analog_syndrome
-                    )
+                    analog_syndrome = get_noisy_analog_syndrome(noiseless_syndrome, self.sigma)
+                    syndrome = get_binary_from_analog(analog_syndrome)
                 else:
                     syndrome_error = generate_syndr_err(self.syndr_err_channel)
                     syndrome = (noiseless_syndrome + syndrome_error) % 2
             else:  # last round is perfect
                 syndrome = np.copy(noiseless_syndrome)
-                analog_syndrome = get_noisy_analog_syndrome(
-                    noiseless_syndrome, 0.0
-                )  # no noise
+                analog_syndrome = get_noisy_analog_syndrome(noiseless_syndrome, 0.0)  # no noise
 
             # fill the corresponding column of the syndrome/analog syndrome matrix
             syndrome_mat[:, cnt] += syndrome
@@ -233,17 +221,12 @@ class QSS_SimulatorV2:
 
             cnt += 1  # move to next column of syndrome matrix
 
-            if (cnt == self.repetitions):  # if we have filled the syndrome matrix, decode
+            if cnt == self.repetitions:  # if we have filled the syndrome matrix, decode
                 if round != (self.rounds - 1):  # if not last round, decode and move syndrome
-                    cnt = (self.repetitions // 2)  # reset counter to start of tentative region
+                    cnt = self.repetitions // 2  # reset counter to start of tentative region
 
                     # the correction is only the correction of the commit region
-                    (
-                        corr,
-                        syndrome_mat,
-                        analog_syndr_mat,
-                        bp_iters
-                    ) = self._decode_multiround(
+                    (corr, syndrome_mat, analog_syndr_mat, bp_iters) = self._decode_multiround(
                         syndrome_mat,
                         analog_syndr_mat,
                         last_round=False,
@@ -253,18 +236,11 @@ class QSS_SimulatorV2:
                     err = (err + corr) % 2
                     syndrome_mat = move_syndrome(syndrome_mat)
                     if self.analog_tg:
-                        analog_syndr_mat = move_syndrome(
-                            analog_syndr_mat, data_type=np.float64
-                        )
+                        analog_syndr_mat = move_syndrome(analog_syndr_mat, data_type=np.float64)
 
                 else:  # if we are in the last round, decode and stop
                     # the correction is the correction of the commit and tentative region
-                    (
-                        corr,
-                        syndrome_mat,
-                        analog_syndr_mat,
-                        bp_iters
-                    ) = self._decode_multiround(
+                    (corr, syndrome_mat, analog_syndr_mat, bp_iters) = self._decode_multiround(
                         syndrome_mat,
                         analog_syndr_mat,
                         last_round=True,
@@ -284,18 +260,17 @@ class QSS_SimulatorV2:
             code_params=self.code_params,
             err_side="z" if self.check_side == "X" else "x",
             bp_iterations=self.bp_iterations,
-            bp_params=self.bp_params
+            bp_params=self.bp_params,
         )
 
     def run(self, samples: int = 1):
-        """Returns single data point"""
+        """Returns single data point."""
         success_cnt = 0
         for run in range(1, samples + 1):
             success_cnt += self._single_sample()
             if run % self.save_interval == 1:
                 self._save_results(success_cnt, run)
-                if _check_convergence(
-                        success_cnt, run, self.code_params, self.eb_precission):
+                if _check_convergence(success_cnt, run, self.code_params, self.eb_precission):
                     print("Converged")
                     break
         return self._save_results(success_cnt, run)

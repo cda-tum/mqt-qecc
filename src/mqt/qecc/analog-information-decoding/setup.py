@@ -1,4 +1,6 @@
-from setuptools import setup, find_packages
+from __future__ import annotations
+
+from setuptools import find_packages, setup
 
 setup(
     name="AnalogInformationDecoding",
@@ -18,4 +20,4 @@ setup(
     license="MIT",
     keywords="bosonic decoders",
     url="",
-    )
+)

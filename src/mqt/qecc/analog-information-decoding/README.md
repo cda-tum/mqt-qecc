@@ -6,9 +6,9 @@ Proper integration and setup is a work in progress.
 The main functionality is provided in the `simulators` module, which contains the main classes
 that can be used to conduct several types of simulations:
 
-* `ATD_Simulator`: Analog Tanner graph decoding,
-* `Single-Shot Simulator`: Analog Single-Shot decoding with meta checks.
-* `QSS_Simulator`: Quasi-Single-Shot decoding, and
+- `ATD_Simulator`: Analog Tanner graph decoding,
+- `Single-Shot Simulator`: Analog Single-Shot decoding with meta checks.
+- `QSS_Simulator`: Quasi-Single-Shot decoding, and
 
 Moreover, `memory_experiment` contains methods for analog overlapping window decoding, in
 particular the `decode_multiround` method.
@@ -22,6 +22,7 @@ The `results` directory contains the results used in the paper [1].
 The `codes` directory contains the parity-check matrices of the codes used in the paper [1].
 Three dimensional toric codes can either be constructed with the hypergraph product construction
 or with a library, e.g., panqec [3].
+
 ### Code construction
 
 The `code_construction` directory contains the code used to construct higher-dimensional hypergraph
