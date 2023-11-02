@@ -1,0 +1,226 @@
+import numpy as np
+from bposd.hgp import hgp
+import scipy.io as sio
+from ldpc import mod2
+from scipy import sparse
+import code_constructor
+import os
+import json
+import subprocess
+from scipy.sparse import coo_matrix, csr_matrix
+
+
+class HD_HGP:
+    def __init__(self, boundaries):
+        self.boundaries = boundaries
+
+
+def is_all_zeros(array):
+    return not np.any(array)
+
+
+def sparse_all_zeros(mat: csr_matrix):
+    mat.data %= 2
+    return mat.sum() == 0
+
+
+def run_checks_scipy(
+        d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr_matrix
+):
+    if not (
+            sparse_all_zeros(d_1 @ d_2)
+            and sparse_all_zeros(d_2 @ d_3)
+            and sparse_all_zeros(d_3 @ d_4)
+    ):
+        raise Exception(
+            "Error generating 4D code, boundary maps do not square to zero"
+        )
+
+
+def generate_4D_product_code(
+        A_1: csr_matrix,
+        A_2: csr_matrix,
+        A_3: csr_matrix,
+        P: csr_matrix,
+        checks=True,
+):
+    r, c = P.shape
+
+    id_r = sparse.identity(r, dtype=int)
+    id_c = sparse.identity(c, dtype=int)
+    id_n0 = sparse.identity(A_1.shape[0], dtype=int)
+    id_n1 = sparse.identity(A_2.shape[0], dtype=int)
+    id_n2 = sparse.identity(A_3.shape[0], dtype=int)
+    id_n3 = sparse.identity(A_3.shape[1], dtype=int)
+
+    d_1 = sparse.hstack((sparse.kron(A_1, id_r), sparse.kron(id_n0, P)))
+
+    x = sparse.hstack((sparse.kron(A_2, id_r), sparse.kron(id_n1, P)))
+    y = sparse.kron(A_1, id_c)
+    dims = (y.shape[0], x.shape[1] - y.shape[1])
+    nmat = csr_matrix(np.zeros(dims))
+    z = sparse.hstack((nmat, y))
+    d_2 = sparse.vstack((x, z))
+
+    x = sparse.hstack((sparse.kron(A_3, id_r), sparse.kron(id_n2, P)))
+    y = sparse.kron(A_2, id_c)
+    dims = (y.shape[0], x.shape[1] - y.shape[1])
+    mat = csr_matrix(np.zeros(dims))
+    z = sparse.hstack([mat, y])
+    d_3 = sparse.vstack((x, z))
+
+    d_4 = sparse.vstack((sparse.kron(id_n3, P), sparse.kron(A_3, id_c)))
+
+    if checks:
+        run_checks_scipy(d_1, d_2, d_3, d_4)
+
+    return d_1, d_2, d_3, d_4
+
+
+def generate_3D_product_code(A_1: csr_matrix, A_2: csr_matrix, P: csr_matrix):
+    r, c = P.shape
+
+    id_r = sparse.identity(r, dtype=int)
+    id_c = sparse.identity(c, dtype=int)
+    id_n0 = sparse.identity(A_1.shape[0], dtype=int)
+    id_n1 = sparse.identity(A_2.shape[0], dtype=int)
+    id_n2 = sparse.identity(A_2.shape[1], dtype=int)
+
+    d_1 = sparse.hstack((sparse.kron(A_1, id_r), sparse.kron(id_n0, P)))
+
+    x = sparse.hstack((sparse.kron(A_2, id_r), sparse.kron(id_n1, P)))
+    y = sparse.kron(A_1, id_c)
+    dims = (y.shape[0], x.shape[1] - y.shape[1])
+    z = sparse.hstack((csr_matrix(np.zeros(dims), dtype=int), y))
+    d_2 = sparse.vstack((x, z))
+
+    d_3 = sparse.vstack((sparse.kron(id_n2, P), sparse.kron(A_2, id_c)))
+
+    if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3)):
+        raise Exception(
+            "Error generating 3D code, boundary maps do not square to zero"
+        )
+
+    return d_1, d_2, d_3  # mx, hx, hzT # hx, hzT, mzT
+
+
+def create_outpath(codename: str) -> str:
+    path = f"/codes/generated_codes/{codename}/"
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
+
+
+def save_code(hx, hz, mz, codename, lx=None, lz=None):
+    path = create_outpath(codename)
+
+    Ms = [hx, hz, mz, lx, lz]
+    names = ["hx", "hz", "mz", "lx", "lz"]
+    for mat, name in zip(Ms, names):
+        if type(mat) != type(None):
+            path_str = path + name
+            try:
+                np.savetxt(path_str + ".txt", mat.todense(), fmt="%i")
+            except:
+                np.savetxt(path_str + ".txt", mat, fmt="%i")
+            sio.mmwrite(
+                path_str + ".mtx",
+                coo_matrix(mat),
+                comment="Field: GF(2)",
+                field="integer",
+            )
+
+
+def run_compute_distances(codename):
+    path = "/codes/generated_codes/" + codename
+    subprocess.run(["bash", "compute_distances_3D.sh", path])
+
+
+def _compute_distances(hx, hz, codename):
+    run_compute_distances(codename)
+    code_dict = {}
+    _, n = hx.shape
+    codeK = n - mod2.rank(hx) - mod2.rank(hz)
+    with open(
+            f"/codes/generated_codes/{codename}/info.txt") as f:
+        code_dict = dict(
+            line[: line.rfind("#")].split(" = ")
+            for line in f
+            if not line.startswith("#") and line.strip()
+        )
+
+    code_dict["n"] = n
+    code_dict["k"] = codeK
+    code_dict["dX"] = int(code_dict["dX"])
+    code_dict["dZ"] = int(code_dict["dZ"])
+
+    print("Code properties:", code_dict)
+    with open(
+            f"/codes/generated_codes/{codename}/code_params.txt",
+            "w") as file:
+        file.write(json.dumps(code_dict))
+
+    return
+
+
+def _store_code_params(hx, hz, codename):
+    code_dict = {}
+    hx, hz = hx.todense(), hz.todense()
+    m, n = hx.shape
+    codeK = n - mod2.rank(hx) - mod2.rank(hz)
+    code_dict["n"] = n
+    code_dict["k"] = codeK
+    with open(
+            f"/codes/generated_codes/{codename}/code_params.txt",
+            "w") as file:
+        file.write(json.dumps(code_dict))
+    return
+
+
+def create_code(
+        constructor: str,
+        seed_codes: list,
+        codename: str,
+        compute_distance: bool = False,
+        compute_logicals: bool = False,
+        lift_parameter=None,
+        checks: bool = False,
+):
+    # Construct initial 2 dim code
+    if constructor == "hgp":
+        code = hgp(seed_codes[0], seed_codes[1])
+    else:
+        raise ValueError(
+            f"No constructor specified or the specified constructor {constructor} not implemented."
+        )
+
+    # Extend to 3D HGP
+    A1 = sparse.csr_matrix(code.hx)
+    A2 = sparse.csr_matrix(code.hz.T)
+    res = generate_3D_product_code(A1, A2, sparse.csr_matrix(seed_codes[2]))
+    hx, hzT, mzT = res
+    # Build 4D HGP code
+    # res = [csr_matrix(A) for A in res]
+
+    # mx, hx, hzT, mzT = generate_4D_product_code(
+    #     *res, csr_matrix(seed_codes[3]), checks=checks
+    # )
+
+    hz = hzT.transpose()
+    mz = mzT.transpose()
+    if compute_logicals:
+        lx, lz = code_constructor._compute_logicals(hx.todense(), hz.todense())
+        save_code(hx=hx, hz=hz, mz=mz, codename=codename, lx=lx, lz=lz)
+
+    # else:
+    #     save_code(hx, hz, mx, mz, codename)
+
+    if compute_distance:
+        _compute_distances(hx.todense(), hz.todense(), codename)
+
+    else:
+        _store_code_params(hx.todense(), hz.todense(), codename)
+    return
+
