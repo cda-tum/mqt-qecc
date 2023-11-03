@@ -34,7 +34,7 @@ The tool can be used to:
   - The framework allows to apply different QECC schemes to quantum circuits and either exports the resulting
     circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, six different ECCs are supported
     with varying extent of functionality.
-- WIP: Decode bosonic-LDPC codes and conduct numerical simulations for analog information decoding under phenomenological
+- WIP: Decode bosonic quantum LDPC codes and conduct numerical simulations for analog information decoding under phenomenological
   (cat qubit) noise.
 
 <p align="center">
