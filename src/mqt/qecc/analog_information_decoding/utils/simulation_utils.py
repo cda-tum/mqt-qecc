@@ -12,6 +12,7 @@ from numba.core.errors import (
     NumbaPendingDeprecationWarning,
 )
 from scipy.special import erfc, erfcinv
+
 from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, calculate_error_rates, replace_inf
 
 warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
@@ -49,7 +50,7 @@ def alist2numpy(fname: str) -> npt.NDArray[int]:  # current original implementat
 # and check_logical_err_l are identical
 # @njit
 def check_logical_err_h(
-        check_matrix: npt.NDArray[int], original_err: npt.NDArray[int], decoded_estimate: npt.NDArray[int]
+    check_matrix: npt.NDArray[int], original_err: npt.NDArray[int], decoded_estimate: npt.NDArray[int]
 ) -> bool:
     r, n = check_matrix.shape
 
@@ -79,7 +80,7 @@ def is_logical_err(L: npt.NDArray[int], residual_err: npt.NDArray[int]) -> bool:
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
     l_check = (L @ residual_err) % 2
-    return l_check.any() == True  # check all zeros
+    return l_check.any() is True  # check all zeros
 
 
 # adapted from https://github.com/quantumgizmos/bp_osd/blob/a179e6e86237f4b9cc2c952103fce919da2777c8/src/bposd/css_decode_sim.py#L430
@@ -87,7 +88,7 @@ def is_logical_err(L: npt.NDArray[int], residual_err: npt.NDArray[int]) -> bool:
 # channel_probs = [x,y,z], residual_err = [x,z]
 # @njit
 def generate_err(
-        nr_qubits: int, channel_probs: npt.NDArray[float], residual_err: npt.NDArray[int]
+    nr_qubits: int, channel_probs: npt.NDArray[float], residual_err: npt.NDArray[int]
 ) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
     """Computes error vector with X and Z part given channel probabilities and residual error.
     Assumes that residual error has two equally sized parts.
@@ -108,14 +109,14 @@ def generate_err(
             # nothing on x part - probably redundant anyways
             error_z[i] = (residual_err_z[i] + 1) % 2
         elif (  # if p = 0.3 then 0.3 <= rand < 0.6 is the same sized interval as rand < 0.3
-                channel_probs_z[i] <= rand < (channel_probs_z[i] + channel_probs_x[i])
+            channel_probs_z[i] <= rand < (channel_probs_z[i] + channel_probs_x[i])
         ):
             # X error
             error_x[i] = (residual_err_x[i] + 1) % 2
         elif (  # 0.6 <= rand < 0.9
-                (channel_probs_z[i] + channel_probs_x[i])
-                <= rand
-                < (channel_probs_x[i] + channel_probs_y[i] + channel_probs_z[i])
+            (channel_probs_z[i] + channel_probs_x[i])
+            <= rand
+            < (channel_probs_x[i] + channel_probs_y[i] + channel_probs_z[i])
         ):
             # y error == both x and z error
             error_z[i] = (residual_err_z[i] + 1) % 2
@@ -127,7 +128,7 @@ def generate_err(
 @njit
 def get_analog_llr(analog_syndrome: npt.NDArray[float], sigma: float) -> npt.NDArray[float]:
     """Computes analog LLRs given analog syndrome and sigma."""
-    return (2 * analog_syndrome) / (sigma ** 2)
+    return (2 * analog_syndrome) / (sigma**2)
 
 
 def get_sigma_from_syndr_er(ser: float) -> float:
@@ -147,7 +148,7 @@ def get_error_rate_from_sigma(sigma: float) -> float:
     if sigma == 0.0:
         return 0.0
     else:
-        return 0.5 * erfc(1 / np.sqrt(2 * sigma ** 2))  # see Eq. cref{eq:perr-to-sigma} in our paper
+        return 0.5 * erfc(1 / np.sqrt(2 * sigma**2))  # see Eq. cref{eq:perr-to-sigma} in our paper
 
 
 @njit
@@ -191,7 +192,7 @@ def get_noisy_analog_syndrome(perfect_syndr: npt.NDArray[int], sigma: float) -> 
 
 # @njit
 def error_channel_setup(
-        error_rate: float, xyz_error_bias: tuple[float, float, float], nr_qubits: int
+    error_rate: float, xyz_error_bias: tuple[float, float, float], nr_qubits: int
 ) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]:
     """Set up an error_channel given the physical error rate, bias, and number of bits."""
     xyz_error_bias = np.array(xyz_error_bias)
@@ -209,7 +210,7 @@ def error_channel_setup(
         pz = error_rate
     else:
         px, py, pz = (
-                error_rate * xyz_error_bias / np.sum(xyz_error_bias)
+            error_rate * xyz_error_bias / np.sum(xyz_error_bias)
         )  # Oscar only considers X or Z errors. For reproducability remove normalization
 
     channel_probs_x = np.ones(nr_qubits) * px
@@ -243,16 +244,16 @@ def get_binary_from_analog(analog_syndrome: npt.NDArray[int]) -> npt.NDArray[np.
 
 
 def save_results(
-        success_cnt: int,
-        nr_runs: int,
-        p: float,
-        s: float,
-        input_vals: dict,
-        outfile: str,
-        code_params: dict[str, int],
-        err_side: str = "X",
-        bp_iterations: int | None = None,
-        bp_params: BpParams = None,
+    success_cnt: int,
+    nr_runs: int,
+    p: float,
+    s: float,
+    input_vals: dict,
+    outfile: str,
+    code_params: dict[str, int],
+    err_side: str = "X",
+    bp_iterations: int | None = None,
+    bp_params: BpParams = None,
 ) -> dict:
     """Save results of a simulation run to a json file."""
     ler, ler_eb, wer, wer_eb = calculate_error_rates(success_cnt, nr_runs, code_params)

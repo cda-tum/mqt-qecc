@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+
 from mqt.qecc.analog_information_decoding.utils.simulation_utils import *
 
 
@@ -10,15 +11,15 @@ def test_check_logical_err_h() -> None:
     H = np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]])
     # check with logical
     estimate = np.array([1, 0, 0, 0, 0, 0, 1])
-    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 1, 1, 0]), estimate) == True
+    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 1, 1, 0]), estimate) is True
     #
     # check with stabilizer
     estimate2 = np.array([0, 0, 0, 0, 0, 0, 1])
-    assert check_logical_err_h(H, np.array([1, 1, 1, 0, 0, 0, 0]), estimate2) == False
+    assert check_logical_err_h(H, np.array([1, 1, 1, 0, 0, 0, 0]), estimate2) is False
 
     # check with all zeros
     estimate3 = np.array([0, 0, 0, 0, 0, 0, 0])
-    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 0, 0, 0]), estimate3) == False
+    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 0, 0, 0]), estimate3) is False
 
 
 def test_is_logical_err() -> None:
@@ -107,39 +108,35 @@ def test_is_logical_err() -> None:
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
 
-    assert is_logical_err(Lsc, residual) == True
+    assert is_logical_err(Lsc, residual) is True
 
     # check with stabilizer
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual2) == False
+    assert is_logical_err(Lsc, residual2) is False
 
     # check with all zeros
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual2) == False
+    assert is_logical_err(Lsc, residual2) is False
 
     # check with non-min weight logical
     residual3 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual3) == True
+    assert is_logical_err(Lsc, residual3) is True
 
 
 def test_get_analog_llr() -> None:
     analog_syndr = np.array([0.5, 0, 0, -1, 0, 1])
     sigma = 0.8
 
-    assert np.allclose(
-        get_analog_llr(analog_syndr, sigma), np.array([1.5625, 0.0, 0.0, -3.125, 0.0, 3.125])
-    )
+    assert np.allclose(get_analog_llr(analog_syndr, sigma), np.array([1.5625, 0.0, 0.0, -3.125, 0.0, 3.125]))
 
     sigma = 0.1
-    assert np.allclose(
-        get_analog_llr(analog_syndr, sigma), np.array([100, 0.0, 0.0, -200.0, 0.0, 200.0])
-    )
+    assert np.allclose(get_analog_llr(analog_syndr, sigma), np.array([100, 0.0, 0.0, -200.0, 0.0, 200.0]))
 
 
 def test_generate_err() -> None:
