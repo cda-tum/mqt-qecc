@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-
-# from simulators.memory_experiment_v2 import build_multiround_pcm, move_syndrome
-from analog_information_decoding.simulators import *
+from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import build_multiround_pcm, move_syndrome
 
 
 def test_build_mr_pcm():

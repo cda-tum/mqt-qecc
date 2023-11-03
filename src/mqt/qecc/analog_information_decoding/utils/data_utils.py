@@ -26,14 +26,14 @@ class BpParams:
     cutoff: float = np.inf
 
     @classmethod
-    def from_dict(cls, dict_) -> BpParams:
+    def from_dict(cls, dict_: dict[str, Any]) -> BpParams:
         class_fields = {f.name for f in fields(cls)}
         return BpParams(**{k: v for k, v in dict_.items() if k in class_fields})
 
 
 def extract_settings(filename: str) -> dict:
     """Extracts all settings from a parameter file and returns them as a dictionary."""
-    keyword_lists = {}
+    keyword_lists: dict[str, Any] = {}
 
     with open(filename) as file:
         for line in file:
@@ -85,13 +85,13 @@ def calculate_error_rates(
     )
 
 
-def is_converged(x_success, z_success, runs, code_params, precission):
+def is_converged(x_success: int, z_success: int, runs: int, code_params: dict, precission: float) -> bool:
     x_cond = _check_convergence(x_success, runs, code_params, precission_cutoff=precission)
     z_cond = _check_convergence(z_success, runs, code_params, precission_cutoff=precission)
     return x_cond == z_cond is True
 
 
-def _check_convergence(success_cnt, runs, code_params, precission_cutoff):
+def _check_convergence(success_cnt: int, runs: int, code_params: dict, precission_cutoff: float) -> bool | None:
     _, _, ler, ler_eb = calculate_error_rates(success_cnt, runs, code_params)
     if ler_eb != 0.0:
         if ler_eb / ler < precission_cutoff:
@@ -115,7 +115,7 @@ def create_outpath(
     analog_tg: bool = False,
     repetitions: int | None = None,
     experiment: str = "wer_per_round",
-    **kwargs,
+    **kwargs: dict[str, Any],
 ) -> str:
     path = f"results/{experiment:s}/"
     if analog_info:
@@ -194,7 +194,7 @@ def product_dict(**kwargs):
         yield dict(zip(keys, instance))
 
 
-def zip_dict(**kwargs):
+def zip_dict(**kwargs: dict[str, Any]) -> Any:
     """Create a iterator of dictionaries where each dictionary contains the zip() of the
     values associated with each key in the input dictionary.
     """

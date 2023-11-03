@@ -12,7 +12,7 @@ from bposd.hgp import hgp
 from ldpc import mod2
 from scipy import sparse
 from scipy.sparse import coo_matrix, csr_matrix
-from typing import List
+
 
 class HD_HGP:
     def __init__(self, boundaries) -> None:
@@ -35,11 +35,11 @@ def run_checks_scipy(d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr
 
 
 def generate_4D_product_code(
-        A_1: csr_matrix,
-        A_2: csr_matrix,
-        A_3: csr_matrix,
-        P: csr_matrix,
-        checks=True,
+    A_1: csr_matrix,
+    A_2: csr_matrix,
+    A_3: csr_matrix,
+    P: csr_matrix,
+    checks=True,
 ) -> tuple[csr_matrix, csr_matrix, csr_matrix]:
     r, c = P.shape
 
@@ -75,7 +75,7 @@ def generate_4D_product_code(
 
 
 def generate_3D_product_code(
-        A_1: csr_matrix, A_2: csr_matrix, P: csr_matrix
+    A_1: csr_matrix, A_2: csr_matrix, P: csr_matrix
 ) -> tuple[csr_matrix, csr_matrix, csr_matrix]:
     r, c = P.shape
 
@@ -111,8 +111,14 @@ def create_outpath(codename: str) -> str:
     return path
 
 
-def save_code(hx: npt.NDArray[int], hz: npt.NDArray[int], mz: npt.NDArray[int], codename: str,
-              lx: npt.NDArray[int] = None, lz: npt.NDArray[int] = None) -> None:
+def save_code(
+    hx: npt.NDArray[int],
+    hz: npt.NDArray[int],
+    mz: npt.NDArray[int],
+    codename: str,
+    lx: npt.NDArray[int] = None,
+    lz: npt.NDArray[int] = None,
+) -> None:
     path = create_outpath(codename)
 
     Ms = [hx, hz, mz, lx, lz]
@@ -169,13 +175,13 @@ def _store_code_params(hx, hz, codename) -> None:
 
 
 def create_code(
-        constructor: str,
-        seed_codes: List,
-        codename: str,
-        compute_distance: bool = False,
-        compute_logicals: bool = False,
-        lift_parameter=None,
-        checks: bool = False,
+    constructor: str,
+    seed_codes: list,
+    codename: str,
+    compute_distance: bool = False,
+    compute_logicals: bool = False,
+    lift_parameter=None,
+    checks: bool = False,
 ) -> None:
     # Construct initial 2 dim code
     if constructor == "hgp":
