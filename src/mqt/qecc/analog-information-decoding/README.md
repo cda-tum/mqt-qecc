@@ -48,6 +48,6 @@ in the LDPC2 package a preliminary beta version of which is available on Github 
 
 ## References
 
-- [1]: L. Berent, T. Hillmann et al.: https://arxiv.org/TODO
+- [1]: L. Berent, T. Hillmann et al.: https://arxiv.org/abs/2311.01328
 - [2]: J. Roffe et al. https://github.com/quantumgizmos/ldpc/tree/ldpc_v2
 - [3]: E. Huang et al. https://github.com/panqec/panqec
