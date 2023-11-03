@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from pymatching import Matching
 from scipy.sparse import block_diag, csr_matrix, eye, hstack
 from utils.simulation_utils import (
@@ -8,7 +9,7 @@ from utils.simulation_utils import (
 )
 
 
-def build_multiround_pcm(pcm, repetitions, format="csr"):
+def build_multiround_pcm(pcm, repetitions, format="csr") -> npt.NDArray[int]:
     """Builds the multiround parity-check matrix as described in the paper.
 
     Each row corresponds to a round of measurements, the matrix for r repetitions has the form
@@ -36,7 +37,7 @@ def build_multiround_pcm(pcm, repetitions, format="csr"):
     return hstack([H_3DPCM, H_3DID], format=format)
 
 
-def move_syndrome(syndrome, data_type=np.int32):
+def move_syndrome(syndrome, data_type=np.int32) -> npt.NDArray[int]:
     """Slides the window one region up, i.e., the syndrome of the first half is overwritten by the second half."""
     T = int(syndrome.shape[1] / 2)  # number of rounds in each region
 
@@ -48,7 +49,7 @@ def move_syndrome(syndrome, data_type=np.int32):
     return new_syndrome
 
 
-def get_updated_decoder(decoding_method: str, decoder, new_channel, H3D=None):
+def get_updated_decoder(decoding_method: str, decoder, new_channel, H3D=None) -> object:
     """Updates the decoder with the new channel information and returns the updated decoder object."""
     if decoding_method == "bposd":
         decoder.update_channel_probs(new_channel)
@@ -66,18 +67,18 @@ def get_updated_decoder(decoding_method: str, decoder, new_channel, H3D=None):
 
 
 def decode_multiround(
-    syndrome: np.ndarray,
-    H: np.ndarray,
+    syndrome: npt.NDArray[int],
+    H: npt.NDArray[int],
     decoder,
-    channel_probs: np.ndarray,  # needed for matching decoder does not have an update weights method
+    channel_probs: npt.NDArray[int],  # needed for matching decoder does not have an update weights method
     repetitions: int,
     last_round=False,
     analog_syndr=None,
     check_block_size: int = 0,
     sigma: float = 0.0,
-    H3D: np.ndarray = None,  # needed for matching decoder
+    H3D: npt.NDArray[int] = None,  # needed for matching decoder
     decoding_method: str = "bposd",  # bposd or matching
-):
+) -> tuple[npt.NDArray[int], npt.NDArray[int], npt.NDArray[int], int]:
     """Overlapping window decoding.
     First, we compute the difference syndrome from the recorded syndrome of each measurement round for all measurement
     rounds of the current window (consisting of two regions with equal size).

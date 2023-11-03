@@ -1,5 +1,0 @@
-
-The raw simulation data used in the paper is made publicly available via Zenodo: https://doi.org/10.5281/zenodo.10067708
-(https://zenodo.org/records/10067708)
-
-This will be referenced in a final version of the paper directly.

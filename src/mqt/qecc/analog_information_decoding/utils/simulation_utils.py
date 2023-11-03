@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 from ldpc.mod2 import rank
 from numba import njit
 from numba.core.errors import (
@@ -15,6 +17,9 @@ from utils.data_utils import BpParams, calculate_error_rates, replace_inf
 
 warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
 warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
+
+if TYPE_CHECKING:
+    from Typing import Tuple
 
 
 @njit
@@ -71,7 +76,7 @@ def check_logical_err_h(check_matrix, original_err, decoded_estimate):
 # i.e., an X residal is a logical iff it commutes with at least one Z logical and
 # an Z residual is a logical iff it commutes with at least one Z logical
 # Hence, L must be of same type as H and of different type than residual_err
-def is_logical_err(L, residual_err):
+def is_logical_err(L: npt.NDArray[int], residual_err: npt.NDArray[int]) -> bool:
     """Checks if the residual error is a logical error
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
@@ -120,7 +125,7 @@ def generate_err(N, channel_probs, residual_err):
 
 
 @njit
-def get_analog_llr(analog_syndrome: np.ndarray, sigma: float) -> np.ndarray:
+def get_analog_llr(analog_syndrome: npt.NDArray[float], sigma: float) -> npt.NDArray[int]:
     """Computes analog LLRs given analog syndrome and sigma."""
     return (2 * analog_syndrome) / (sigma**2)
 
@@ -140,7 +145,7 @@ def get_error_rate_from_sigma(sigma: float) -> float:
 
 
 @njit
-def get_virtual_check_init_vals(noisy_syndr, sigma: float):
+def get_virtual_check_init_vals(noisy_syndr: npt.NDArray[float], sigma: float) -> npt.NDArray[float]:
     """Computes a vector of values v_i from the noisy syndrome bits y_i s.t. BP initializes the LLRs l_i of the analog nodes with the
     analog info values (see paper section). v_i := 1/(e^{y_i}+1).
     """
@@ -149,7 +154,8 @@ def get_virtual_check_init_vals(noisy_syndr, sigma: float):
 
 
 @njit
-def generate_syndr_err(channel_probs):
+def generate_syndr_err(channel_probs: npt.NDArray[float]) -> npt.NDArray[int]:
+    """Generates a random error vector given the error channel probabilities."""
     error = np.zeros_like(channel_probs, dtype=np.int32)
 
     for i, _prob in np.ndenumerate(channel_probs):
@@ -162,7 +168,7 @@ def generate_syndr_err(channel_probs):
 
 
 # @njit
-def get_noisy_analog_syndrome(perfect_syndr: np.ndarray, sigma: float) -> np.array:
+def get_noisy_analog_syndrome(perfect_syndr: npt.NDArray[int], sigma: float) -> np.array:
     """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength)
     Assumes perfect_syndr has entries in {0,1}.
     """
@@ -178,7 +184,7 @@ def get_noisy_analog_syndrome(perfect_syndr: np.ndarray, sigma: float) -> np.arr
 
 
 @njit
-def error_channel_setup(error_rate, xyz_error_bias, N):
+def error_channel_setup(error_rate: float, xyz_error_bias: Tuple[float, float, float], nr_qubits: int):
     """Set up an error_channel given the physical error rate, bias, and number of bits."""
     xyz_error_bias = np.array(xyz_error_bias)
     if xyz_error_bias[0] == np.inf:
@@ -198,22 +204,22 @@ def error_channel_setup(error_rate, xyz_error_bias, N):
             error_rate * xyz_error_bias / np.sum(xyz_error_bias)
         )  # Oscar only considers X or Z errors. For reproducability remove normalization
 
-    channel_probs_x = np.ones(N) * px
-    channel_probs_z = np.ones(N) * pz
-    channel_probs_y = np.ones(N) * py
+    channel_probs_x = np.ones(nr_qubits) * px
+    channel_probs_z = np.ones(nr_qubits) * pz
+    channel_probs_y = np.ones(nr_qubits) * py
 
     return channel_probs_x, channel_probs_y, channel_probs_z
 
 
 # @njit
-def build_single_stage_pcm(H, M) -> np.ndarray:
-    id_r = np.identity(M.shape[1])
-    zeros = np.zeros((M.shape[0], H.shape[1]))
-    return np.block([[H, id_r], [zeros, M]]).astype(np.int32)
+def build_single_stage_pcm(pcm: npt.NDArray[int], meta: npt.NDArray[int]) -> npt.NDArray[int]:
+    id_r = np.identity(meta.shape[1])
+    zeros = np.zeros((meta.shape[0], pcm.shape[1]))
+    return np.block([[pcm, id_r], [zeros, meta]]).astype(np.int32)
 
 
 @njit
-def get_signed_from_binary(binary_syndrome: np.ndarray) -> np.ndarray:
+def get_signed_from_binary(binary_syndrome: npt.NDArray[int]) -> npt.NDArray[int]:
     """Maps the binary vector with {0,1} entries to a vector with {-1,1} entries."""
     signed_syndr = []
     for j in range(len(binary_syndrome)):
@@ -221,7 +227,7 @@ def get_signed_from_binary(binary_syndrome: np.ndarray) -> np.ndarray:
     return np.array(signed_syndr)
 
 
-def get_binary_from_analog(analog_syndrome: np.ndarray) -> np.ndarray:
+def get_binary_from_analog(analog_syndrome: npt.NDArray[int]) -> npt.NDArray[int]:
     """Returns the thresholded binary vector.
     Since in {-1,+1} notation -1 indicates a check violation, we map values <= 0 to 1 and values > 0 to 0.
     """
@@ -235,11 +241,12 @@ def save_results(
     s: float,
     input_vals: dict,
     outfile: str,
-    code_params,
+    code_params: dict[str, int],
     err_side: str = "X",
     bp_iterations: int | None = None,
     bp_params: BpParams = None,
 ) -> dict:
+    """Save results of a simulation run to a json file."""
     ler, ler_eb, wer, wer_eb = calculate_error_rates(success_cnt, nr_runs, code_params)
 
     output = {
@@ -259,7 +266,7 @@ def save_results(
 
     output.update(input_vals)
     output["bias"] = replace_inf(output["bias"])
-    with open(outfile, "w") as f:
+    with open(outfile, "w", encoding="UTF-8") as f:
         json.dump(
             output,
             f,

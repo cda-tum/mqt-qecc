@@ -136,7 +136,7 @@ If you use our tool for your research, we will be thankful if you refer to it by
 
 - [![a](https://img.shields.io/static/v1?label=arXiv&message=2311.01328&color=inactive&style=flat-square)](https://arxiv.org/abs/2311.01328)
   L. Berent, T. Hillmann, J. Eisert, R. Wille, and J. Roffe, "Analog information decoding of bosonic quantum LDPC codes".
-- 
+
 - [![a](https://img.shields.io/static/v1?label=arXiv&message=2303.14237&color=inactive&style=flat-square)](https://arxiv.org/abs/2303.14237)
   L. Berent, L. Burgholzer, P.J. Derks, J. Eisert, and R. Wille, "Decoding quantum color codes with MaxSAT".
 

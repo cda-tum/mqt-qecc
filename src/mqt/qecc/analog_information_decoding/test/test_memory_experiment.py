@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import numpy as np
-from simulators.memory_experiment_v2 import build_multiround_pcm, move_syndrome
+
+# from simulators.memory_experiment_v2 import build_multiround_pcm, move_syndrome
+from analog_information_decoding.simulators import *
 
 
 def test_build_mr_pcm():

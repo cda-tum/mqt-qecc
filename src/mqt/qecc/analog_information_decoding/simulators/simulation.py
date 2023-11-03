@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from timeit import default_timer as timer
 
+import numpy as np
+import numpy.typing as npt
 from ldpc2 import bposd_decoder
 from ldpc2.bposd_decoder import SoftInfoBpOsdDecoder
 from utils.data_utils import (
@@ -10,8 +12,6 @@ from utils.data_utils import (
     is_converged,
     replace_inf,
 )
-
-# , create_outpath
 from utils.data_utils import create_outpath as get_outpath
 from utils.simulation_utils import *
 
@@ -617,7 +617,12 @@ class Single_Shot_Simulator:
         )
 
     def save_results(
-        self, x_success_cnt: int, z_success_cnt: int, runs: int, x_bp_iters: np.ndarray, z_bp_iters: np.ndarray
+        self,
+        x_success_cnt: int,
+        z_success_cnt: int,
+        runs: int,
+        x_bp_iters: npt.NDArray[int],
+        z_bp_iters: npt.NDArray[int],
     ):
         x_ler, x_ler_eb, x_wer, x_wer_eb = calculate_error_rates(x_success_cnt, runs, self.code_params)
         z_ler, z_ler_eb, z_wer, z_wer_eb = calculate_error_rates(z_success_cnt, runs, self.code_params)

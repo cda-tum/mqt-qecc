@@ -6,40 +6,41 @@ import subprocess
 
 import code_constructor
 import numpy as np
+import numpy.typing as npt
 import scipy.io as sio
 from bposd.hgp import hgp
 from ldpc import mod2
 from scipy import sparse
 from scipy.sparse import coo_matrix, csr_matrix
-
+from typing import List
 
 class HD_HGP:
     def __init__(self, boundaries) -> None:
         self.boundaries = boundaries
 
 
-def is_all_zeros(array):
+def is_all_zeros(array) -> bool:
     return not np.any(array)
 
 
-def sparse_all_zeros(mat: csr_matrix):
+def sparse_all_zeros(mat: csr_matrix) -> bool:
     mat.data %= 2
     return mat.sum() == 0
 
 
-def run_checks_scipy(d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr_matrix):
+def run_checks_scipy(d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr_matrix) -> None:
     if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3) and sparse_all_zeros(d_3 @ d_4)):
         msg = "Error generating 4D code, boundary maps do not square to zero"
         raise Exception(msg)
 
 
 def generate_4D_product_code(
-    A_1: csr_matrix,
-    A_2: csr_matrix,
-    A_3: csr_matrix,
-    P: csr_matrix,
-    checks=True,
-):
+        A_1: csr_matrix,
+        A_2: csr_matrix,
+        A_3: csr_matrix,
+        P: csr_matrix,
+        checks=True,
+) -> tuple[csr_matrix, csr_matrix, csr_matrix]:
     r, c = P.shape
 
     id_r = sparse.identity(r, dtype=int)
@@ -73,7 +74,9 @@ def generate_4D_product_code(
     return d_1, d_2, d_3, d_4
 
 
-def generate_3D_product_code(A_1: csr_matrix, A_2: csr_matrix, P: csr_matrix):
+def generate_3D_product_code(
+        A_1: csr_matrix, A_2: csr_matrix, P: csr_matrix
+) -> tuple[csr_matrix, csr_matrix, csr_matrix]:
     r, c = P.shape
 
     id_r = sparse.identity(r, dtype=int)
@@ -108,7 +111,8 @@ def create_outpath(codename: str) -> str:
     return path
 
 
-def save_code(hx, hz, mz, codename, lx=None, lz=None):
+def save_code(hx: npt.NDArray[int], hz: npt.NDArray[int], mz: npt.NDArray[int], codename: str,
+              lx: npt.NDArray[int] = None, lz: npt.NDArray[int] = None) -> None:
     path = create_outpath(codename)
 
     Ms = [hx, hz, mz, lx, lz]
@@ -128,12 +132,12 @@ def save_code(hx, hz, mz, codename, lx=None, lz=None):
             )
 
 
-def run_compute_distances(codename):
+def run_compute_distances(codename) -> None:
     path = "/codes/generated_codes/" + codename
     subprocess.run(["bash", "compute_distances_3D.sh", path])
 
 
-def _compute_distances(hx, hz, codename):
+def _compute_distances(hx, hz, codename) -> None:
     run_compute_distances(codename)
     code_dict = {}
     _, n = hx.shape
@@ -152,10 +156,8 @@ def _compute_distances(hx, hz, codename):
     with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
         file.write(json.dumps(code_dict))
 
-    return
 
-
-def _store_code_params(hx, hz, codename):
+def _store_code_params(hx, hz, codename) -> None:
     code_dict = {}
     hx, hz = hx.todense(), hz.todense()
     m, n = hx.shape
@@ -164,18 +166,17 @@ def _store_code_params(hx, hz, codename):
     code_dict["k"] = codeK
     with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
         file.write(json.dumps(code_dict))
-    return
 
 
 def create_code(
-    constructor: str,
-    seed_codes: list,
-    codename: str,
-    compute_distance: bool = False,
-    compute_logicals: bool = False,
-    lift_parameter=None,
-    checks: bool = False,
-):
+        constructor: str,
+        seed_codes: List,
+        codename: str,
+        compute_distance: bool = False,
+        compute_logicals: bool = False,
+        lift_parameter=None,
+        checks: bool = False,
+) -> None:
     # Construct initial 2 dim code
     if constructor == "hgp":
         code = hgp(seed_codes[0], seed_codes[1])
@@ -188,21 +189,12 @@ def create_code(
     A2 = sparse.csr_matrix(code.hz.T)
     res = generate_3D_product_code(A1, A2, sparse.csr_matrix(seed_codes[2]))
     hx, hzT, mzT = res
-    # Build 4D HGP code
-    # res = [csr_matrix(A) for A in res]
-
-    # mx, hx, hzT, mzT = generate_4D_product_code(
-    #     *res, csr_matrix(seed_codes[3]), checks=checks
-    # )
 
     hz = hzT.transpose()
     mz = mzT.transpose()
     if compute_logicals:
         lx, lz = code_constructor._compute_logicals(hx.todense(), hz.todense())
         save_code(hx=hx, hz=hz, mz=mz, codename=codename, lx=lx, lz=lz)
-
-    # else:
-    #     save_code(hx, hz, mx, mz, codename)
 
     if compute_distance:
         _compute_distances(hx.todense(), hz.todense(), codename)

@@ -6,38 +6,35 @@ import subprocess
 
 import ldpc.code_util
 import numpy as np
+import numpy.typing as npt
 import scipy.io as sio
 import scipy.sparse as scs
 from bposd.hgp import hgp
 from ldpc import mod2
 from scipy import sparse
+from typing import List
 
-
-class HD_HGP:
-    def __init__(self, boundaries) -> None:
-        self.boundaries = boundaries
-
-
-def is_all_zeros(array):
+def is_all_zeros(array: npt.NDArray[int]) -> bool:
     return not np.any(array)
 
-
-def run_checks_scipy(d_1, d_2, d_3, d_4):
+def run_checks_scipy(d_1:npt.NDArray[int], d_2:npt.NDArray[int], d_3:npt.NDArray[int], d_4:npt.NDArray[int]) -> None:
     sd_1 = scs.csr_matrix(d_1)
     sd_2 = scs.csr_matrix(d_2)
     sd_3 = scs.csr_matrix(d_3)
     sd_4 = scs.csr_matrix(d_4)
 
     if not (
-        is_all_zeros((sd_1 * sd_2).todense() % 2)
-        and is_all_zeros((sd_2 * sd_3).todense() % 2)
-        and is_all_zeros((sd_3 * sd_4).todense() % 2)
+            is_all_zeros((sd_1 * sd_2).todense() % 2)
+            and is_all_zeros((sd_2 * sd_3).todense() % 2)
+            and is_all_zeros((sd_3 * sd_4).todense() % 2)
     ):
         msg = "Error generating 4D code, boundary maps do not square to zero"
         raise Exception(msg)
 
 
-def generate_4D_product_code(A_1, A_2, A_3, P, checks=True):
+def generate_4D_product_code(
+        A_1:npt.NDArray[int], A_2:npt.NDArray[int], A_3:npt.NDArray[int], P:npt.NDArray[int], checks=True
+) -> tuple[npt.NDArray[int], npt.NDArray[int], npt.NDArray[int], npt.NDArray[int]]:
     r, c = P.shape
     id_r = np.identity(r, dtype=np.int32)
     id_c = np.identity(c, dtype=np.int32)
@@ -68,7 +65,9 @@ def generate_4D_product_code(A_1, A_2, A_3, P, checks=True):
     return d_1, d_2, d_3, d_4
 
 
-def generate_3D_product_code(A_1, A_2, P):
+def generate_3D_product_code(
+        A_1: npt.NDArray[np.int32], A_2: npt.NDArray[np.int32], P: npt.NDArray[np.int32]
+) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.int32], npt.NDArray[np.int32]]:
     r, c = P.shape
     id_r = np.identity(r, dtype=np.int32)
     id_c = np.identity(c, dtype=np.int32)
@@ -102,7 +101,8 @@ def create_outpath(codename: str) -> str:
     return path
 
 
-def save_code(hx, hz, mx, mz, codename, lx=None, lz=None):
+def save_code(hx: npt.NDArray[int], hz: npt.NDArray[int], mx: npt.NDArray[int], mz: npt.NDArray[int], codename: str,
+              lx: npt.NDArray[int] = None, lz: npt.NDArray[int] = None) -> None:
     path = create_outpath(codename)
 
     Ms = [hx, hz, mx, mz, lx, lz]
@@ -117,12 +117,12 @@ def save_code(hx, hz, mx, mz, codename, lx=None, lz=None):
             )
 
 
-def run_compute_distances(codename):
+def run_compute_distances(codename: str) -> None:
     path = "generated_codes/" + codename
     subprocess.run(["bash", "compute_distances.sh", path])
 
 
-def _compute_distances(hx, hz, codename):
+def _compute_distances(hx: npt.NDArray[int], hz: npt.NDArray[int], codename: str) -> None:
     run_compute_distances(codename)
     code_dict = {}
     m, n = hx.shape
@@ -143,11 +143,9 @@ def _compute_distances(hx, hz, codename):
     with open(f"generated_codes/{codename}/code_params.txt", "w") as file:
         file.write(json.dumps(code_dict))
 
-    return
 
-
-def _compute_logicals(hx, hz):
-    def compute_lz(hx, hz):
+def _compute_logicals(hx: npt.NDArray[int], hz: npt.NDArray[int]) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
+    def compute_lz(hx: npt.NDArray[int], hz: npt.NDArray[int]) -> npt.NDArray[int]:
         # lz logical operators
         # lz\in ker{hx} AND \notin Im(Hz.T)
 
@@ -166,14 +164,13 @@ def _compute_logicals(hx, hz):
 
 
 def create_code(
-    constructor: str,
-    seed_codes: list,
-    codename: str,
-    compute_distance: bool = False,
-    compute_logicals: bool = False,
-    lift_parameter=None,
-    checks: bool = False,
-):
+        constructor: str,
+        seed_codes: List[npt.NDArray[int]],
+        codename: str,
+        compute_distance: bool = False,
+        compute_logicals: bool = False,
+        checks: bool = False,
+) -> None:
     # Construct initial 2 dim code
     if constructor == "hgp":
         code = hgp(seed_codes[0], seed_codes[1])
@@ -207,7 +204,6 @@ def create_code(
 
     if compute_distance:
         _compute_distances(hx, hz, codename)
-    return
 
 
 if __name__ == "__main__":

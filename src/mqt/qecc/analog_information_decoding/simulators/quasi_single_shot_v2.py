@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from bposd import bposd_decoder
 from pymatching import Matching
 from simulators.memory_experiment_v2 import (
@@ -25,10 +26,10 @@ from utils.simulation_utils import (
 class QSS_SimulatorV2:
     def __init__(
         self,
-        H: np.ndarray,
+        H: npt.NDArray[int],
         per: float,
         ser: float,
-        L: np.ndarray,
+        L: npt.NDArray[int],
         bias: list[float],
         codename: str,
         bp_params: BpParams | None,
@@ -159,10 +160,10 @@ class QSS_SimulatorV2:
 
     def _decode_multiround(
         self,
-        syndrome_mat: np.ndarray,
-        analog_syndr_mat: np.ndarray,
+        syndrome_mat: npt.NDArray[int],
+        analog_syndr_mat: npt.NDArray[int],
         last_round: bool = False,
-    ) -> np.ndarray:
+    ) -> npt.NDArray[int]:
         return decode_multiround(
             syndrome=syndrome_mat,
             H=self.H,
@@ -263,7 +264,7 @@ class QSS_SimulatorV2:
             bp_params=self.bp_params,
         )
 
-    def run(self, samples: int = 1):
+    def run(self, samples: int = 1) -> dict:
         """Returns single data point."""
         success_cnt = 0
         for run in range(1, samples + 1):

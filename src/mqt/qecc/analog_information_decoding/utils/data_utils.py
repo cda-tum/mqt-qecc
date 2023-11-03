@@ -26,12 +26,12 @@ class BpParams:
     cutoff: float = np.inf
 
     @classmethod
-    def from_dict(cls, dict_):
+    def from_dict(cls, dict_) -> BpParams:
         class_fields = {f.name for f in fields(cls)}
         return BpParams(**{k: v for k, v in dict_.items() if k in class_fields})
 
 
-def extract_settings(filename):
+def extract_settings(filename: str) -> dict:
     """Extracts all settings from a parameter file and returns them as a dictionary."""
     keyword_lists = {}
 
@@ -65,7 +65,9 @@ def load_data(
     return data
 
 
-def calculate_error_rates(success_cnt, runs, code_params):
+def calculate_error_rates(
+    success_cnt: int, runs: int, code_params: dict[str, int]
+) -> tuple[float, float, float, float]:
     """Calculates logical error rate, logical error rate error bar, word error rate,
     and word error rate error bar.
     """
@@ -172,7 +174,7 @@ def create_outpath(
     return f_loc
 
 
-def replace_inf(lst: list):
+def replace_inf(lst: list) -> list:
     new_lst = []
     for item in lst:
         if np.isinf(item):
@@ -199,7 +201,7 @@ def zip_dict(**kwargs):
     return (dict(zip(kwargs.keys(), values)) for values in zip(*kwargs.values()))
 
 
-def _update_error_rates(success_cnt, runs, code_K):
+def _update_error_rates(success_cnt: int, runs: int, code_K: int) -> tuple[float, float, float, float]:
     """Calculates logical error rate, logical error rate error bar, word error rate,
     and word error rate error bar.
     """

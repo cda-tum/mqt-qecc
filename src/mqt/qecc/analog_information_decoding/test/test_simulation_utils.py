@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 
 import numpy as np
-import utils
 from utils import simulation_utils
 
 
