@@ -1,4 +1,5 @@
 """Generate the lifted hypergraph product of the protographs a and b. From Roffe's LDPC library."""  # noqa: EXE002
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

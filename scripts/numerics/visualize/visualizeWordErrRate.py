@@ -1,4 +1,5 @@
 """Visualize the word error rate plots."""
+
 from __future__ import annotations
 
 import json

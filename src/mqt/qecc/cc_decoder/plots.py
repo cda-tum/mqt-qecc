@@ -1,4 +1,5 @@
 """Plotting functions for the paper."""
+
 from __future__ import annotations
 
 import argparse

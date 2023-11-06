@@ -1,4 +1,5 @@
 """Toric code construction."""
+
 # using tools from https://github.com/quantumgizmos/bp_osd
 from __future__ import annotations
 
