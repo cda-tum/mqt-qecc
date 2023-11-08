@@ -25,9 +25,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - if: runner.os == 'macOS'
-        name: Install flint
-        run: brew install flint
       - if: matrix.runs-on != 'ubuntu-latest'
         name: Setup ccache
         uses: Chocobo1/setup-ccache-action@v1
@@ -35,6 +32,12 @@ jobs:
           prepend_symlinks_to_path: false
           windows_compile_environment: msvc
           override_cache_key: wheels-${{ matrix.runs-on }}
+      - if: runner.os == 'macOS'
+        name: Install flint
+        run: |
+          brew install gmp mpfr ntl
+          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
+          cd flint2 && ./configure && make -j 3 && make install
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16
       - name: Verify clean directory
