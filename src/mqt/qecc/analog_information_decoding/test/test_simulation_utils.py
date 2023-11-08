@@ -144,8 +144,8 @@ def test_generate_err() -> None:
     p = 0.0
     n = 10
     ch = np.ones(n) * p
-    channel = np.array([np.copy(ch), np.copy(ch), np.copy(ch)])
-    residual = np.array([np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)])
+    channel = np.copy(ch), np.copy(ch), np.copy(ch)
+    residual = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
 
     expected = np.array([np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)])
     assert np.array_equal(generate_err(n, channel, residual), expected)

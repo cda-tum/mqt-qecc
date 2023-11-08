@@ -169,7 +169,8 @@ explicit_package_bases = true
 pretty = true
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qiskit_aer.*", "qecsim.*" , "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*", "z3.*", "bposd.*", "numba.*"]
+module = ["qiskit.*", "qiskit_aer.*", "qecsim.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+    "z3.*", "bposd.*", "numba.*", "pymatching.*"]
 ignore_missing_imports = true
 
 
@@ -183,52 +184,52 @@ unsafe-fixes = true
 [tool.ruff.lint]
 extend-select = [
     "E", "F", "W", # flake8
-    "A",           # flake8-builtins
-    "ANN",         # flake8-annotations
-    "ARG",         # flake8-unused-arguments
-    "ASYNC",       # flake8-async
-    "B",  "B904",  # flake8-bugbear
-    "C4",          # flake8-comprehensions
-    "D",           # pydocstyle
-    "EM",          # flake8-errmsg
-    "EXE",         # flake8-executable
-    "FA",          # flake8-future-annotations
-    "FLY",         # flynt
-    "I",           # isort
-    "ICN",         # flake8-import-conventions
-    "ISC",         # flake8-implicit-str-concat
-    "N",           # flake8-naming
-    "NPY",         # numpy
-    "PERF",        # perflint
-    "PGH",         # pygrep-hooks
-    "PIE",         # flake8-pie
-    "PL",          # pylint
-    "PT",          # flake8-pytest-style
-    "PTH",         # flake8-use-pathlib
-    "PYI",         # flake8-pyi
-    "Q",           # flake8-quotes
-    "RET",         # flake8-return
-    "RSE",         # flake8-raise
-    "RUF",         # Ruff-specific
-    "SLF",         # flake8-self
-    "SLOT",        # flake8-slots
-    "SIM",         # flake8-simplify
-    "TCH",         # flake8-type-checking
-    "TID",         # flake8-tidy-imports
-    "TRY",         # tryceratops
-    "UP",          # pyupgrade
-    "YTT",         # flake8-2020
+    "A", # flake8-builtins
+    "ANN", # flake8-annotations
+    "ARG", # flake8-unused-arguments
+    "ASYNC", # flake8-async
+    "B", "B904", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "D", # pydocstyle
+    "EM", # flake8-errmsg
+    "EXE", # flake8-executable
+    "FA", # flake8-future-annotations
+    "FLY", # flynt
+    "I", # isort
+    "ICN", # flake8-import-conventions
+    "ISC", # flake8-implicit-str-concat
+    "N", # flake8-naming
+    "NPY", # numpy
+    "PERF", # perflint
+    "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "PL", # pylint
+    "PT", # flake8-pytest-style
+    "PTH", # flake8-use-pathlib
+    "PYI", # flake8-pyi
+    "Q", # flake8-quotes
+    "RET", # flake8-return
+    "RSE", # flake8-raise
+    "RUF", # Ruff-specific
+    "SLF", # flake8-self
+    "SLOT", # flake8-slots
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "TRY", # tryceratops
+    "UP", # pyupgrade
+    "YTT", # flake8-2020
 ]
 extend-ignore = [
-    "ANN101",  # Missing type annotation for self in method
-    "PLR",     # Design related pylint codes
+    "ANN101", # Missing type annotation for self in method
+    "PLR", # Design related pylint codes
 ]
 isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "*.pyi" = ["D"]  # pydocstyle
 "*.ipynb" = [
-    "D",    # pydocstyle
+    "D", # pydocstyle
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
@@ -251,7 +252,7 @@ before-all = [
     "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
     "cd flint2 && ./configure && make -j 3 && make install"
 ]
-environment = { DEPLOY="ON" }
+environment = { DEPLOY = "ON" }
 
 [tool.cibuildwheel.macos]
 archs = "x86_64"

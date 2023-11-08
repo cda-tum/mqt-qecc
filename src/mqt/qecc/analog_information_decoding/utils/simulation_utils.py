@@ -90,7 +90,9 @@ def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> np.bo
 # channel_probs = [x,y,z], residual_err = [x,z]
 # @njit # type: ignore[misc]
 def generate_err(
-    nr_qubits: int, channel_probs: NDArray[np.float_], residual_err: NDArray[np.int_]
+    nr_qubits: int,
+    channel_probs: tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]],
+    residual_err: list[NDArray[np.int_]],
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     """Computes error vector with X and Z part given channel probabilities and residual error.
     Assumes that residual error has two equally sized parts.
@@ -226,7 +228,7 @@ def build_single_stage_pcm(pcm: NDArray[np.int_], meta: NDArray[np.int_]) -> NDA
     """Build the single statge parity check matrix."""
     id_r = np.identity(meta.shape[1])
     zeros = np.zeros((meta.shape[0], pcm.shape[1]))
-    return np.block([[pcm, id_r], [zeros, meta]]).astype(np.int32)
+    return np.block([[pcm, id_r], [zeros, meta]])
 
 
 @njit  # type: ignore[misc]

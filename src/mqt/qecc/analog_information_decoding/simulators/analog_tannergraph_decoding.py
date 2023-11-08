@@ -2,19 +2,22 @@ from __future__ import annotations
 
 import json
 import os
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from ldpc import bp_decoder, bposd_decoder
-from ldpc2.bp_decoder import SoftInfoBpDecoder
-from ldpc2.bposd_decoder import SoftInfoBpOsdDecoder
+from ldpc.bp_decoder import SoftInfoBpDecoder
+from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
 
 import mqt.qecc.analog_information_decoding.utils.simulation_utils as simulation_utils
 from mqt.qecc.analog_information_decoding.utils.data_utils import (
     BpParams,
     calculate_error_rates,
-    create_outpath,
     is_converged,
 )
+
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
 
 
 def create_outpath(
@@ -26,7 +29,7 @@ def create_outpath(
     bias: list[float] | None = None,
     overwrite: bool = False,
     id: int = 0,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     """Create output path from input parameters."""
     path = f"results/{experiment:s}/"
@@ -71,9 +74,9 @@ class SoftInfoDecoder:
 
     def __init__(
         self,
-        H: npt.NDArray[int],
+        H: NDArray[np.int32],
         bp_params: BpParams,
-        error_channel: npt.NDArray[int],
+        error_channel: NDArray[np.float_],
         sigma: float | None = None,
         ser: float | None = None,
     ) -> None:
@@ -94,10 +97,6 @@ class SoftInfoDecoder:
             if self.syndr_err_rate is not None:
                 msg = "Only one of sigma or ser must be specified"
                 raise ValueError(msg)
-
-        if self.error_channel is None:
-            msg = "error_channel must be specified"
-            raise ValueError(msg)
 
         self.bp_decoder = SoftInfoBpOsdDecoder(
             pcm=self.H,
@@ -125,9 +124,9 @@ class SoftInfoDecoder:
             cutoff=self.bp_params.cutoff,
         )
 
-    def decode(self, analog_syndrome: npt.NDArray[int]) -> npt.NDArray[int]:
+    def decode(self, analog_syndrome: NDArray[np.int32]) -> NDArray[np.int32]:
         """Decode a given analog syndrome."""
-        return self.bp_decoder.decode(analog_syndrome)
+        return self.bp_decoder.decode(analog_syndrome)  # type: ignore[no-any-return]
 
 
 class AnalogTannergraphDecoder:
@@ -137,9 +136,9 @@ class AnalogTannergraphDecoder:
 
     def __init__(
         self,
-        H: npt.NDArray[int],
+        H: NDArray[np.int32],
         bp_params: BpParams,
-        error_channel: npt.NDArray[int],
+        error_channel: NDArray[np.float_],
         sigma: float | None = None,
         ser: float | None = None,
     ) -> None:
@@ -161,10 +160,6 @@ class AnalogTannergraphDecoder:
             if self.syndr_err_rate is not None:
                 msg = "Only one of sigma or ser must be specified"
                 raise ValueError(msg)
-
-        if self.error_channel is None:
-            msg = "error_channel must be specified"
-            raise ValueError(msg)
 
         self.bp_decoder = bposd_decoder(
             parity_check_matrix=self.atg,
@@ -188,7 +183,7 @@ class AnalogTannergraphDecoder:
             ms_scaling_factor=self.bp_params.ms_scaling_factor,
         )
 
-    def _set_analog_syndrome(self, analog_syndrome: npt.NDArray[int]) -> None:
+    def _set_analog_syndrome(self, analog_syndrome: NDArray[np.float_]) -> None:
         """Initializes the error channel of the BP decoder s.t. the virtual nodes are initialized with the
         analog syndrome LLRs on decoding initialization.
         :param analog_syndrome: the analog syndrome values to initialize the virtual nodes with.
@@ -201,32 +196,32 @@ class AnalogTannergraphDecoder:
         )
         self.bp_decoder.update_channel_probs(new_channel)
 
-    def decode(self, analog_syndrome: npt.NDArray[int]) -> npt.NDArray[int]:
+    def decode(self, analog_syndrome: NDArray[np.float_]) -> NDArray[np.int32]:
         """Decode a given analog syndrome."""
         self._set_analog_syndrome(analog_syndrome)
-        return self.bp_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))
+        return self.bp_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
 
 
 class ATD_Simulator:
     def __init__(
         self,
-        Hx: npt.NDArray[int],
-        Lx: npt.NDArray[int],
-        Hz: npt.NDArray[int],
-        Lz: npt.NDArray[int],
+        Hx: NDArray[np.int32],
+        Lx: NDArray[np.int32],
+        Hz: NDArray[np.int32],
+        Lz: NDArray[np.int32],
         codename: str,
         seed: int,
         bp_params: BpParams,
         data_err_rate: float,
         syndr_err_rate: float | None = None,
         sigma: float | None = None,
-        bias=None,
+        bias: NDArray[np.float_] | None = None,
         experiment: str = "atd",
         decoding_method: str = "atd",
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         if bias is None:
-            bias = [1.0, 1.0, 1.0]
+            bias = np.array([1.0, 1.0, 1.0])
         simulation_utils.set_seed(seed)
         self.Hx = Hx
         self.Lx = Lx
@@ -251,7 +246,7 @@ class ATD_Simulator:
                 synd_err_channel = simulation_utils.error_channel_setup(
                     error_rate=self.syndr_err_rate,
                     xyz_error_bias=self.bias,
-                    N=1,
+                    nr_qubits=1,
                 )
 
         else:
@@ -263,7 +258,7 @@ class ATD_Simulator:
             synd_err_channel = simulation_utils.error_channel_setup(
                 error_rate=self.syndr_err_rate,
                 xyz_error_bias=self.bias,
-                N=1,
+                nr_qubits=1,
             )
 
         x_synd_err_rate = synd_err_channel[0][0] + synd_err_channel[1][0]  # x + y errors, 1st bit only
@@ -289,13 +284,13 @@ class ATD_Simulator:
             Decoder = AnalogTannergraphDecoder
 
         elif self.decoding_method == "softinfo":
-            Decoder = SoftInfoDecoder
+            Decoder = SoftInfoDecoder  # type: ignore[assignment]
 
         # single-sided error only, no bias
         self.full_error_channel = simulation_utils.error_channel_setup(
             error_rate=self.data_err_rate,
             xyz_error_bias=self.bias,
-            N=self.n,
+            nr_qubits=self.n,
         )
         self.x_decoder = Decoder(
             error_channel=self.full_error_channel[0] + self.full_error_channel[1],  # x + y errors
@@ -322,7 +317,7 @@ class ATD_Simulator:
             x_err,
             z_err,
         ) = simulation_utils.generate_err(  # no residual error, only one side needed
-            N=self.n,
+            nr_qubits=self.n,
             channel_probs=self.full_error_channel,
             residual_err=residual_err,
         )
@@ -343,7 +338,7 @@ class ATD_Simulator:
             self.Lx, z_residual
         )
 
-    def run(self, samples) -> dict:
+    def run(self, samples: int) -> dict[str, Any]:
         x_success_cnt = 0
         z_success_cnt = 0
         for runs in range(1, samples + 1):
@@ -431,7 +426,7 @@ class ATD_Simulator:
         return output
 
 
-def get_analog_pcm(H: npt.NDArray[int]) -> npt.NDArray[int]:
+def get_analog_pcm(H: NDArray[np.int32]) -> NDArray[np.int32]:
     """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
     return np.hstack((H, np.identity(H.shape[0], dtype=np.int32)))
 

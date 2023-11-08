@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from pymatching import Matching
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-def build_multiround_pcm(pcm, repetitions, format="csr") -> NDArray[int]:
+def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, format: str = "csr") -> NDArray[np.int32]:
     """Builds the multiround parity-check matrix as described in the paper.
 
     Each row corresponds to a round of measurements, the matrix for r repetitions has the form
@@ -39,10 +39,10 @@ def build_multiround_pcm(pcm, repetitions, format="csr") -> NDArray[int]:
     H_3DID = H_3DID_diag + H_3DID_offdiag
 
     # # hstack the two blocks
-    return hstack([H_3DPCM, H_3DID], format=format)
+    return hstack([H_3DPCM, H_3DID], format=format)  # type: ignore[no-any-return]
 
 
-def move_syndrome(syndrome, data_type=np.int32) -> NDArray[int]:
+def move_syndrome(syndrome: NDArray[np.int32], data_type: Any = np.int32) -> NDArray[np.int32]:
     """Slides the window one region up, i.e., the syndrome of the first half is overwritten by the second half."""
     T = int(syndrome.shape[1] / 2)  # number of rounds in each region
 
@@ -54,7 +54,9 @@ def move_syndrome(syndrome, data_type=np.int32) -> NDArray[int]:
     return new_syndrome
 
 
-def get_updated_decoder(decoding_method: str, decoder, new_channel, H3D=None) -> object:
+def get_updated_decoder(
+    decoding_method: str, decoder: Any, new_channel: NDArray[np.float_], H3D: Any | None = None
+) -> Any:
     """Updates the decoder with the new channel information and returns the updated decoder object."""
     if decoding_method == "bposd":
         decoder.update_channel_probs(new_channel)
@@ -72,19 +74,19 @@ def get_updated_decoder(decoding_method: str, decoder, new_channel, H3D=None) ->
 
 
 def decode_multiround(
-    syndrome: NDArray[int],
-    H: NDArray[int],
-    decoder,
-    channel_probs: NDArray[int],  # needed for matching decoder does not have an update weights method
+    syndrome: NDArray[np.int32],
+    H: NDArray[np.int32],
+    decoder: Any,
+    channel_probs: NDArray[np.int32],  # needed for matching decoder does not have an update weights method
     repetitions: int,
-    last_round=False,
-    analog_syndr=None,
+    analog_syndr: NDArray[np.float_] | None,
+    last_round: bool = False,
     check_block_size: int = 0,
     sigma: float = 0.0,
-    H3D: NDArray[int] = None,  # needed for matching decoder
+    H3D: NDArray[np.int32] | None = None,  # needed for matching decoder
     decoding_method: str = "bposd",  # bposd or matching
-) -> tuple[NDArray[int], NDArray[int], NDArray[int], int]:
-    """Overlapping window decoding.
+) -> tuple[Any, NDArray[np.int32], NDArray[np.int32], int]:
+    """Overlapping window decoding.bool
     First, we compute the difference syndrome from the recorded syndrome of each measurement round for all measurement
     rounds of the current window (consisting of two regions with equal size).
     Then, we apply the correction returned from the decoder on the first region (commit region).
@@ -101,7 +103,7 @@ def decode_multiround(
     if analog_tg:
         # If we have analog information, we use it to initialize the time-like syndrome nodes, which are defined
         # in the block of the H3D matrix after the diagonal H block.
-        analog_init_vals = get_virtual_check_init_vals(analog_syndr.flatten("F"), sigma)
+        analog_init_vals = get_virtual_check_init_vals(analog_syndr.flatten("F"), sigma)  # type: ignore[union-attr]
 
         new_channel = np.hstack((channel_probs[:check_block_size], analog_init_vals))
 
@@ -152,4 +154,4 @@ def decode_multiround(
         # correct in the commit and tentative region as the last round stabilizer is perfect
         decoded = (np.cumsum(space_correction, 1) % 2)[:, -1]
 
-    return decoded.astype(np.int32), syndrome, analog_syndr, bp_iter
+    return decoded.astype(np.int32), syndrome, analog_syndr, bp_iter  # type: ignore[return-value]
