@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 from timeit import default_timer as timer
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import numpy.typing as npt
-from ldpc2 import bposd_decoder
-from ldpc2.bposd_decoder import SoftInfoBpOsdDecoder
-from utils.data_utils import (
+from ldpc import bposd_decoder
+from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
+
+from mqt.qecc.analog_information_decoding.utils.data_utils import (
     BpParams,
     calculate_error_rates,
     is_converged,
     replace_inf,
 )
-from utils.data_utils import create_outpath as get_outpath
-from utils.simulation_utils import *
+from mqt.qecc.analog_information_decoding.utils.data_utils import create_outpath as get_outpath
+from mqt.qecc.analog_information_decoding.utils.simulation_utils import *
+
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
 
 
 class Single_Shot_Simulator:
@@ -24,15 +28,15 @@ class Single_Shot_Simulator:
         ser: float,
         single_stage: bool,
         seed: int,
-        bias: list,
+        bias: NDArray[np.float_],
         x_meta: bool,
         z_meta: bool,
         sus_th_depth: int,
+        bp_params: BpParams,
         analog_info: bool = False,
         cutoff: int = 0,
         analog_tg: bool = False,
-        bp_params: BpParams = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         set_seed(seed)
         self.codename = codename
@@ -125,7 +129,7 @@ class Single_Shot_Simulator:
 
         self._total_decoding_time = 0.0
 
-    def check_input(self):
+    def check_input(self) -> None:
         """Check initialization parameters for consistency."""
         if self.analog_tg is True and self.analog_info is True:
             msg = "analog_tg and analog_info cannot be both True"
@@ -133,7 +137,7 @@ class Single_Shot_Simulator:
 
     def _single_sample(
         self,
-    ):
+    ) -> tuple[np.bool_, np.bool_]:
         """Simulates a single sample for a given sustainable threshold depth.
         :return:
         """
@@ -610,7 +614,7 @@ class Single_Shot_Simulator:
                 ms_scaling_factor=self.bp_params.ms_scaling_factor,
             )
 
-    def construct_analog_pcms(self):
+    def construct_analog_pcms(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
         """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
         return np.hstack([self.Hx, np.identity(self.Hx.shape[0], dtype=np.int32)]), np.hstack(
             [self.Hz, np.identity(self.Hz.shape[0], dtype=np.int32)]
@@ -621,8 +625,8 @@ class Single_Shot_Simulator:
         x_success_cnt: int,
         z_success_cnt: int,
         runs: int,
-        x_bp_iters: npt.NDArray[int],
-        z_bp_iters: npt.NDArray[int],
+        x_bp_iters: NDArray,
+        z_bp_iters: NDArray,
     ):
         x_ler, x_ler_eb, x_wer, x_wer_eb = calculate_error_rates(x_success_cnt, runs, self.code_params)
         z_ler, z_ler_eb, z_wer, z_wer_eb = calculate_error_rates(z_success_cnt, runs, self.code_params)

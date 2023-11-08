@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+
 from mqt.qecc.analog_information_decoding.utils.simulation_utils import *
 
 
@@ -10,15 +11,15 @@ def test_check_logical_err_h() -> None:
     H = np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]])
     # check with logical
     estimate = np.array([1, 0, 0, 0, 0, 0, 1])
-    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 1, 1, 0]), estimate) == True
+    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 1, 1, 0]), estimate) is True
     #
     # check with stabilizer
     estimate2 = np.array([0, 0, 0, 0, 0, 0, 1])
-    assert check_logical_err_h(H, np.array([1, 1, 1, 0, 0, 0, 0]), estimate2) == False
+    assert check_logical_err_h(H, np.array([1, 1, 1, 0, 0, 0, 0]), estimate2) is False
 
     # check with all zeros
     estimate3 = np.array([0, 0, 0, 0, 0, 0, 0])
-    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 0, 0, 0]), estimate3) == False
+    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 0, 0, 0]), estimate3) is False
 
 
 def test_is_logical_err() -> None:
@@ -107,39 +108,35 @@ def test_is_logical_err() -> None:
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
 
-    assert is_logical_err(Lsc, residual) == True
+    assert is_logical_err(Lsc, residual) is True
 
     # check with stabilizer
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual2) == False
+    assert is_logical_err(Lsc, residual2) is False
 
     # check with all zeros
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual2) == False
+    assert is_logical_err(Lsc, residual2) is False
 
     # check with non-min weight logical
     residual3 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual3) == True
+    assert is_logical_err(Lsc, residual3) is True
 
 
 def test_get_analog_llr() -> None:
     analog_syndr = np.array([0.5, 0, 0, -1, 0, 1])
     sigma = 0.8
 
-    assert np.allclose(
-        get_analog_llr(analog_syndr, sigma), np.array([1.5625, 0.0, 0.0, -3.125, 0.0, 3.125])
-    )
+    assert np.allclose(get_analog_llr(analog_syndr, sigma), np.array([1.5625, 0.0, 0.0, -3.125, 0.0, 3.125]))
 
     sigma = 0.1
-    assert np.allclose(
-        get_analog_llr(analog_syndr, sigma), np.array([100, 0.0, 0.0, -200.0, 0.0, 200.0])
-    )
+    assert np.allclose(get_analog_llr(analog_syndr, sigma), np.array([100, 0.0, 0.0, -200.0, 0.0, 200.0]))
 
 
 def test_generate_err() -> None:
@@ -147,16 +144,16 @@ def test_generate_err() -> None:
     p = 0.0
     n = 10
     ch = np.ones(n) * p
-    channel = [np.copy(ch), np.copy(ch), np.copy(ch)]
-    residual = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
+    channel = np.array([np.copy(ch), np.copy(ch), np.copy(ch)])
+    residual = np.array([np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)])
 
-    expected = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
+    expected = np.array([np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)])
     assert np.array_equal(generate_err(n, channel, residual), expected)
 
     residual[0][0] = 1
     residual[1][0] = 1
 
-    expected = [np.copy(residual[0]), np.copy(residual[1])]
+    expected = np.array([np.copy(residual[0]), np.copy(residual[1])])
     res = generate_err(n, channel, residual)
     assert np.array_equal(res[0], expected[0])
     assert np.array_equal(res[1], expected[1])
@@ -219,31 +216,31 @@ def test_get_noisy_analog_syndr() -> None:
 
 def test_err_chnl_setup() -> None:
     p = 0.1
-    bias = [1.0, 1.0, 1.0]
+    bias = np.array([1.0, 1.0, 1.0])
     n = 10
     ar = np.ones(n) * p / 3
-    exp = [np.copy(ar), np.copy(ar), np.copy(ar)]
+    exp = np.array([np.copy(ar), np.copy(ar), np.copy(ar)])
     res = error_channel_setup(p, bias, n)
 
     assert np.array_equal(res, exp)
 
-    bias = [1.0, 0.0, 0.0]
+    bias = np.array([1.0, 0.0, 0.0])
     ar = np.ones(n) * p
-    exp = [np.copy(ar), np.zeros(n), np.zeros(n)]
+    exp = np.array([np.copy(ar), np.zeros(n), np.zeros(n)])
     res = error_channel_setup(p, bias, n)
 
     assert np.array_equal(res, exp)
 
-    bias = [1.0, 1.0, 0.0]
+    bias = np.array([1.0, 1.0, 0.0])
     ar = np.ones(n) * p / 2
-    exp = [np.copy(ar), np.copy(ar), np.zeros(n)]
+    exp = np.array([np.copy(ar), np.copy(ar), np.zeros(n)])
     res = error_channel_setup(p, bias, n)
 
     assert np.array_equal(res, exp)
 
-    bias = [np.inf, 0.0, 0.0]
+    bias = np.array([np.inf, 0.0, 0.0])
     ar = np.ones(n) * p
-    exp = [np.copy(ar), np.zeros(n), np.zeros(n)]
+    exp = np.array([np.copy(ar), np.zeros(n), np.zeros(n)])
     res = error_channel_setup(p, bias, n)
 
     assert np.array_equal(res, exp)

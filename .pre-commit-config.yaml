@@ -78,6 +78,9 @@ repos:
           - numpy
           - pytest
           - pytest-mock
+          - ldpc
+          - bposd
+          - numba
 
   # Check for spelling
   - repo: https://github.com/codespell-project/codespell

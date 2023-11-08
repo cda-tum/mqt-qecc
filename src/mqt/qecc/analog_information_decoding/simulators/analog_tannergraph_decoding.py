@@ -4,12 +4,12 @@ import json
 import os
 
 import numpy as np
-import numpy.typing as npt
-import utils.simulation_utils as simulation_utils
 from ldpc import bp_decoder, bposd_decoder
 from ldpc2.bp_decoder import SoftInfoBpDecoder
 from ldpc2.bposd_decoder import SoftInfoBpOsdDecoder
-from utils.data_utils import (
+
+import mqt.qecc.analog_information_decoding.utils.simulation_utils as simulation_utils
+from mqt.qecc.analog_information_decoding.utils.data_utils import (
     BpParams,
     calculate_error_rates,
     create_outpath,
@@ -21,36 +21,29 @@ def create_outpath(
     experiment: str = "atd",
     data_err_rate: float | None = None,
     sigma: float | None = None,
-    bp_params: BpParams = None,
+    bp_params: BpParams | None = None,
     codename: str | None = None,
-    bias: list | None = None,
+    bias: list[float] | None = None,
     overwrite: bool = False,
     id: int = 0,
     **kwargs,
 ) -> str:
     """Create output path from input parameters."""
     path = f"results/{experiment:s}/"
-
-    path += f"bias={bias[0]}_{bias[1]}_{bias[2]}/"
-
-    path += f"bp_{bp_params.bp_method}/"
-
-    path += f"{bp_params.osd_method}/"
-
-    path += f"osd_order_{bp_params.osd_order}/"
-
-    path += f"max_bp_iter_{bp_params.max_bp_iter}/"
-
-    path += f"ms_scaling_factor_{bp_params.ms_scaling_factor}/"
-
-    path += f"schedule_{bp_params.schedule}/"
-
-    path += f"cutoff_{bp_params.cutoff:.1f}/"
-
-    path += f"lp_{codename:s}/"
-
-    path += f"per_{data_err_rate:.3e}_sigma_{sigma:.3e}/"
-
+    if bias is not None:
+        path += f"bias={bias[0]}_{bias[1]}_{bias[2]}/"
+    if bp_params is not None:
+        path += f"bp_{bp_params.bp_method}/"
+        path += f"{bp_params.osd_method}/"
+        path += f"osd_order_{bp_params.osd_order}/"
+        path += f"max_bp_iter_{bp_params.max_bp_iter}/"
+        path += f"ms_scaling_factor_{bp_params.ms_scaling_factor}/"
+        path += f"schedule_{bp_params.schedule}/"
+        path += f"cutoff_{bp_params.cutoff:.1f}/"
+    if codename is not None:
+        path += f"lp_{codename:s}/"
+    if data_err_rate is not None:
+        path += f"per_{data_err_rate:.3e}_sigma_{sigma:.3e}/"
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 

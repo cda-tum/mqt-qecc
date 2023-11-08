@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
-import numpy.typing as npt
 from bposd import bposd_decoder
 from pymatching import Matching
-from simulators.memory_experiment_v2 import (
+
+from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import (
     build_multiround_pcm,
     decode_multiround,
     move_syndrome,
 )
-from utils.data_utils import BpParams, _check_convergence, create_outpath
-from utils.simulation_utils import (
+from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, _check_convergence, create_outpath
+from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
     error_channel_setup,
     generate_err,
     generate_syndr_err,
@@ -22,17 +24,20 @@ from utils.simulation_utils import (
     set_seed,
 )
 
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
+
 
 class QSS_SimulatorV2:
     def __init__(
         self,
-        H: npt.NDArray[int],
+        H: NDArray[int],
         per: float,
         ser: float,
-        L: npt.NDArray[int],
+        L: NDArray[int],
         bias: list[float],
         codename: str,
-        bp_params: BpParams | None,
+        bp_params: BpParams,
         decoding_method: str = "bposd",  # bposd or matching
         check_side: str = "X",
         seed: int = 666,
@@ -160,10 +165,10 @@ class QSS_SimulatorV2:
 
     def _decode_multiround(
         self,
-        syndrome_mat: npt.NDArray[int],
-        analog_syndr_mat: npt.NDArray[int],
+        syndrome_mat: NDArray[int],
+        analog_syndr_mat: NDArray[int],
         last_round: bool = False,
-    ) -> npt.NDArray[int]:
+    ) -> NDArray[int]:
         return decode_multiround(
             syndrome=syndrome_mat,
             H=self.H,
@@ -182,7 +187,7 @@ class QSS_SimulatorV2:
         # prepare fresh syndrome matrix and error vector
         # each column == measurement result of a single timestep
         syndrome_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.int32)
-        analog_syndr_mat = None
+        analog_syndr_mat = []
 
         if self.analog_tg:
             analog_syndr_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.float64)
@@ -250,7 +255,7 @@ class QSS_SimulatorV2:
                     err = (err + corr) % 2
         return int(not is_logical_err(self.L, err))
 
-    def _save_results(self, success_cnt: int, samples: int) -> dict:
+    def _save_results(self, success_cnt: int, samples: int) -> dict[str, Any]:
         return save_results(
             success_cnt=success_cnt,
             nr_runs=samples,
@@ -264,7 +269,7 @@ class QSS_SimulatorV2:
             bp_params=self.bp_params,
         )
 
-    def run(self, samples: int = 1) -> dict:
+    def run(self, samples: int = 1) -> dict[str, Any]:
         """Returns single data point."""
         success_cnt = 0
         for run in range(1, samples + 1):

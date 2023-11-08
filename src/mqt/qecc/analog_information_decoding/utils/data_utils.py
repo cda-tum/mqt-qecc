@@ -31,9 +31,9 @@ class BpParams:
         return BpParams(**{k: v for k, v in dict_.items() if k in class_fields})
 
 
-def extract_settings(filename: str) -> dict:
+def extract_settings(filename: str) -> dict[str, list[str]]:
     """Extracts all settings from a parameter file and returns them as a dictionary."""
-    keyword_lists: dict[str, Any] = {}
+    keyword_lists: dict[str, list[str]] = {}
 
     with open(filename) as file:
         for line in file:
@@ -49,7 +49,7 @@ def extract_settings(filename: str) -> dict:
 
 def load_data(
     input_filenames: list[str],
-) -> list[dict]:
+) -> list[dict[str, str]]:
     """Loads data from a list of JSON files and returns it as a list of dictionaries."""
     data = []
     for file in input_filenames:
@@ -59,7 +59,7 @@ def load_data(
             ldata = json.load(path.open())
             data.append(ldata)
         except:
-            merge_json_files(path.with_suffix(""))
+            merge_json_files(str(path.with_suffix("")))
             ldata = json.load(path.open())
             data.append(ldata)
     return data
@@ -85,13 +85,15 @@ def calculate_error_rates(
     )
 
 
-def is_converged(x_success: int, z_success: int, runs: int, code_params: dict, precission: float) -> bool:
+def is_converged(x_success: int, z_success: int, runs: int, code_params: dict[str, int], precission: float) -> bool:
     x_cond = _check_convergence(x_success, runs, code_params, precission_cutoff=precission)
     z_cond = _check_convergence(z_success, runs, code_params, precission_cutoff=precission)
     return x_cond == z_cond is True
 
 
-def _check_convergence(success_cnt: int, runs: int, code_params: dict, precission_cutoff: float) -> bool | None:
+def _check_convergence(
+    success_cnt: int, runs: int, code_params: dict[str, int], precission_cutoff: float
+) -> bool | None:
     _, _, ler, ler_eb = calculate_error_rates(success_cnt, runs, code_params)
     if ler_eb != 0.0:
         if ler_eb / ler < precission_cutoff:
@@ -174,7 +176,7 @@ def create_outpath(
     return f_loc
 
 
-def replace_inf(lst: list) -> list:
+def replace_inf(lst: list[str]) -> list[str]:
     new_lst = []
     for item in lst:
         if np.isinf(item):
@@ -184,7 +186,7 @@ def replace_inf(lst: list) -> list:
     return new_lst
 
 
-def product_dict(**kwargs):
+def product_dict(**kwargs: Any) -> Any:
     """Generate a iterator of dictionaries where each dictionary is a cartesian product
     of the values associated with each key in the input dictionary.
     """
@@ -526,7 +528,7 @@ def merge_json_files_xz(input_path: str) -> None:
         json.dump(output_data, output_file, ensure_ascii=False, indent=4)
 
 
-def _combine_xz_data(xdata: dict | None, zdata: dict | None) -> dict:
+def _combine_xz_data(xdata: dict[str, Any] | None, zdata: dict[str, Any] | None) -> dict[str, Any]:
     """Combine the x and z data into a single dictionary.
     Before doing that, rename "runs" in each dictionary to "x_runs" and "z_runs" respectively.
 

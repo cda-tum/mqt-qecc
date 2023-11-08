@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import warnings
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import numpy.typing as npt
 from ldpc.mod2 import rank
 from numba import njit
 from numba.core.errors import (
@@ -12,20 +12,23 @@ from numba.core.errors import (
     NumbaPendingDeprecationWarning,
 )
 from scipy.special import erfc, erfcinv
+
 from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, calculate_error_rates, replace_inf
 
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
 warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
 warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
 
-@njit
+@njit  # type: ignore[misc]
 def set_seed(value: float) -> None:
     """The approriate way to set seeds when numba is used."""
     np.random.seed(value)
 
 
-# @njit
-def alist2numpy(fname: str) -> npt.NDArray[int]:  # current original implementation is buggy
+# @njit # type: ignore[misc]
+def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementation is buggy
     alist_file = np.loadtxt(fname, delimiter=",", dtype=str)
     matrix_dimensions = alist_file[0].split()
     m = int(matrix_dimensions[0])
@@ -34,23 +37,23 @@ def alist2numpy(fname: str) -> npt.NDArray[int]:  # current original implementat
     mat = np.zeros((m, n), dtype=np.int32)
 
     for i in range(m):
-        columns = []
+        columns: list[int] = []
         for item in alist_file[i + 4].split():
             if item.isdigit():
                 columns.append(item)
-        columns = np.array(columns, dtype=np.int32)
-        columns = columns - 1  # convert to zero indexing
-        mat[i, columns] = 1
+        columns_two = np.array(columns, dtype=np.int32)
+        columns_two = columns_two - 1  # convert to zero indexing
+        mat[i, columns_two] = 1
 
     return mat
 
 
 # Rewrite such that call signatures of check_logical_err_h
 # and check_logical_err_l are identical
-# @njit
+# @njit # type: ignore[misc]
 def check_logical_err_h(
-        check_matrix: npt.NDArray[int], original_err: npt.NDArray[int], decoded_estimate: npt.NDArray[int]
-) -> bool:
+    check_matrix: NDArray[np.int_], original_err: NDArray[np.int_], decoded_estimate: NDArray[np.int_]
+) -> np.bool_:
     r, n = check_matrix.shape
 
     # compute residual err given original err
@@ -66,7 +69,7 @@ def check_logical_err_h(
 
     rank_htr = rank(htr)
 
-    return rank_ht < rank_htr
+    return np.bool_(rank_ht < rank_htr)
 
 
 # L is a numpy array, residual_err is vector s.t. dimensions match
@@ -74,21 +77,21 @@ def check_logical_err_h(
 # i.e., an X residal is a logical iff it commutes with at least one Z logical and
 # an Z residual is a logical iff it commutes with at least one Z logical
 # Hence, L must be of same type as H and of different type than residual_err
-def is_logical_err(L: npt.NDArray[int], residual_err: npt.NDArray[int]) -> bool:
+def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> np.bool_:
     """Checks if the residual error is a logical error
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
     l_check = (L @ residual_err) % 2
-    return l_check.any() == True  # check all zeros
+    return l_check.any()  # check all zeros
 
 
 # adapted from https://github.com/quantumgizmos/bp_osd/blob/a179e6e86237f4b9cc2c952103fce919da2777c8/src/bposd/css_decode_sim.py#L430
 # and https://github.com/MikeVasmer/single_shot_3D_HGP/blob/master/sim_scripts/single_shot_hgp3d.cpp#L207
 # channel_probs = [x,y,z], residual_err = [x,z]
-# @njit
+# @njit # type: ignore[misc]
 def generate_err(
-        nr_qubits: int, channel_probs: npt.NDArray[float], residual_err: npt.NDArray[int]
-) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
+    nr_qubits: int, channel_probs: NDArray[np.float_], residual_err: NDArray[np.int_]
+) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     """Computes error vector with X and Z part given channel probabilities and residual error.
     Assumes that residual error has two equally sized parts.
     """
@@ -108,14 +111,14 @@ def generate_err(
             # nothing on x part - probably redundant anyways
             error_z[i] = (residual_err_z[i] + 1) % 2
         elif (  # if p = 0.3 then 0.3 <= rand < 0.6 is the same sized interval as rand < 0.3
-                channel_probs_z[i] <= rand < (channel_probs_z[i] + channel_probs_x[i])
+            channel_probs_z[i] <= rand < (channel_probs_z[i] + channel_probs_x[i])
         ):
             # X error
             error_x[i] = (residual_err_x[i] + 1) % 2
         elif (  # 0.6 <= rand < 0.9
-                (channel_probs_z[i] + channel_probs_x[i])
-                <= rand
-                < (channel_probs_x[i] + channel_probs_y[i] + channel_probs_z[i])
+            (channel_probs_z[i] + channel_probs_x[i])
+            <= rand
+            < (channel_probs_x[i] + channel_probs_y[i] + channel_probs_z[i])
         ):
             # y error == both x and z error
             error_z[i] = (residual_err_z[i] + 1) % 2
@@ -124,10 +127,10 @@ def generate_err(
     return error_x, error_z
 
 
-@njit
-def get_analog_llr(analog_syndrome: npt.NDArray[float], sigma: float) -> npt.NDArray[float]:
+@njit  # type: ignore[misc]
+def get_analog_llr(analog_syndrome: NDArray[np.float_], sigma: float) -> NDArray[np.float_]:
     """Computes analog LLRs given analog syndrome and sigma."""
-    return (2 * analog_syndrome) / (sigma ** 2)
+    return (2 * analog_syndrome) / (sigma**2)
 
 
 def get_sigma_from_syndr_er(ser: float) -> float:
@@ -136,8 +139,7 @@ def get_sigma_from_syndr_er(ser: float) -> float:
     """
     if ser == 0.0:
         return 0.0
-    else:
-        return 1 / np.sqrt(2) / (erfcinv(2 * ser))  # see Eq. cref{eq:perr-to-sigma} in our paper
+    return float(1 / np.sqrt(2) / (erfcinv(2 * ser)))  # see Eq. cref{eq:perr-to-sigma} in our paper
 
 
 def get_error_rate_from_sigma(sigma: float) -> float:
@@ -146,35 +148,35 @@ def get_error_rate_from_sigma(sigma: float) -> float:
     """
     if sigma == 0.0:
         return 0.0
-    else:
-        return 0.5 * erfc(1 / np.sqrt(2 * sigma ** 2))  # see Eq. cref{eq:perr-to-sigma} in our paper
+    return float(0.5 * erfc(1 / np.sqrt(2 * sigma**2)))  # see Eq. cref{eq:perr-to-sigma} in our paper
 
 
-@njit
-def get_virtual_check_init_vals(noisy_syndr: npt.NDArray[float], sigma: float) -> npt.NDArray[float]:
-    """Computes a vector of values v_i from the noisy syndrome bits y_i s.t. BP initializes the LLRs l_i of the analog nodes with the
+@njit  # type: ignore[misc]
+def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float_], sigma: float) -> NDArray[np.float_]:
+    """Computes a vector of values v_i from the noisy syndrome bits y_i s.t.
+    BP initializes the LLRs l_i of the analog nodes with the
     analog info values (see paper section). v_i := 1/(e^{y_i}+1).
     """
     llrs = get_analog_llr(noisy_syndr, sigma)
-    return 1 / (np.exp(np.abs(llrs)) + 1)
+    return np.array(1 / (np.exp(np.abs(llrs)) + 1))
 
 
-@njit
-def generate_syndr_err(channel_probs: npt.NDArray[float]) -> npt.NDArray[np.int32]:
+@njit  # type: ignore[misc]
+def generate_syndr_err(channel_probs: NDArray[np.float_]) -> NDArray[np.int32]:
     """Generates a random error vector given the error channel probabilities."""
     error = np.zeros_like(channel_probs, dtype=np.int32)
 
-    for i, _prob in np.ndenumerate(channel_probs):
+    for i, p in np.ndenumerate(channel_probs):
         rand = np.random.random()
 
-        if rand < channel_probs[i]:
+        if rand < p:
             error[i] = 1
 
     return error
 
 
-# @njit
-def get_noisy_analog_syndrome(perfect_syndr: npt.NDArray[int], sigma: float) -> np.array:
+# @njit # type: ignore[misc]
+def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float_]:
     """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength)
     Assumes perfect_syndr has entries in {0,1}.
     """
@@ -189,10 +191,10 @@ def get_noisy_analog_syndrome(perfect_syndr: npt.NDArray[int], sigma: float) -> 
     return np.random.normal(sgns, sigma, len(sgns))
 
 
-# @njit
+# @njit # type: ignore[misc]
 def error_channel_setup(
-        error_rate: float, xyz_error_bias: tuple[float, float, float], nr_qubits: int
-) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]:
+    error_rate: float, xyz_error_bias: NDArray[np.float_], nr_qubits: int
+) -> tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]]:
     """Set up an error_channel given the physical error rate, bias, and number of bits."""
     xyz_error_bias = np.array(xyz_error_bias)
     if xyz_error_bias[0] == np.inf:
@@ -209,7 +211,7 @@ def error_channel_setup(
         pz = error_rate
     else:
         px, py, pz = (
-                error_rate * xyz_error_bias / np.sum(xyz_error_bias)
+            error_rate * xyz_error_bias / np.sum(xyz_error_bias)
         )  # Oscar only considers X or Z errors. For reproducability remove normalization
 
     channel_probs_x = np.ones(nr_qubits) * px
@@ -219,15 +221,16 @@ def error_channel_setup(
     return channel_probs_x, channel_probs_y, channel_probs_z
 
 
-# @njit
-def build_single_stage_pcm(pcm: npt.NDArray[int], meta: npt.NDArray[int]) -> npt.NDArray[int]:
+# @njit # type: ignore[misc]
+def build_single_stage_pcm(pcm: NDArray[np.int_], meta: NDArray[np.int_]) -> NDArray[np.int_]:
+    """Build the single statge parity check matrix."""
     id_r = np.identity(meta.shape[1])
     zeros = np.zeros((meta.shape[0], pcm.shape[1]))
     return np.block([[pcm, id_r], [zeros, meta]]).astype(np.int32)
 
 
-@njit
-def get_signed_from_binary(binary_syndrome: npt.NDArray[int]) -> npt.NDArray[int]:
+@njit  # type: ignore[misc]
+def get_signed_from_binary(binary_syndrome: NDArray[np.int_]) -> NDArray[np.int_]:
     """Maps the binary vector with {0,1} entries to a vector with {-1,1} entries."""
     signed_syndr = []
     for j in range(len(binary_syndrome)):
@@ -235,29 +238,30 @@ def get_signed_from_binary(binary_syndrome: npt.NDArray[int]) -> npt.NDArray[int
     return np.array(signed_syndr)
 
 
-def get_binary_from_analog(analog_syndrome: npt.NDArray[int]) -> npt.NDArray[np.int32]:
+def get_binary_from_analog(analog_syndrome: NDArray[np.float_]) -> NDArray[np.int32]:
     """Returns the thresholded binary vector.
+
     Since in {-1,+1} notation -1 indicates a check violation, we map values <= 0 to 1 and values > 0 to 0.
     """
     return np.where(analog_syndrome <= 0.0, 1, 0).astype(np.int32)
 
 
 def save_results(
-        success_cnt: int,
-        nr_runs: int,
-        p: float,
-        s: float,
-        input_vals: dict,
-        outfile: str,
-        code_params: dict[str, int],
-        err_side: str = "X",
-        bp_iterations: int | None = None,
-        bp_params: BpParams = None,
-) -> dict:
+    success_cnt: int,
+    nr_runs: int,
+    p: float,
+    s: float,
+    input_vals: dict[str, Any],
+    outfile: str,
+    code_params: dict[str, int],
+    bp_params: BpParams | None,
+    err_side: str = "X",
+    bp_iterations: int | None = None,
+) -> dict[str, Any]:
     """Save results of a simulation run to a json file."""
     ler, ler_eb, wer, wer_eb = calculate_error_rates(success_cnt, nr_runs, code_params)
 
-    output = {
+    output: dict[str, Any] = {
         "code_K": code_params["k"],
         "code_N": code_params["n"],
         "nr_runs": nr_runs,
@@ -268,7 +272,7 @@ def save_results(
         f"{err_side}_wer": wer,
         f"{err_side}_wer_eb": wer_eb,
         f"{err_side}_success_cnt": success_cnt,
-        "avg_bp_iterations": bp_iterations / nr_runs,
+        "avg_bp_iterations": bp_iterations / nr_runs if bp_iterations is not None else 0,
         "bp_params": bp_params,
     }
 

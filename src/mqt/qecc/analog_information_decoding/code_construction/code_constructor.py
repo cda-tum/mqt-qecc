@@ -1,26 +1,32 @@
+"""Package for code construction."""
 from __future__ import annotations
 
 import json
 import os
 import subprocess
+from typing import TYPE_CHECKING, Any
 
 import ldpc.code_util
 import numpy as np
-import numpy.typing as npt
 import scipy.io as sio
 import scipy.sparse as scs
 from bposd.hgp import hgp
 from ldpc import mod2
 from scipy import sparse
 
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
 
-def is_all_zeros(array: npt.NDArray[int]) -> bool:
+
+def is_all_zeros(array: NDArray[np.int_]) -> bool:
+    """Check if array is all zeros."""
     return not np.any(array)
 
 
 def run_checks_scipy(
-    d_1: npt.NDArray[int], d_2: npt.NDArray[int], d_3: npt.NDArray[int], d_4: npt.NDArray[int]
+    d_1: NDArray[np.int_], d_2: NDArray[np.int_], d_3: NDArray[np.int_], d_4: NDArray[np.int_]
 ) -> None:
+    """Run checks on the boundary maps."""
     sd_1 = scs.csr_matrix(d_1)
     sd_2 = scs.csr_matrix(d_2)
     sd_3 = scs.csr_matrix(d_3)
@@ -36,31 +42,31 @@ def run_checks_scipy(
 
 
 def generate_4D_product_code(
-    A_1: npt.NDArray[int], A_2: npt.NDArray[int], A_3: npt.NDArray[int], P: npt.NDArray[int], checks=True
-) -> tuple[npt.NDArray[int], npt.NDArray[int], npt.NDArray[int], npt.NDArray[int]]:
-    r, c = P.shape
+    a_1: NDArray[np.int_], a_2: NDArray[np.int_], a_3: NDArray[np.int_], p: NDArray[np.int_], checks: bool = True
+) -> tuple[NDArray[np.int_], NDArray[np.int_], NDArray[np.int_], NDArray[np.int_]]:
+    r, c = p.shape
     id_r = np.identity(r, dtype=np.int32)
     id_c = np.identity(c, dtype=np.int32)
-    id_n0 = np.identity(A_1.shape[0], dtype=np.int32)
-    id_n1 = np.identity(A_2.shape[0], dtype=np.int32)
-    id_n2 = np.identity(A_3.shape[0], dtype=np.int32)
-    id_n3 = np.identity(A_3.shape[1], dtype=np.int32)
+    id_n0 = np.identity(a_1.shape[0], dtype=np.int32)
+    id_n1 = np.identity(a_2.shape[0], dtype=np.int32)
+    id_n2 = np.identity(a_3.shape[0], dtype=np.int32)
+    id_n3 = np.identity(a_3.shape[1], dtype=np.int32)
 
-    d_1 = np.hstack((np.kron(A_1, id_r), np.kron(id_n0, P)))
+    d_1 = np.hstack((np.kron(a_1, id_r), np.kron(id_n0, p))).astype(np.int32)
 
-    x = np.hstack((np.kron(A_2, id_r), np.kron(id_n1, P)))
-    y = np.kron(A_1, id_c)
+    x = np.hstack((np.kron(a_2, id_r), np.kron(id_n1, p)))
+    y = np.kron(a_1, id_c)
     dims = (y.shape[0], x.shape[1] - y.shape[1])
     z = np.hstack((np.zeros(dims, dtype=np.int32), y))
     d_2 = np.vstack((x, z))
 
-    x = np.hstack((np.kron(A_3, id_r), np.kron(id_n2, P)))
-    y = np.kron(A_2, id_c)
+    x = np.hstack((np.kron(a_3, id_r), np.kron(id_n2, p)))
+    y = np.kron(a_2, id_c)
     dims = (y.shape[0], x.shape[1] - y.shape[1])
     z = np.hstack((np.zeros(dims, dtype=np.int32), y))
-    d_3 = np.vstack((x, z))
+    d_3 = np.vstack((x, z)).astype(np.int32)
 
-    d_4 = np.vstack((np.kron(id_n3, P), np.kron(A_3, id_c)))
+    d_4 = np.vstack((np.kron(id_n3, p), np.kron(a_3, id_c)))
 
     if checks:
         run_checks_scipy(d_1, d_2, d_3, d_4)
@@ -68,25 +74,26 @@ def generate_4D_product_code(
     return d_1, d_2, d_3, d_4
 
 
-def generate_3D_product_code(
-    A_1: npt.NDArray[np.int32], A_2: npt.NDArray[np.int32], P: npt.NDArray[np.int32]
-) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.int32], npt.NDArray[np.int32]]:
-    r, c = P.shape
+def generate_3d_product_code(
+    a_1: NDArray[np.int32], a_2: NDArray[np.int32], p: NDArray[np.int32]
+) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]:
+    """Generate 3D product code."""
+    r, c = p.shape
     id_r = np.identity(r, dtype=np.int32)
     id_c = np.identity(c, dtype=np.int32)
-    id_n0 = np.identity(A_1.shape[0], dtype=np.int32)
-    id_n1 = np.identity(A_2.shape[0], dtype=np.int32)
-    id_n2 = np.identity(A_2.shape[1], dtype=np.int32)
+    id_n0 = np.identity(a_1.shape[0], dtype=np.int32)
+    id_n1 = np.identity(a_2.shape[0], dtype=np.int32)
+    id_n2 = np.identity(a_2.shape[1], dtype=np.int32)
 
-    d_1 = np.hstack((np.kron(A_1, id_r), np.kron(id_n0, P)))
+    d_1 = np.hstack((np.kron(a_1, id_r), np.kron(id_n0, p)))
 
-    x = np.hstack((np.kron(A_2, id_r), np.kron(id_n1, P)))
-    y = np.kron(A_1, id_c)
+    x = np.hstack((np.kron(a_2, id_r), np.kron(id_n1, p)))
+    y = np.kron(a_1, id_c)
     dims = (y.shape[0], x.shape[1] - y.shape[1])
     z = np.hstack((np.zeros(dims, dtype=np.int32), y))
     d_2 = np.vstack((x, z))
 
-    d_3 = np.vstack((np.kron(id_n2, P), np.kron(A_2, id_c)))
+    d_3 = np.vstack((np.kron(id_n2, p), np.kron(a_2, id_c)))
 
     if not (is_all_zeros(d_1 @ d_2 % 2) and is_all_zeros(d_2 @ d_3 % 2)):
         msg = "Error generating 3D code, boundary maps do not square to zero"
@@ -96,6 +103,7 @@ def generate_3D_product_code(
 
 
 def create_outpath(codename: str) -> str:
+    """Create output path for code files."""
     path = f"generated_codes/{codename}/"
 
     if not os.path.exists(path):
@@ -105,20 +113,20 @@ def create_outpath(codename: str) -> str:
 
 
 def save_code(
-    hx: npt.NDArray[int],
-    hz: npt.NDArray[int],
-    mx: npt.NDArray[int],
-    mz: npt.NDArray[int],
+    hx: NDArray[np.int_],
+    hz: NDArray[np.int_],
+    mx: NDArray[np.int_],
+    mz: NDArray[np.int_],
     codename: str,
-    lx: npt.NDArray[int] = None,
-    lz: npt.NDArray[int] = None,
+    lx: NDArray[np.int_] | None,
+    lz: NDArray[np.int_] | None,
 ) -> None:
+    """Save code to files."""
     path = create_outpath(codename)
-
-    Ms = [hx, hz, mx, mz, lx, lz]
-    names = ["hx", "hz", "mx", "mz", "lx", "lz"]
-    for mat, name in zip(Ms, names):
-        if type(mat) != type(None):
+    ms = [hx, hz, mx, mz, lx, lz] if lx is not None and lz is not None else [hx, hz, mx, mz]
+    names: list[str] = ["hx", "hz", "mx", "mz", "lx", "lz"]
+    for mat, name in zip(ms, names):
+        if mat is not None:
             np.savetxt(path + name + ".txt", mat, fmt="%i")
             sio.mmwrite(
                 path + name + ".mtx",
@@ -128,22 +136,23 @@ def save_code(
 
 
 def run_compute_distances(codename: str) -> None:
+    """Run compute distances bash script."""
     path = "generated_codes/" + codename
-    subprocess.run(["bash", "compute_distances.sh", path])
+    subprocess.run(["bash", "compute_distances.sh", path], check=False)
 
 
-def _compute_distances(hx: npt.NDArray[int], hz: npt.NDArray[int], codename: str) -> None:
+def _compute_distances(hx: NDArray[np.int_], hz: NDArray[np.int_], codename: str) -> None:
     run_compute_distances(codename)
-    code_dict = {}
+    code_dict: Any = {}
     m, n = hx.shape
-    codeK = n - mod2.rank(hx) - mod2.rank(hz)
+    code_k = n - mod2.rank(hx) - mod2.rank(hz)
     with open(f"generated_codes/{codename}/info.txt") as f:
         code_dict = dict(
             line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
 
     code_dict["n"] = n
-    code_dict["k"] = codeK
+    code_dict["k"] = code_k
     code_dict["dX"] = int(code_dict["dX"])
     code_dict["dZ"] = int(code_dict["dZ"])
     code_dict["dMX"] = int(code_dict["dMX"])
@@ -154,8 +163,8 @@ def _compute_distances(hx: npt.NDArray[int], hz: npt.NDArray[int], codename: str
         file.write(json.dumps(code_dict))
 
 
-def _compute_logicals(hx: npt.NDArray[int], hz: npt.NDArray[int]) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
-    def compute_lz(hx: npt.NDArray[int], hz: npt.NDArray[int]) -> npt.NDArray[int]:
+def _compute_logicals(hx: NDArray[np.int_], hz: NDArray[np.int_]) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
+    def compute_lz(hx: NDArray[np.int_], hz: NDArray[np.int_]) -> NDArray[np.int_]:
         # lz logical operators
         # lz\in ker{hx} AND \notin Im(Hz.T)
 
@@ -175,7 +184,7 @@ def _compute_logicals(hx: npt.NDArray[int], hz: npt.NDArray[int]) -> tuple[npt.N
 
 def create_code(
     constructor: str,
-    seed_codes: list[npt.NDArray[int]],
+    seed_codes: list[NDArray[np.int_]],
     codename: str,
     compute_distance: bool = False,
     compute_logicals: bool = False,
@@ -189,9 +198,9 @@ def create_code(
         raise ValueError(msg)
 
     # Extend to 3D HGP
-    A1 = code.hx
-    A2 = code.hz.T
-    res = generate_3D_product_code(A1, A2, seed_codes[2])
+    a1 = code.hx
+    a2 = code.hz.T
+    res = generate_3d_product_code(a1, a2, seed_codes[2])
 
     # Build 4D HGP code
     mx, hx, hzT, mzT = generate_4D_product_code(*res, seed_codes[3], checks=checks)
@@ -203,14 +212,14 @@ def create_code(
     if np.any(hzT @ mzT % 2) or np.any(hx @ hzT % 2) or np.any(mx @ hx % 2):
         msg = "err"
         raise Exception(msg)
-    save_code(hx, hz, mx, mz, codename)
+    save_code(hx, hz, mx, mz, codename, lx=None, lz=None)
 
     if compute_logicals:
         lx, lz = _compute_logicals(hx, hz)
         save_code(hx, hz, mx, mz, codename, lx=lx, lz=lz)
 
     else:
-        save_code(hx, hz, mx, mz, codename)
+        save_code(hx, hz, mx, mz, codename, lx=None, lz=None)
 
     if compute_distance:
         _compute_distances(hx, hz, codename)
