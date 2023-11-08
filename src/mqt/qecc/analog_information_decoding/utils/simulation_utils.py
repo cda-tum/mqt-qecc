@@ -12,6 +12,7 @@ from numba.core.errors import (
     NumbaPendingDeprecationWarning,
 )
 from scipy.special import erfc, erfcinv
+
 from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, calculate_error_rates, replace_inf
 
 if TYPE_CHECKING:
