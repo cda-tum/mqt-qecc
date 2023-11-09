@@ -1,4 +1,5 @@
 """Test simple example with hamming code."""
+
 from __future__ import annotations
 
 import numpy as np

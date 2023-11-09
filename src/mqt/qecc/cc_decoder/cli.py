@@ -1,4 +1,5 @@
 """Command line interface for the CC decoder."""
+
 from __future__ import annotations
 
 import argparse

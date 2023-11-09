@@ -1,4 +1,5 @@
 """Test the decoder for the hexagonal color code."""
+
 from __future__ import annotations
 
 from pathlib import Path

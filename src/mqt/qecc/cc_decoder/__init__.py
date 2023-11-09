@@ -1,4 +1,5 @@
 """Contains the implementation of the tensor network decoder for the hexagonal color code."""
+
 from __future__ import annotations
 
 from .color_code import ColorCode, LatticeType
