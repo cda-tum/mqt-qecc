@@ -41,9 +41,10 @@ def run_checks_scipy(
         raise Exception(msg)
 
 
-def generate_4D_product_code(
+def generate_4d_product_code(
     a_1: NDArray[np.int_], a_2: NDArray[np.int_], a_3: NDArray[np.int_], p: NDArray[np.int_], checks: bool = True
 ) -> tuple[NDArray[np.int_], NDArray[np.int_], NDArray[np.int_], NDArray[np.int_]]:
+    """Generate 4D product code."""
     r, c = p.shape
     id_r = np.identity(r, dtype=np.int32)
     id_c = np.identity(c, dtype=np.int32)
@@ -203,7 +204,7 @@ def create_code(
     res = generate_3d_product_code(a1, a2, seed_codes[2])
 
     # Build 4D HGP code
-    mx, hx, hzT, mzT = generate_4D_product_code(*res, seed_codes[3], checks=checks)
+    mx, hx, hzT, mzT = generate_4d_product_code(*res, seed_codes[3], checks=checks)
 
     hz = hzT.T
     mz = mzT.T

@@ -111,7 +111,7 @@ def create_outpath(
     single_stage: bool = True,
     sus_th_depth: int | None = None,
     rounds: int | None = None,
-    id: int = 0,
+    identifier: int = 0,
     overwrite: bool = False,
     analog_info: bool = False,
     analog_tg: bool = False,
@@ -165,10 +165,10 @@ def create_outpath(
         os.makedirs(path, exist_ok=True)
 
     if overwrite is False:
-        f_loc = path + f"id_{id}.json"
+        f_loc = path + f"id_{identifier}.json"
         while os.path.exists(f_loc):
-            id += 1
-            f_loc = path + f"id_{id}.json"
+            identifier += 1
+            f_loc = path + f"id_{identifier}.json"
 
     while not os.path.exists(f_loc):
         open(f_loc, "w").close()
@@ -177,6 +177,7 @@ def create_outpath(
 
 
 def replace_inf(lst: list[str]) -> list[str]:
+    """Replaces all occurences of np.inf in a list with the string "i"."""
     new_lst = []
     for item in lst:
         if np.isinf(item):
@@ -203,14 +204,14 @@ def zip_dict(**kwargs: dict[str, Any]) -> Any:
     return (dict(zip(kwargs.keys(), values)) for values in zip(*kwargs.values()))
 
 
-def _update_error_rates(success_cnt: int, runs: int, code_K: int) -> tuple[float, float, float, float]:
+def _update_error_rates(success_cnt: int, runs: int, code_k: int) -> tuple[float, float, float, float]:
     """Calculates logical error rate, logical error rate error bar, word error rate,
     and word error rate error bar.
     """
     logical_err_rate = 1.0 - (success_cnt / runs)
     logical_err_rate_eb = np.sqrt((1 - logical_err_rate) * logical_err_rate / runs)
-    word_error_rate = 1.0 - (1 - logical_err_rate) ** (1 / code_K)
-    word_error_rate_eb = logical_err_rate_eb * ((1 - logical_err_rate_eb) ** (1 / code_K - 1)) / code_K
+    word_error_rate = 1.0 - (1 - logical_err_rate) ** (1 / code_k)
+    word_error_rate_eb = logical_err_rate_eb * ((1 - logical_err_rate_eb) ** (1 / code_k - 1)) / code_k
     return (
         logical_err_rate,
         logical_err_rate_eb,
@@ -297,7 +298,6 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
         try:
             merged_data["nr_runs"] += data.get("nr_runs", 0)
             merged_data["x_success_cnt"] += data.get("x_success_cnt", 0)
-        # merged_data["z_success_cnt"] += data.get("z_success_cnt", 0)
         except:
             pass
 

@@ -54,6 +54,7 @@ def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementa
 def check_logical_err_h(
     check_matrix: NDArray[np.int_], original_err: NDArray[np.int_], decoded_estimate: NDArray[np.int_]
 ) -> np.bool_:
+    """Checks if the residual error is a logical error."""
     r, n = check_matrix.shape
 
     # compute residual err given original err
