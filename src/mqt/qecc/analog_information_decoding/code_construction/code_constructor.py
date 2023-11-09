@@ -18,13 +18,13 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-def is_all_zeros(array: NDArray[np.int_]) -> bool:
+def is_all_zeros(array: NDArray[np.int32]) -> bool:
     """Check if array is all zeros."""
     return not np.any(array)
 
 
 def run_checks_scipy(
-    d_1: NDArray[np.int_], d_2: NDArray[np.int_], d_3: NDArray[np.int_], d_4: NDArray[np.int_]
+    d_1: NDArray[np.int32], d_2: NDArray[np.int32], d_3: NDArray[np.int32], d_4: NDArray[np.int32]
 ) -> None:
     """Run checks on the boundary maps."""
     sd_1 = scs.csr_matrix(d_1)
@@ -42,8 +42,8 @@ def run_checks_scipy(
 
 
 def generate_4d_product_code(
-    a_1: NDArray[np.int_], a_2: NDArray[np.int_], a_3: NDArray[np.int_], p: NDArray[np.int_], checks: bool = True
-) -> tuple[NDArray[np.int_], NDArray[np.int_], NDArray[np.int_], NDArray[np.int_]]:
+    a_1: NDArray[np.int32], a_2: NDArray[np.int32], a_3: NDArray[np.int32], p: NDArray[np.int32], checks: bool = True
+) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]:
     """Generate 4D product code."""
     r, c = p.shape
     id_r = np.identity(r, dtype=np.int32)
@@ -114,13 +114,13 @@ def create_outpath(codename: str) -> str:
 
 
 def save_code(
-    hx: NDArray[np.int_],
-    hz: NDArray[np.int_],
-    mx: NDArray[np.int_],
-    mz: NDArray[np.int_],
+    hx: NDArray[np.int32],
+    hz: NDArray[np.int32],
+    mx: NDArray[np.int32],
+    mz: NDArray[np.int32],
     codename: str,
-    lx: NDArray[np.int_] | None,
-    lz: NDArray[np.int_] | None,
+    lx: NDArray[np.int32] | None,
+    lz: NDArray[np.int32] | None,
 ) -> None:
     """Save code to files."""
     path = create_outpath(codename)
@@ -142,7 +142,7 @@ def run_compute_distances(codename: str) -> None:
     subprocess.run(["bash", "compute_distances.sh", path], check=False)
 
 
-def _compute_distances(hx: NDArray[np.int_], hz: NDArray[np.int_], codename: str) -> None:
+def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: str) -> None:
     run_compute_distances(codename)
     code_dict: Any = {}
     m, n = hx.shape
@@ -164,8 +164,8 @@ def _compute_distances(hx: NDArray[np.int_], hz: NDArray[np.int_], codename: str
         file.write(json.dumps(code_dict))
 
 
-def _compute_logicals(hx: NDArray[np.int_], hz: NDArray[np.int_]) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
-    def compute_lz(hx: NDArray[np.int_], hz: NDArray[np.int_]) -> NDArray[np.int_]:
+def _compute_logicals(hx: NDArray[np.int32], hz: NDArray[np.int32]) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
+    def compute_lz(hx: NDArray[np.int32], hz: NDArray[np.int32]) -> NDArray[np.int32]:
         # lz logical operators
         # lz\in ker{hx} AND \notin Im(Hz.T)
 
@@ -185,7 +185,7 @@ def _compute_logicals(hx: NDArray[np.int_], hz: NDArray[np.int_]) -> tuple[NDArr
 
 def create_code(
     constructor: str,
-    seed_codes: list[NDArray[np.int_]],
+    seed_codes: list[NDArray[np.int32]],
     codename: str,
     compute_distance: bool = False,
     compute_logicals: bool = False,
