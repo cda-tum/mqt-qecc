@@ -164,7 +164,7 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
 
         ax[1][0].plot(mdata["p"], mdata["avg_total_time"], label="d=" + str(d))
         ax[1][0].set_xlabel("Physical error rate")
-        ax[1][0].set_ylabel("Average time per run (µs)")
+        ax[1][0].set_ylabel("Average time per run (micro seconds)")
         ax[1][0].legend()
         ax[1][0].set_ylim(0, 185000)
 
@@ -184,7 +184,7 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
         ax[2][1].plot(ds, pdata["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
-    ax[1][1].set_ylabel("Average time per run (µs)")
+    ax[1][1].set_ylabel("Average time per run (microseconds)")
     ax[1][1].legend()
     ax[1][1].set_xticks(ds)
     ax[1][1].set_ylim(0, 185000)
@@ -233,7 +233,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     for code, xys in sorted(code_to_xys.items()):
         ax[1][0].plot(*zip(*xys), "x-", label=f"d={code}")
     ax[1][0].set_xlabel("Physical error rate")
-    ax[1][0].set_ylabel("Average time per run (µs)")
+    ax[1][0].set_ylabel("Average time per run (microseconds)")
     ax[1][0].legend()
     ax[1][0].set_ylim(0, 300000)
 
@@ -252,7 +252,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         ax[1][1].plot(ds, pdata["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
-    ax[1][1].set_ylabel("Average time per run (µs)")
+    ax[1][1].set_ylabel("Average time per run (microseconds)")
     ax[1][1].legend()
     # ax[1][1].set_yscale("log")
     ax[1][1].set_xticks(ds)
@@ -338,12 +338,12 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             )
 
         ax[1].set_xlabel("Distance")
-        ax[1].set_ylabel("Average time per run (µs)")
+        ax[1].set_ylabel("Average time per run (microseconds)")
         ax[1].legend()
         ax[1].set_xticks(ds)
 
         ax[0].set_xlabel("Physical error rate")
-        ax[0].set_ylabel("Average time per run (µs)")
+        ax[0].set_ylabel("Average time per run (microseconds)")
         ax[0].legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     # save plot as vector graphic
