@@ -388,7 +388,7 @@ class ATD_Simulator:
 
         return output
 
-    def save_results(self, x_success_cnt: int, z_success_cnt: int, runs: int) -> dict:
+    def save_results(self, x_success_cnt: int, z_success_cnt: int, runs: int) -> dict[str, Any]:
         """Compute error rates and error bars and save output dict."""
         x_ler, x_ler_eb, x_wer, x_wer_eb = calculate_error_rates(x_success_cnt, runs, self.code_params)
         z_ler, z_ler_eb, z_wer, z_wer_eb = calculate_error_rates(z_success_cnt, runs, self.code_params)
@@ -440,7 +440,7 @@ if __name__ == "__main__":
     code_path = "generated_codes/lp/"
     s = np.linspace(0.10, 0.4, 11)
     p = 0.05
-    for bp_method in [1]:
+    for bp_method in ["msl"]:
         for decoder in ["atd"]:
             for c in [16, 21, 30]:
                 Hx = np.loadtxt(code_path + str(c) + "_hx.txt", dtype=int)

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, format: str = "csr") -> NDArray[np.int32]:
+def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, format: str = "csr") -> csr_matrix:
     """Builds the multiround parity-check matrix as described in the paper.
 
     Each row corresponds to a round of measurements, the matrix for r repetitions has the form
@@ -39,10 +39,10 @@ def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, format: str =
     H_3DID = H_3DID_diag + H_3DID_offdiag
 
     # # hstack the two blocks
-    return hstack([H_3DPCM, H_3DID], format=format)  # type: ignore[no-any-return]
+    return hstack([H_3DPCM, H_3DID], format=format)
 
 
-def move_syndrome(syndrome: NDArray[np.int32], data_type: Any = np.int32) -> NDArray[np.int32]:
+def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[Any]:
     """Slides the window one region up, i.e., the syndrome of the first half is overwritten by the second half."""
     T = int(syndrome.shape[1] / 2)  # number of rounds in each region
 
@@ -77,7 +77,7 @@ def decode_multiround(
     syndrome: NDArray[np.int32],
     H: NDArray[np.int32],
     decoder: Any,
-    channel_probs: NDArray[np.int32],  # needed for matching decoder does not have an update weights method
+    channel_probs: NDArray[np.float_],  # needed for matching decoder does not have an update weights method
     repetitions: int,
     analog_syndr: NDArray[np.float_] | None,
     last_round: bool = False,
@@ -85,7 +85,7 @@ def decode_multiround(
     sigma: float = 0.0,
     H3D: NDArray[np.int32] | None = None,  # needed for matching decoder
     decoding_method: str = "bposd",  # bposd or matching
-) -> tuple[Any, NDArray[np.int32], NDArray[np.int32], int]:
+) -> tuple[Any, NDArray[np.int32], NDArray[np.float_], int]:
     """Overlapping window decoding.bool
     First, we compute the difference syndrome from the recorded syndrome of each measurement round for all measurement
     rounds of the current window (consisting of two regions with equal size).

@@ -31,11 +31,11 @@ if TYPE_CHECKING:
 class QSS_SimulatorV2:
     def __init__(
         self,
-        H: NDArray[int],
+        H: NDArray[np.int_],
         per: float,
         ser: float,
-        L: NDArray[int],
-        bias: list[float],
+        L: NDArray[np.int_],
+        bias: NDArray[np.float_],
         codename: str,
         bp_params: BpParams,
         decoding_method: str = "bposd",  # bposd or matching
@@ -45,7 +45,7 @@ class QSS_SimulatorV2:
         repetitions: int = 0,
         rounds: int = 0,
         experiment: str = "qss",
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """:param H: parity-check matrix of code
         :param per: physical data error rate
@@ -105,12 +105,12 @@ class QSS_SimulatorV2:
         self.x_bit_chnl, self.y_bit_chnl, self.z_bit_chnl = error_channel_setup(
             error_rate=self.data_err_rate,
             xyz_error_bias=bias,
-            N=self.num_qubits,
+            nr_qubits=self.num_qubits,
         )
         self.x_syndr_err_chnl, self.y_syndr_err_chnl, self.z_syndr_err_chnl = error_channel_setup(
             error_rate=self.syndr_err_rate,
             xyz_error_bias=bias,
-            N=self.num_checks,
+            nr_qubits=self.num_checks,
         )
         if self.check_side == "X":
             self.err_idx = 1
@@ -133,7 +133,7 @@ class QSS_SimulatorV2:
         # the number of columns of the diagonal check matrix of the H3D matrix
         self.check_block_size = self.num_qubits * (self.repetitions)
 
-        channel_probs = np.zeros(self.H3D.shape[1])
+        channel_probs = np.zeros(self.H3D.shape[1]).astype(np.float_)
         # The bits corresponding to the columns of the diagonal H-bock of H3D are initialized with the bit channel
         channel_probs[: self.check_block_size] = np.array(self.data_err_channel.tolist() * (self.repetitions))
 
@@ -145,8 +145,6 @@ class QSS_SimulatorV2:
             self.sigma = get_sigma_from_syndr_er(
                 self.syndr_err_channel[0]  # x/z + y
             )  # assumes all sigmas are the same
-        else:
-            self.sigma = None
         self.bp_iterations = 0
         if self.decoding_method == "bposd":
             self.decoder = bposd_decoder(
@@ -165,10 +163,10 @@ class QSS_SimulatorV2:
 
     def _decode_multiround(
         self,
-        syndrome_mat: NDArray[int],
-        analog_syndr_mat: NDArray[int],
+        syndrome_mat: NDArray[np.int_],
+        analog_syndr_mat: NDArray[np.float_],
         last_round: bool = False,
-    ) -> NDArray[int]:
+    ) -> tuple[Any, NDArray[np.int32], NDArray[np.float_], int]:
         return decode_multiround(
             syndrome=syndrome_mat,
             H=self.H,
@@ -187,7 +185,6 @@ class QSS_SimulatorV2:
         # prepare fresh syndrome matrix and error vector
         # each column == measurement result of a single timestep
         syndrome_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.int32)
-        analog_syndr_mat = []
 
         if self.analog_tg:
             analog_syndr_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.float64)
@@ -198,12 +195,12 @@ class QSS_SimulatorV2:
         for round in range(self.rounds):
             residual_err = [np.copy(err), np.copy(err)]
             err = generate_err(
-                N=self.num_qubits,
-                channel_probs=[
+                nr_qubits=self.num_qubits,
+                channel_probs=(
                     self.x_bit_chnl,
                     self.y_bit_chnl,
                     self.z_bit_chnl,
-                ],
+                ),
                 residual_err=residual_err,
             )[self.err_idx]  # only first or last vector needed, depending on side (X or Z)
             noiseless_syndrome = (self.H @ err) % 2
@@ -238,7 +235,7 @@ class QSS_SimulatorV2:
                         last_round=False,
                     )
                     # we compute the average for all rounds since this equals a single sample
-                    self.bp_iterations += bp_iters / self.rounds
+                    self.bp_iterations += int(bp_iters / self.rounds)
                     err = (err + corr) % 2
                     syndrome_mat = move_syndrome(syndrome_mat)
                     if self.analog_tg:
@@ -251,7 +248,7 @@ class QSS_SimulatorV2:
                         analog_syndr_mat,
                         last_round=True,
                     )
-                    self.bp_iterations += bp_iters / self.rounds
+                    self.bp_iterations += int(bp_iters / self.rounds)
                     err = (err + corr) % 2
         return int(not is_logical_err(self.L, err))
 
