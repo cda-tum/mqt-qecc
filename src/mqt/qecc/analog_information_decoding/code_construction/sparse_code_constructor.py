@@ -1,3 +1,4 @@
+"""Sparse code constructor for 3D and 4D HGP codes."""
 from __future__ import annotations
 
 import json
@@ -30,18 +31,20 @@ def sparse_all_zeros(mat: csr_matrix) -> bool:
 
 
 def run_checks_scipy(d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr_matrix) -> None:
+    """Run checks on the boundary maps."""
     if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3) and sparse_all_zeros(d_3 @ d_4)):
         msg = "Error generating 4D code, boundary maps do not square to zero"
         raise Exception(msg)
 
 
-def generate_4D_product_code(
+def generate_4d_product_code(
     a_1: csr_matrix,
     a_2: csr_matrix,
     a_3: csr_matrix,
     p: csr_matrix,
     checks: bool = True,
 ) -> tuple[csr_matrix, csr_matrix, csr_matrix, csr_matrix]:
+    """Generate 4D HGP code."""
     r, c = p.shape
 
     id_r = sparse.identity(r, dtype=int)
@@ -75,9 +78,10 @@ def generate_4D_product_code(
     return d_1, d_2, d_3, d_4
 
 
-def generate_3D_product_code(
+def generate_3d_product_code(
     a_1: csr_matrix, a_2: csr_matrix, p: csr_matrix
 ) -> tuple[csr_matrix, csr_matrix, csr_matrix]:
+    """Generate 3D HGP code."""
     r, c = p.shape
 
     id_r = sparse.identity(r, dtype=int)
@@ -121,11 +125,12 @@ def save_code(
     lx: csr_matrix = None,
     lz: csr_matrix = None,
 ) -> None:
+    """Save code to file."""
     path = create_outpath(codename)
 
-    Ms: list[csr_matrix] = [hx, hz, mz, lx, lz]
+    matrices: list[csr_matrix] = [hx, hz, mz, lx, lz]
     names = ["hx", "hz", "mz", "lx", "lz"]
-    for mat, name in zip(Ms, names):
+    for mat, name in zip(matrices, names):
         if type(mat) != type(None):
             path_str = path + name
             try:
@@ -141,21 +146,22 @@ def save_code(
 
 
 def run_compute_distances(codename: str) -> None:
+    """Run compute distances bash script."""
     path = "/codes/generated_codes/" + codename
-    subprocess.run(["bash", "compute_distances_3D.sh", path])
+    subprocess.run(["bash", "compute_distances_3D.sh", path], check=False)
 
 
 def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: str) -> None:
     run_compute_distances(codename)
     _, n = hx.shape
-    codeK = n - mod2.rank(hx) - mod2.rank(hz)
+    code_k = n - mod2.rank(hx) - mod2.rank(hz)
     with open(f"/codes/generated_codes/{codename}/info.txt") as f:
         code_dict: dict[str, Any] = dict(
             line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
 
     code_dict["n"] = n
-    code_dict["k"] = codeK
+    code_dict["k"] = code_k
     code_dict["dX"] = int(code_dict["dX"])
     code_dict["dZ"] = int(code_dict["dZ"])
 
@@ -165,12 +171,13 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
 
 
 def _store_code_params(hx: csr_matrix, hz: csr_matrix, codename: str) -> None:
+    """Store code parameters in file."""
     code_dict = {}
     hx, hz = hx.todense(), hz.todense()
     m, n = hx.shape
-    codeK = n - mod2.rank(hx) - mod2.rank(hz)
+    code_k = n - mod2.rank(hx) - mod2.rank(hz)
     code_dict["n"] = n
-    code_dict["k"] = codeK
+    code_dict["k"] = code_k
     with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
         file.write(json.dumps(code_dict))
 
@@ -181,8 +188,8 @@ def create_code(
     codename: str,
     compute_distance: bool = False,
     compute_logicals: bool = False,
-    checks: bool = False,
 ) -> None:
+    """Create code."""
     # Construct initial 2 dim code
     if constructor == "hgp":
         code = hgp(seed_codes[0], seed_codes[1])
@@ -191,13 +198,13 @@ def create_code(
         raise ValueError(msg)
 
     # Extend to 3D HGP
-    A1 = sparse.csr_matrix(code.hx)
-    A2 = sparse.csr_matrix(code.hz.T)
-    res = generate_3D_product_code(A1, A2, sparse.csr_matrix(seed_codes[2]))
-    hx, hzT, mzT = res
+    a1 = sparse.csr_matrix(code.hx)
+    a2 = sparse.csr_matrix(code.hz.T)
+    res = generate_3d_product_code(a1, a2, sparse.csr_matrix(seed_codes[2]))
+    hx, hz_t, mz_t = res
 
-    hz = hzT.transpose()
-    mz = mzT.transpose()
+    hz = hz_t.transpose()
+    mz = mz_t.transpose()
     if compute_logicals:
         lx, lz = code_constructor._compute_logicals(hx.todense(), hz.todense())
         save_code(hx=hx, hz=hz, mz=mz, codename=codename, lx=lx, lz=lz)

@@ -29,6 +29,7 @@ def set_seed(value: float) -> None:
 
 # @njit # type: ignore[misc]
 def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementation is buggy
+    """Converts an alist file to a numpy array."""
     alist_file = np.loadtxt(fname, delimiter=",", dtype=str)
     matrix_dimensions = alist_file[0].split()
     m = int(matrix_dimensions[0])
@@ -79,7 +80,8 @@ def check_logical_err_h(
 # an Z residual is a logical iff it commutes with at least one Z logical
 # Hence, L must be of same type as H and of different type than residual_err
 def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> np.bool_:
-    """Checks if the residual error is a logical error
+    """Checks if the residual error is a logical error.
+
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
     l_check = (L @ residual_err) % 2
@@ -138,6 +140,7 @@ def get_analog_llr(analog_syndrome: NDArray[np.float_], sigma: float) -> NDArray
 
 def get_sigma_from_syndr_er(ser: float) -> float:
     """For analog Cat syndrome noise we need to convert the syndrome error model as described in the paper.
+
     :return: sigma.
     """
     if ser == 0.0:
@@ -147,6 +150,7 @@ def get_sigma_from_syndr_er(ser: float) -> float:
 
 def get_error_rate_from_sigma(sigma: float) -> float:
     """For analog Cat syndrome noise we need to convert the syndrome error model as described in the paper.
+
     :return: sigma.
     """
     if sigma == 0.0:
@@ -157,6 +161,7 @@ def get_error_rate_from_sigma(sigma: float) -> float:
 @njit  # type: ignore[misc]
 def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float_], sigma: float) -> NDArray[np.float_]:
     """Computes a vector of values v_i from the noisy syndrome bits y_i s.t.
+
     BP initializes the LLRs l_i of the analog nodes with the
     analog info values (see paper section). v_i := 1/(e^{y_i}+1).
     """
@@ -180,7 +185,8 @@ def generate_syndr_err(channel_probs: NDArray[np.float_]) -> NDArray[np.int32]:
 
 # @njit # type: ignore[misc]
 def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float_]:
-    """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength)
+    """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength).
+
     Assumes perfect_syndr has entries in {0,1}.
     """
     # compute signed syndrome: 1 = check satisfied, -1 = check violated

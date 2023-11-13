@@ -1,3 +1,4 @@
+"""Single shot simulations."""
 from __future__ import annotations
 
 import json
@@ -15,13 +16,28 @@ from mqt.qecc.analog_information_decoding.utils.data_utils import (
     replace_inf,
 )
 from mqt.qecc.analog_information_decoding.utils.data_utils import create_outpath as get_outpath
-from mqt.qecc.analog_information_decoding.utils.simulation_utils import *
+from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
+    build_single_stage_pcm,
+    check_logical_err_h,
+    error_channel_setup,
+    generate_err,
+    generate_syndr_err,
+    get_binary_from_analog,
+    get_noisy_analog_syndrome,
+    get_sigma_from_syndr_er,
+    get_signed_from_binary,
+    get_virtual_check_init_vals,
+    is_logical_err,
+    set_seed,
+)
 
 if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-class Single_Shot_Simulator:
+class SingleShotSimulator:
+    """Single shot decoding simulator."""
+
     def __init__(
         self,
         codename: str,
@@ -39,6 +55,7 @@ class Single_Shot_Simulator:
         analog_tg: bool = False,
         **kwargs: Any,
     ) -> None:
+        """Initialize simulator."""
         set_seed(seed)
         self.codename = codename
         self.data_err_rate = per
@@ -132,9 +149,7 @@ class Single_Shot_Simulator:
     def _single_sample(
         self,
     ) -> tuple[np.bool_, np.bool_]:
-        """Simulates a single sample for a given sustainable threshold depth.
-        :return:
-        """
+        """Simulates a single sample for a given sustainable threshold depth."""
         residual_err = [
             np.zeros(self.n).astype(np.int32),  # X-residual error part
             np.zeros(self.n).astype(np.int32),  # Z-residual error part
@@ -241,7 +256,7 @@ class Single_Shot_Simulator:
         if self.x_meta:
             z_decoded, self.z_bp_iters = self._decode_ss_with_meta(
                 syndrome_w_err=z_syndrome_w_err,
-                M=self.Mx,
+                meta_pcm=self.Mx,
                 ss_bpd=self.ss_z_bpd,
                 bit_err_channel=z_err_channel,
                 sigma=self.sigma_z,
@@ -258,7 +273,7 @@ class Single_Shot_Simulator:
         if self.z_meta:
             x_decoded, self.x_bp_iters = self._decode_ss_with_meta(
                 syndrome_w_err=x_syndrome_w_err,
-                M=self.Mz,
+                meta_pcm=self.Mz,
                 ss_bpd=self.ss_x_bpd,
                 bit_err_channel=x_err_channel,
                 sigma=self.sigma_x,
@@ -293,17 +308,17 @@ class Single_Shot_Simulator:
                 bit_err_channel=bit_err_channel,
                 sigma=sigma,
             )
-            iter = analog_tg_decoder.iter
+            it = analog_tg_decoder.iter
         else:
             decoded = standard_decoder.decode(syndrome_w_err)
-            iter = standard_decoder.iter
-        return decoded, iter
+            it = standard_decoder.iter
+        return decoded, it
 
     def _decode_ss_with_meta(
         self,
         syndrome_w_err: NDArray[np.float_],
         ss_bpd: Any,
-        M: NDArray[np.int32],
+        meta_pcm: NDArray[np.int32],
         bit_err_channel: NDArray[np.float_],
         sigma: float,
     ) -> tuple[NDArray[np.int32], int]:
@@ -320,16 +335,16 @@ class Single_Shot_Simulator:
             decoded = self._ss_analog_tg_decoding(
                 decoder=ss_bpd,
                 analog_syndrome=syndrome_w_err,
-                M=M,
+                meta_pcm=meta_pcm,
                 bit_err_channel=bit_err_channel,
                 sigma=sigma,
             )
         else:
             if self.analog_info:
-                meta_bin = (M @ get_binary_from_analog(syndrome_w_err)) % 2
+                meta_bin = (meta_pcm @ get_binary_from_analog(syndrome_w_err)) % 2
                 meta_syndr = get_signed_from_binary(meta_bin)  # for AI decoder we need {-1,+1} syndrome as input
             else:
-                meta_syndr = (M @ syndrome_w_err) % 2
+                meta_syndr = (meta_pcm @ syndrome_w_err) % 2
 
             ss_syndr = np.hstack((syndrome_w_err, meta_syndr))
             # only first n bit are data, the other are virtual nodes and can be discarded for estimate
@@ -340,7 +355,7 @@ class Single_Shot_Simulator:
         self,
         decoder: Any,
         analog_syndrome: NDArray[np.float_],
-        M: NDArray[np.int32],
+        meta_pcm: NDArray[np.int32],
         bit_err_channel: NDArray[np.float_],
         sigma: float,
     ) -> NDArray[np.int32]:
@@ -354,7 +369,7 @@ class Single_Shot_Simulator:
         decoder.update_channel_probs(np.hstack((bit_err_channel, analog_channel)))
 
         bin_syndr = get_binary_from_analog(analog_syndrome)  # here we need to threshold since syndrome is analog
-        meta_syndr = (M @ bin_syndr) % 2
+        meta_syndr = (meta_pcm @ bin_syndr) % 2
         ss_syndr = np.hstack((bin_syndr, meta_syndr))
         # only first n bit are data, return them
         return decoder.decode(ss_syndr)[: self.n]  # type: ignore[no-any-return]
@@ -416,7 +431,8 @@ class Single_Shot_Simulator:
     def _meta_code_decoding(
         self, syndrome_w_err: NDArray[np.float_], M: NDArray[np.int32], m_bp: Any
     ) -> NDArray[np.int32]:
-        """Decodes the noisy syndrome using the meta code
+        """Decodes the noisy syndrome using the meta code.
+
         If analog_info or analog_tg is activated the analog syndrome is thresholded to binary to be able to use
         the meta code. The binary syndrome is repaired according to the meta code and a binary,
         repaired syndrome is returned.
@@ -439,7 +455,8 @@ class Single_Shot_Simulator:
         bit_err_channel: NDArray[np.float_],
         sigma: float,
     ) -> NDArray[np.int32]:
-        """Decodes the noisy analog syndrome using the analog tanner graph and BPOSD
+        """Decodes the noisy analog syndrome using the analog tanner graph and BPOSD.
+
         First, the channel probabilities need to be set according to the analog syndrome s.t. the decoder is
         initialized properly.
         Only the first n bits of the decoding estimate returned by the decoder are true estimates,
@@ -455,6 +472,7 @@ class Single_Shot_Simulator:
         self,
     ) -> None:
         """Sets up the single stage decoding.
+
         * BPOSD decoders for the single-stage check matrices (cf Higgot & Breuckmann) are setup in case
         there is a meta code for the respective side.
         * BPOSD decoders for the check matrices Hx/Hz are set up for the last, perfect round
@@ -537,6 +555,7 @@ class Single_Shot_Simulator:
         self,
     ) -> None:
         """Sets up the two stage decoding.
+
             * In case meta codes are present, BPOSD decoders for the meta codes are setup
             * In case analo_tg is active, BPOSD decoders for the analog tanner graph are setup
             * Additionally, BPOSD for Hx, Hz are setup for the final round
@@ -621,16 +640,15 @@ class Single_Shot_Simulator:
                 cutoff=cutoff,
                 sigma=sigma,
             )
-        else:
-            return bposd_decoder(
-                parity_check_matrix=pcm,
-                channel_probs=channel_probs,
-                max_iter=self.bp_params.max_bp_iter,
-                bp_method=self.bp_params.bp_method,
-                osd_order=self.bp_params.osd_order,
-                osd_method=self.bp_params.osd_method,
-                ms_scaling_factor=self.bp_params.ms_scaling_factor,
-            )
+        return bposd_decoder(
+            parity_check_matrix=pcm,
+            channel_probs=channel_probs,
+            max_iter=self.bp_params.max_bp_iter,
+            bp_method=self.bp_params.bp_method,
+            osd_order=self.bp_params.osd_order,
+            osd_method=self.bp_params.osd_method,
+            ms_scaling_factor=self.bp_params.ms_scaling_factor,
+        )
 
     def construct_analog_pcms(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
         """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
@@ -646,6 +664,7 @@ class Single_Shot_Simulator:
         x_bp_iters: int,
         z_bp_iters: int,
     ) -> dict[str, Any]:
+        """Saves the results of the simulation to a json file."""
         x_ler, x_ler_eb, x_wer, x_wer_eb = calculate_error_rates(x_success_cnt, runs, self.code_params)
         z_ler, z_ler_eb, z_wer, z_wer_eb = calculate_error_rates(z_success_cnt, runs, self.code_params)
 
@@ -683,6 +702,7 @@ class Single_Shot_Simulator:
         return output
 
     def run(self, samples: int) -> dict[str, Any]:
+        """Run the simulation."""
         x_success_cnt = 0
         z_success_cnt = 0
         x_bp_iters = 0

@@ -1,3 +1,4 @@
+"""Quasi single shot simulator."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -28,13 +29,15 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-class QSS_SimulatorV2:
+class QssSimulator:
+    """Quasi single shot simulator."""
+
     def __init__(
         self,
-        H: NDArray[np.int_],
+        pcm: NDArray[np.int_],
         per: float,
         ser: float,
-        L: NDArray[np.int_],
+        logicals: NDArray[np.int_],
         bias: NDArray[np.float_],
         codename: str,
         bp_params: BpParams,
@@ -47,10 +50,12 @@ class QSS_SimulatorV2:
         experiment: str = "qss",
         **kwargs: Any,
     ) -> None:
-        """:param H: parity-check matrix of code
+        """Initialize QSS Simulator
+        :param pcm: parity-check matrix of code.
+
         :param per: physical data error rate
         :param ser: syndrome error rate
-        :param L: logical matrix
+        :param logicals: logical matrix
         :param bias: bias array
         :param codename: name of the code
         :param bp_params: BP decoder parameters
@@ -62,11 +67,11 @@ class QSS_SimulatorV2:
         :param experiment: name of experiment, for outpath creation
         :param kwargs:
         """
-        self.H = H
+        self.H = pcm
         self.data_err_rate = per
         self.syndr_err_rate = ser
         self.check_side = check_side
-        self.L = L
+        self.L = logicals
         self.bias = bias
         self.codename = codename
         self.bp_params = bp_params
@@ -137,7 +142,8 @@ class QSS_SimulatorV2:
         # The bits corresponding to the columns of the diagonal H-bock of H3D are initialized with the bit channel
         channel_probs[: self.check_block_size] = np.array(self.data_err_channel.tolist() * (self.repetitions))
 
-        # The remaining bits (corresponding to the identity block of H3D) are initialized with the syndrome error channel
+        # The remaining bits (corresponding to the identity block of H3D)
+        # are initialized with the syndrome error channel
         channel_probs[self.check_block_size :] = np.array(self.syndr_err_channel.tolist() * (self.repetitions))
 
         # If we do ATG decoding, initialize sigma (syndrome noise strength)
@@ -169,14 +175,14 @@ class QSS_SimulatorV2:
     ) -> tuple[Any, NDArray[np.int32], NDArray[np.float_], int]:
         return decode_multiround(
             syndrome=syndrome_mat,
-            H=self.H,
+            pcm=self.H,
             decoder=self.decoder,
             repetitions=self.repetitions,
             last_round=last_round,
             analog_syndr=analog_syndr_mat,
             check_block_size=self.check_block_size,
             sigma=self.sigma,
-            H3D=self.H3D if self.decoding_method == "matching" else None,  # avoid passing matrix in case not needed
+            h3d=self.H3D if self.decoding_method == "matching" else None,  # avoid passing matrix in case not needed
             channel_probs=self.channel_probs,
             decoding_method=self.decoding_method,
         )

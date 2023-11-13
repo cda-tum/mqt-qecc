@@ -1,3 +1,4 @@
+"""This module contains the functions for the multiround decoding simulation."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, format: str = "csr") -> csr_matrix:
+def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, matrix_format: str = "csr") -> csr_matrix:
     """Builds the multiround parity-check matrix as described in the paper.
 
     Each row corresponds to a round of measurements, the matrix for r repetitions has the form
@@ -27,35 +28,35 @@ def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, format: str =
     pcm_rows, pcm_cols = pcm.shape
 
     # Construct the block of PCMs
-    H_3DPCM = block_diag([pcm] * (repetitions + 1), format=format)
+    h_3dpcm = block_diag([pcm] * (repetitions + 1), format=matrix_format)
 
     # Construct the block of identity matrices
-    H_3DID_diag = block_diag([eye(pcm_rows, format=format)] * (repetitions + 1), format=format)
+    h_3did_diag = block_diag([eye(pcm_rows, format=matrix_format)] * (repetitions + 1), format=matrix_format)
 
     # Construct the block of identity matrices
-    H_3DID_offdiag = eye(pcm_rows * (repetitions + 1), k=-pcm_rows, format=format)
+    h_3did_offdiag = eye(pcm_rows * (repetitions + 1), k=-pcm_rows, format=matrix_format)
 
     # Construct the block of identity matrices
-    H_3DID = H_3DID_diag + H_3DID_offdiag
+    h_3did = h_3did_diag + h_3did_offdiag
 
     # # hstack the two blocks
-    return hstack([H_3DPCM, H_3DID], format=format)
+    return hstack([h_3dpcm, h_3did], format=matrix_format)
 
 
 def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[Any]:
     """Slides the window one region up, i.e., the syndrome of the first half is overwritten by the second half."""
-    T = int(syndrome.shape[1] / 2)  # number of rounds in each region
+    region_size = int(syndrome.shape[1] / 2)  # number of rounds in each region, T
 
     # zero likes syndrome
     new_syndrome = np.zeros(syndrome.shape, dtype=data_type)
 
     # move the syndromes from the Tth round to the 0th round
-    new_syndrome[:, :T] = syndrome[:, T:]
+    new_syndrome[:, :region_size] = syndrome[:, region_size:]
     return new_syndrome
 
 
 def get_updated_decoder(
-    decoding_method: str, decoder: Any, new_channel: NDArray[np.float_], H3D: Any | None = None
+    decoding_method: str, decoder: Any, new_channel: NDArray[np.float_], h3d: Any | None = None
 ) -> Any:
     """Updates the decoder with the new channel information and returns the updated decoder object."""
     if decoding_method == "bposd":
@@ -67,7 +68,7 @@ def get_updated_decoder(
             a_min=-16777215,
             a_max=16777215,
         )
-        return Matching(H3D, weights=weights)
+        return Matching(h3d, weights=weights)
     else:
         msg = "Unknown decoding method"
         raise ValueError(msg, decoding_method)
@@ -75,7 +76,7 @@ def get_updated_decoder(
 
 def decode_multiround(
     syndrome: NDArray[np.int32],
-    H: NDArray[np.int32],
+    pcm: NDArray[np.int32],
     decoder: Any,
     channel_probs: NDArray[np.float_],  # needed for matching decoder does not have an update weights method
     repetitions: int,
@@ -83,10 +84,11 @@ def decode_multiround(
     last_round: bool = False,
     check_block_size: int = 0,
     sigma: float = 0.0,
-    H3D: NDArray[np.int32] | None = None,  # needed for matching decoder
+    h3d: NDArray[np.int32] | None = None,  # needed for matching decoder
     decoding_method: str = "bposd",  # bposd or matching
 ) -> tuple[Any, NDArray[np.int32], NDArray[np.float_], int]:
-    """Overlapping window decoding.bool
+    """Overlapping window decoding.
+
     First, we compute the difference syndrome from the recorded syndrome of each measurement round for all measurement
     rounds of the current window (consisting of two regions with equal size).
     Then, we apply the correction returned from the decoder on the first region (commit region).
@@ -109,16 +111,16 @@ def decode_multiround(
 
         # in the last round, we have a perfect syndrome round to make sure we're in the codespace
         if last_round:
-            new_channel[-H.shape[0] :] = 1e-15
+            new_channel[-pcm.shape[0] :] = 1e-15
 
-        decoder = get_updated_decoder(decoding_method, decoder, new_channel, H3D)
+        decoder = get_updated_decoder(decoding_method, decoder, new_channel, h3d)
 
     else:
         if last_round:
             new_channel = np.copy(channel_probs)
-            new_channel[-H.shape[0] :] = 1e-15
+            new_channel[-pcm.shape[0] :] = 1e-15
 
-            decoder = get_updated_decoder(decoding_method, decoder, new_channel, H3D)
+            decoder = get_updated_decoder(decoding_method, decoder, new_channel, h3d)
 
     decoded = decoder.decode(diff_syndrome.flatten("F"))
 
@@ -126,21 +128,21 @@ def decode_multiround(
         bp_iter = decoder.iter
 
     # extract space correction, first repetitions * n entires
-    space_correction = decoded[: H.shape[1] * repetitions].reshape((repetitions, H.shape[1])).T
+    space_correction = decoded[: pcm.shape[1] * repetitions].reshape((repetitions, pcm.shape[1])).T
     # extract time correction
 
     if last_round is False:
         # this corresponds to the decoding on the second block of the H3D matrix
-        time_correction = decoded[H.shape[1] * repetitions :].reshape((repetitions, H.shape[0])).T
+        time_correction = decoded[pcm.shape[1] * repetitions :].reshape((repetitions, pcm.shape[0])).T
 
         # append time correction with zeros
-        time_correction = np.hstack((time_correction, np.zeros((H.shape[0], 1), dtype=np.int32)))
+        time_correction = np.hstack((time_correction, np.zeros((pcm.shape[0], 1), dtype=np.int32)))
 
         # correct only in the commit region
         decoded = (np.cumsum(space_correction, 1) % 2)[:, region_size - 1]
 
         #  get the syndrome according to the correction
-        corr_syndrome = (H @ decoded) % 2
+        corr_syndrome = (pcm @ decoded) % 2
 
         # propagate the syndrome correction through the tentative region
         syndrome[:, region_size:] = ((syndrome[:, region_size:] + corr_syndrome[:, None]) % 2).astype(np.int32)

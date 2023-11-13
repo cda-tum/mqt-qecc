@@ -68,9 +68,8 @@ def load_data(
 def calculate_error_rates(
     success_cnt: int, runs: int, code_params: dict[str, int]
 ) -> tuple[float, float, float, float]:
-    """Calculates logical error rate, logical error rate error bar, word error rate,
-    and word error rate error bar.
-    """
+    """Calculates logical error rates. """
+
     logical_err_rate = 1.0 - (success_cnt / runs)
     logical_err_rate_eb = np.sqrt((1 - logical_err_rate) * logical_err_rate / runs)
     word_error_rate = 1.0 - (1 - logical_err_rate) ** (1 / code_params["k"])
@@ -188,7 +187,8 @@ def replace_inf(lst: list[str]) -> list[str]:
 
 
 def product_dict(**kwargs: Any) -> Any:
-    """Generate a iterator of dictionaries where each dictionary is a cartesian product
+    """Generate a iterator of dictionaries where each dictionary is a cartesian product.
+
     of the values associated with each key in the input dictionary.
     """
     keys = kwargs.keys()
@@ -320,7 +320,8 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
-    """Merges a list of dictionaries into a single dictionary. The values for the fields "nr_runs",
+    """Merges a list of dictionaries into a single dictionary. The values for the fields "nr_runs".
+
     "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
 
     Args:
@@ -381,7 +382,8 @@ from json.decoder import JSONDecodeError
 
 
 def merge_json_files(input_path: str) -> None:
-    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder
+    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder.
+
     and merges them using the `merge_datasets` function. The resulting dictionaries are
     stored in a list and then dumped as a JSON file in the input folder.
 
@@ -417,7 +419,8 @@ def merge_json_files(input_path: str) -> None:
 
 
 def merge_json_files_x(input_path: str) -> None:
-    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder
+    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder.
+
     and merges them using the `merge_datasets` function. The resulting dictionaries are
     stored in a list and then dumped as a JSON file in the input folder.
 
@@ -453,7 +456,8 @@ def merge_json_files_x(input_path: str) -> None:
 
 
 def merge_json_files_z(input_path: str) -> None:
-    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder
+    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder.
+
     and merges them using the `merge_datasets` function. The resulting dictionaries are
     stored in a list and then dumped as a JSON file in the input folder.
 
@@ -489,7 +493,8 @@ def merge_json_files_z(input_path: str) -> None:
 
 
 def merge_json_files_xz(input_path: str) -> None:
-    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder
+    """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder.
+
     and merges them using the `merge_datasets` function. The resulting dictionaries are
     stored in a list and then dumped as a JSON file in the input folder.
 
@@ -530,6 +535,7 @@ def merge_json_files_xz(input_path: str) -> None:
 
 def _combine_xz_data(xdata: dict[str, Any] | None, zdata: dict[str, Any] | None) -> dict[str, Any]:
     """Combine the x and z data into a single dictionary.
+
     Before doing that, rename "runs" in each dictionary to "x_runs" and "z_runs" respectively.
 
     """

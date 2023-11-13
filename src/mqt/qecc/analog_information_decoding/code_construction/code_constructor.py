@@ -170,12 +170,12 @@ def _compute_logicals(hx: NDArray[np.int32], hz: NDArray[np.int32]) -> tuple[NDA
         # lz\in ker{hx} AND \notin Im(Hz.T)
 
         ker_hx = mod2.nullspace(hx)  # compute the kernel basis of hx
-        im_hzT = mod2.row_basis(hz)  # compute the image basis of hz.T
+        im_hz_t = mod2.row_basis(hz)  # compute the image basis of hz.T
 
         # in the below we row reduce to find vectors in kx that are not in the image of hz.T.
-        log_stack = np.vstack([im_hzT, ker_hx])
+        log_stack = np.vstack([im_hz_t, ker_hx])
         pivots = mod2.row_echelon(log_stack.T)[3]
-        log_op_indices = [i for i in range(im_hzT.shape[0], log_stack.shape[0]) if i in pivots]
+        log_op_indices = [i for i in range(im_hz_t.shape[0], log_stack.shape[0]) if i in pivots]
         return log_stack[log_op_indices]
 
     lx = compute_lz(hz, hx)
@@ -191,6 +191,7 @@ def create_code(
     compute_logicals: bool = False,
     checks: bool = False,
 ) -> None:
+    """Create 4D code."""
     # Construct initial 2 dim code
     if constructor == "hgp":
         code = hgp(seed_codes[0], seed_codes[1])
@@ -204,13 +205,13 @@ def create_code(
     res = generate_3d_product_code(a1, a2, seed_codes[2])
 
     # Build 4D HGP code
-    mx, hx, hzT, mzT = generate_4d_product_code(*res, seed_codes[3], checks=checks)
+    mx, hx, hz_t, mz_t = generate_4d_product_code(*res, seed_codes[3], checks=checks)
 
-    hz = hzT.T
-    mz = mzT.T
+    hz = hz_t.T
+    mz = mz_t.T
 
     # Perform checks
-    if np.any(hzT @ mzT % 2) or np.any(hx @ hzT % 2) or np.any(mx @ hx % 2):
+    if np.any(hz_t @ mz_t % 2) or np.any(hx @ hz_t % 2) or np.any(mx @ hx % 2):
         msg = "err"
         raise Exception(msg)
     save_code(hx, hz, mx, mz, codename, lx=None, lz=None)

@@ -1,9 +1,11 @@
+"""Analog Tannergraph Decoding Simulator."""
 from __future__ import annotations
 
 import json
 import os
 from typing import TYPE_CHECKING, Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 from ldpc import bp_decoder, bposd_decoder
 from ldpc.bp_decoder import SoftInfoBpDecoder
@@ -28,7 +30,7 @@ def create_outpath(
     codename: str | None = None,
     bias: list[float] | None = None,
     overwrite: bool = False,
-    id: int = 0,
+    identifier: int = 0,
     **kwargs: Any,
 ) -> str:
     """Create output path from input parameters."""
@@ -51,12 +53,12 @@ def create_outpath(
         os.makedirs(path, exist_ok=True)
 
     if overwrite is False:
-        f_loc = path + f"id_{id}.json"
+        f_loc = path + f"id_{identifier}.json"
         while os.path.exists(f_loc):
-            id += 1
-            f_loc = path + f"id_{id}.json"
+            identifier += 1
+            f_loc = path + f"id_{identifier}.json"
     else:
-        f_loc = path + f"id_{id}.json"
+        f_loc = path + f"id_{identifier}.json"
 
     while not os.path.exists(f_loc):
         open(f_loc, "w").close()
@@ -74,15 +76,16 @@ class SoftInfoDecoder:
 
     def __init__(
         self,
-        H: NDArray[np.int32],
+        pcm: NDArray[np.int32],
         bp_params: BpParams,
         error_channel: NDArray[np.float_],
         sigma: float | None = None,
         ser: float | None = None,
     ) -> None:
-        self.m, self.n = H.shape
+        """Initialize the decoder."""
+        self.m, self.n = pcm.shape
         self.sigma = sigma
-        self.H = H
+        self.H = pcm
         self.bp_params = bp_params
         self.syndr_err_rate = ser
         self.error_channel = error_channel
@@ -91,8 +94,7 @@ class SoftInfoDecoder:
             if self.syndr_err_rate is None:
                 msg = "Either sigma or ser must be specified"
                 raise ValueError(msg)
-            else:
-                self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
+            self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
         else:
             if self.syndr_err_rate is not None:
                 msg = "Only one of sigma or ser must be specified"
@@ -136,17 +138,18 @@ class AnalogTannergraphDecoder:
 
     def __init__(
         self,
-        H: NDArray[np.int32],
+        pcm: NDArray[np.int32],
         bp_params: BpParams,
         error_channel: NDArray[np.float_],
         sigma: float | None = None,
         ser: float | None = None,
     ) -> None:
-        self.m, self.n = H.shape
+        """Initialize the decoder."""
+        self.m, self.n = pcm.shape
         self.sigma = sigma
-        self.H = H
+        self.H = pcm
         self.bp_params = bp_params
-        self.atg = get_analog_pcm(H)
+        self.atg = get_analog_pcm(pcm)
         self.syndr_err_rate = ser
         self.error_channel = error_channel
 
@@ -154,8 +157,7 @@ class AnalogTannergraphDecoder:
             if self.syndr_err_rate is None:
                 msg = "Either sigma or ser must be specified"
                 raise ValueError(msg)
-            else:
-                self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
+            self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
         else:
             if self.syndr_err_rate is not None:
                 msg = "Only one of sigma or ser must be specified"
@@ -186,6 +188,7 @@ class AnalogTannergraphDecoder:
     def _set_analog_syndrome(self, analog_syndrome: NDArray[np.float_]) -> None:
         """Initializes the error channel of the BP decoder s.t. the virtual nodes are initialized with the
         analog syndrome LLRs on decoding initialization.
+
         :param analog_syndrome: the analog syndrome values to initialize the virtual nodes with.
         """
         new_channel = np.hstack(
@@ -202,13 +205,15 @@ class AnalogTannergraphDecoder:
         return self.bp_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
 
 
-class ATD_Simulator:
+class AtdSimulator:
+    """Analog Tanner graph Decoding Simulator."""
+
     def __init__(
         self,
-        Hx: NDArray[np.int32],
-        Lx: NDArray[np.int32],
-        Hz: NDArray[np.int32],
-        Lz: NDArray[np.int32],
+        hx: NDArray[np.int32],
+        lx: NDArray[np.int32],
+        hz: NDArray[np.int32],
+        lz: NDArray[np.int32],
         codename: str,
         seed: int,
         bp_params: BpParams,
@@ -220,13 +225,14 @@ class ATD_Simulator:
         decoding_method: str = "atd",
         **kwargs: Any,
     ) -> None:
+        """Initialize the simulator."""
         if bias is None:
             bias = np.array([1.0, 1.0, 1.0])
         simulation_utils.set_seed(seed)
-        self.Hx = Hx
-        self.Lx = Lx
-        self.Hz = Hz
-        self.Lz = Lz
+        self.Hx = hx
+        self.Lx = lx
+        self.Hz = hz
+        self.Lz = lz
         self.codename = codename
         self.data_err_rate = data_err_rate
         self.bias = bias
@@ -241,13 +247,13 @@ class ATD_Simulator:
             if syndr_err_rate is None:
                 msg = "Either sigma or ser must be specified"
                 raise ValueError(msg)
-            else:
-                self.syndr_err_rate = syndr_err_rate
-                synd_err_channel = simulation_utils.error_channel_setup(
-                    error_rate=self.syndr_err_rate,
-                    xyz_error_bias=self.bias,
-                    nr_qubits=1,
-                )
+
+            self.syndr_err_rate = syndr_err_rate
+            synd_err_channel = simulation_utils.error_channel_setup(
+                error_rate=self.syndr_err_rate,
+                xyz_error_bias=self.bias,
+                nr_qubits=1,
+            )
 
         else:
             if syndr_err_rate is not None:
@@ -271,7 +277,7 @@ class ATD_Simulator:
         self.eb_precission = kwargs.get("eb_precission", 1e-1)
         self.input_values = self.__dict__.copy()
 
-        self.n = Hx.shape[1]
+        self.n = hx.shape[1]
         self.code_params = eval(open("generated_codes/code/code_params.txt").read())
         del self.input_values["Hx"]
         del self.input_values["Lx"]
@@ -294,13 +300,13 @@ class ATD_Simulator:
         )
         self.x_decoder = Decoder(
             error_channel=self.full_error_channel[0] + self.full_error_channel[1],  # x + y errors
-            H=self.Hz,
+            pcm=self.Hz,
             sigma=self.x_sigma,
             bp_params=self.bp_params,
         )
         self.z_decoder = Decoder(
             error_channel=self.full_error_channel[2] + self.full_error_channel[1],  # z + y errors
-            H=self.Hx,
+            pcm=self.Hx,
             sigma=self.z_sigma,
             bp_params=self.bp_params,
         )
@@ -339,6 +345,7 @@ class ATD_Simulator:
         )
 
     def run(self, samples: int) -> dict[str, Any]:
+        """Run the simulation."""
         x_success_cnt = 0
         z_success_cnt = 0
         for runs in range(1, samples + 1):
@@ -426,12 +433,10 @@ class ATD_Simulator:
         return output
 
 
-def get_analog_pcm(H: NDArray[np.int32]) -> NDArray[np.int32]:
+def get_analog_pcm(pcm: NDArray[np.int32]) -> NDArray[np.int32]:
     """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
-    return np.hstack((H, np.identity(H.shape[0], dtype=np.int32)))
+    return np.hstack((pcm, np.identity(pcm.shape[0], dtype=np.int32)))
 
-
-import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     """ example simulation script """
@@ -451,11 +456,11 @@ if __name__ == "__main__":
                 ebs = []
                 for sigma in s:
                     print(sigma)
-                    sim = ATD_Simulator(
-                        Hx=Hx,
-                        Lx=Lx,
-                        Hz=Hz,
-                        Lz=Lz,
+                    sim = AtdSimulator(
+                        hx=Hx,
+                        lx=Lx,
+                        hz=Hz,
+                        lz=Lz,
                         codename=str(c),
                         data_err_rate=p,
                         sigma=sigma,
