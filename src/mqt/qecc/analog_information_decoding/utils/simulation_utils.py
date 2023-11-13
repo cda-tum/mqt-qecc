@@ -136,7 +136,7 @@ def generate_err(
 def get_analog_llr(analog_syndrome: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes analog LLRs given analog syndrome and sigma."""
     if sigma <= 0.0:
-        return np.zeros_like(analog_syndrome).astype(np.float_)
+        return np.zeros_like(analog_syndrome).astype(np.float64)
     return (2 * analog_syndrome) / (sigma**2)
 
 
@@ -168,7 +168,7 @@ def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) 
     analog info values (see paper section). v_i := 1/(e^{y_i}+1).
     """
     if sigma <= 0.0:
-        return np.zeros_like(noisy_syndr).astype(np.float_)
+        return np.zeros_like(noisy_syndr).astype(np.float64)
     llrs = get_analog_llr(noisy_syndr, sigma)
     return np.array(1 / (np.exp(np.abs(llrs)) + 1))
 
