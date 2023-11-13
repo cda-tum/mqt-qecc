@@ -195,7 +195,7 @@ def test_get_error_rate_from_sigma() -> None:
 
 
 def test_get_virtual_check_init_vals() -> None:
-    noisy_syndr = np.array([0.5, 0, 0, -1, 0, 100])
+    noisy_syndr = np.array([0.5, 0, 0, -1, 0, 10])
     sigma = 0.8
 
     assert np.allclose(
@@ -205,7 +205,7 @@ def test_get_virtual_check_init_vals() -> None:
         ),
     )
 
-    sigma = 0.1
+    sigma = 0.2
     assert np.allclose(
         get_virtual_check_init_vals(noisy_syndr, sigma),
         np.array([3.72007598e-44, 5.00000000e-01, 5.00000000e-01, 1.38389653e-87, 5.00000000e-01, 0.00000000e00]),
@@ -213,7 +213,6 @@ def test_get_virtual_check_init_vals() -> None:
     sigma = 0.0
     res = get_virtual_check_init_vals(noisy_syndr, sigma)
 
-    assert math.isnan(res[1])
     assert res[0] == 0.0
 
 

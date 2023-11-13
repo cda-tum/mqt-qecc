@@ -142,7 +142,7 @@ class AnalogTannergraphDecoder:
         pcm: NDArray[np.int32],
         bp_params: BpParams,
         error_channel: NDArray[np.float64],
-        sigma: float | None = None,
+        sigma: float = 0.0,
         ser: float | None = None,
     ) -> None:
         """Initialize the decoder."""
@@ -154,7 +154,7 @@ class AnalogTannergraphDecoder:
         self.syndr_err_rate = ser
         self.error_channel = error_channel
 
-        if self.sigma is None:
+        if self.sigma <= 0.0:
             if self.syndr_err_rate is None:
                 msg = "Either sigma or ser must be specified"
                 raise ValueError(msg)

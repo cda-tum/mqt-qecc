@@ -149,7 +149,7 @@ class SingleShotSimulator:
 
     def _single_sample(
         self,
-    ) -> tuple[np.bool_, np.bool_]:
+    ) -> tuple[bool, bool]:
         """Simulates a single sample for a given sustainable threshold depth."""
         residual_err = [
             np.zeros(self.n).astype(np.int32),  # X-residual error part

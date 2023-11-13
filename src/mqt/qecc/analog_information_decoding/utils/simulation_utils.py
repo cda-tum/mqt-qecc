@@ -54,7 +54,7 @@ def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementa
 # @njit # type: ignore[misc]
 def check_logical_err_h(
     check_matrix: NDArray[np.int_], original_err: NDArray[np.int_], decoded_estimate: NDArray[np.int_]
-) -> np.bool_:
+) -> bool:
     """Checks if the residual error is a logical error."""
     r, n = check_matrix.shape
 
@@ -71,7 +71,7 @@ def check_logical_err_h(
 
     rank_htr = rank(htr)
 
-    return np.bool_(rank_ht < rank_htr)
+    return (rank_ht < rank_htr) is True
 
 
 # L is a numpy array, residual_err is vector s.t. dimensions match
@@ -79,13 +79,13 @@ def check_logical_err_h(
 # i.e., an X residal is a logical iff it commutes with at least one Z logical and
 # an Z residual is a logical iff it commutes with at least one Z logical
 # Hence, L must be of same type as H and of different type than residual_err
-def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> np.bool_:
+def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> bool:
     """Checks if the residual error is a logical error.
 
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
     l_check = (L @ residual_err) % 2
-    return l_check.any()  # check all zeros
+    return l_check.any() is True  # check all zeros
 
 
 # adapted from https://github.com/quantumgizmos/bp_osd/blob/a179e6e86237f4b9cc2c952103fce919da2777c8/src/bposd/css_decode_sim.py#L430
@@ -135,6 +135,8 @@ def generate_err(
 @njit  # type: ignore[misc]
 def get_analog_llr(analog_syndrome: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes analog LLRs given analog syndrome and sigma."""
+    if sigma <= 0.0:
+        return np.zeros_like(analog_syndrome).astype(np.float_)
     return (2 * analog_syndrome) / (sigma**2)
 
 
@@ -158,13 +160,15 @@ def get_error_rate_from_sigma(sigma: float) -> float:
     return float(0.5 * erfc(1 / np.sqrt(2 * sigma**2)))  # see Eq. cref{eq:perr-to-sigma} in our paper
 
 
-@njit  # type: ignore[misc]
+# @njit  # type: ignore[misc]
 def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes a vector of values v_i from the noisy syndrome bits y_i s.t.
 
     BP initializes the LLRs l_i of the analog nodes with the
     analog info values (see paper section). v_i := 1/(e^{y_i}+1).
     """
+    if sigma <= 0.0:
+        return np.zeros_like(noisy_syndr).astype(np.float_)
     llrs = get_analog_llr(noisy_syndr, sigma)
     return np.array(1 / (np.exp(np.abs(llrs)) + 1))
 
