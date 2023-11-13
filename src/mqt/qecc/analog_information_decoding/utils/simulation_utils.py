@@ -1,4 +1,5 @@
 """Simulation utilities for analog information decoding."""
+
 from __future__ import annotations
 
 import json
