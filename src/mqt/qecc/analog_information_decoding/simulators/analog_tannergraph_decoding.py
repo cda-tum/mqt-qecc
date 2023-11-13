@@ -1,4 +1,5 @@
 """Analog Tannergraph Decoding Simulator."""
+
 from __future__ import annotations
 
 import json
@@ -78,7 +79,7 @@ class SoftInfoDecoder:
         self,
         pcm: NDArray[np.int32],
         bp_params: BpParams,
-        error_channel: NDArray[np.float_],
+        error_channel: NDArray[np.float64],
         sigma: float | None = None,
         ser: float | None = None,
     ) -> None:
@@ -140,7 +141,7 @@ class AnalogTannergraphDecoder:
         self,
         pcm: NDArray[np.int32],
         bp_params: BpParams,
-        error_channel: NDArray[np.float_],
+        error_channel: NDArray[np.float64],
         sigma: float | None = None,
         ser: float | None = None,
     ) -> None:
@@ -185,7 +186,7 @@ class AnalogTannergraphDecoder:
             ms_scaling_factor=self.bp_params.ms_scaling_factor,
         )
 
-    def _set_analog_syndrome(self, analog_syndrome: NDArray[np.float_]) -> None:
+    def _set_analog_syndrome(self, analog_syndrome: NDArray[np.float64]) -> None:
         """Initializes the error channel of the BP decoder s.t. the virtual nodes are initialized with the
         analog syndrome LLRs on decoding initialization.
 
@@ -199,7 +200,7 @@ class AnalogTannergraphDecoder:
         )
         self.bp_decoder.update_channel_probs(new_channel)
 
-    def decode(self, analog_syndrome: NDArray[np.float_]) -> NDArray[np.int32]:
+    def decode(self, analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
         """Decode a given analog syndrome."""
         self._set_analog_syndrome(analog_syndrome)
         return self.bp_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
@@ -220,7 +221,7 @@ class AtdSimulator:
         data_err_rate: float,
         syndr_err_rate: float | None = None,
         sigma: float | None = None,
-        bias: NDArray[np.float_] | None = None,
+        bias: NDArray[np.float64] | None = None,
         experiment: str = "atd",
         decoding_method: str = "atd",
         **kwargs: Any,

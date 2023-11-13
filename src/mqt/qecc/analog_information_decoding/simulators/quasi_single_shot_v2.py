@@ -1,4 +1,5 @@
 """Quasi single shot simulator."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -38,7 +39,7 @@ class QssSimulator:
         per: float,
         ser: float,
         logicals: NDArray[np.int_],
-        bias: NDArray[np.float_],
+        bias: NDArray[np.float64],
         codename: str,
         bp_params: BpParams,
         decoding_method: str = "bposd",  # bposd or matching
@@ -138,7 +139,7 @@ class QssSimulator:
         # the number of columns of the diagonal check matrix of the H3D matrix
         self.check_block_size = self.num_qubits * (self.repetitions)
 
-        channel_probs = np.zeros(self.H3D.shape[1]).astype(np.float_)
+        channel_probs = np.zeros(self.H3D.shape[1]).astype(np.float64)
         # The bits corresponding to the columns of the diagonal H-bock of H3D are initialized with the bit channel
         channel_probs[: self.check_block_size] = np.array(self.data_err_channel.tolist() * (self.repetitions))
 
@@ -170,9 +171,9 @@ class QssSimulator:
     def _decode_multiround(
         self,
         syndrome_mat: NDArray[np.int_],
-        analog_syndr_mat: NDArray[np.float_],
+        analog_syndr_mat: NDArray[np.float64],
         last_round: bool = False,
-    ) -> tuple[Any, NDArray[np.int32], NDArray[np.float_], int]:
+    ) -> tuple[Any, NDArray[np.int32], NDArray[np.float64], int]:
         return decode_multiround(
             syndrome=syndrome_mat,
             pcm=self.H,

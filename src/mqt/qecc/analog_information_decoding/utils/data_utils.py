@@ -68,8 +68,7 @@ def load_data(
 def calculate_error_rates(
     success_cnt: int, runs: int, code_params: dict[str, int]
 ) -> tuple[float, float, float, float]:
-    """Calculates logical error rates. """
-
+    """Calculates logical error rates."""
     logical_err_rate = 1.0 - (success_cnt / runs)
     logical_err_rate_eb = np.sqrt((1 - logical_err_rate) * logical_err_rate / runs)
     word_error_rate = 1.0 - (1 - logical_err_rate) ** (1 / code_params["k"])

@@ -1,4 +1,5 @@
 """Package for code construction."""
+
 from __future__ import annotations
 
 import json

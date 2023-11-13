@@ -1,4 +1,5 @@
 """Tests for the simulation_utils module."""
+
 from __future__ import annotations
 
 import math

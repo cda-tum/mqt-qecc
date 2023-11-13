@@ -1,4 +1,5 @@
 """This module contains the functions for the multiround decoding simulation."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -56,7 +57,7 @@ def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[
 
 
 def get_updated_decoder(
-    decoding_method: str, decoder: Any, new_channel: NDArray[np.float_], h3d: Any | None = None
+    decoding_method: str, decoder: Any, new_channel: NDArray[np.float64], h3d: Any | None = None
 ) -> Any:
     """Updates the decoder with the new channel information and returns the updated decoder object."""
     if decoding_method == "bposd":
@@ -78,15 +79,15 @@ def decode_multiround(
     syndrome: NDArray[np.int32],
     pcm: NDArray[np.int32],
     decoder: Any,
-    channel_probs: NDArray[np.float_],  # needed for matching decoder does not have an update weights method
+    channel_probs: NDArray[np.float64],  # needed for matching decoder does not have an update weights method
     repetitions: int,
-    analog_syndr: NDArray[np.float_] | None,
+    analog_syndr: NDArray[np.float64] | None,
     last_round: bool = False,
     check_block_size: int = 0,
     sigma: float = 0.0,
     h3d: NDArray[np.int32] | None = None,  # needed for matching decoder
     decoding_method: str = "bposd",  # bposd or matching
-) -> tuple[Any, NDArray[np.int32], NDArray[np.float_], int]:
+) -> tuple[Any, NDArray[np.int32], NDArray[np.float64], int]:
     """Overlapping window decoding.
 
     First, we compute the difference syndrome from the recorded syndrome of each measurement round for all measurement

@@ -94,7 +94,7 @@ def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> np.bo
 # @njit # type: ignore[misc]
 def generate_err(
     nr_qubits: int,
-    channel_probs: tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]],
+    channel_probs: tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]],
     residual_err: list[NDArray[np.int_]],
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     """Computes error vector with X and Z part given channel probabilities and residual error.
@@ -133,7 +133,7 @@ def generate_err(
 
 
 @njit  # type: ignore[misc]
-def get_analog_llr(analog_syndrome: NDArray[np.float_], sigma: float) -> NDArray[np.float_]:
+def get_analog_llr(analog_syndrome: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes analog LLRs given analog syndrome and sigma."""
     return (2 * analog_syndrome) / (sigma**2)
 
@@ -159,7 +159,7 @@ def get_error_rate_from_sigma(sigma: float) -> float:
 
 
 @njit  # type: ignore[misc]
-def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float_], sigma: float) -> NDArray[np.float_]:
+def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes a vector of values v_i from the noisy syndrome bits y_i s.t.
 
     BP initializes the LLRs l_i of the analog nodes with the
@@ -170,7 +170,7 @@ def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float_], sigma: float) -
 
 
 @njit  # type: ignore[misc]
-def generate_syndr_err(channel_probs: NDArray[np.float_]) -> NDArray[np.int32]:
+def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     """Generates a random error vector given the error channel probabilities."""
     error = np.zeros_like(channel_probs, dtype=np.int32)
 
@@ -184,7 +184,7 @@ def generate_syndr_err(channel_probs: NDArray[np.float_]) -> NDArray[np.int32]:
 
 
 # @njit # type: ignore[misc]
-def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float_]:
+def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float64]:
     """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength).
 
     Assumes perfect_syndr has entries in {0,1}.
@@ -202,8 +202,8 @@ def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> 
 
 # @njit # type: ignore[misc]
 def error_channel_setup(
-    error_rate: float, xyz_error_bias: NDArray[np.float_], nr_qubits: int
-) -> tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]]:
+    error_rate: float, xyz_error_bias: NDArray[np.float64], nr_qubits: int
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     """Set up an error_channel given the physical error rate, bias, and number of bits."""
     xyz_error_bias = np.array(xyz_error_bias)
     if xyz_error_bias[0] == np.inf:
@@ -247,7 +247,7 @@ def get_signed_from_binary(binary_syndrome: NDArray[np.int_]) -> NDArray[np.int_
     return np.array(signed_syndr)
 
 
-def get_binary_from_analog(analog_syndrome: NDArray[np.float_]) -> NDArray[np.int32]:
+def get_binary_from_analog(analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
     """Returns the thresholded binary vector.
 
     Since in {-1,+1} notation -1 indicates a check violation, we map values <= 0 to 1 and values > 0 to 0.

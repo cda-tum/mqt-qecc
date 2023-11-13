@@ -1,4 +1,5 @@
 """Tests for the memory experiment simulator."""
+
 from __future__ import annotations
 
 import numpy as np

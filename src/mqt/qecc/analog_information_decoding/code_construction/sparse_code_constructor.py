@@ -1,4 +1,5 @@
 """Sparse code constructor for 3D and 4D HGP codes."""
+
 from __future__ import annotations
 
 import json

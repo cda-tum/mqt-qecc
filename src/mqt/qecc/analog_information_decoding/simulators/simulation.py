@@ -1,4 +1,5 @@
 """Single shot simulations."""
+
 from __future__ import annotations
 
 import json
@@ -45,7 +46,7 @@ class SingleShotSimulator:
         ser: float,
         single_stage: bool,
         seed: int,
-        bias: NDArray[np.float_],
+        bias: NDArray[np.float64],
         x_meta: bool,
         z_meta: bool,
         sus_th_depth: int,
@@ -240,7 +241,7 @@ class SingleShotSimulator:
         return x_syndrome_w_err, z_syndrome_w_err
 
     def _single_stage_decoding(
-        self, x_syndrome_w_err: NDArray[np.float_], z_syndrome_w_err: NDArray[np.float_]
+        self, x_syndrome_w_err: NDArray[np.float64], z_syndrome_w_err: NDArray[np.float64]
     ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
         """Single stage decoding of the given syndromes
         If meta checks are activated, we apply the single-stage decoding method.
@@ -290,10 +291,10 @@ class SingleShotSimulator:
 
     def _decode_ss_no_meta(
         self,
-        syndrome_w_err: NDArray[np.float_],
+        syndrome_w_err: NDArray[np.float64],
         analog_tg_decoder: Any,
         standard_decoder: Any,
-        bit_err_channel: NDArray[np.float_],
+        bit_err_channel: NDArray[np.float64],
         sigma: float,
     ) -> tuple[NDArray[np.int32], int]:
         """Decoding of syndrome without meta checks.
@@ -316,10 +317,10 @@ class SingleShotSimulator:
 
     def _decode_ss_with_meta(
         self,
-        syndrome_w_err: NDArray[np.float_],
+        syndrome_w_err: NDArray[np.float64],
         ss_bpd: Any,
         meta_pcm: NDArray[np.int32],
-        bit_err_channel: NDArray[np.float_],
+        bit_err_channel: NDArray[np.float64],
         sigma: float,
     ) -> tuple[NDArray[np.int32], int]:
         """Single-Stage decoding for given syndrome.
@@ -354,9 +355,9 @@ class SingleShotSimulator:
     def _ss_analog_tg_decoding(
         self,
         decoder: Any,
-        analog_syndrome: NDArray[np.float_],
+        analog_syndrome: NDArray[np.float64],
         meta_pcm: NDArray[np.int32],
-        bit_err_channel: NDArray[np.float_],
+        bit_err_channel: NDArray[np.float64],
         sigma: float,
     ) -> NDArray[np.int32]:
         """Decodes the noisy analog syndrome using the single stage analog tanner graph and BPOSD, i.e.,
@@ -375,7 +376,7 @@ class SingleShotSimulator:
         return decoder.decode(ss_syndr)[: self.n]  # type: ignore[no-any-return]
 
     def _two_stage_decoding(
-        self, x_syndrome_w_err: NDArray[np.float_], z_syndrome_w_err: NDArray[np.float_]
+        self, x_syndrome_w_err: NDArray[np.float64], z_syndrome_w_err: NDArray[np.float64]
     ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
         """Two stage decoding of single shot code
         Meta checks on either side (or both) can be deactivated.
@@ -429,7 +430,7 @@ class SingleShotSimulator:
         return x_decoded, z_decoded
 
     def _meta_code_decoding(
-        self, syndrome_w_err: NDArray[np.float_], M: NDArray[np.int32], m_bp: Any
+        self, syndrome_w_err: NDArray[np.float64], M: NDArray[np.int32], m_bp: Any
     ) -> NDArray[np.int32]:
         """Decodes the noisy syndrome using the meta code.
 
@@ -450,9 +451,9 @@ class SingleShotSimulator:
     def _analog_tg_decoding(
         self,
         decoder: Any,
-        analog_syndrome: NDArray[np.float_],
+        analog_syndrome: NDArray[np.float64],
         hard_syndrome: NDArray[np.int32],
-        bit_err_channel: NDArray[np.float_],
+        bit_err_channel: NDArray[np.float64],
         sigma: float,
     ) -> NDArray[np.int32]:
         """Decodes the noisy analog syndrome using the analog tanner graph and BPOSD.
@@ -619,7 +620,7 @@ class SingleShotSimulator:
     def get_decoder(
         self,
         pcm: NDArray[np.int32],
-        channel_probs: NDArray[np.float_],
+        channel_probs: NDArray[np.float64],
         cutoff: int = 0,
         sigma: float = 0.0,
         analog_info: bool = False,
