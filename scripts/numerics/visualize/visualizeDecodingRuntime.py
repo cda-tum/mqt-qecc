@@ -1,4 +1,5 @@
 """Plot the decoding runtime for different code lengths and different error probabilities."""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Qiskit wrapper for the ECC Framework."""
+
 from __future__ import annotations
 
 import argparse
