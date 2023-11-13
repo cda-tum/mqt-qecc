@@ -24,23 +24,25 @@ from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
 
 
 def test_check_logical_err_h() -> None:
-    H = np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]])
+    """Test check_logical_err_h function."""
+    h = np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]])
     # check with logical
     estimate = np.array([1, 0, 0, 0, 0, 0, 1])
-    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 1, 1, 0]), estimate) is True
+    assert check_logical_err_h(h, np.array([0, 0, 0, 0, 1, 1, 0]), estimate) is True
     #
     # check with stabilizer
     estimate2 = np.array([0, 0, 0, 0, 0, 0, 1])
-    assert check_logical_err_h(H, np.array([1, 1, 1, 0, 0, 0, 0]), estimate2) is False
+    assert check_logical_err_h(h, np.array([1, 1, 1, 0, 0, 0, 0]), estimate2) is False
 
     # check with all zeros
     estimate3 = np.array([0, 0, 0, 0, 0, 0, 0])
-    assert check_logical_err_h(H, np.array([0, 0, 0, 0, 0, 0, 0]), estimate3) is False
+    assert check_logical_err_h(h, np.array([0, 0, 0, 0, 0, 0, 0]), estimate3) is False
 
 
 def test_is_logical_err() -> None:
+    """Test is_logical_err function."""
     # check with logical
-    Lsc = np.array(
+    l_sc = np.array(
         [
             [
                 1,
@@ -124,28 +126,29 @@ def test_is_logical_err() -> None:
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
 
-    assert is_logical_err(Lsc, residual) is True
+    assert is_logical_err(l_sc, residual) is True
 
     # check with stabilizer
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual2) is False
+    assert is_logical_err(l_sc, residual2) is False
 
     # check with all zeros
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual2) is False
+    assert is_logical_err(l_sc, residual2) is False
 
     # check with non-min weight logical
     residual3 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(Lsc, residual3) is True
+    assert is_logical_err(l_sc, residual3) is True
 
 
 def test_get_analog_llr() -> None:
+    """Test get_analog_llr function."""
     analog_syndr = np.array([0.5, 0, 0, -1, 0, 1])
     sigma = 0.8
 
@@ -156,6 +159,7 @@ def test_get_analog_llr() -> None:
 
 
 def test_generate_err() -> None:
+    """Test generate_err function."""
     # no errors
     p = 0.0
     n = 10
@@ -176,6 +180,7 @@ def test_generate_err() -> None:
 
 
 def test_get_sigma_from_syndr_er() -> None:
+    """Test get_sigma_from_syndr_er function."""
     ser = 0.1
 
     assert math.ceil(get_sigma_from_syndr_er(ser)) == math.ceil(0.780304146072379)
@@ -186,6 +191,7 @@ def test_get_sigma_from_syndr_er() -> None:
 
 
 def test_get_error_rate_from_sigma() -> None:
+    """Test get_error_rate_from_sigma function."""
     sigma = 0.3
     assert np.isclose([get_error_rate_from_sigma(sigma)], [0.00042906])
     sigma = 0.5
@@ -195,6 +201,7 @@ def test_get_error_rate_from_sigma() -> None:
 
 
 def test_get_virtual_check_init_vals() -> None:
+    """Test get_virtual_check_init_vals function."""
     noisy_syndr = np.array([0.5, 0, 0, -1, 0, 10])
     sigma = 0.8
 
@@ -217,12 +224,14 @@ def test_get_virtual_check_init_vals() -> None:
 
 
 def test_generate_syndr_err() -> None:
+    """Test generate_syndr_err function."""
     channel = np.array([0.0, 1.0])
 
     assert np.array_equal(generate_syndr_err(channel), np.array([0.0, 1.0]))
 
 
 def test_get_noisy_analog_syndr() -> None:
+    """Test get_noisy_analog_syndr function."""
     perfect_s = np.array([1, 0])
     sigma = 0.0
 
@@ -230,6 +239,7 @@ def test_get_noisy_analog_syndr() -> None:
 
 
 def test_err_chnl_setup() -> None:
+    """Test error_channel_setup function."""
     p = 0.1
     bias = np.array([1.0, 1.0, 1.0])
     n = 10
@@ -262,15 +272,17 @@ def test_err_chnl_setup() -> None:
 
 
 def test_build_ss_pcm() -> None:
-    H = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]])
-    M = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]])
-    id_r = np.identity(M.shape[1])
-    zeros = np.zeros((M.shape[0], H.shape[1]))
-    exp = np.block([[H, id_r], [zeros, M]]).astype(np.int32)
-    assert np.array_equal(build_single_stage_pcm(H, M), exp)
+    """Test build_single_stage_pcm function."""
+    h = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]])
+    m = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]])
+    id_r = np.identity(m.shape[1])
+    zeros = np.zeros((m.shape[0], h.shape[1]))
+    exp = np.block([[h, id_r], [zeros, m]]).astype(np.int32)
+    assert np.array_equal(build_single_stage_pcm(h, m), exp)
 
 
 def test_get_signed_from_binary() -> None:
+    """Test get_signed_from_binary function."""
     binary = np.array([1, 0, 0, 1, 0, 1])
     exp = np.array([-1, 1, 1, -1, 1, -1])
 
@@ -278,6 +290,7 @@ def test_get_signed_from_binary() -> None:
 
 
 def test_get_binary_from_analog() -> None:
+    """Test get_binary_from_analog function."""
     exp = np.array([1, 0, 0, 1, 0, 1])
     analog = np.array([-1.0, 3.0, 1.0, -1.0, 1.0, -2])
 

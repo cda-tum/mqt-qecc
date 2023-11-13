@@ -180,7 +180,7 @@ extend-include = ["*.ipynb"]
 src = ["src"]
 preview = true
 unsafe-fixes = true
-
+exclude = ["*/code_constructor.py", "*/sparse_code_constructor.py", "*/data_utils.py"]
 [tool.ruff.lint]
 extend-select = [
     "E", "F", "W", # flake8

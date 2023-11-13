@@ -8,6 +8,7 @@ from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import
 
 
 def test_build_mr_pcm() -> None:
+    """Test build_multiround_pcm function."""
     pcm = np.array([[1, 1, 0], [0, 1, 1]]).astype(np.int32)
     mr_pcm = build_multiround_pcm(pcm, 1)
     np.zeros((2, 3))
@@ -20,6 +21,7 @@ def test_build_mr_pcm() -> None:
 
 
 def test_move_syndrome() -> None:
+    """Test move_syndrome function."""
     # three bit syndrome over 4 rounds
     syndr = np.array([[0, 0, 1, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
     res = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [1, 0, 0, 0]])

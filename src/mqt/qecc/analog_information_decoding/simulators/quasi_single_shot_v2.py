@@ -49,7 +49,7 @@ class QssSimulator:
         repetitions: int = 0,
         rounds: int = 0,
         experiment: str = "qss",
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize QSS Simulator
         :param pcm: parity-check matrix of code.

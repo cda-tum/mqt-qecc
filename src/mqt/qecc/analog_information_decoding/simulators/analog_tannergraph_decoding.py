@@ -32,7 +32,6 @@ def create_outpath(
     bias: list[float] | None = None,
     overwrite: bool = False,
     identifier: int = 0,
-    **kwargs: Any,
 ) -> str:
     """Create output path from input parameters."""
     path = f"results/{experiment:s}/"
@@ -50,12 +49,12 @@ def create_outpath(
         path += f"lp_{codename:s}/"
     if data_err_rate is not None:
         path += f"per_{data_err_rate:.3e}_sigma_{sigma:.3e}/"
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
+    if not os.path.exists(path):  # noqa: PTH110
+        os.makedirs(path, exist_ok=True)  # noqa: PTH103
 
     if overwrite is False:
         f_loc = path + f"id_{identifier}.json"
-        while os.path.exists(f_loc):
+        while os.path.exists(f_loc):  # noqa: PTH110
             identifier += 1
             f_loc = path + f"id_{identifier}.json"
     else:
@@ -133,7 +132,8 @@ class SoftInfoDecoder:
 
 
 class AnalogTannergraphDecoder:
-    """Analog Tannergraph decoder
+    """Analog Tannergraph decoder.
+
     Builds the analog tanner graph and uses this as decoding graph.
     """
 
@@ -187,9 +187,9 @@ class AnalogTannergraphDecoder:
         )
 
     def _set_analog_syndrome(self, analog_syndrome: NDArray[np.float64]) -> None:
-        """Initializes the error channel of the BP decoder s.t. the virtual nodes are initialized with the
-        analog syndrome LLRs on decoding initialization.
+        """Initializes the error channel of the BP decoder.
 
+        Ensures that the virtual nodes are initialized with the analog syndrome LLRs on decoding initialization.
         :param analog_syndrome: the analog syndrome values to initialize the virtual nodes with.
         """
         new_channel = np.hstack(
@@ -224,7 +224,7 @@ class AtdSimulator:
         bias: NDArray[np.float64] | None = None,
         experiment: str = "atd",
         decoding_method: str = "atd",
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize the simulator."""
         if bias is None:
@@ -288,10 +288,10 @@ class AtdSimulator:
 
         # setup decoders
         if self.decoding_method == "atd":
-            Decoder = AnalogTannergraphDecoder
+            Decoder = AnalogTannergraphDecoder  # noqa: N806
 
         elif self.decoding_method == "softinfo":
-            Decoder = SoftInfoDecoder  # type: ignore[assignment]
+            Decoder = SoftInfoDecoder  # type: ignore[assignment] # noqa: N806
 
         # single-sided error only, no bias
         self.full_error_channel = simulation_utils.error_channel_setup(
@@ -423,7 +423,7 @@ class AtdSimulator:
         }
 
         output.update(self.input_values)
-        with open(self.outfile, "w") as f:
+        with open(self.outfile, "w") as f:  # noqa: PTH123
             json.dump(
                 output,
                 f,

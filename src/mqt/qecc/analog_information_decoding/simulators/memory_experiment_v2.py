@@ -44,7 +44,7 @@ def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, matrix_format
     return hstack([h_3dpcm, h_3did], format=matrix_format)
 
 
-def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[Any]:
+def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[Any]:  # noqa: ANN401
     """Slides the window one region up, i.e., the syndrome of the first half is overwritten by the second half."""
     region_size = int(syndrome.shape[1] / 2)  # number of rounds in each region, T
 
@@ -57,8 +57,11 @@ def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[
 
 
 def get_updated_decoder(
-    decoding_method: str, decoder: Any, new_channel: NDArray[np.float64], h3d: Any | None = None
-) -> Any:
+    decoding_method: str,
+    decoder: Any,
+    new_channel: NDArray[np.float64],
+    h3d: Any | None = None,  # noqa: ANN401
+) -> Any:  # noqa: ANN401
     """Updates the decoder with the new channel information and returns the updated decoder object."""
     if decoding_method == "bposd":
         decoder.update_channel_probs(new_channel)
@@ -78,7 +81,7 @@ def get_updated_decoder(
 def decode_multiround(
     syndrome: NDArray[np.int32],
     pcm: NDArray[np.int32],
-    decoder: Any,
+    decoder: Any,  # noqa: ANN401
     channel_probs: NDArray[np.float64],  # needed for matching decoder does not have an update weights method
     repetitions: int,
     analog_syndr: NDArray[np.float64] | None,

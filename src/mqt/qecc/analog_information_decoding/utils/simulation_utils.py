@@ -1,3 +1,4 @@
+"""Simulation utilities for analog information decoding."""
 from __future__ import annotations
 
 import json
@@ -79,12 +80,12 @@ def check_logical_err_h(
 # i.e., an X residal is a logical iff it commutes with at least one Z logical and
 # an Z residual is a logical iff it commutes with at least one Z logical
 # Hence, L must be of same type as H and of different type than residual_err
-def is_logical_err(L: NDArray[np.int_], residual_err: NDArray[np.int_]) -> bool:
+def is_logical_err(logicals: NDArray[np.int_], residual_err: NDArray[np.int_]) -> bool:
     """Checks if the residual error is a logical error.
 
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
-    l_check = (L @ residual_err) % 2
+    l_check = (logicals @ residual_err) % 2
     return l_check.any() is True  # check all zeros
 
 

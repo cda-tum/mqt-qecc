@@ -54,7 +54,7 @@ class SingleShotSimulator:
         analog_info: bool = False,
         cutoff: int = 0,
         analog_tg: bool = False,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize simulator."""
         set_seed(seed)
@@ -292,12 +292,13 @@ class SingleShotSimulator:
     def _decode_ss_no_meta(
         self,
         syndrome_w_err: NDArray[np.float64],
-        analog_tg_decoder: Any,
-        standard_decoder: Any,
+        analog_tg_decoder: Any,  # noqa: ANN401
+        standard_decoder: Any,  # noqa: ANN401
         bit_err_channel: NDArray[np.float64],
         sigma: float,
     ) -> tuple[NDArray[np.int32], int]:
         """Decoding of syndrome without meta checks.
+
         In case analog_tg is active, we use the analog tanner graph decoding method, which uses the analog syndrome.
         Otherwise, we decode the standard check matrix with BPOSD, or the AI decoder in case analog_info is active.
         """
@@ -318,7 +319,7 @@ class SingleShotSimulator:
     def _decode_ss_with_meta(
         self,
         syndrome_w_err: NDArray[np.float64],
-        ss_bpd: Any,
+        ss_bpd: Any,  # noqa: ANN401
         meta_pcm: NDArray[np.int32],
         bit_err_channel: NDArray[np.float64],
         sigma: float,
@@ -354,14 +355,15 @@ class SingleShotSimulator:
 
     def _ss_analog_tg_decoding(
         self,
-        decoder: Any,
+        decoder: Any,  # noqa: ANN401
         analog_syndrome: NDArray[np.float64],
         meta_pcm: NDArray[np.int32],
         bit_err_channel: NDArray[np.float64],
         sigma: float,
     ) -> NDArray[np.int32]:
-        """Decodes the noisy analog syndrome using the single stage analog tanner graph and BPOSD, i.e.,
-        combines single-stage and analog tanner graph method.
+        """Decodes the noisy analog syndrome using the single stage analog tanner graph and BPOSD.
+
+        That is, combines single-stage and analog tanner graph method.
         In the standard single-stage method, BP is initialized with the bit channel + the syndrome channel.
         In order for the virtual nodes to contain the analog info, we adapt the syndrome channel by computing
         the 'analog channel' given the analog syndrome.
@@ -378,7 +380,8 @@ class SingleShotSimulator:
     def _two_stage_decoding(
         self, x_syndrome_w_err: NDArray[np.float64], z_syndrome_w_err: NDArray[np.float64]
     ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-        """Two stage decoding of single shot code
+        """Two stage decoding of single shot code.
+
         Meta checks on either side (or both) can be deactivated.
 
         If the meta checks for a side are activated the syndrome is thresholded and repaired using the meta code.
@@ -393,7 +396,7 @@ class SingleShotSimulator:
             # thus, meta syndrome of z_syndrome = Mx*z_syndrome where z_syndrome = Hx*z_error
             z_syndrome_repaired = self._meta_code_decoding(
                 syndrome_w_err=z_syndrome_w_err,
-                M=self.Mx,
+                meta_pcm=self.Mx,
                 m_bp=self.mz_bp,
             )
         else:
@@ -402,7 +405,7 @@ class SingleShotSimulator:
         if self.z_meta:
             x_syndrome_repaired = self._meta_code_decoding(
                 syndrome_w_err=x_syndrome_w_err,
-                M=self.Mz,
+                meta_pcm=self.Mz,
                 m_bp=self.mx_bp,
             )
         else:
@@ -430,7 +433,10 @@ class SingleShotSimulator:
         return x_decoded, z_decoded
 
     def _meta_code_decoding(
-        self, syndrome_w_err: NDArray[np.float64], M: NDArray[np.int32], m_bp: Any
+        self,
+        syndrome_w_err: NDArray[np.float64],
+        meta_pcm: NDArray[np.int32],
+        m_bp: Any,  # noqa: ANN401
     ) -> NDArray[np.int32]:
         """Decodes the noisy syndrome using the meta code.
 
@@ -441,7 +447,7 @@ class SingleShotSimulator:
         if self.analog_info or self.analog_tg:
             syndrome_w_err_binary = get_binary_from_analog(syndrome_w_err)
 
-        meta_syndrome = (M @ syndrome_w_err_binary) % 2
+        meta_syndrome = (meta_pcm @ syndrome_w_err_binary) % 2
         meta_decoded = m_bp.decode(meta_syndrome)
         syndrome_w_err_binary += meta_decoded  # repair syndrome
         syndrome_w_err_binary %= 2
@@ -450,7 +456,7 @@ class SingleShotSimulator:
 
     def _analog_tg_decoding(
         self,
-        decoder: Any,
+        decoder: Any,  # noqa: ANN401
         analog_syndrome: NDArray[np.float64],
         hard_syndrome: NDArray[np.int32],
         bit_err_channel: NDArray[np.float64],
@@ -624,7 +630,7 @@ class SingleShotSimulator:
         cutoff: int = 0,
         sigma: float = 0.0,
         analog_info: bool = False,
-    ) -> Any:
+    ) -> Any:  # noqa: ANN401
         """Initialize decoder objects
         If analog_info is activated, the SoftInfoBpDecoder is used instead of the BPOSD decoder.
         Note that analog_info and analog_tg cannot be used simultaneously.
