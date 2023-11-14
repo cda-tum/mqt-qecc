@@ -1,4 +1,5 @@
 """Square Octagon Color Code. Created by Peter-Jan Derks."""
+
 from __future__ import annotations
 
 from .color_code import ColorCode, LatticeType

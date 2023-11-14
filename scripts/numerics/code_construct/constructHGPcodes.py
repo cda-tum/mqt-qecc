@@ -1,4 +1,5 @@
 """Hypergraph product code construction from Roffe's LDPC library."""
+
 from __future__ import annotations
 
 import ldpc.protograph as pt

@@ -23,13 +23,10 @@ jobs:
       matrix:
         runs-on: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        flint-inst-cmd: [sudo apt-get install libflint-dev]
         include:
           - runs-on: macos-latest
-            flint-inst-cmd: brew install flint
             python-version: 3.8
           - runs-on: macos-latest
-            flint-inst-cmd: brew install flint
             python-version: 3.11
     steps:
       - uses: actions/checkout@v4
@@ -47,8 +44,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      - name: Install dependencies
-        run: ${{ matrix.flint-inst-cmd }}
+      - name: Install flint (Linux)
+        if: matrix.runs-on == 'ubuntu-latest'
+        run: sudo apt-get install libflint-dev
+      - name: Install flint (macOS)
+        if: matrix.runs-on == 'macos-latest'
+        run: |
+          brew install gmp mpfr ntl
+          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
+          cd flint2 && ./configure && make -j 3 && make install
       - name: Set up mold as linker (Linux only)
         uses: rui314/setup-mold@v1
       - name: Test on 🐍 ${{ matrix.python-version }}

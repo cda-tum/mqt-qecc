@@ -1,4 +1,5 @@
 """Constructs the lifted parity check codes for the lifted parity check codes."""
+
 # using tools from https://github.com/quantumgizmos/bp_osd
 from __future__ import annotations
 
