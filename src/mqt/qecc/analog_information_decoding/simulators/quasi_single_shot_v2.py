@@ -85,7 +85,7 @@ class QssSimulator:
             msg = "repetitions must be even"
             raise ValueError(msg)
 
-        if self.decoding_method not in ["bposd", "matching"]:
+        if self.decoding_method not in {"bposd", "matching"}:
             msg = "Decoding method must be either bposd or matching"
             raise ValueError(msg)
 

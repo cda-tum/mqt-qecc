@@ -12,7 +12,7 @@ from ldpc import bp_decoder, bposd_decoder
 from ldpc.bp_decoder import SoftInfoBpDecoder
 from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
 
-import mqt.qecc.analog_information_decoding.utils.simulation_utils as simulation_utils
+from mqt.qecc.analog_information_decoding.utils import simulation_utils
 from mqt.qecc.analog_information_decoding.utils.data_utils import (
     BpParams,
     calculate_error_rates,

@@ -242,7 +242,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     pers = [0.001, 0.021, 0.051, 0.081, 0.111]
     for d, cdata in sorted(code_to_xys.items()):
         ds.append(d)
-        for _, (p, t) in enumerate(cdata):
+        for p, t in cdata:
             if p in pers:
                 if p not in p_data:
                     p_data[p] = {"d": [], "t": []}
@@ -303,7 +303,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             metrics[d]["avg_total_time"].append(result["avg_total_time"])
 
         for d, mdata in sorted(metrics.items()):
-            if d in (17, 21):
+            if d in {17, 21}:
                 (
                     mdata["p"],
                     mdata["avg_total_time"],
