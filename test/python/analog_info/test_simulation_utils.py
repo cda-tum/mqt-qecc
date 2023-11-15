@@ -126,25 +126,25 @@ def test_is_logical_err() -> None:
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
 
-    assert is_logical_err(l_sc, residual) == True
+    assert is_logical_err(l_sc, residual) is True
 
     # check with stabilizer
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(l_sc, residual2) == False
+    assert is_logical_err(l_sc, residual2) is False
 
     # check with all zeros
     residual2 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(l_sc, residual2) == False
+    assert is_logical_err(l_sc, residual2) is False
 
     # check with non-min weight logical
     residual3 = np.array(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    assert is_logical_err(l_sc, residual3) == True
+    assert is_logical_err(l_sc, residual3) is True
 
 
 def test_get_analog_llr() -> None:

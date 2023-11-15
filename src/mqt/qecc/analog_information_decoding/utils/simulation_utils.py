@@ -87,7 +87,7 @@ def is_logical_err(logicals: NDArray[np.int_], residual_err: NDArray[np.int_]) -
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
     l_check = (logicals @ residual_err) % 2
-    return l_check.any() == True  # check all zeros
+    return l_check.any() is True  # check all zeros
 
 
 # adapted from https://github.com/quantumgizmos/bp_osd/blob/a179e6e86237f4b9cc2c952103fce919da2777c8/src/bposd/css_decode_sim.py#L430
