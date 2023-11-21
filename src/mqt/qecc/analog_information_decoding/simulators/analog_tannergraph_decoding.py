@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
@@ -60,8 +61,9 @@ def create_outpath(
     else:
         f_loc = path + f"id_{identifier}.json"
 
-    while not os.path.exists(f_loc):
-        open(f_loc, "w").close()
+    path_location = Path(f_loc)
+    while not path_location.exists():
+        path_location.open()
 
     return f_loc
 
@@ -95,10 +97,9 @@ class SoftInfoDecoder:
                 msg = "Either sigma or ser must be specified"
                 raise ValueError(msg)
             self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
-        else:
-            if self.syndr_err_rate is not None:
-                msg = "Only one of sigma or ser must be specified"
-                raise ValueError(msg)
+        elif self.syndr_err_rate is not None:
+            msg = "Only one of sigma or ser must be specified"
+            raise ValueError(msg)
 
         self.bp_decoder = SoftInfoBpOsdDecoder(
             pcm=self.H,
@@ -159,10 +160,9 @@ class AnalogTannergraphDecoder:
                 msg = "Either sigma or ser must be specified"
                 raise ValueError(msg)
             self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
-        else:
-            if self.syndr_err_rate is not None:
-                msg = "Only one of sigma or ser must be specified"
-                raise ValueError(msg)
+        elif self.syndr_err_rate is not None:
+            msg = "Only one of sigma or ser must be specified"
+            raise ValueError(msg)
 
         self.bp_decoder = bposd_decoder(
             parity_check_matrix=self.atg,
@@ -279,7 +279,8 @@ class AtdSimulator:
         self.input_values = self.__dict__.copy()
 
         self.n = hx.shape[1]
-        self.code_params = eval(open("generated_codes/code/code_params.txt").read())
+        with Path("generated_codes/code/code_params.txt").open() as infile:
+            self.code_params = json.load(infile)
         del self.input_values["Hx"]
         del self.input_values["Lx"]
         del self.input_values["Hz"]
@@ -365,7 +366,7 @@ class AtdSimulator:
                     self.code_params,
                     self.eb_precission,
                 ):
-                    print("Result has converged.")
+                    print("Result has converged.")  # noqa: T201
                     break
 
         x_ler, x_ler_eb, x_wer, x_wer_eb = calculate_error_rates(x_success_cnt, runs, self.code_params)
@@ -423,14 +424,8 @@ class AtdSimulator:
         }
 
         output.update(self.input_values)
-        with open(self.outfile, "w") as f:  # noqa: PTH123
-            json.dump(
-                output,
-                f,
-                ensure_ascii=False,
-                indent=4,
-                default=lambda o: o.__dict__,
-            )
+        with Path(self.outfile).open() as f:
+            f.write(json.dumps(output, ensure_ascii=False, indent=4, default=lambda o: o.__dict__))
         return output
 
 
@@ -441,8 +436,6 @@ def get_analog_pcm(pcm: NDArray[np.int32]) -> NDArray[np.int32]:
 
 if __name__ == "__main__":
     """ example simulation script """
-    if os.getcwd().split("/")[-1] == "simulators":
-        os.chdir("..")
     code_path = "generated_codes/lp/"
     s = np.linspace(0.10, 0.4, 11)
     p = 0.05
@@ -456,7 +449,7 @@ if __name__ == "__main__":
                 lers = []
                 ebs = []
                 for sigma in s:
-                    print(sigma)
+                    print(sigma)  # noqa: T201
                     sim = AtdSimulator(
                         hx=Hx,
                         lx=Lx,

@@ -149,3 +149,13 @@ If you use our tool for your research, we will be thankful if you refer to it by
   L. Berent, L. Burgholzer, and R.
   Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
   in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
+
+## Credits
+
+The authors of this software are:
+
+- Lucas Berent
+- Lukas Burgholzer
+- Thomas Grurl
+- Peter-Jan H.S. Derks
+- Timo Hillmann

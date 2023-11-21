@@ -77,7 +77,7 @@ def calculate_threshold(
         ler_eb_data.extend(ler_eb)
         distance_data.extend([int(distance) for _ in range(len(per_array))])
 
-    popt, pcov = curve_fit(threshold_fit, (per_data, distance_data), ler_data, maxfev=10000)
+    popt, _ = curve_fit(threshold_fit, (per_data, distance_data), ler_data, maxfev=10000)
     if ax is not None:
         ax.axvline(x=popt[-1], color="black", linestyle="dashed")
         print("threshold: ", popt[-1])
@@ -116,7 +116,7 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
         with file.open() as f:
             data.append(json.loads(f.read()))
 
-    fig, ax = plt.subplots(4, 4, figsize=(12, 12))
+    _, ax = plt.subplots(4, 4, figsize=(12, 12))
     metrics: dict[int, Any] = {}
     per_metrics: dict[float, Any] = {}
 
@@ -212,7 +212,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     for xys in code_to_xys.values():
         xys.sort(key=lambda xy: xy[0])
 
-    fig, ax = plt.subplots(2, 2, figsize=(12, 10))
+    _, ax = plt.subplots(2, 2, figsize=(12, 10))
     # add data
     for code, xys in sorted(code_to_xys.items()):
         ax[0][0].plot(*zip(*xys), "x-", label=f"d={code}")
@@ -263,7 +263,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
 
 def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
     """Generate plots for the comparison of the different solvers."""
-    fig, ax = plt.subplots(2, figsize=(12, 12))
+    _, ax = plt.subplots(2, figsize=(12, 12))
     cols = [
         "blue",
         "orange",
@@ -292,7 +292,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             with Path(fp).open() as ff:
                 data.append(json.loads(ff.read()))
 
-        metrics: dict[int, dict[str, list[Any]]] = {}
+        metrics: dict[int, dict[str, Any]] = {}
         for result in data:
             d = result["distance"]
             p = result["p"]

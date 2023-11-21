@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -26,7 +27,7 @@ warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 @njit  # type: ignore[misc]
 def set_seed(value: float) -> None:
     """The approriate way to set seeds when numba is used."""
-    np.random.seed(value)
+    np.random.seed(value)  # noqa: NPY002
 
 
 # @njit # type: ignore[misc]
@@ -40,10 +41,7 @@ def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementa
     mat = np.zeros((m, n), dtype=np.int32)
 
     for i in range(m):
-        columns: list[int] = []
-        for item in alist_file[i + 4].split():
-            if item.isdigit():
-                columns.append(item)
+        columns = [item for item in alist_file[i + 4].split() if item.isdigit()]
         columns_two = np.array(columns, dtype=np.int32)
         columns_two = columns_two - 1  # convert to zero indexing
         mat[i, columns_two] = 1
@@ -58,7 +56,7 @@ def check_logical_err_h(
     check_matrix: NDArray[np.int_], original_err: NDArray[np.int_], decoded_estimate: NDArray[np.int_]
 ) -> bool:
     """Checks if the residual error is a logical error."""
-    r, n = check_matrix.shape
+    _, n = check_matrix.shape
 
     # compute residual err given original err
     residual_err = np.zeros((n, 1), dtype=np.int32)
@@ -100,6 +98,7 @@ def generate_err(
     residual_err: list[NDArray[np.int_]],
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     """Computes error vector with X and Z part given channel probabilities and residual error.
+
     Assumes that residual error has two equally sized parts.
     """
     error_x = residual_err[0]
@@ -189,21 +188,21 @@ def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     return error
 
 
-# @njit # type: ignore[misc]
+@njit  # type: ignore[misc]
 def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float64]:
     """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength).
 
     Assumes perfect_syndr has entries in {0,1}.
     """
-    # compute signed syndrome: 1 = check satisfied, -1 = check violated
+    # compute signed syndrome: 1 = check satisfied, -1 = check violated. float needed for Gaussian sampling call
     sgns = np.where(
-        perfect_syndr == 0,
+        perfect_syndr == 0.0,
         np.ones_like(perfect_syndr),
-        np.full_like(perfect_syndr, -1),
-    )
+        np.full_like(perfect_syndr, -1.0),
+    ).astype(float)
 
     # sample from Gaussian with zero mean and sigma std. dev: ~N(0, sigma_sq)
-    return np.random.normal(sgns, sigma, len(sgns))
+    return np.array(np.random.default_rng().normal(loc=sgns, scale=sigma, size=perfect_syndr.shape)).astype(np.float64)
 
 
 # @njit # type: ignore[misc]
@@ -247,10 +246,11 @@ def build_single_stage_pcm(pcm: NDArray[np.int_], meta: NDArray[np.int_]) -> NDA
 @njit  # type: ignore[misc]
 def get_signed_from_binary(binary_syndrome: NDArray[np.int_]) -> NDArray[np.int_]:
     """Maps the binary vector with {0,1} entries to a vector with {-1,1} entries."""
-    signed_syndr = []
-    for j in range(len(binary_syndrome)):
-        signed_syndr.append(1 if binary_syndrome[j] == 0 else -1)
-    return np.array(signed_syndr)
+    return np.where(
+        binary_syndrome == 0,
+        np.full(shape=binary_syndrome.shape, fill_value=1),
+        np.full(shape=binary_syndrome.shape, fill_value=-1),
+    )
 
 
 def get_binary_from_analog(analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
@@ -293,12 +293,6 @@ def save_results(
 
     output.update(input_vals)
     output["bias"] = replace_inf(output["bias"])
-    with open(outfile, "w", encoding="UTF-8") as f:
-        json.dump(
-            output,
-            f,
-            ensure_ascii=False,
-            indent=4,
-            default=lambda o: o.__dict__,
-        )
+    with Path(outfile).open(outfile) as out:
+        out.write(json.dumps(output, ensure_ascii=False, indent=4, default=lambda o: o.__dict__))
     return output

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
@@ -78,7 +79,8 @@ class SingleShotSimulator:
         # self.code_path = f"generated_codes/{codename}"
         self.code_path = f"/codes/generated_codes/{codename}"
         # Load code params
-        self.code_params = eval(open(f"{self.code_path}/code_params.txt").read())
+        with Path(f"{self.code_path}/code_params.txt").open() as infile:
+            self.code_params = json.load(infile)
 
         self.input_values = self.__dict__.copy()
         self.outfile = get_outpath(**self.input_values)
@@ -100,7 +102,7 @@ class SingleShotSimulator:
             self.lx = np.loadtxt(f"{self.code_path}/lx.txt", dtype=np.int32)
             self.lz = np.loadtxt(f"{self.code_path}/lz.txt", dtype=np.int32)
             self._check_logicals = True
-        except:
+        except Exception:
             self._check_logicals = False
 
         (
@@ -243,7 +245,8 @@ class SingleShotSimulator:
     def _single_stage_decoding(
         self, x_syndrome_w_err: NDArray[np.float64], z_syndrome_w_err: NDArray[np.float64]
     ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-        """Single stage decoding of the given syndromes
+        """Single stage decoding of the given syndromes.
+
         If meta checks are activated, we apply the single-stage decoding method.
         This is complemented by either analog_tg decoding or analog_info decoding (or standard decoding) of the
         single stage matrix.
@@ -631,7 +634,8 @@ class SingleShotSimulator:
         sigma: float = 0.0,
         analog_info: bool = False,
     ) -> Any:  # noqa: ANN401
-        """Initialize decoder objects
+        """Initialize decoder objects.
+
         If analog_info is activated, the SoftInfoBpDecoder is used instead of the BPOSD decoder.
         Note that analog_info and analog_tg cannot be used simultaneously.
         """
@@ -698,13 +702,15 @@ class SingleShotSimulator:
 
         output.update(self.input_values)
         output["bias"] = replace_inf(output["bias"])
-        with open(self.outfile, "w") as f:
-            json.dump(
-                output,
-                f,
-                ensure_ascii=False,
-                indent=4,
-                default=lambda o: o.__dict__,
+
+        with Path(self.outfile).open() as f:
+            f.write(
+                json.dumps(
+                    output,
+                    ensure_ascii=False,
+                    indent=4,
+                    default=lambda o: o.__dict__,
+                )
             )
         return output
 
@@ -732,7 +738,7 @@ class SingleShotSimulator:
                     self.code_params,
                     self.eb_precission,
                 ):
-                    print("Result has converged.")
+                    print("Result has converged.")  # noqa: T201
                     break
 
         x_ler, x_ler_eb, x_wer, x_wer_eb = calculate_error_rates(x_success_cnt, runs, self.code_params)

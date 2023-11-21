@@ -26,7 +26,7 @@ def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, matrix_format
     if not isinstance(pcm, csr_matrix):
         pcm = csr_matrix(pcm)
 
-    pcm_rows, pcm_cols = pcm.shape
+    pcm_rows, _ = pcm.shape
 
     # Construct the block of PCMs
     h_3dpcm = block_diag([pcm] * (repetitions + 1), format=matrix_format)
@@ -58,7 +58,7 @@ def move_syndrome(syndrome: NDArray[Any], data_type: Any = np.int32) -> NDArray[
 
 def get_updated_decoder(
     decoding_method: str,
-    decoder: Any,
+    decoder: Any,  # noqa: ANN401
     new_channel: NDArray[np.float64],
     h3d: Any | None = None,  # noqa: ANN401
 ) -> Any:  # noqa: ANN401
@@ -66,16 +66,15 @@ def get_updated_decoder(
     if decoding_method == "bposd":
         decoder.update_channel_probs(new_channel)
         return decoder
-    elif decoding_method == "matching":
+    if decoding_method == "matching":
         weights = np.clip(
             np.log((1 - new_channel) / new_channel),
             a_min=-16777215,
             a_max=16777215,
         )
         return Matching(h3d, weights=weights)
-    else:
-        msg = "Unknown decoding method"
-        raise ValueError(msg, decoding_method)
+    msg = "Unknown decoding method"
+    raise ValueError(msg, decoding_method)
 
 
 def decode_multiround(
@@ -119,12 +118,11 @@ def decode_multiround(
 
         decoder = get_updated_decoder(decoding_method, decoder, new_channel, h3d)
 
-    else:
-        if last_round:
-            new_channel = np.copy(channel_probs)
-            new_channel[-pcm.shape[0] :] = 1e-15
+    elif last_round:
+        new_channel = np.copy(channel_probs)
+        new_channel[-pcm.shape[0] :] = 1e-15
 
-            decoder = get_updated_decoder(decoding_method, decoder, new_channel, h3d)
+        decoder = get_updated_decoder(decoding_method, decoder, new_channel, h3d)
 
     decoded = decoder.decode(diff_syndrome.flatten("F"))
 

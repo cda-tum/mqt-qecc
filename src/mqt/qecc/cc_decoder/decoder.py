@@ -124,7 +124,7 @@ class LightsOut:
             #       This is just to measure the time it takes to solve the problem.
             with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open("a+") as out:
                 start = datetime.datetime.now()
-                subprocess.run([solver_path, wcnf], stdout=out, check=False)
+                subprocess.run([solver_path, wcnf], stdout=out, check=False)  # noqa: S603
                 solve_time = datetime.datetime.now() - start
 
         # pop the context from the optimizer

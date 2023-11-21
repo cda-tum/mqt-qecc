@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -51,7 +53,8 @@ class QssSimulator:
         experiment: str = "qss",
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
-        """Initialize QSS Simulator
+        """Initialize QSS Simulator.
+
         :param pcm: parity-check matrix of code.
 
         :param per: physical data error rate
@@ -97,7 +100,8 @@ class QssSimulator:
         self.experiment = experiment
         set_seed(seed)
         # load code parameters
-        self.code_params = eval(open(f"generated_codes/{codename}/code_params.txt").read())
+        with Path(f"{codename}/code_params.txt").open() as infile:
+            self.code_params = json.load(infile)
         self.input_values = self.__dict__.copy()
 
         self.outfile = create_outpath(**self.input_values)
@@ -199,7 +203,7 @@ class QssSimulator:
         err = np.zeros(self.num_qubits, dtype=np.int32)
         cnt = 0  # counter for syndrome_mat
 
-        for round in range(self.rounds):
+        for rnd in range(self.rounds):
             residual_err = [np.copy(err), np.copy(err)]
             err = generate_err(
                 nr_qubits=self.num_qubits,
@@ -213,7 +217,7 @@ class QssSimulator:
             noiseless_syndrome = (self.H @ err) % 2
 
             # add syndrome error
-            if round != (self.rounds - 1):
+            if rnd != (self.rounds - 1):
                 if self.analog_tg:
                     analog_syndrome = get_noisy_analog_syndrome(noiseless_syndrome, self.sigma)
                     syndrome = get_binary_from_analog(analog_syndrome)
@@ -232,7 +236,7 @@ class QssSimulator:
             cnt += 1  # move to next column of syndrome matrix
 
             if cnt == self.repetitions:  # if we have filled the syndrome matrix, decode
-                if round != (self.rounds - 1):  # if not last round, decode and move syndrome
+                if rnd != (self.rounds - 1):  # if not last round, decode and move syndrome
                     cnt = self.repetitions // 2  # reset counter to start of tentative region
 
                     # the correction is only the correction of the commit region
@@ -281,6 +285,6 @@ class QssSimulator:
             if run % self.save_interval == 1:
                 self._save_results(success_cnt, run)
                 if _check_convergence(success_cnt, run, self.code_params, self.eb_precission):
-                    print("Converged")
+                    print("Converged")  # noqa: T201
                     break
         return self._save_results(success_cnt, run)
