@@ -129,7 +129,7 @@ def decode_multiround(
     if decoding_method == "bposd":
         bp_iter = decoder.iter
 
-    # extract space correction, first repetitions * n entires
+    # extract space correction, first repetitions * n entire
     space_correction = decoded[: pcm.shape[1] * repetitions].reshape((repetitions, pcm.shape[1])).T
     # extract time correction
 

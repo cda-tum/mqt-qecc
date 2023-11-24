@@ -166,7 +166,7 @@ class SingleShotSimulator:
                 channel_probs=self.data_error_channel,
                 residual_err=residual_err,
             )
-            # by our convention, we call the syndrome after the error that is occured
+            # by our convention, we call the syndrome after the error that is occurred
             # however, the check_error_rate depends on which check errors,
             # hence is named after the check matrix.
             x_syndrome = self.Hz @ x_err % 2

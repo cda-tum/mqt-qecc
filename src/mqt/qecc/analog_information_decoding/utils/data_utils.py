@@ -84,9 +84,9 @@ def calculate_error_rates(
     )
 
 
-def is_converged(x_success: int, z_success: int, runs: int, code_params: dict[str, int], precission: float) -> bool:
-    x_cond = _check_convergence(x_success, runs, code_params, precission_cutoff=precission)
-    z_cond = _check_convergence(z_success, runs, code_params, precission_cutoff=precission)
+def is_converged(x_success: int, z_success: int, runs: int, code_params: dict[str, int], precision: float) -> bool:
+    x_cond = _check_convergence(x_success, runs, code_params, precission_cutoff=precision)
+    z_cond = _check_convergence(z_success, runs, code_params, precission_cutoff=precision)
     return x_cond == z_cond is True
 
 
@@ -176,7 +176,7 @@ def create_outpath(
 
 
 def replace_inf(lst: list[str]) -> list[str]:
-    """Replaces all occurences of np.inf in a list with the string "i"."""
+    """Replaces all occurrences of np.inf in a list with the string "i"."""
     new_lst = []
     for item in lst:
         if np.isinf(item):
@@ -411,7 +411,7 @@ def merge_json_files(input_path: str) -> None:
             if merged_data:
                 output_data.append(merged_data)
 
-    # save output to parent directiory
+    # save output to parent directory
     code_name = os.path.basename(os.path.normpath(input_path))
     parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
     with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
@@ -448,7 +448,7 @@ def merge_json_files_x(input_path: str) -> None:
             if merged_data:
                 output_data.append(merged_data)
 
-    # save output to parent directiory
+    # save output to parent directory
     code_name = os.path.basename(os.path.normpath(input_path))
     parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
     with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
@@ -485,7 +485,7 @@ def merge_json_files_z(input_path: str) -> None:
             if merged_data:
                 output_data.append(merged_data)
 
-    # save output to parent directiory
+    # save output to parent directory
     code_name = os.path.basename(os.path.normpath(input_path))
     parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
     with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
@@ -526,7 +526,7 @@ def merge_json_files_xz(input_path: str) -> None:
             if merged_data:
                 output_data.append(merged_data)
 
-    # save output to parent directiory
+    # save output to parent directory
     code_name = os.path.basename(os.path.normpath(input_path))
     parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
     with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:

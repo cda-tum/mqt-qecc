@@ -26,7 +26,7 @@ warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
 @njit  # type: ignore[misc]
 def set_seed(value: float) -> None:
-    """The approriate way to set seeds when numba is used."""
+    """The appropriate way to set seeds when numba is used."""
     np.random.seed(value)  # noqa: NPY002
 
 
@@ -226,7 +226,7 @@ def error_channel_setup(
     else:
         px, py, pz = (
             error_rate * xyz_error_bias / np.sum(xyz_error_bias)
-        )  # Oscar only considers X or Z errors. For reproducability remove normalization
+        )  # Oscar only considers X or Z errors. For reproducibility remove normalization
 
     channel_probs_x = np.ones(nr_qubits) * px
     channel_probs_z = np.ones(nr_qubits) * pz

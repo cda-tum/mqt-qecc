@@ -52,5 +52,5 @@ This module contains functionality needed throughout different simulation types.
 Dependencies
 ++++++++++++
 
-The used BP+OSD implementation, as well as our implementation of the SSMSA decoder are provided
-in the LDPC2 package a preliminary beta version of which is available on Github :cite:labelpar:`roffe2023ldpc`.
+The used BP+OSD implementation, as well as our implementation of the soft-syndrome minimum-sum decoder are provided
+in the ldpc2 package a preliminary beta version of which is available on Github :cite:labelpar:`roffe2023ldpc`.
