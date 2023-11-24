@@ -184,7 +184,7 @@ src = ["src"]
 preview = true
 unsafe-fixes = true
 exclude = [
-    "*/code_constructor/*",
+    "*/code_construction/*",
     "*/data_utils.py",
     "scripts/*",
     "*/cc_decoder/plots.py"
