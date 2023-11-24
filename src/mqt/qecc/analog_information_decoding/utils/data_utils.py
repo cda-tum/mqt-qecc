@@ -1,4 +1,5 @@
 """This module contains utility functions for loading and processing raw simulation data."""
+# type: ignore
 from __future__ import annotations
 
 import itertools
