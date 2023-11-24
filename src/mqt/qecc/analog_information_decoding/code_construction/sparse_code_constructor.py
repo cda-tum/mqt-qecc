@@ -132,7 +132,7 @@ def save_code(
     matrices: list[csr_matrix] = [hx, hz, mz, lx, lz]
     names = ["hx", "hz", "mz", "lx", "lz"]
     for mat, name in zip(matrices, names):
-        if type(mat) != type(None):
+        if mat is not None:
             path_str = path + name
             try:
                 np.savetxt(path_str + ".txt", mat.todense(), fmt="%i")
@@ -215,4 +215,3 @@ def create_code(
 
     else:
         _store_code_params(hx.todense(), hz.todense(), codename)
-    return
