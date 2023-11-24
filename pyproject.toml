@@ -47,7 +47,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
+test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock", "numba", "pymatching"]
 coverage = ["mqt.qecc[test]", "pytest-cov"]
 docs = [
     "furo>=2023.08.17",
