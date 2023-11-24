@@ -10,7 +10,8 @@ readme = "README.md"
 authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" },
     { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
-    { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" }
+    { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" },
+    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"}
 ]
 keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
@@ -170,6 +171,10 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 explicit_package_bases = true
 pretty = true
+exclude = [
+    "*/code_construction/*",
+    "*/data_utils.py"
+]
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qiskit_aer.*", "qecsim.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
