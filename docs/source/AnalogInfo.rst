@@ -1,4 +1,4 @@
-Analog Information Decoding
+    Analog Information Decoding
 ===========================
 This submodule provides means to conduct decoding simulations for quantum CSS codes with
 analog syndrome information as proposed in the corresponding paper :cite:labelpar:`berent2023analog`.
@@ -53,4 +53,4 @@ Dependencies
 ++++++++++++
 
 The used BP+OSD implementation, as well as our implementation of the soft-syndrome minimum-sum decoder are provided
-in the ldpc2 package a preliminary beta version of which is available on Github :cite:labelpar:`roffe2023ldpc`.
+in the ldpc2 package a preliminary beta version of which is available on github :cite:labelpar:`roffe2023ldpc`.
