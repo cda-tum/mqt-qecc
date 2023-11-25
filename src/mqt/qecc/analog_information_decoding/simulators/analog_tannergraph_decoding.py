@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from ldpc import bp_decoder, bposd_decoder
-from ldpc.bp_decoder import SoftInfoBpDecoder
-from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
+# from ldpc.bp_decoder import SoftInfoBpDecoder
+# from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
 
 from mqt.qecc.analog_information_decoding.utils import simulation_utils
 from mqt.qecc.analog_information_decoding.utils.data_utils import (
@@ -23,112 +23,68 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
 
-def create_outpath(
-    experiment: str = "atd",
-    data_err_rate: float | None = None,
-    sigma: float | None = None,
-    bp_params: BpParams | None = None,
-    codename: str | None = None,
-    bias: list[float] | None = None,
-    overwrite: bool = False,
-    identifier: int = 0,
-) -> str:
-    """Create output path from input parameters."""
-    path = f"results/{experiment:s}/"
-    if bias is not None:
-        path += f"bias={bias[0]}_{bias[1]}_{bias[2]}/"
-    if bp_params is not None:
-        path += f"bp_{bp_params.bp_method}/"
-        path += f"{bp_params.osd_method}/"
-        path += f"osd_order_{bp_params.osd_order}/"
-        path += f"max_bp_iter_{bp_params.max_bp_iter}/"
-        path += f"ms_scaling_factor_{bp_params.ms_scaling_factor}/"
-        path += f"schedule_{bp_params.schedule}/"
-        path += f"cutoff_{bp_params.cutoff:.1f}/"
-    if codename is not None:
-        path += f"lp_{codename:s}/"
-    if data_err_rate is not None:
-        path += f"per_{data_err_rate:.3e}_sigma_{sigma:.3e}/"
-    if not os.path.exists(path):  # noqa: PTH110
-        os.makedirs(path, exist_ok=True)  # noqa: PTH103
-
-    if overwrite is False:
-        f_loc = path + f"id_{identifier}.json"
-        while os.path.exists(f_loc):  # noqa: PTH110
-            identifier += 1
-            f_loc = path + f"id_{identifier}.json"
-    else:
-        f_loc = path + f"id_{identifier}.json"
-
-    path_location = Path(f_loc)
-    while not path_location.exists():
-        path_location.open()
-
-    return f_loc
-
-
-class SoftInfoDecoder:
-    """Soft Information Decoder.
-
-    Plug and play solution for soft information decoding that can be
-    interchanged with `AnalogTannergraphDecoder` in `ATD_Simulator`.
-
-    """
-
-    def __init__(
-        self,
-        pcm: NDArray[np.int32],
-        bp_params: BpParams,
-        error_channel: NDArray[np.float64],
-        sigma: float | None = None,
-        ser: float | None = None,
-    ) -> None:
-        """Initialize the decoder."""
-        self.m, self.n = pcm.shape
-        self.sigma = sigma
-        self.H = pcm
-        self.bp_params = bp_params
-        self.syndr_err_rate = ser
-        self.error_channel = error_channel
-
-        if self.sigma is None:
-            if self.syndr_err_rate is None:
-                msg = "Either sigma or ser must be specified"
-                raise ValueError(msg)
-            self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
-        elif self.syndr_err_rate is not None:
-            msg = "Only one of sigma or ser must be specified"
-            raise ValueError(msg)
-
-        self.bp_decoder = SoftInfoBpOsdDecoder(
-            pcm=self.H,
-            error_channel=error_channel,
-            sigma=self.sigma,
-            max_iter=self.bp_params.max_bp_iter,
-            ms_scaling_factor=self.bp_params.ms_scaling_factor,
-            omp_thread_count=self.bp_params.omp_thread_count,
-            random_serial_schedule=self.bp_params.random_serial_schedule,
-            serial_schedule_order=self.bp_params.serial_schedule_order,
-            osd_method=self.bp_params.osd_method,
-            osd_order=self.bp_params.osd_order,
-            bp_method=self.bp_params.bp_method,
-            schedule=self.bp_params.schedule,
-            cutoff=self.bp_params.cutoff,
-        )
-
-        self.bp_decoder = SoftInfoBpDecoder(
-            pcm=self.H,
-            error_channel=error_channel,
-            sigma=self.sigma,
-            max_iter=self.bp_params.max_bp_iter,
-            ms_scaling_factor=self.bp_params.ms_scaling_factor,
-            bp_method=self.bp_params.bp_method,
-            cutoff=self.bp_params.cutoff,
-        )
-
-    def decode(self, analog_syndrome: NDArray[np.int32]) -> NDArray[np.int32]:
-        """Decode a given analog syndrome."""
-        return self.bp_decoder.decode(analog_syndrome)  # type: ignore[no-any-return]
+# class SoftInfoDecoder:
+#     """Soft Information Decoder.
+#
+#     Plug and play solution for soft information decoding that can be
+#     interchanged with `AnalogTannergraphDecoder` in `ATD_Simulator`.
+#
+#     """
+#
+#     def __init__(
+#         self,
+#         pcm: NDArray[np.int32],
+#         bp_params: BpParams,
+#         error_channel: NDArray[np.float64],
+#         sigma: float | None = None,
+#         ser: float | None = None,
+#     ) -> None:
+#         """Initialize the decoder."""
+#         self.m, self.n = pcm.shape
+#         self.sigma = sigma
+#         self.H = pcm
+#         self.bp_params = bp_params
+#         self.syndr_err_rate = ser
+#         self.error_channel = error_channel
+#
+#         if self.sigma is None:
+#             if self.syndr_err_rate is None:
+#                 msg = "Either sigma or ser must be specified"
+#                 raise ValueError(msg)
+#             self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
+#         elif self.syndr_err_rate is not None:
+#             msg = "Only one of sigma or ser must be specified"
+#             raise ValueError(msg)
+#
+#         self.bposd_decoder = SoftInfoBpOsdDecoder(
+#             pcm=self.H,
+#             error_channel=error_channel,
+#             sigma=self.sigma,
+#             max_iter=self.bp_params.max_bp_iter,
+#             ms_scaling_factor=self.bp_params.ms_scaling_factor,
+#             omp_thread_count=self.bp_params.omp_thread_count,
+#             random_serial_schedule=self.bp_params.random_serial_schedule,
+#             serial_schedule_order=self.bp_params.serial_schedule_order,
+#             osd_method=self.bp_params.osd_method,
+#             osd_order=self.bp_params.osd_order,
+#             bp_method=self.bp_params.bp_method,
+#             schedule=self.bp_params.schedule,
+#             cutoff=self.bp_params.cutoff,
+#         )
+#
+#         self.bp_decoder = SoftInfoBpDecoder(
+#             pcm=self.H,
+#             error_channel=error_channel,
+#             sigma=self.sigma,
+#             max_iter=self.bp_params.max_bp_iter,
+#             ms_scaling_factor=self.bp_params.ms_scaling_factor,
+#             bp_method=self.bp_params.bp_method,
+#             cutoff=self.bp_params.cutoff,
+#         )
+#
+#     def decode(self, analog_syndrome: NDArray[np.int32]) -> NDArray[np.int32]:
+#         """Decode a given analog syndrome."""
+#         return self.bp_decoder.decode(analog_syndrome)  # type: ignore[no-any-return]
 
 
 class AnalogTannergraphDecoder:
@@ -138,12 +94,12 @@ class AnalogTannergraphDecoder:
     """
 
     def __init__(
-        self,
-        pcm: NDArray[np.int32],
-        bp_params: BpParams,
-        error_channel: NDArray[np.float64],
-        sigma: float = 0.0,
-        ser: float | None = None,
+            self,
+            pcm: NDArray[np.int32],
+            bp_params: BpParams,
+            error_channel: NDArray[np.float64],
+            sigma: float = 0.0,
+            ser: float | None = None,
     ) -> None:
         """Initialize the decoder."""
         self.m, self.n = pcm.shape
@@ -163,7 +119,7 @@ class AnalogTannergraphDecoder:
             msg = "Only one of sigma or ser must be specified"
             raise ValueError(msg)
 
-        self.bp_decoder = bposd_decoder(
+        self.bposd_decoder = bposd_decoder(
             parity_check_matrix=self.atg,
             channel_probs=np.hstack((self.error_channel, np.zeros(self.m))),  # initd as dummy for now
             max_iter=self.bp_params.max_bp_iter,
@@ -177,13 +133,13 @@ class AnalogTannergraphDecoder:
             serial_schedule_order=self.bp_params.serial_schedule_order,
         )
 
-        self.bp_decoder = bp_decoder(
-            parity_check_matrix=self.atg,
-            channel_probs=np.hstack((self.error_channel, np.zeros(self.m))),  # initd as dummy for now
-            max_iter=self.bp_params.max_bp_iter,
-            bp_method=self.bp_params.bp_method,
-            ms_scaling_factor=self.bp_params.ms_scaling_factor,
-        )
+        # self.bp_decoder = bp_decoder(
+        #     parity_check_matrix=self.atg,
+        #     channel_probs=np.hstack((self.error_channel, np.zeros(self.m))),  # initd as dummy for now
+        #     max_iter=self.bp_params.max_bp_iter,
+        #     bp_method=self.bp_params.bp_method,
+        #     ms_scaling_factor=self.bp_params.ms_scaling_factor,
+        # )
 
     def _set_analog_syndrome(self, analog_syndrome: NDArray[np.float64]) -> None:
         """Initializes the error channel of the BP decoder.
@@ -193,37 +149,39 @@ class AnalogTannergraphDecoder:
         """
         new_channel = np.hstack(
             (
-                self.bp_decoder.channel_probs[: self.n],
+                self.bposd_decoder.channel_probs[: self.n],
                 simulation_utils.get_virtual_check_init_vals(analog_syndrome, self.sigma),
             )
         )
-        self.bp_decoder.update_channel_probs(new_channel)
+        self.bposd_decoder.update_channel_probs(new_channel)
 
     def decode(self, analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
         """Decode a given analog syndrome."""
         self._set_analog_syndrome(analog_syndrome)
-        return self.bp_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
+        return self.bposd_decoder.decode(
+            simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
 
 
 class AtdSimulator:
     """Analog Tanner graph Decoding Simulator."""
 
     def __init__(
-        self,
-        hx: NDArray[np.int32],
-        lx: NDArray[np.int32],
-        hz: NDArray[np.int32],
-        lz: NDArray[np.int32],
-        codename: str,
-        seed: int,
-        bp_params: BpParams,
-        data_err_rate: float,
-        syndr_err_rate: float | None = None,
-        sigma: float | None = None,
-        bias: NDArray[np.float64] | None = None,
-        experiment: str = "atd",
-        decoding_method: str = "atd",
-        **kwargs: Any,  # noqa: ANN401
+            self,
+            hx: NDArray[np.int32],
+            lx: NDArray[np.int32],
+            hz: NDArray[np.int32],
+            lz: NDArray[np.int32],
+            codename: str,
+            seed: int,
+            bp_params: BpParams,
+            data_err_rate: float,
+            syndr_err_rate: float | None = None,
+            sigma: float | None = None,
+            bias: NDArray[np.float64] | None = None,
+            experiment: str = "atd",
+            decoding_method: str = "atd",
+            output_path: str | None = None,
+            **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize the simulator."""
         if bias is None:
@@ -239,10 +197,7 @@ class AtdSimulator:
         self.experiment = experiment
         self.decoding_method = decoding_method
         self.sigma = sigma
-
-        self.eff_x_err_rate = 0
-        self.eff_z_err_rate = 0
-
+        self.outfile = output_path
         if sigma is None:
             if syndr_err_rate is None:
                 msg = "Either sigma or ser must be specified"
@@ -278,13 +233,13 @@ class AtdSimulator:
         self.input_values = self.__dict__.copy()
 
         self.n = hx.shape[1]
-        with Path("generated_codes/code/code_params.txt").open() as infile:
+        with Path(
+                f"/home/luca/Documents/codeRepos/mqt-qecc/qecc/src/mqt/qecc/analog_information_decoding/codes/{codename}/code_params.txt").open() as infile:
             self.code_params = json.load(infile)
         del self.input_values["Hx"]
         del self.input_values["Lx"]
         del self.input_values["Hz"]
         del self.input_values["Lz"]
-        self.outfile = create_outpath(**self.input_values)
 
         # setup decoders
         if self.decoding_method == "atd":
@@ -332,13 +287,13 @@ class AtdSimulator:
         x_perf_syndr = (self.Hz @ x_err) % 2
         x_noisy_syndr = simulation_utils.get_noisy_analog_syndrome(sigma=self.x_sigma, perfect_syndr=x_perf_syndr)
         x_decoding = self.x_decoder.decode(x_noisy_syndr)[: self.n]
-        self.x_bp_iterations += self.x_decoder.bp_decoder.iter
+        self.x_bp_iterations += self.x_decoder.bposd_decoder.iter
         x_residual = (x_err + x_decoding) % 2
 
         z_perf_syndr = (self.Hx @ z_err) % 2
         z_noisy_syndr = simulation_utils.get_noisy_analog_syndrome(sigma=self.z_sigma, perfect_syndr=z_perf_syndr)
         z_decoding = self.z_decoder.decode(z_noisy_syndr)[: self.n]
-        self.z_bp_iterations += self.z_decoder.bp_decoder.iter
+        self.z_bp_iterations += self.z_decoder.bposd_decoder.iter
         z_residual = (z_err + z_decoding) % 2
 
         return not simulation_utils.is_logical_err(self.Lz, x_residual), not simulation_utils.is_logical_err(
@@ -359,11 +314,11 @@ class AtdSimulator:
 
                 # check convergence only once during each save interval
                 if is_converged(
-                    x_success_cnt,
-                    z_success_cnt,
-                    runs,
-                    self.code_params,
-                    self.eb_precission,
+                        x_success_cnt,
+                        z_success_cnt,
+                        runs,
+                        self.code_params,
+                        self.eb_precission,
                 ):
                     print("Result has converged.")  # noqa: T201
                     break
@@ -424,7 +379,7 @@ class AtdSimulator:
 
         output.update(self.input_values)
         with Path(self.outfile).open() as f:
-            f.write(json.dumps(output, ensure_ascii=False, indent=4, default=lambda o: o.__dict__))
+            json.dump(output,f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__)
         return output
 
 
