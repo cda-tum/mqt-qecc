@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 from ldpc import bp_decoder, bposd_decoder
 from ldpc.bp_decoder import SoftInfoBpDecoder
@@ -432,69 +431,3 @@ class AtdSimulator:
 def get_analog_pcm(pcm: NDArray[np.int32]) -> NDArray[np.int32]:
     """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
     return np.hstack((pcm, np.identity(pcm.shape[0], dtype=np.int32)))
-
-
-if __name__ == "__main__":
-    """ example simulation script """
-    code_path = "generated_codes/lp/"
-    s = np.linspace(0.10, 0.4, 11)
-    p = 0.05
-    for bp_method in ["msl"]:
-        for decoder in ["atd"]:
-            for c in [16, 21, 30]:
-                Hx = np.loadtxt(code_path + str(c) + "_hx.txt", dtype=int)
-                Hz = np.loadtxt(code_path + str(c) + "_hz.txt", dtype=int)
-                Lx = np.loadtxt(code_path + str(c) + "_lx.txt", dtype=int)
-                Lz = np.loadtxt(code_path + str(c) + "_lz.txt", dtype=int)
-                lers = []
-                ebs = []
-                for sigma in s:
-                    print(sigma)  # noqa: T201
-                    sim = AtdSimulator(
-                        hx=Hx,
-                        lx=Lx,
-                        hz=Hz,
-                        lz=Lz,
-                        codename=str(c),
-                        data_err_rate=p,
-                        sigma=sigma,
-                        seed=666,
-                        bp_params=BpParams(
-                            max_bp_iter=100,
-                            bp_method=bp_method,
-                            osd_order=10,
-                            osd_method="osd_cs",
-                            ms_scaling_factor=0.75,
-                            cutoff=5.0,
-                        ),
-                        decoding_method=decoder,
-                    )
-                    out = sim.run(samples=1500)
-
-                    ler = (
-                        out["z_ler"] * (1 - out["x_ler"])
-                        + out["x_ler"] * (1 - out["z_ler"])
-                        + out["x_ler"] * out["z_ler"]
-                    )
-                    ler_eb = (
-                        out["z_ler_eb"] * (1 - out["x_ler_eb"])
-                        + out["x_ler_eb"] * (1 - out["z_ler_eb"])
-                        + out["x_ler_eb"] * out["z_ler_eb"]
-                    )
-                    lers.append(ler)
-                    ebs.append(ler_eb)
-
-                plt.errorbar(
-                    s,
-                    lers,
-                    ebs,
-                    label=f"l={c}, {decoder} {bp_method}",
-                    marker="o",
-                    linestyle="solid",
-                )
-
-    plt.legend()
-    plt.xlabel("sigma")
-    plt.ylabel("LER")
-    plt.yscale("log")
-    plt.show()

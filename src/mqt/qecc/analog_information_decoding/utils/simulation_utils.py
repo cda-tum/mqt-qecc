@@ -188,7 +188,7 @@ def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     return error
 
 
-@njit  # type: ignore[misc]
+# @njit  # type: ignore[misc]
 def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float64]:
     """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength).
 
