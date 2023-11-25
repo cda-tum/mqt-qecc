@@ -172,8 +172,8 @@ warn_unreachable = true
 explicit_package_bases = true
 pretty = true
 exclude = [
-    "*/code_construction/*",
-    "*/data_utils.py"
+    "code_construction*",
+    "^data_utils\\.py$"
 ]
 
 [[tool.mypy.overrides]]
