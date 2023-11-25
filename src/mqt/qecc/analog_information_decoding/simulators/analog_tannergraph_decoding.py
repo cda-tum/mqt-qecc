@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from ldpc import bp_decoder, bposd_decoder
+from ldpc import bposd_decoder
+
 # from ldpc.bp_decoder import SoftInfoBpDecoder
 # from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
-
 from mqt.qecc.analog_information_decoding.utils import simulation_utils
 from mqt.qecc.analog_information_decoding.utils.data_utils import (
     BpParams,
@@ -94,12 +93,12 @@ class AnalogTannergraphDecoder:
     """
 
     def __init__(
-            self,
-            pcm: NDArray[np.int32],
-            bp_params: BpParams,
-            error_channel: NDArray[np.float64],
-            sigma: float = 0.0,
-            ser: float | None = None,
+        self,
+        pcm: NDArray[np.int32],
+        bp_params: BpParams,
+        error_channel: NDArray[np.float64],
+        sigma: float = 0.0,
+        ser: float | None = None,
     ) -> None:
         """Initialize the decoder."""
         self.m, self.n = pcm.shape
@@ -158,30 +157,29 @@ class AnalogTannergraphDecoder:
     def decode(self, analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
         """Decode a given analog syndrome."""
         self._set_analog_syndrome(analog_syndrome)
-        return self.bposd_decoder.decode(
-            simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
+        return self.bposd_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
 
 
 class AtdSimulator:
     """Analog Tanner graph Decoding Simulator."""
 
     def __init__(
-            self,
-            hx: NDArray[np.int32],
-            lx: NDArray[np.int32],
-            hz: NDArray[np.int32],
-            lz: NDArray[np.int32],
-            codename: str,
-            seed: int,
-            bp_params: BpParams,
-            data_err_rate: float,
-            syndr_err_rate: float | None = None,
-            sigma: float | None = None,
-            bias: NDArray[np.float64] | None = None,
-            experiment: str = "atd",
-            decoding_method: str = "atd",
-            output_path: str | None = None,
-            **kwargs: Any,  # noqa: ANN401
+        self,
+        hx: NDArray[np.int32],
+        lx: NDArray[np.int32],
+        hz: NDArray[np.int32],
+        lz: NDArray[np.int32],
+        codename: str,
+        seed: int,
+        bp_params: BpParams,
+        data_err_rate: float,
+        syndr_err_rate: float | None = None,
+        sigma: float | None = None,
+        bias: NDArray[np.float64] | None = None,
+        experiment: str = "atd",
+        decoding_method: str = "atd",
+        output_path: str | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize the simulator."""
         if bias is None:
@@ -234,7 +232,8 @@ class AtdSimulator:
 
         self.n = hx.shape[1]
         with Path(
-                f"/home/luca/Documents/codeRepos/mqt-qecc/qecc/src/mqt/qecc/analog_information_decoding/codes/{codename}/code_params.txt").open() as infile:
+            f"/home/luca/Documents/codeRepos/mqt-qecc/qecc/src/mqt/qecc/analog_information_decoding/codes/{codename}/code_params.txt"
+        ).open() as infile:
             self.code_params = json.load(infile)
         del self.input_values["Hx"]
         del self.input_values["Lx"]
@@ -314,11 +313,11 @@ class AtdSimulator:
 
                 # check convergence only once during each save interval
                 if is_converged(
-                        x_success_cnt,
-                        z_success_cnt,
-                        runs,
-                        self.code_params,
-                        self.eb_precission,
+                    x_success_cnt,
+                    z_success_cnt,
+                    runs,
+                    self.code_params,
+                    self.eb_precission,
                 ):
                     print("Result has converged.")  # noqa: T201
                     break
@@ -379,7 +378,7 @@ class AtdSimulator:
 
         output.update(self.input_values)
         with Path(self.outfile).open() as f:
-            json.dump(output,f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__)
+            json.dump(output, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__)
         return output
 
 

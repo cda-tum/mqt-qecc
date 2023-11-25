@@ -37,5 +37,5 @@ __all__ = [
     "AnalogTannergraphDecoder",
     "AtdSimulator",
     # "SoftInfoDecoder",
-    "QssSimulator"
+    "QssSimulator",
 ]

@@ -1,16 +1,14 @@
+from __future__ import annotations
+
 from unittest import mock
 
 import numpy as np
 import pytest
-from mqt.qecc.analog_information_decoding.simulators.analog_tannergraph_decoding import AnalogTannergraphDecoder
-from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams
-from typing import TYPE_CHECKING
 
 from mqt.qecc import AtdSimulator
+from mqt.qecc.analog_information_decoding.simulators.analog_tannergraph_decoding import AnalogTannergraphDecoder
 from mqt.qecc.analog_information_decoding.utils import simulation_utils
-
-if TYPE_CHECKING:
-    from numpy._typing import NDArray
+from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams
 
 
 @pytest.fixture()
@@ -22,11 +20,7 @@ def error_channel():
 @pytest.fixture()
 def pcm():
     """Return parity check matrix."""
-    return np.array([
-        [1, 0, 0, 1, 0, 1, 1],
-        [0, 1, 0, 1, 1, 1, 1],
-        [0, 0, 1, 0, 1, 0, 1]
-    ]).astype(np.int32)
+    return np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 1, 1], [0, 0, 1, 0, 1, 0, 1]]).astype(np.int32)
 
 
 @pytest.fixture()
@@ -48,7 +42,8 @@ def test_set_analog_syndrome(atd: AnalogTannergraphDecoder, error_channel) -> No
 
     res = atd.decode(analog_syndr)
     assert np.array_equal(atd.bposd_decoder.channel_probs, expected)
-    assert res is not None and len(res) == 10
+    assert res is not None
+    assert len(res) == 10
 
 
 def test_atd_simulator_data_error_channels_setup(pcm) -> None:
@@ -59,7 +54,7 @@ def test_atd_simulator_data_error_channels_setup(pcm) -> None:
         hz=pcm,
         lx=np.array([]),
         lz=np.array([]),
-        codename='test',
+        codename="test",
         data_err_rate=per,
         sigma=sigma,
         seed=666,
@@ -84,7 +79,7 @@ def test_atd_simulator_syndrome_error_channels_setup(pcm) -> None:
         hz=pcm,
         lx=np.array([]),
         lz=np.array([]),
-        codename='test',
+        codename="test",
         data_err_rate=per,
         sigma=sigma,
         seed=666,
@@ -109,7 +104,7 @@ def test_atd_simulator_syndrome_error_channels_setup(pcm) -> None:
         hz=pcm,
         lx=np.array([]),
         lz=np.array([]),
-        codename='test',
+        codename="test",
         data_err_rate=per,
         syndr_err_rate=ser,
         seed=666,
@@ -124,15 +119,16 @@ def test_atd_simulator_syndrome_error_channels_setup(pcm) -> None:
     assert sim.x_sigma == simulation_utils.get_sigma_from_syndr_er(expec_chnl[0][0] + expec_chnl[1][0])
     assert sim.z_sigma == simulation_utils.get_sigma_from_syndr_er(expec_chnl[2][0] + expec_chnl[1][0])
 
-def test_single_sample(pcm)-> None:
+
+def test_single_sample(pcm) -> None:
     per = 0.1
     ser = 0.1
     sim = AtdSimulator(
         hx=pcm,
         hz=pcm,
-        lx=np.array([1,1,1,1,1,1,1]),
-        lz=np.array([1,1,1,1,1,1,1]),
-        codename='test',
+        lx=np.array([1, 1, 1, 1, 1, 1, 1]),
+        lz=np.array([1, 1, 1, 1, 1, 1, 1]),
+        codename="test",
         data_err_rate=per,
         syndr_err_rate=ser,
         seed=666,
@@ -144,24 +140,25 @@ def test_single_sample(pcm)-> None:
     assert sim.x_bp_iterations is not None
     assert sim.z_bp_iterations is not None
 
-def test_safe_results(pcm)-> None:
+
+def test_safe_results(pcm) -> None:
     per = 0.1
     ser = 0.1
     sim = AtdSimulator(
         hx=pcm,
         hz=pcm,
-        lx=np.array([1,1,1,1,1,1,1]),
-        lz=np.array([1,1,1,1,1,1,1]),
-        codename='test',
+        lx=np.array([1, 1, 1, 1, 1, 1, 1]),
+        lz=np.array([1, 1, 1, 1, 1, 1, 1]),
+        codename="test",
         data_err_rate=per,
         syndr_err_rate=ser,
         seed=666,
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
-        output_path="./results"
+        output_path="./results",
     )
-    with mock.patch('json.dump', return_value=True):
-            res = sim.save_results(1,1,1)
+    with mock.patch("json.dump", return_value=True):
+        res = sim.save_results(1, 1, 1)
     assert res is not None
     assert res["code_K"] == 3
     assert res["code_N"] == 7
