@@ -15,7 +15,7 @@ from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import
     decode_multiround,
     move_syndrome,
 )
-from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, _check_convergence, create_outpath
+from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, _check_convergence
 from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
     error_channel_setup,
     generate_err,
@@ -51,6 +51,7 @@ class QssSimulator:
         repetitions: int = 0,
         rounds: int = 0,
         experiment: str = "qss",
+        outpath: str = "/",
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize QSS Simulator.
@@ -100,11 +101,13 @@ class QssSimulator:
         self.experiment = experiment
         set_seed(seed)
         # load code parameters
-        with Path(f"{codename}/code_params.txt").open() as infile:
+        with Path(
+            f"/home/luca/Documents/codeRepos/mqt-qecc/qecc/src/mqt/qecc/analog_information_decoding/codes/{codename}/code_params.txt"
+        ).open() as infile:
             self.code_params = json.load(infile)
         self.input_values = self.__dict__.copy()
 
-        self.outfile = create_outpath(**self.input_values)
+        self.outfile = outpath
 
         # Remove Arrays
         del self.input_values["H"]

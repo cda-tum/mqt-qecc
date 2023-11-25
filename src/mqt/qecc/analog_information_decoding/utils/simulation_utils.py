@@ -85,7 +85,7 @@ def is_logical_err(logicals: NDArray[np.int_], residual_err: NDArray[np.int_]) -
     :returns: True if its logical error, False otherwise (is a stabilizer).
     """
     l_check = (logicals @ residual_err) % 2
-    return l_check.any() is True  # check all zeros
+    return bool(l_check.any())  # check all zeros
 
 
 # adapted from https://github.com/quantumgizmos/bp_osd/blob/a179e6e86237f4b9cc2c952103fce919da2777c8/src/bposd/css_decode_sim.py#L430
@@ -293,6 +293,6 @@ def save_results(
 
     output.update(input_vals)
     output["bias"] = replace_inf(output["bias"])
-    with Path(outfile).open(outfile) as out:
-        out.write(json.dumps(output, ensure_ascii=False, indent=4, default=lambda o: o.__dict__))
+    with Path(outfile).open(mode="w") as out:
+        json.dump(output, out, ensure_ascii=False, indent=4, default=lambda o: o.__dict__)
     return output
