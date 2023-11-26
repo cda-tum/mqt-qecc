@@ -56,6 +56,8 @@ def atd_simulator_sigma(pcm: NDArray[np.int32]) -> AtdSimulator:
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
     )
+
+
 @pytest.fixture()
 def atd_simulator_ser(pcm: NDArray[np.int32]) -> AtdSimulator:
     """Return AtdSimulator using error rate to initialize syndrome channel."""
