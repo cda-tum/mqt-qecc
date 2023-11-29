@@ -232,7 +232,7 @@ class AtdSimulator:
 
         self.n = hx.shape[1]
         with Path(
-            f"/home/luca/Documents/codeRepos/mqt-qecc/qecc/src/mqt/qecc/analog_information_decoding/codes/{codename}/code_params.txt"
+            f"codes/{codename}/code_params.txt"
         ).open() as infile:
             self.code_params = json.load(infile)
         del self.input_values["Hx"]
