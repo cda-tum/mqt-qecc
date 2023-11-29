@@ -22,3 +22,4 @@ python:
         - docs
     - method: pip
       path: numba
+
