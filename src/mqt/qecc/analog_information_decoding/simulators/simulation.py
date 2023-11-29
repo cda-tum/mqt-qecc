@@ -86,12 +86,12 @@ class SingleShotSimulator:
         self.outfile = get_outpath(**self.input_values)
 
         # Set parity check matrices
-        self.Hx = np.loadtxt(f"{self.code_path}/hx.txt", dtype=np.int32)
-        self.Hz = np.loadtxt(f"{self.code_path}/hz.txt", dtype=np.int32)
+        self.Hx: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/hx.txt", dtype=np.int32)
+        self.Hz: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/hz.txt", dtype=np.int32)
         if self.x_meta:
-            self.Mx = np.loadtxt(f"{self.code_path}/mx.txt", dtype=np.int32)
+            self.Mx: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/mx.txt", dtype=np.int32)
         if self.z_meta:
-            self.Mz = np.loadtxt(f"{self.code_path}/mz.txt", dtype=np.int32)
+            self.Mz: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/mz.txt", dtype=np.int32)
 
         self.n = self.Hx.shape[1]  # m==shape[0] ambiguous for Hx, Hz, better use their shape directly
 
@@ -99,8 +99,8 @@ class SingleShotSimulator:
 
         # load logicals if possible
         try:
-            self.lx = np.loadtxt(f"{self.code_path}/lx.txt", dtype=np.int32)
-            self.lz = np.loadtxt(f"{self.code_path}/lz.txt", dtype=np.int32)
+            self.lx: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/lx.txt", dtype=np.int32)
+            self.lz: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/lz.txt", dtype=np.int32)
             self._check_logicals = True
         except Exception:
             self._check_logicals = False
@@ -153,7 +153,7 @@ class SingleShotSimulator:
         self,
     ) -> tuple[bool, bool]:
         """Simulates a single sample for a given sustainable threshold depth."""
-        residual_err = [
+        residual_err: list[NDArray[np.int32]] = [
             np.zeros(self.n).astype(np.int32),  # X-residual error part
             np.zeros(self.n).astype(np.int32),  # Z-residual error part
         ]
