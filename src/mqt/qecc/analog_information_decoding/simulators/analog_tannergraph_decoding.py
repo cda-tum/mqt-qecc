@@ -231,9 +231,7 @@ class AtdSimulator:
         self.input_values = self.__dict__.copy()
 
         self.n = hx.shape[1]
-        with Path(
-            f"codes/{codename}/code_params.txt"
-        ).open() as infile:
+        with Path(f"codes/{codename}/code_params.txt").open() as infile:
             self.code_params = json.load(infile)
         del self.input_values["Hx"]
         del self.input_values["Lx"]
