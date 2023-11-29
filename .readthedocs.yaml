@@ -20,5 +20,3 @@ python:
       path: .
       extra_requirements:
         - docs
-    - method: pip
-      path: numba
