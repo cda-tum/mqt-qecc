@@ -33,16 +33,16 @@ def set_seed(value: float) -> None:
 # @njit # type: ignore[misc]
 def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementation is buggy
     """Converts an alist file to a numpy array."""
-    alist_file:NDArray[np.str_] = np.loadtxt(fname, delimiter=",", dtype=str)
+    alist_file: NDArray[np.str_] = np.loadtxt(fname, delimiter=",", dtype=str)
     matrix_dimensions = alist_file[0].split()
     m = int(matrix_dimensions[0])
     n = int(matrix_dimensions[1])
 
-    mat:NDArray[np.int32] = np.zeros((m, n), dtype=np.int32)
+    mat: NDArray[np.int32] = np.zeros((m, n), dtype=np.int32)
 
     for i in range(m):
         columns = [item for item in alist_file[i + 4].split() if item.isdigit()]
-        columns_two:NDArray[np.int32] = np.array(columns, dtype=np.int32)
+        columns_two: NDArray[np.int32] = np.array(columns, dtype=np.int32)
         columns_two = columns_two - 1  # convert to zero indexing
         mat[i, columns_two] = 1
 
@@ -59,7 +59,7 @@ def check_logical_err_h(
     _, n = check_matrix.shape
 
     # compute residual err given original err
-    residual_err:NDArray[np.int32] = np.zeros((n, 1), dtype=np.int32)
+    residual_err: NDArray[np.int32] = np.zeros((n, 1), dtype=np.int32)
     for i in range(n):
         residual_err[i][0] = original_err[i] ^ decoded_estimate[i]
 
@@ -177,7 +177,7 @@ def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) 
 @njit  # type: ignore[misc]
 def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     """Generates a random error vector given the error channel probabilities."""
-    error:NDArray[np.int32] = np.zeros_like(channel_probs, dtype=np.int32)
+    error: NDArray[np.int32] = np.zeros_like(channel_probs, dtype=np.int32)
 
     for i, p in np.ndenumerate(channel_probs):
         rand = np.random.random()
@@ -195,11 +195,11 @@ def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> 
     Assumes perfect_syndr has entries in {0,1}.
     """
     # compute signed syndrome: 1 = check satisfied, -1 = check violated. float needed for Gaussian sampling call
-    sgns:NDArray[np.float_] = np.where(
+    sgns: NDArray[np.float64] = np.where(
         perfect_syndr == 0.0,
         np.ones_like(perfect_syndr),
         np.full_like(perfect_syndr, -1.0),
-    ).astype(np.float)
+    ).astype(float)
 
     # sample from Gaussian with zero mean and sigma std. dev: ~N(0, sigma_sq)
     return np.array(np.random.default_rng().normal(loc=sgns, scale=sigma, size=perfect_syndr.shape)).astype(np.float64)
