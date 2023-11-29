@@ -65,6 +65,7 @@ docs = [
     "sphinxext-opengraph",
     "sphinx-autodoc-typehints",
     "qiskit-terra[visualization]",
+    "numba"
 ]
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]
