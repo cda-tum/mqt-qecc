@@ -44,6 +44,7 @@ dependencies = [
     "numpy",
     "qiskit-terra>=0.23.0",
     "qiskit-aer>=0.12.1",
+    "bposd"
 ]
 dynamic = ["version"]
 
