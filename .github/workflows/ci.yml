@@ -38,6 +38,8 @@ jobs:
         uses: rui314/setup-mold@v1
       - name: Install Ninja
         run: pipx install ninja
+      - name: Install bposd
+        run: pip install bposd
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
