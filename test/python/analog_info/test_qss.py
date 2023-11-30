@@ -45,8 +45,8 @@ def test_err_channel_setup(qss_simulator: QssSimulator) -> None:
     syndr_chnl = simulation_utils.error_channel_setup(
         error_rate=0.1, xyz_error_bias=np.array([1.0, 1.0, 1.0]), nr_qubits=3
     )
-    expected_syndr_chnl = np.array(1.0 * (syndr_chnl[2] + syndr_chnl[1])).astype(np.float64)
-    expected_data_chnl = np.array(1.0 * (data_chnl[2] + data_chnl[1])).astype(np.float64)
+    expected_syndr_chnl:NDArray[np.float64] = np.array(1.0 * (syndr_chnl[2] + syndr_chnl[1])).astype(np.float64)
+    expected_data_chnl:NDArray[np.float64] = np.array(1.0 * (data_chnl[2] + data_chnl[1])).astype(np.float64)
     assert qss_simulator.err_idx == 1
     assert np.allclose(qss_simulator.data_err_channel, expected_data_chnl)
     assert np.allclose(qss_simulator.syndr_err_channel, expected_syndr_chnl)

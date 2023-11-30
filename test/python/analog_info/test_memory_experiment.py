@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import build_multiround_pcm, move_syndrome
 
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
+
 
 def test_build_mr_pcm() -> None:
     """Test build_multiround_pcm function."""
-    pcm = np.array([[1, 1, 0], [0, 1, 1]]).astype(np.int32)
+    pcm:NDArray[np.int32] = np.array([[1, 1, 0], [0, 1, 1]]).astype(np.int32)
     mr_pcm = build_multiround_pcm(pcm, 1)
     np.zeros((2, 3))
     np.identity(2)
