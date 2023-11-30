@@ -18,7 +18,10 @@ from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams
 if TYPE_CHECKING:
     from numpy._typing import NDArray
 
-
+@pytest.fixture()
+def code_params() -> dict[str, int]:
+    """Return code parameters."""
+    return {"n": 7, "k": 3, "d": 2}
 @pytest.fixture()
 def error_channel() -> NDArray[np.int32]:
     """Return error channel."""
@@ -44,7 +47,7 @@ def atd(error_channel: NDArray[np.float64], pcm: NDArray[np.int32]) -> AnalogTan
 
 
 @pytest.fixture()
-def atd_simulator_sigma(pcm: NDArray[np.int32]) -> AtdSimulator:
+def atd_simulator_sigma(pcm: NDArray[np.int32], code_params:dict[str,int]) -> AtdSimulator:
     """Return AtdSimulator using sigma to initialize syndrome channel."""
     return AtdSimulator(
         hx=pcm,
@@ -57,12 +60,12 @@ def atd_simulator_sigma(pcm: NDArray[np.int32]) -> AtdSimulator:
         seed=666,
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
-        code_params={"n": 7, "k": 3, "d": 2},
+        code_params=code_params,
     )
 
 
 @pytest.fixture()
-def atd_simulator_ser(pcm: NDArray[np.int32]) -> AtdSimulator:
+def atd_simulator_ser(pcm: NDArray[np.int32],code_params:dict[str,int]) -> AtdSimulator:
     """Return AtdSimulator using error rate to initialize syndrome channel."""
     per = 0.1
     ser = 0.1
@@ -78,6 +81,7 @@ def atd_simulator_ser(pcm: NDArray[np.int32]) -> AtdSimulator:
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
         output_path="./results",
+        code_params=code_params,
     )
 
 
@@ -93,7 +97,7 @@ def test_set_analog_syndrome(atd: AnalogTannergraphDecoder, error_channel: NDArr
     assert len(res) == 10
 
 
-def test_atd_simulator_data_error_channels_setup(pcm: NDArray[np.int32]) -> None:
+def test_atd_simulator_data_error_channels_setup(pcm: NDArray[np.int32],code_params:dict[str,int]) -> None:
     """Test simulator data error channel computation and initialization."""
     per = 0.1
     sigma = 0.1
@@ -108,6 +112,7 @@ def test_atd_simulator_data_error_channels_setup(pcm: NDArray[np.int32]) -> None
         seed=666,
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
+        code_params=code_params,
     )
     expected_err_chnl = simulation_utils.error_channel_setup(
         error_rate=per,
