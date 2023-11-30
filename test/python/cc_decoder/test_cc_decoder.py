@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
 
@@ -37,7 +38,7 @@ def nr_sims() -> int:
 @pytest.fixture()
 def results_dir() -> str:
     """Return directory to store results."""
-    return "./results"
+    return "./results/test/"
 
 
 @pytest.fixture()

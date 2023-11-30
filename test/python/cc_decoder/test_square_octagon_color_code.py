@@ -36,7 +36,7 @@ def nr_sims() -> int:
 @pytest.fixture()
 def results_dir() -> str:
     """Return directory to store results."""
-    return "./results"
+    return "./results/test/"
 
 
 @pytest.mark.parametrize("code", [SquareOctagonColorCode(distance=d) for d in range(3, 23, 2)])

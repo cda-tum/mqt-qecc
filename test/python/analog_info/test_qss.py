@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -67,7 +68,8 @@ def test_decoder_error_channel_setup(qss_simulator: QssSimulator) -> None:
 
 def test_single_sample(qss_simulator: QssSimulator) -> None:
     """Test single sample overall."""
-    res = qss_simulator.run(1)
+    with mock.patch("pathlib.Path.open"), mock.patch("json.dump"):
+        res = qss_simulator.run(1)
     assert res is not None
     assert res["pers"] == 0.1
     assert res["code_N"] == 7
