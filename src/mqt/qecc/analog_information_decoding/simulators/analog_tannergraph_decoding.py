@@ -173,6 +173,7 @@ class AtdSimulator:
         seed: int,
         bp_params: BpParams,
         data_err_rate: float,
+        code_params: dict[str, Any],
         syndr_err_rate: float | None = None,
         sigma: float | None = None,
         bias: NDArray[np.float64] | None = None,
@@ -231,10 +232,7 @@ class AtdSimulator:
         self.input_values = self.__dict__.copy()
 
         self.n = hx.shape[1]
-        with Path(
-            f"codes/{codename}/code_params.txt"
-        ).open() as infile:  # todo importlib resources -> qcec verify compilation flows
-            self.code_params = json.load(infile)
+        self.code_params = code_params
         del self.input_values["Hx"]
         del self.input_values["Lx"]
         del self.input_values["Hz"]
