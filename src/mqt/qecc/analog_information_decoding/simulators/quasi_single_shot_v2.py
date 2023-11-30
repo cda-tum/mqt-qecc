@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -44,6 +42,7 @@ class QssSimulator:
         bias: NDArray[np.float64],
         codename: str,
         bp_params: BpParams,
+        code_params: dict[str, int],
         decoding_method: str = "bposd",  # bposd or matching
         check_side: str = "X",
         seed: int = 666,
@@ -100,11 +99,7 @@ class QssSimulator:
         self.rounds = rounds
         self.experiment = experiment
         set_seed(seed)
-        # load code parameters
-        with Path(
-            f"/home/luca/Documents/codeRepos/mqt-qecc/qecc/src/mqt/qecc/analog_information_decoding/codes/{codename}/code_params.txt"
-        ).open() as infile:
-            self.code_params = json.load(infile)
+        self.code_params = code_params
         self.input_values = self.__dict__.copy()
 
         self.outfile = outpath

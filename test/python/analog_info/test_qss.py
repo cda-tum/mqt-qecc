@@ -22,7 +22,13 @@ def pcm() -> NDArray[np.int32]:
 
 
 @pytest.fixture()
-def qss_simulator(pcm: NDArray[np.int32]) -> QssSimulator:
+def code_params() -> dict[str, int]:
+    """Return code parameters."""
+    return {"n": 7, "k": 3, "d": 2}
+
+
+@pytest.fixture()
+def qss_simulator(pcm: NDArray[np.int32], code_params: dict[str, int]) -> QssSimulator:
     """Return QSS simulator object."""
     return QssSimulator(
         pcm=pcm,
@@ -34,6 +40,7 @@ def qss_simulator(pcm: NDArray[np.int32]) -> QssSimulator:
         bp_params=BpParams(osd_method="osd0"),
         outpath="./results",
         repetitions=2,
+        code_params=code_params,
     )
 
 
