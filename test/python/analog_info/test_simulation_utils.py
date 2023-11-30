@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -21,6 +22,9 @@ from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
     get_virtual_check_init_vals,
     is_logical_err,
 )
+
+if TYPE_CHECKING:
+    from numpy._typing import NDArray
 
 
 def test_check_logical_err_h() -> None:
@@ -165,7 +169,7 @@ def test_generate_err() -> None:
     n = 10
     ch = np.ones(n) * p
     channel = np.copy(ch), np.copy(ch), np.copy(ch)
-    residual = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
+    residual: list[NDArray[np.int32]] = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
 
     expected = np.array([np.zeros(n).astype(np.float64), np.zeros(n).astype(np.float64)])
     assert np.array_equal(generate_err(n, channel, residual), expected)
