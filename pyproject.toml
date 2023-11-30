@@ -151,6 +151,7 @@ xfail_strict = true
 filterwarnings = [
     "error",
     "ignore:pkg_resources.*:DeprecationWarning:",
+    "ignore:pkg_resources.*declare_namespace('mpl_toolkits')",
     "ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:",
     "ignore:.*qiskit.utils.algorithm_globals.QiskitAlgorithmGlobals*:DeprecationWarning:qiskit",
     "ignore:.*Building a flow controller with keyword arguments is going to be deprecated*:PendingDeprecationWarning:qiskit",
