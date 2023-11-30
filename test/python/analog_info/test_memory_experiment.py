@@ -39,3 +39,19 @@ def test_move_syndrome() -> None:
     syndr = np.array([[0, 0, 1, 1, 0, 0], [0, 0, 1, 1, 0, 0], [0, 0, 1, 1, 0, 0]])
     res = np.array([[1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]])
     assert np.array_equal(res, move_syndrome(syndr))
+
+
+def test_decode_multiround() -> None:
+    """Test decoding of multiround syndrome."""
+    # three bit syndrome over 4 rounds
+    syndr = np.array([[0, 0, 1, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
+    res = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [1, 0, 0, 0]])
+    assert np.array_equal(res, move_syndrome(syndr))
+
+    syndr = np.array([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]])
+    res = np.array([[1, 1, 0, 0], [1, 1, 0, 0], [1, 1, 0, 0]])
+    assert np.array_equal(res, move_syndrome(syndr))
+
+    syndr = np.array([[0, 0, 1, 1, 0, 0], [0, 0, 1, 1, 0, 0], [0, 0, 1, 1, 0, 0]])
+    res = np.array([[1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]])
+    assert np.array_equal(res, move_syndrome(syndr))
