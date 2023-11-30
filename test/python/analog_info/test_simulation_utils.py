@@ -22,6 +22,7 @@ from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
     get_virtual_check_init_vals,
     is_logical_err,
 )
+
 if TYPE_CHECKING:
     from numpy._typing import NDArray
 
