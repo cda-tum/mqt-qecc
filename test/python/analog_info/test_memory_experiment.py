@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def test_build_mr_pcm() -> None:
     """Test build_multiround_pcm function."""
-    pcm:NDArray[np.int32] = np.array([[1, 1, 0], [0, 1, 1]]).astype(np.int32)
+    pcm: NDArray[np.int32] = np.array([[1, 1, 0], [0, 1, 1]]).astype(np.int32)
     mr_pcm = build_multiround_pcm(pcm, 1)
     np.zeros((2, 3))
     np.identity(2)
