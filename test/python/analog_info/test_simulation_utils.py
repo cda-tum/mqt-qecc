@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -22,9 +21,6 @@ from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
     get_virtual_check_init_vals,
     is_logical_err,
 )
-
-if TYPE_CHECKING:
-    from numpy._typing import NDArray
 
 
 def test_check_logical_err_h() -> None:
