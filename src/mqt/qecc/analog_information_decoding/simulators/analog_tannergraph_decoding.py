@@ -270,7 +270,7 @@ class AtdSimulator:
 
     def single_sample(self) -> tuple[bool, bool]:
         """Samples and error and decodes once. Returns if the decoding round was successful separately for each side."""
-        residual_err = [
+        residual_err: list[NDArray[np.int32]] = [
             np.zeros(self.n).astype(np.int32),
             np.zeros(self.n).astype(np.int32),
         ]  # no residual error

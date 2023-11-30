@@ -146,7 +146,7 @@ class QssSimulator:
         # the number of columns of the diagonal check matrix of the H3D matrix
         self.check_block_size = self.num_qubits * (self.repetitions)
 
-        channel_probs = np.zeros(self.H3D.shape[1]).astype(np.float64)
+        channel_probs: NDArray[np.float64] = np.zeros(self.H3D.shape[1]).astype(np.float64)
         # The bits corresponding to the columns of the diagonal H-bock of H3D are initialized with the bit channel
         channel_probs[: self.check_block_size] = np.array(self.data_err_channel.tolist() * (self.repetitions))
 
@@ -198,12 +198,12 @@ class QssSimulator:
     def _single_sample(self) -> int:
         # prepare fresh syndrome matrix and error vector
         # each column == measurement result of a single timestep
-        syndrome_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.int32)
+        syndrome_mat: NDArray[np.int32] = np.zeros((self.num_checks, self.repetitions), dtype=np.int32)
 
         if self.analog_tg:
-            analog_syndr_mat = np.zeros((self.num_checks, self.repetitions), dtype=np.float64)
+            analog_syndr_mat: NDArray[np.float64] = np.zeros((self.num_checks, self.repetitions), dtype=np.float64)
 
-        err = np.zeros(self.num_qubits, dtype=np.int32)
+        err: NDArray[np.int32] = np.zeros(self.num_qubits, dtype=np.int32)
         cnt = 0  # counter for syndrome_mat
 
         for rnd in range(self.rounds):
