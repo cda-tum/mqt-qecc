@@ -168,7 +168,7 @@ def test_generate_err() -> None:
     n = 10
     ch = np.ones(n) * p
     channel = np.copy(ch), np.copy(ch), np.copy(ch)
-    residual:NDArray[np.int32] = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
+    residual:list[np.int32] = [np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)]
 
     expected = np.array([np.zeros(n).astype(np.int32), np.zeros(n).astype(np.int32)])
     assert np.array_equal(generate_err(n, channel, residual), expected)
@@ -276,7 +276,7 @@ def test_err_chnl_setup() -> None:
 
 def test_build_ss_pcm() -> None:
     """Test build_single_stage_pcm function."""
-    h = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]]).astype(np.int32)
+    h:NDArray[np.int32] = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]]).astype(np.int32)
     m:NDArray[np.int32] = np.array([[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1]]).astype(np.int32)
     id_r = np.identity(m.shape[1])
     zeros = np.zeros((m.shape[0], h.shape[1]))
