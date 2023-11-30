@@ -83,7 +83,7 @@ def atd_simulator_ser(pcm: NDArray[np.int32], code_params: dict[str, int]) -> At
         seed=666,
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
-        output_path="./results",
+        output_path="./res",
         code_params=code_params,
     )
 
