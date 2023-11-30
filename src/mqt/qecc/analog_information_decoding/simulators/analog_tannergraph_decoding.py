@@ -385,4 +385,3 @@ class AtdSimulator:
 def get_analog_pcm(pcm: NDArray[np.int32]) -> NDArray[np.int32]:
     """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
     return np.hstack((pcm, np.identity(pcm.shape[0], dtype=np.int32)))
-
