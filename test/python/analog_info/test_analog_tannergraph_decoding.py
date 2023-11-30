@@ -8,8 +8,10 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from mqt.qecc.analog_information_decoding.simulators.analog_tannergraph_decoding import AtdSimulator
-from mqt.qecc.analog_information_decoding.simulators.analog_tannergraph_decoding import AnalogTannergraphDecoder
+from mqt.qecc.analog_information_decoding.simulators.analog_tannergraph_decoding import (
+    AnalogTannergraphDecoder,
+    AtdSimulator,
+)
 from mqt.qecc.analog_information_decoding.utils import simulation_utils
 from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams
 
@@ -55,7 +57,7 @@ def atd_simulator_sigma(pcm: NDArray[np.int32]) -> AtdSimulator:
         seed=666,
         bp_params=BpParams(osd_method="osd0"),
         decoding_method="atd",
-        code_params={"n":7, "k":3, "d":2}
+        code_params={"n": 7, "k": 3, "d": 2},
     )
 
 
