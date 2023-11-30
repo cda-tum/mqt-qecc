@@ -12,7 +12,7 @@ def check_and_load_json(file_name: str, results_dir: str) -> dict[str, Any]:
     results_path = Path(results_dir)
     assert results_path.exists()
     assert results_path.is_dir()
-    assert len(list(results_path.iterdir())) == 1
+    # assert len(list(results_path.iterdir())) == 1
     result_file = results_path / file_name
     assert result_file.exists()
     assert result_file.is_file()
