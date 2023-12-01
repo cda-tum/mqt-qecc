@@ -8,8 +8,7 @@ from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from ldpc import bposd_decoder
-from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
+from bposd import bposd_decoder
 
 from mqt.qecc.analog_information_decoding.utils.data_utils import (
     BpParams,
@@ -52,6 +51,13 @@ class SingleShotSimulator:
         z_meta: bool,
         sus_th_depth: int,
         bp_params: BpParams,
+        code_params: dict[str, int],
+        hx: NDArray[np.int32],
+        hz: NDArray[np.int32],
+        mx: NDArray[np.int32] | None,
+        mz: NDArray[np.int32] | None,
+        lz: NDArray[np.int32] | None,
+        lx: NDArray[np.int32] | None,
         analog_info: bool = False,
         cutoff: int = 0,
         analog_tg: bool = False,
@@ -79,30 +85,28 @@ class SingleShotSimulator:
         # self.code_path = f"generated_codes/{codename}"
         self.code_path = f"/codes/generated_codes/{codename}"
         # Load code params
-        with Path(f"{self.code_path}/code_params.txt").open() as infile:
-            self.code_params = json.load(infile)
+
+        self.code_params = code_params
 
         self.input_values = self.__dict__.copy()
         self.outfile = get_outpath(**self.input_values)
 
         # Set parity check matrices
-        self.Hx: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/hx.txt", dtype=np.int32)
-        self.Hz: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/hz.txt", dtype=np.int32)
+        self.Hx = hx
+        self.Hz = hz
         if self.x_meta:
-            self.Mx: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/mx.txt", dtype=np.int32)
+            self.Mx = mx
         if self.z_meta:
-            self.Mz: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/mz.txt", dtype=np.int32)
+            self.Mz = mz
 
         self.n = self.Hx.shape[1]  # m==shape[0] ambiguous for Hx, Hz, better use their shape directly
-
         self.check_input()
-
         # load logicals if possible
-        try:
-            self.lx: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/lx.txt", dtype=np.int32)
-            self.lz: NDArray[np.int32] = np.loadtxt(f"{self.code_path}/lz.txt", dtype=np.int32)
+        if lx is not None and lz is not None:
+            self.lx = lx
+            self.lz = lz
             self._check_logicals = True
-        except Exception:
+        else:
             self._check_logicals = False
 
         (
@@ -257,7 +261,7 @@ class SingleShotSimulator:
         x_err_channel = self.x_bit_err_channel + self.y_bit_err_channel
         z_err_channel = self.z_bit_err_channel + self.y_bit_err_channel
 
-        if self.x_meta:
+        if self.x_meta and self.Mx is not None:
             z_decoded, self.z_bp_iters = self._decode_ss_with_meta(
                 syndrome_w_err=z_syndrome_w_err,
                 meta_pcm=self.Mx,
@@ -274,7 +278,7 @@ class SingleShotSimulator:
                 sigma=self.sigma_z,
             )
 
-        if self.z_meta:
+        if self.z_meta and self.Mz is not None:
             x_decoded, self.x_bp_iters = self._decode_ss_with_meta(
                 syndrome_w_err=x_syndrome_w_err,
                 meta_pcm=self.Mz,
@@ -394,7 +398,7 @@ class SingleShotSimulator:
 
         In case analog_info is activated x_bpd/z_bpd have been set accordinlgy in the setup() method.
         """
-        if self.x_meta:
+        if self.x_meta and self.Mx is not None:
             # Mx corrects failures of Hx and Mz corrects failures of Mz
             # thus, meta syndrome of z_syndrome = Mx*z_syndrome where z_syndrome = Hx*z_error
             z_syndrome_repaired = self._meta_code_decoding(
@@ -405,7 +409,7 @@ class SingleShotSimulator:
         else:
             z_syndrome_repaired = np.copy(z_syndrome_w_err).astype(np.int32)
 
-        if self.z_meta:
+        if self.z_meta and self.Mz is not None:
             x_syndrome_repaired = self._meta_code_decoding(
                 syndrome_w_err=x_syndrome_w_err,
                 meta_pcm=self.Mz,
@@ -449,6 +453,8 @@ class SingleShotSimulator:
         """
         if self.analog_info or self.analog_tg:
             syndrome_w_err_binary = get_binary_from_analog(syndrome_w_err)
+        else:
+            syndrome_w_err_binary = np.copy(syndrome_w_err)
 
         meta_syndrome = (meta_pcm @ syndrome_w_err_binary) % 2
         meta_decoded = m_bp.decode(meta_syndrome)
@@ -495,10 +501,14 @@ class SingleShotSimulator:
 
         # setup single stage matrices (Oscar&Niko method) H = [[H, Im],    H ~ mxn, I ~ mxm, M ~ lxm
         #                                                      [0, M]]
-        if self.z_meta:
+        if self.z_meta and self.Mz is not None:
             self.ss_z_pcm = build_single_stage_pcm(self.Hz, self.Mz)
-        if self.x_meta:
+        else:
+            self.ss_z_pcm = None  # type: ignore[assignment]
+        if self.x_meta and self.Mx is not None:
             self.ss_x_pcm = build_single_stage_pcm(self.Hx, self.Mx)
+        else:
+            self.ss_x_pcm = None  # type: ignore[assignment]
 
         # X-checks := (Hx|Mx) => Influenced by Z-syndrome error rate
         # ss_x_bpd used to decode X bit errors using Z-side check matrices
@@ -509,8 +519,8 @@ class SingleShotSimulator:
             self.ss_x_bpd = self.get_decoder(
                 pcm=self.ss_z_pcm,
                 channel_probs=np.hstack((x_err_channel, self.x_syndr_error_channel)),
-                sigma=self.sigma_x,
-                analog_info=self.analog_info,
+                # sigma=self.sigma_x,
+                # analog_info=self.analog_info,
             )
 
         if self.analog_tg:
@@ -518,8 +528,8 @@ class SingleShotSimulator:
                 pcm=self.z_apcm,
                 # second part dummy, needs to be updated for each syndrome
                 channel_probs=np.hstack((x_err_channel, np.zeros(self.Hz.shape[0]))),
-                cutoff=self.cutoff,
-                analog_info=False,
+                # cutoff=self.cutoff,
+                # analog_info=False,
                 # sigma not needed, since we apply BPOSD
             )
         else:
@@ -527,9 +537,8 @@ class SingleShotSimulator:
         self.x_bpd = self.get_decoder(
             pcm=self.Hz,
             channel_probs=x_err_channel,
-            cutoff=self.cutoff,
-            analog_info=self.analog_info,
-            sigma=self.sigma_x,
+            # cutoff=self.cutoff,
+            # analog_info=self.analog_info,
         )
 
         z_err_channel = self.z_bit_err_channel + self.y_bit_err_channel
@@ -537,9 +546,9 @@ class SingleShotSimulator:
             self.ss_z_bpd = self.get_decoder(
                 pcm=self.ss_x_pcm,
                 channel_probs=np.hstack((z_err_channel, self.z_syndr_error_channel)),
-                cutoff=self.cutoff,
-                analog_info=self.analog_info,
-                sigma=self.sigma_z,
+                # cutoff=self.cutoff,
+                # analog_info=self.analog_info,
+                # sigma=self.sigma_z,
             )
 
         if self.analog_tg:
@@ -547,8 +556,8 @@ class SingleShotSimulator:
                 pcm=self.x_apcm,
                 # second part dummy, needs to be updated for each syndrome
                 channel_probs=np.hstack((z_err_channel, np.zeros(self.Hx.shape[0]))),
-                cutoff=self.cutoff,
-                analog_info=self.analog_info,
+                # cutoff=self.cutoff,
+                # analog_info=self.analog_info,
                 # sigma not needed, since we apply BPOSD
             )
         else:
@@ -556,9 +565,9 @@ class SingleShotSimulator:
         self.z_bpd = self.get_decoder(
             pcm=self.Hx,
             channel_probs=z_err_channel,
-            cutoff=self.cutoff,
-            analog_info=self.analog_info,
-            sigma=self.sigma_z,
+            # cutoff=self.cutoff,
+            # analog_info=self.analog_info,
+            # sigma=self.sigma_z,
         )
 
     def _two_stage_setup(
@@ -572,21 +581,21 @@ class SingleShotSimulator:
         :return:
         """
         # used to decode errors in Hz == x-syndrome errors with x_synd_error rate
-        if self.z_meta:
+        if self.z_meta and self.Mz is not None:
             self.mx_bp = self.get_decoder(
                 pcm=self.Mz,
                 channel_probs=self.x_syndr_error_channel,
-                cutoff=self.cutoff,
-                analog_info=False,  # =False and sigma not needed, since we don't have soft info for meta code
+                # cutoff=self.cutoff,
+                # analog_info=False,  # =False and sigma not needed, since we don't have soft info for meta code
             )
 
         # used to decode errors in Hx
-        if self.x_meta:
+        if self.x_meta and self.Mx is not None:
             self.mz_bp = self.get_decoder(
                 pcm=self.Mx,
                 channel_probs=self.z_syndr_error_channel,
-                cutoff=self.cutoff,
-                analog_info=False,  # =False and sigma not needed, since we don't have soft info for meta code
+                # cutoff=self.cutoff,
+                # analog_info=False,  # =False and sigma not needed, since we don't have soft info for meta code
             )
 
         x_err_channel = self.x_bit_err_channel + self.y_bit_err_channel
@@ -595,16 +604,15 @@ class SingleShotSimulator:
                 pcm=self.z_apcm,
                 channel_probs=np.hstack((x_err_channel, np.zeros(self.Hz.shape[0]))),
                 # second part dummy, needs to be updated for each syndrome
-                cutoff=self.cutoff,
-                analog_info=self.analog_info,
+                # cutoff=self.cutoff,
+                # analog_info=self.analog_info,
                 # sigma not needed, since we apply BPOSD
             )
         self.x_bpd = self.get_decoder(
             pcm=self.Hz,
             channel_probs=x_err_channel,
-            cutoff=self.cutoff,
-            analog_info=self.analog_info,
-            sigma=self.sigma_x,
+            # cutoff=self.cutoff,
+            # analog_info=self.analog_info,
         )
 
         z_err_channel = self.z_bit_err_channel + self.y_bit_err_channel
@@ -613,16 +621,15 @@ class SingleShotSimulator:
                 pcm=self.x_apcm,
                 # second part dummy, needs to be updated for each syndrome
                 channel_probs=np.hstack((z_err_channel, np.zeros(self.Hx.shape[0]))),
-                cutoff=self.cutoff,
-                analog_info=self.analog_info,
+                # cutoff=self.cutoff,
+                # analog_info=self.analog_info,
                 # sigma not needed, since we apply BPOSD
             )
         self.z_bpd = self.get_decoder(
             pcm=self.Hx,
             channel_probs=z_err_channel,
-            cutoff=self.cutoff,
-            analog_info=self.analog_info,
-            sigma=self.sigma_z,
+            # cutoff=self.cutoff,
+            # analog_info=self.analog_info,
             # sigma not needed, since we don't have analog info for meta code
         )
 
@@ -630,27 +637,27 @@ class SingleShotSimulator:
         self,
         pcm: NDArray[np.int32],
         channel_probs: NDArray[np.float64],
-        cutoff: int = 0,
-        sigma: float = 0.0,
-        analog_info: bool = False,
+        # cutoff: int = 0,
+        # sigma: float = 0.0,
+        # analog_info: bool = False,
     ) -> Any:  # noqa: ANN401
         """Initialize decoder objects.
 
         If analog_info is activated, the SoftInfoBpDecoder is used instead of the BPOSD decoder.
         Note that analog_info and analog_tg cannot be used simultaneously.
         """
-        if analog_info:
-            return SoftInfoBpOsdDecoder(
-                pcm=pcm,
-                error_channel=channel_probs,
-                max_iter=self.bp_params.max_bp_iter,
-                bp_method=self.bp_params.bp_method,
-                osd_order=self.bp_params.osd_order,
-                osd_method=self.bp_params.osd_method,
-                ms_scaling_factor=self.bp_params.ms_scaling_factor,
-                cutoff=cutoff,
-                sigma=sigma,
-            )
+        # if analog_info:
+        #     return SoftInfoBpOsdDecoder(
+        #         pcm=pcm,
+        #         error_channel=channel_probs,
+        #         max_iter=self.bp_params.max_bp_iter,
+        #         bp_method=self.bp_params.bp_method,
+        #         osd_order=self.bp_params.osd_order,
+        #         osd_method=self.bp_params.osd_method,
+        #         ms_scaling_factor=self.bp_params.ms_scaling_factor,
+        #         cutoff=cutoff,
+        #         sigma=sigma,
+        #     )
         return bposd_decoder(
             parity_check_matrix=pcm,
             channel_probs=channel_probs,
@@ -701,7 +708,7 @@ class SingleShotSimulator:
         }
 
         output.update(self.input_values)
-        output["bias"] = replace_inf(output["bias"])
+        output["bias"] = replace_inf(output["bias"])  # type: ignore[assignment, arg-type]
 
         with Path(self.outfile).open() as f:
             f.write(
