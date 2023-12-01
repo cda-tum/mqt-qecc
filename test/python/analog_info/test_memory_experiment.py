@@ -100,6 +100,7 @@ def test_decode_multiround_syndr_err(
         osd_method="osd0",
         ms_scaling_factor=0.5,
     )
+
     analoy_syndr = np.array([[0.0, -1.0, 0.0], [0.0, 0.0, 0.0]])
     sigma = 0.3
     decoding_method = "bposd"
