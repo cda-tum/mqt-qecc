@@ -95,7 +95,7 @@ def test_decode_multiround_syndr_err(
     analoy_syndr = np.array([[0.0, -1.0, 0.0], [0.0, 0.0, 0.0]])
     sigma = 0.3
     decoding_method = "bposd"
-    syndrome = np.array([[0, 1, 0], [0, 0, 0]]).astype(np.int32)
+    syndrome = np.array([[0, 1, 0], [0, 0, 0]])
     res = decode_multiround(
         pcm=pcm,
         channel_probs=channel_probs,
@@ -121,7 +121,7 @@ def test_decode_multiround_data_err(
     analoy_syndr = np.array([[0.0, -1.0, -1.0], [0.0, 0.0, 0.0]])
     sigma = 0.3
     decoding_method = "bposd"
-    syndrome = np.array([[0, 1, 1], [0, 0, 0]]).astype(np.int32)
+    syndrome = np.array([[0, 1, 1], [0, 0, 0]])
     res = decode_multiround(
         pcm=pcm,
         channel_probs=channel_probs,
