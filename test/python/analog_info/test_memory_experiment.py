@@ -91,15 +91,6 @@ def test_decode_multiround_syndr_err(
 ) -> None:
     """Test decoding of multiround syndrome for three bit repetition code."""
     check_block_size = pcm.shape[1] * repetitions
-    decoder = bposd_decoder(
-        parity_check_matrix=h3d,
-        channel_probs=channel_probs,
-        max_iter=15,
-        bp_method="msl",
-        osd_order=0,
-        osd_method="osd0",
-        ms_scaling_factor=0.5,
-    )
 
     analoy_syndr = np.array([[0.0, -1.0, 0.0], [0.0, 0.0, 0.0]])
     sigma = 0.3
