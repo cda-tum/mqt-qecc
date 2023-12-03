@@ -42,7 +42,7 @@ def qss_simulator(pcm: NDArray[np.int32], code_params: dict[str, int]) -> QssSim
         outpath="./results",
         repetitions=2,
         code_params=code_params,
-        rounds=1
+        rounds=1,
     )
 
 

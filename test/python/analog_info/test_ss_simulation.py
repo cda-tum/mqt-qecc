@@ -152,6 +152,7 @@ def test_two_state_initialization(two_stage_simulator: SingleShotSimulator) -> N
     assert np.array_equal(res[0], np.array([0, 0, 0, 0, 0, 0, 0]))
     assert np.array_equal(res[1], np.array([0, 0, 0, 0, 0, 0, 0]))
 
+
 def test_single_sample(single_stage_analog_simulator: SingleShotSimulator) -> None:
     """Test single sample overall."""
     with mock.patch("pathlib.Path.open"), mock.patch("json.dump"):
