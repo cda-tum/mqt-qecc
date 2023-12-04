@@ -233,6 +233,12 @@ def test_generate_syndr_err() -> None:
 
     assert np.array_equal(generate_syndr_err(channel), np.array([0.0, 1.0]))
 
+    channel = np.array([0.0, 0.0, 0.0])
+    assert np.array_equal(generate_syndr_err(channel), np.zeros_like(channel).astype(float))
+
+    channel = np.array([1.0, 1.0, 1.0])
+    assert np.array_equal(generate_syndr_err(channel), np.ones_like(channel).astype(float))
+
 
 def test_get_noisy_analog_syndr() -> None:
     """Test get_noisy_analog_syndr function."""
@@ -270,6 +276,13 @@ def test_err_chnl_setup() -> None:
     bias = np.array([np.inf, 0.0, 0.0])
     ar = np.ones(n) * p
     exp = np.array([np.copy(ar), np.zeros(n), np.zeros(n)])
+    res = error_channel_setup(p, bias, n)
+
+    assert np.array_equal(res, exp)
+
+    bias = np.array([0.0, np.inf, 0.0])
+    ar = np.ones(n) * p
+    exp = np.array([np.zeros(n), np.copy(ar), np.zeros(n)])
     res = error_channel_setup(p, bias, n)
 
     assert np.array_equal(res, exp)

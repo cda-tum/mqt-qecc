@@ -166,3 +166,12 @@ def test_safe_results(atd_simulator_ser: AtdSimulator) -> None:
     assert res is not None
     assert res["code_K"] == 3
     assert res["code_N"] == 7
+
+
+def test_run(atd_simulator_ser: AtdSimulator) -> None:
+    """Test run method."""
+    with mock.patch("json.dump", return_value=True):
+        res = atd_simulator_ser.run(1)
+    assert res is not None
+    assert res["code_K"] == 3
+    assert res["code_N"] == 7
