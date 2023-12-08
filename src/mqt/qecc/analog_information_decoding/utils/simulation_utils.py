@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from ldpc.mod2 import rank
-from numba import njit
 from numba.core.errors import (
     NumbaDeprecationWarning,
     NumbaPendingDeprecationWarning,
@@ -24,7 +23,7 @@ warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
 warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
 
-@njit  # type: ignore[misc]
+# @njit  # type: ignore[misc]
 def set_seed(value: float) -> None:
     """The appropriate way to set seeds when numba is used."""
     np.random.seed(value)  # noqa: NPY002
@@ -133,7 +132,7 @@ def generate_err(
     return error_x, error_z
 
 
-@njit  # type: ignore[misc]
+# @njit  # type: ignore[misc]
 def get_analog_llr(analog_syndrome: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes analog LLRs given analog syndrome and sigma."""
     if sigma <= 0.0:
@@ -174,7 +173,7 @@ def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) 
     return np.array(1 / (np.exp(np.abs(llrs)) + 1))
 
 
-@njit  # type: ignore[misc]
+# @njit  # type: ignore[misc]
 def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     """Generates a random error vector given the error channel probabilities."""
     error: NDArray[np.int32] = np.zeros_like(channel_probs, dtype=np.int32)
@@ -243,7 +242,7 @@ def build_single_stage_pcm(pcm: NDArray[np.int_], meta: NDArray[np.int_]) -> NDA
     return np.block([[pcm, id_r], [zeros, meta]])
 
 
-@njit  # type: ignore[misc]
+# @njit  # type: ignore[misc]
 def get_signed_from_binary(binary_syndrome: NDArray[np.int_]) -> NDArray[np.int_]:
     """Maps the binary vector with {0,1} entries to a vector with {-1,1} entries."""
     return np.where(
