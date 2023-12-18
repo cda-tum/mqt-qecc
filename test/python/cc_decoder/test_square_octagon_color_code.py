@@ -77,19 +77,17 @@ def test_z3_solver(
 ) -> None:
     """Test the Z3 solver."""
     d = d3_so_code.distance
-    ret = script_runner.run(
-        [
-            "mqt.qecc.cc-decoder",
-            "--type",
-            "square_octagon",
-            str(d),
-            str(p),
-            "--nr_sims",
-            str(nr_sims),
-            "--results_dir",
-            results_dir,
-        ]
-    )
+    ret = script_runner.run([
+        "mqt.qecc.cc-decoder",
+        "--type",
+        "square_octagon",
+        str(d),
+        str(p),
+        "--nr_sims",
+        str(nr_sims),
+        "--results_dir",
+        results_dir,
+    ])
     assert ret.success
     assert not ret.stderr
 

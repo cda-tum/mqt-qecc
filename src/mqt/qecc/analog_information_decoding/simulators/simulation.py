@@ -670,9 +670,10 @@ class SingleShotSimulator:
 
     def construct_analog_pcms(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
         """Constructs apcm = [H | I_m] where I_m is the m x m identity matrix."""
-        return np.hstack([self.Hx, np.identity(self.Hx.shape[0], dtype=np.int32)]), np.hstack(
-            [self.Hz, np.identity(self.Hz.shape[0], dtype=np.int32)]
-        )
+        return np.hstack([self.Hx, np.identity(self.Hx.shape[0], dtype=np.int32)]), np.hstack([
+            self.Hz,
+            np.identity(self.Hz.shape[0], dtype=np.int32),
+        ])
 
     def save_results(
         self,

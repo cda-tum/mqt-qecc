@@ -146,12 +146,10 @@ class AnalogTannergraphDecoder:
         Ensures that the virtual nodes are initialized with the analog syndrome LLRs on decoding initialization.
         :param analog_syndrome: the analog syndrome values to initialize the virtual nodes with.
         """
-        new_channel = np.hstack(
-            (
-                self.bposd_decoder.channel_probs[: self.n],
-                simulation_utils.get_virtual_check_init_vals(analog_syndrome, self.sigma),
-            )
-        )
+        new_channel = np.hstack((
+            self.bposd_decoder.channel_probs[: self.n],
+            simulation_utils.get_virtual_check_init_vals(analog_syndrome, self.sigma),
+        ))
         self.bposd_decoder.update_channel_probs(new_channel)
 
     def decode(self, analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
