@@ -18,7 +18,7 @@ from scipy.special import erfc, erfcinv
 from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, calculate_error_rates, replace_inf
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray
+    from numpy.typing import NDArray
 warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
 warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 

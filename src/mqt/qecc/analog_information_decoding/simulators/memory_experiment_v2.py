@@ -13,7 +13,7 @@ from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
 )
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray
+    from numpy.typing import NDArray
 
 
 def build_multiround_pcm(pcm: NDArray[np.int32], repetitions: int, matrix_format: str = "csr") -> csr_matrix:

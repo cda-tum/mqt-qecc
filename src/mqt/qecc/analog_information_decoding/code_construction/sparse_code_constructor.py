@@ -17,7 +17,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 from mqt.qecc.analog_information_decoding.code_construction import code_constructor
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray
+    from numpy.typing import NDArray
 
 
 def is_all_zeros(array: NDArray[np.int_]) -> bool:

@@ -16,7 +16,7 @@ from ldpc import mod2
 from scipy import sparse
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray
+    from numpy.typing import NDArray
 
 
 def is_all_zeros(array: NDArray[np.int32]) -> bool:

@@ -15,7 +15,7 @@ from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import
 )
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray
+    from numpy.typing import NDArray
     from scipy.sparse import csr_matrix
 
 

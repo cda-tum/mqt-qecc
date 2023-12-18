@@ -19,7 +19,7 @@ from mqt.qecc.analog_information_decoding.utils.data_utils import (
 )
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray
+    from numpy.typing import NDArray
 
 
 # class SoftInfoDecoder:
