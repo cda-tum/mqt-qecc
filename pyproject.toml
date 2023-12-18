@@ -51,7 +51,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock", "numba", "pymatching"]
+test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
 coverage = ["mqt.qecc[test]", "pytest-cov"]
 docs = [
     "furo>=2023.08.17",
@@ -67,8 +67,6 @@ docs = [
     "sphinxext-opengraph",
     "sphinx-autodoc-typehints",
     "qiskit-terra[visualization]",
-    "numba",
-    "pymatching",
 ]
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]
@@ -152,7 +150,7 @@ log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
     "error",
-    "ignore:.*pkg_resources.*:DeprecationWarning:pkg_resources",
+    "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:",
     "ignore:.*qiskit.utils.algorithm_globals.QiskitAlgorithmGlobals*:DeprecationWarning:qiskit",
     "ignore:.*Building a flow controller with keyword arguments is going to be deprecated*:PendingDeprecationWarning:qiskit",
