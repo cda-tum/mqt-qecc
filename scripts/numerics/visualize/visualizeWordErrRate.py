@@ -15,7 +15,7 @@ def wer() -> None:
     input_filename = ""
     input_filename2 = ""
     input_filename3 = ""
-    fig, ax = plt.subplots(1)
+    _fig, ax = plt.subplots(1)
 
     with Path(input_filename).open() as f:
         data = json.load(f)
@@ -77,7 +77,7 @@ def wer_comp() -> None:
     plt.rcParams.update({"font.size": 15})
     input_filename = ""
     input_filename2 = ""
-    fig, ax = plt.subplots(1)
+    _fig, ax = plt.subplots(1)
 
     with Path(input_filename).open() as f:
         data = json.load(f)
