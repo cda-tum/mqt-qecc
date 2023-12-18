@@ -1,4 +1,4 @@
-    Analog Information Decoding
+Analog Information Decoding
 ===========================
 This submodule provides means to conduct decoding simulations for quantum CSS codes with
 analog syndrome information as proposed in the corresponding paper :cite:labelpar:`berent2023analog`.
