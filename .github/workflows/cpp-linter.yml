@@ -47,7 +47,7 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
       - name: Run cpp-linter
-        uses: cpp-linter/cpp-linter-action@v2
+        uses: cpp-linter/cpp-linter-action@v2.7.2
         id: linter
         env:
           GITHUB_TOKEN: ${{ github.token }}
