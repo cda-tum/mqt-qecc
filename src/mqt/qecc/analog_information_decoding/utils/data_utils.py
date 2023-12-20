@@ -347,7 +347,7 @@ def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
             break
 
     # merged_data = dict(datasets[0])
-
+    merged_data = {}
     # Extract and add up the values for "nr_runs", "x_success_cnt", and "z_success_cnt"
     for data in datasets:
         try:
