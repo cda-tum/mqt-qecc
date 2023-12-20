@@ -237,9 +237,9 @@ class SingleShotSimulator:
                 z_syndrome_w_err = get_noisy_analog_syndrome(perfect_syndr=z_syndrome, sigma=self.sigma_z)
             else:  # usual pauli error channel syndrome error
                 x_syndrome_err = generate_syndr_err(channel_probs=self.x_syndr_error_channel)
-                x_syndrome_w_err = (x_syndrome + x_syndrome_err) % 2
+                x_syndrome_w_err = (x_syndrome + x_syndrome_err) % 2  # type: ignore[assignment] # only occurs due to reused var name
                 z_syndrome_err = generate_syndr_err(channel_probs=self.z_syndr_error_channel)
-                z_syndrome_w_err = (z_syndrome + z_syndrome_err) % 2
+                z_syndrome_w_err = (z_syndrome + z_syndrome_err) % 2  # type: ignore[assignment] # only occurs due to reused var name
         else:
             x_syndrome_w_err = np.copy(x_syndrome)
             z_syndrome_w_err = np.copy(z_syndrome)
@@ -353,7 +353,7 @@ class SingleShotSimulator:
                 meta_bin = (meta_pcm @ get_binary_from_analog(syndrome_w_err)) % 2
                 meta_syndr = get_signed_from_binary(meta_bin)  # for AI decoder we need {-1,+1} syndrome as input
             else:
-                meta_syndr = (meta_pcm @ syndrome_w_err) % 2
+                meta_syndr = (meta_pcm @ syndrome_w_err) % 2  # type: ignore[assignment] # only occurs due to reused var name
 
             ss_syndr = np.hstack((syndrome_w_err, meta_syndr))
             # only first n bit are data, the other are virtual nodes and can be discarded for estimate
@@ -646,18 +646,6 @@ class SingleShotSimulator:
         If analog_info is activated, the SoftInfoBpDecoder is used instead of the BPOSD decoder.
         Note that analog_info and analog_tg cannot be used simultaneously.
         """
-        # if analog_info:
-        #     return SoftInfoBpOsdDecoder(
-        #         pcm=pcm,
-        #         error_channel=channel_probs,
-        #         max_iter=self.bp_params.max_bp_iter,
-        #         bp_method=self.bp_params.bp_method,
-        #         osd_order=self.bp_params.osd_order,
-        #         osd_method=self.bp_params.osd_method,
-        #         ms_scaling_factor=self.bp_params.ms_scaling_factor,
-        #         cutoff=cutoff,
-        #         sigma=sigma,
-        #     )
         return bposd_decoder(
             parity_check_matrix=pcm,
             channel_probs=channel_probs,

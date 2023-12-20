@@ -59,7 +59,7 @@ def load_data(
         try:
             ldata = json.load(path.open())
             data.append(ldata)
-        except:
+        except json.decoder.JSONDecodeError:
             merge_json_files(str(path.with_suffix("")))
             ldata = json.load(path.open())
             data.append(ldata)
@@ -132,10 +132,6 @@ def create_outpath(
         path += f"sus_th_depth={sus_th_depth}/"
     elif rounds:
         path += f"rounds={rounds}/"
-    # else:
-    #     raise ValueError(
-    #         "Either sus_th_depth or window_count_per_run must be specified."
-    #     )
 
     if repetitions:
         path += f"repetitions={repetitions}/"
@@ -289,6 +285,7 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
     # Start with a copy of the first dictionary in the list that contains z_success_cnt
     # and remove that dict from the list
     for i, data in enumerate(datasets):
+        merged_data = {}
         if "x_success_cnt" in data:
             merged_data = dict(datasets.pop(i))
             break
@@ -298,7 +295,7 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
         try:
             merged_data["nr_runs"] += data.get("nr_runs", 0)
             merged_data["x_success_cnt"] += data.get("x_success_cnt", 0)
-        except:
+        except KeyError:
             pass
 
     # Update logical and word error rates based on accumulated data.
@@ -357,7 +354,8 @@ def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
             merged_data["nr_runs"] += data.get("nr_runs", 0)
             # merged_data["z_success_cnt"] += data.get("z_success_cnt", 0)
             merged_data["z_success_cnt"] += data.get("z_success_cnt", 0)
-        except:
+        except KeyError:
+            # don't care about key error here
             pass
 
     # Update logical and word error rates based on accumulated data.
@@ -406,6 +404,7 @@ def merge_json_files(input_path: str) -> None:
                             json_data = json.load(file)
                             data.append(json_data)
                         except JSONDecodeError:
+                            # don't care about json decode error here
                             pass
             merged_data = merge_datasets(data)
             if merged_data:
@@ -443,6 +442,7 @@ def merge_json_files_x(input_path: str) -> None:
                             json_data = json.load(file)
                             data.append(json_data)
                         except JSONDecodeError:
+                            # don't care about json decode error here
                             pass
             merged_data = _merge_datasets_x(data)
             if merged_data:
@@ -480,6 +480,7 @@ def merge_json_files_z(input_path: str) -> None:
                             json_data = json.load(file)
                             data.append(json_data)
                         except JSONDecodeError:
+                            # don't caer about json decode error here
                             pass
             merged_data = _merge_datasets_z(data)
             if merged_data:
@@ -517,6 +518,7 @@ def merge_json_files_xz(input_path: str) -> None:
                             json_data = json.load(file)
                             data.append(json_data)
                         except JSONDecodeError:
+                            # don't care about json decode error here
                             pass
             # print(folder_path, filename)
             # print(data)
