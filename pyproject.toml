@@ -193,7 +193,6 @@ unsafe-fixes = true
 
 [tool.ruff.lint]
 exclude = [
-    "*/code_construction/*",
     "scripts/*",
     "*/cc_decoder/plots.py"
 ]

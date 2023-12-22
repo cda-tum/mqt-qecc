@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -35,7 +35,7 @@ def run_checks_scipy(d_1: csr_matrix, d_2: csr_matrix, d_3: csr_matrix, d_4: csr
     """Run checks on the boundary maps."""
     if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3) and sparse_all_zeros(d_3 @ d_4)):
         msg = "Error generating 4D code, boundary maps do not square to zero"
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
 
 def generate_4d_product_code(
@@ -103,7 +103,7 @@ def generate_3d_product_code(
 
     if not (sparse_all_zeros(d_1 @ d_2) and sparse_all_zeros(d_2 @ d_3)):
         msg = "Error generating 3D code, boundary maps do not square to zero"
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
     return d_1, d_2, d_3  # mx, hx, hzT # hx, hzT, mzT
 
@@ -111,10 +111,7 @@ def generate_3d_product_code(
 def create_outpath(codename: str) -> str:
     """Create output path for code."""
     path = f"/codes/generated_codes/{codename}/"
-
-    if not os.path.exists(path):
-        os.makedirs(path)
-
+    Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
 
@@ -149,14 +146,14 @@ def save_code(
 def run_compute_distances(codename: str) -> None:
     """Run compute distances bash script."""
     path = "/codes/generated_codes/" + codename
-    subprocess.run(["bash", "compute_distances_3D.sh", path], check=False)
+    subprocess.run(["bash", "compute_distances_3D.sh", path], check=False)  # noqa: S603, S607
 
 
 def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: str) -> None:
     run_compute_distances(codename)
     _, n = hx.shape
     code_k = n - mod2.rank(hx) - mod2.rank(hz)
-    with open(f"/codes/generated_codes/{codename}/info.txt") as f:
+    with Path(f"/codes/generated_codes/{codename}/info.txt").open() as f:
         code_dict: dict[str, Any] = dict(
             line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
@@ -166,8 +163,7 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
     code_dict["dX"] = int(code_dict["dX"])
     code_dict["dZ"] = int(code_dict["dZ"])
 
-    print("Code properties:", code_dict)
-    with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
+    with Path(f"/codes/generated_codes/{codename}/code_params.txt").open("w") as file:
         file.write(json.dumps(code_dict))
 
 
@@ -175,11 +171,11 @@ def _store_code_params(hx: csr_matrix, hz: csr_matrix, codename: str) -> None:
     """Store code parameters in file."""
     code_dict = {}
     hx, hz = hx.todense(), hz.todense()
-    m, n = hx.shape
+    _m, n = hx.shape
     code_k = n - mod2.rank(hx) - mod2.rank(hz)
     code_dict["n"] = n
     code_dict["k"] = code_k
-    with open(f"/codes/generated_codes/{codename}/code_params.txt", "w") as file:
+    with Path(f"/codes/generated_codes/{codename}/code_params.txt").open("w") as file:
         file.write(json.dumps(code_dict))
 
 
@@ -207,7 +203,7 @@ def create_code(
     hz = hz_t.transpose()
     mz = mz_t.transpose()
     if compute_logicals:
-        lx, lz = code_constructor._compute_logicals(hx.todense(), hz.todense())
+        lx, lz = code_constructor._compute_logicals(hx.todense(), hz.todense())  # noqa: SLF001
         save_code(hx=hx, hz=hz, mz=mz, codename=codename, lx=lx, lz=lz)
 
     if compute_distance:

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import ldpc.code_util
@@ -39,7 +39,7 @@ def run_checks_scipy(
         and is_all_zeros((sd_3 * sd_4).todense() % 2)
     ):
         msg = "Error generating 4D code, boundary maps do not square to zero"
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
 
 def generate_4d_product_code(
@@ -99,7 +99,7 @@ def generate_3d_product_code(
 
     if not (is_all_zeros(d_1 @ d_2 % 2) and is_all_zeros(d_2 @ d_3 % 2)):
         msg = "Error generating 3D code, boundary maps do not square to zero"
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
     return d_1, d_2, d_3
 
@@ -107,10 +107,7 @@ def generate_3d_product_code(
 def create_outpath(codename: str) -> str:
     """Create output path for code files."""
     path = f"generated_codes/{codename}/"
-
-    if not os.path.exists(path):
-        os.makedirs(path)
-
+    Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
 
@@ -140,15 +137,15 @@ def save_code(
 def run_compute_distances(codename: str) -> None:
     """Run compute distances bash script."""
     path = "generated_codes/" + codename
-    subprocess.run(["bash", "compute_distances.sh", path], check=False)
+    subprocess.run(["bash", "compute_distances.sh", path], check=False)  # noqa: S603, S607
 
 
 def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: str) -> None:
     run_compute_distances(codename)
     code_dict: Any = {}
-    m, n = hx.shape
+    _m, n = hx.shape
     code_k = n - mod2.rank(hx) - mod2.rank(hz)
-    with open(f"generated_codes/{codename}/info.txt") as f:
+    with Path(f"generated_codes/{codename}/info.txt").open() as f:
         code_dict = dict(
             line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
@@ -160,8 +157,7 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
     code_dict["dMX"] = int(code_dict["dMX"])
     code_dict["dMZ"] = int(code_dict["dMZ"])
 
-    print("Code properties:", code_dict)
-    with open(f"generated_codes/{codename}/code_params.txt", "w") as file:
+    with Path(f"generated_codes/{codename}/code_params.txt").open("w") as file:
         file.write(json.dumps(code_dict))
 
 
@@ -214,7 +210,7 @@ def create_code(
     # Perform checks
     if np.any(hz_t @ mz_t % 2) or np.any(hx @ hz_t % 2) or np.any(mx @ hx % 2):
         msg = "err"
-        raise Exception(msg)
+        raise RuntimeError(msg)
     save_code(hx, hz, mx, mz, codename, lx=None, lz=None)
 
     if compute_logicals:
