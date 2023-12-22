@@ -9,10 +9,8 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from ldpc import bposd_decoder
 
-# from ldpc.bp_decoder import SoftInfoBpDecoder
-# from ldpc.bposd_decoder import SoftInfoBpOsdDecoder
-from mqt.qecc.analog_information_decoding.utils import simulation_utils
-from mqt.qecc.analog_information_decoding.utils.data_utils import (
+from ..utils import simulation_utils
+from ..utils.data_utils import (
     BpParams,
     calculate_error_rates,
     is_converged,
@@ -20,70 +18,6 @@ from mqt.qecc.analog_information_decoding.utils.data_utils import (
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-
-
-# class SoftInfoDecoder:
-#     """Soft Information Decoder.
-#
-#     Plug and play solution for soft information decoding that can be
-#     interchanged with `AnalogTannergraphDecoder` in `ATD_Simulator`.
-#
-#     """
-#
-#     def __init__(
-#         self,
-#         pcm: NDArray[np.int32],
-#         bp_params: BpParams,
-#         error_channel: NDArray[np.float64],
-#         sigma: float | None = None,
-#         ser: float | None = None,
-#     ) -> None:
-#         """Initialize the decoder."""
-#         self.m, self.n = pcm.shape
-#         self.sigma = sigma
-#         self.H = pcm
-#         self.bp_params = bp_params
-#         self.syndr_err_rate = ser
-#         self.error_channel = error_channel
-#
-#         if self.sigma is None:
-#             if self.syndr_err_rate is None:
-#                 msg = "Either sigma or ser must be specified"
-#                 raise ValueError(msg)
-#             self.sigma = simulation_utils.get_sigma_from_syndr_er(self.syndr_err_rate)
-#         elif self.syndr_err_rate is not None:
-#             msg = "Only one of sigma or ser must be specified"
-#             raise ValueError(msg)
-#
-#         self.bposd_decoder = SoftInfoBpOsdDecoder(
-#             pcm=self.H,
-#             error_channel=error_channel,
-#             sigma=self.sigma,
-#             max_iter=self.bp_params.max_bp_iter,
-#             ms_scaling_factor=self.bp_params.ms_scaling_factor,
-#             omp_thread_count=self.bp_params.omp_thread_count,
-#             random_serial_schedule=self.bp_params.random_serial_schedule,
-#             serial_schedule_order=self.bp_params.serial_schedule_order,
-#             osd_method=self.bp_params.osd_method,
-#             osd_order=self.bp_params.osd_order,
-#             bp_method=self.bp_params.bp_method,
-#             schedule=self.bp_params.schedule,
-#             cutoff=self.bp_params.cutoff,
-#         )
-#
-#         self.bp_decoder = SoftInfoBpDecoder(
-#             pcm=self.H,
-#             error_channel=error_channel,
-#             sigma=self.sigma,
-#             max_iter=self.bp_params.max_bp_iter,
-#             ms_scaling_factor=self.bp_params.ms_scaling_factor,
-#             bp_method=self.bp_params.bp_method,
-#             cutoff=self.bp_params.cutoff,
-#         )
-#
-#     def decode(self, analog_syndrome: NDArray[np.int32]) -> NDArray[np.int32]:
-#         """Decode a given analog syndrome."""
-#         return self.bp_decoder.decode(analog_syndrome)  # type: ignore[no-any-return]
 
 
 class AnalogTannergraphDecoder:
@@ -239,9 +173,6 @@ class AtdSimulator:
         # setup decoders
         if self.decoding_method == "atd":
             Decoder = AnalogTannergraphDecoder  # noqa: N806
-
-        # elif self.decoding_method == "softinfo":
-        #     Decoder = SoftInfoDecoder
 
         # single-sided error only, no bias
         self.full_error_channel = simulation_utils.error_channel_setup(

@@ -14,7 +14,7 @@ from ldpc import mod2
 from scipy import sparse
 from scipy.sparse import coo_matrix, csr_matrix
 
-from mqt.qecc.analog_information_decoding.code_construction import code_constructor
+from . import code_constructor
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -136,7 +136,7 @@ def save_code(
             path_str = path + name
             try:
                 np.savetxt(path_str + ".txt", mat.todense(), fmt="%i")
-            except:
+            except Exception:
                 np.savetxt(path_str + ".txt", mat, fmt="%i")
             sio.mmwrite(
                 path_str + ".mtx",

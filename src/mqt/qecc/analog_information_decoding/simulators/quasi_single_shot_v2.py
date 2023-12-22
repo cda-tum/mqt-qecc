@@ -8,13 +8,8 @@ import numpy as np
 from bposd import bposd_decoder
 from pymatching import Matching
 
-from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import (
-    build_multiround_pcm,
-    decode_multiround,
-    move_syndrome,
-)
-from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, _check_convergence
-from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
+from ..utils.data_utils import BpParams, _check_convergence
+from ..utils.simulation_utils import (
     error_channel_setup,
     generate_err,
     generate_syndr_err,
@@ -24,6 +19,11 @@ from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
     is_logical_err,
     save_results,
     set_seed,
+)
+from .memory_experiment_v2 import (
+    build_multiround_pcm,
+    decode_multiround,
+    move_syndrome,
 )
 
 if TYPE_CHECKING:

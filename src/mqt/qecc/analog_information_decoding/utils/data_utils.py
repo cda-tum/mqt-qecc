@@ -284,24 +284,20 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
 
     # Start with a copy of the first dictionary in the list that contains z_success_cnt
     # and remove that dict from the list
+    merged_data = {}
     for i, data in enumerate(datasets):
-        merged_data = {}
         if "x_success_cnt" in data:
             merged_data = dict(datasets.pop(i))
             break
 
     # Extract and add up the values for "nr_runs", "x_success_cnt", and "z_success_cnt"
     for data in datasets:
-        try:
-            merged_data["nr_runs"] += data.get("nr_runs", 0)
-            merged_data["x_success_cnt"] += data.get("x_success_cnt", 0)
-        except KeyError:
-            pass
+        merged_data["nr_runs"] += data.get("nr_runs", 0)
+        merged_data["x_success_cnt"] += data.get("x_success_cnt", 0)
 
     # Update logical and word error rates based on accumulated data.
     runs = merged_data["nr_runs"]
     x_success_cnt = merged_data["x_success_cnt"]
-    # z_success_cnt = merged_data["z_success_cnt"]
 
     x_ler, x_ler_eb, x_wer, x_wer_eb = _update_error_rates(x_success_cnt, runs, merged_data["code_K"])
 
@@ -341,26 +337,19 @@ def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
 
     # Start with a copy of the first dictionary in the list that contains z_success_cnt
     # and remove that dict from the list
+    merged_data = {}
     for i, data in enumerate(datasets):
         if "z_success_cnt" in data:
             merged_data = dict(datasets.pop(i))
             break
 
-    # merged_data = dict(datasets[0])
-    merged_data = {}
     # Extract and add up the values for "nr_runs", "x_success_cnt", and "z_success_cnt"
     for data in datasets:
-        try:
-            merged_data["nr_runs"] += data.get("nr_runs", 0)
-            # merged_data["z_success_cnt"] += data.get("z_success_cnt", 0)
-            merged_data["z_success_cnt"] += data.get("z_success_cnt", 0)
-        except KeyError:
-            # don't care about key error here
-            pass
+        merged_data["nr_runs"] += data.get("nr_runs", 0)
+        merged_data["z_success_cnt"] += data.get("z_success_cnt", 0)
 
     # Update logical and word error rates based on accumulated data.
     runs = merged_data["nr_runs"]
-    # x_success_cnt = merged_data["x_success_cnt"]
     z_success_cnt = merged_data["z_success_cnt"]
 
     z_ler, z_ler_eb, z_wer, z_wer_eb = _update_error_rates(z_success_cnt, runs, merged_data["code_K"])

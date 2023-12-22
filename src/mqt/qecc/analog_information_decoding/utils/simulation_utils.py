@@ -3,33 +3,24 @@
 from __future__ import annotations
 
 import json
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from ldpc.mod2 import rank
-from numba.core.errors import (
-    NumbaDeprecationWarning,
-    NumbaPendingDeprecationWarning,
-)
 from scipy.special import erfc, erfcinv
 
-from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams, calculate_error_rates, replace_inf
+from .data_utils import BpParams, calculate_error_rates, replace_inf
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
-warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
 
-# @njit  # type: ignore[misc]
 def set_seed(value: float) -> None:
     """The appropriate way to set seeds when numba is used."""
     np.random.seed(value)  # noqa: NPY002
 
 
-# @njit # type: ignore[misc]
 def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementation is buggy
     """Converts an alist file to a numpy array."""
     alist_file: NDArray[np.str_] = np.loadtxt(fname, delimiter=",", dtype=str)
@@ -50,7 +41,6 @@ def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementa
 
 # Rewrite such that call signatures of check_logical_err_h
 # and check_logical_err_l are identical
-# @njit # type: ignore[misc]
 def check_logical_err_h(
     check_matrix: NDArray[np.int_], original_err: NDArray[np.int_], decoded_estimate: NDArray[np.int_]
 ) -> bool:
@@ -90,7 +80,6 @@ def is_logical_err(logicals: NDArray[np.int_], residual_err: NDArray[np.int_]) -
 # adapted from https://github.com/quantumgizmos/bp_osd/blob/a179e6e86237f4b9cc2c952103fce919da2777c8/src/bposd/css_decode_sim.py#L430
 # and https://github.com/MikeVasmer/single_shot_3D_HGP/blob/master/sim_scripts/single_shot_hgp3d.cpp#L207
 # channel_probs = [x,y,z], residual_err = [x,z]
-# @njit # type: ignore[misc]
 def generate_err(
     nr_qubits: int,
     channel_probs: tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]],
@@ -132,7 +121,6 @@ def generate_err(
     return error_x, error_z
 
 
-# @njit  # type: ignore[misc]
 def get_analog_llr(analog_syndrome: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes analog LLRs given analog syndrome and sigma."""
     if sigma <= 0.0:
@@ -160,7 +148,6 @@ def get_error_rate_from_sigma(sigma: float) -> float:
     return float(0.5 * erfc(1 / np.sqrt(2 * sigma**2)))  # see Eq. cref{eq:perr-to-sigma} in our paper
 
 
-# @njit  # type: ignore[misc]
 def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) -> NDArray[np.float64]:
     """Computes a vector of values v_i from the noisy syndrome bits y_i s.t.
 
@@ -173,7 +160,6 @@ def get_virtual_check_init_vals(noisy_syndr: NDArray[np.float64], sigma: float) 
     return np.array(1 / (np.exp(np.abs(llrs)) + 1))
 
 
-# @njit  # type: ignore[misc]
 def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     """Generates a random error vector given the error channel probabilities."""
     error: NDArray[np.int32] = np.zeros_like(channel_probs, dtype=np.int32)
@@ -187,7 +173,6 @@ def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     return error
 
 
-# @njit  # type: ignore[misc]
 def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> NDArray[np.float64]:
     """Generate noisy analog syndrome vector given the perfect syndrome and standard deviation sigma (~ noise strength).
 
@@ -204,7 +189,6 @@ def get_noisy_analog_syndrome(perfect_syndr: NDArray[np.int_], sigma: float) -> 
     return np.array(np.random.default_rng().normal(loc=sgns, scale=sigma, size=perfect_syndr.shape)).astype(np.float64)
 
 
-# @njit # type: ignore[misc]
 def error_channel_setup(
     error_rate: float, xyz_error_bias: NDArray[np.float64], nr_qubits: int
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
@@ -234,7 +218,6 @@ def error_channel_setup(
     return channel_probs_x, channel_probs_y, channel_probs_z
 
 
-# @njit # type: ignore[misc]
 def build_single_stage_pcm(pcm: NDArray[np.int_], meta: NDArray[np.int_]) -> NDArray[np.int_]:
     """Build the single statge parity check matrix."""
     id_r = np.identity(meta.shape[1])
@@ -242,7 +225,6 @@ def build_single_stage_pcm(pcm: NDArray[np.int_], meta: NDArray[np.int_]) -> NDA
     return np.block([[pcm, id_r], [zeros, meta]])
 
 
-# @njit  # type: ignore[misc]
 def get_signed_from_binary(binary_syndrome: NDArray[np.int_]) -> NDArray[np.int_]:
     """Maps the binary vector with {0,1} entries to a vector with {-1,1} entries."""
     return np.where(

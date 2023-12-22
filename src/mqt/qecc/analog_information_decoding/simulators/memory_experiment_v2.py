@@ -8,7 +8,7 @@ import numpy as np
 from pymatching import Matching
 from scipy.sparse import block_diag, csr_matrix, eye, hstack
 
-from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
+from ..utils.simulation_utils import (
     get_virtual_check_init_vals,
 )
 

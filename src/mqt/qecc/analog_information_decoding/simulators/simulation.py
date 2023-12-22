@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from bposd import bposd_decoder
 
-from mqt.qecc.analog_information_decoding.utils.data_utils import (
+from ..utils.data_utils import (
     BpParams,
     calculate_error_rates,
     is_converged,
     replace_inf,
 )
-from mqt.qecc.analog_information_decoding.utils.data_utils import create_outpath as get_outpath
-from mqt.qecc.analog_information_decoding.utils.simulation_utils import (
+from ..utils.data_utils import create_outpath as get_outpath
+from ..utils.simulation_utils import (
     build_single_stage_pcm,
     check_logical_err_h,
     error_channel_setup,
