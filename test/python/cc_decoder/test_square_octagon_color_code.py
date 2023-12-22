@@ -36,7 +36,7 @@ def nr_sims() -> int:
 @pytest.fixture()
 def results_dir() -> str:
     """Return directory to store results."""
-    return "./results"
+    return "./results/test/"
 
 
 @pytest.mark.parametrize("code", [SquareOctagonColorCode(distance=d) for d in range(3, 23, 2)])
@@ -77,19 +77,17 @@ def test_z3_solver(
 ) -> None:
     """Test the Z3 solver."""
     d = d3_so_code.distance
-    ret = script_runner.run(
-        [
-            "mqt.qecc.cc-decoder",
-            "--type",
-            "square_octagon",
-            str(d),
-            str(p),
-            "--nr_sims",
-            str(nr_sims),
-            "--results_dir",
-            results_dir,
-        ]
-    )
+    ret = script_runner.run([
+        "mqt.qecc.cc-decoder",
+        "--type",
+        "square_octagon",
+        str(d),
+        str(p),
+        "--nr_sims",
+        str(nr_sims),
+        "--results_dir",
+        results_dir,
+    ])
     assert ret.success
     assert not ret.stderr
 

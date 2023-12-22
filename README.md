@@ -34,6 +34,8 @@ The tool can be used to:
   - The framework allows to apply different QECC schemes to quantum circuits and either exports the resulting
     circuits or simulates them using Qiskit [[4]](https://qiskit.org/). Currently, six different ECCs are supported
     with varying extent of functionality.
+- WIP: Decode bosonic quantum LDPC codes and conduct numerical simulations for analog information decoding under phenomenological
+  (cat qubit) noise.
 
 <p align="center">
   <a href="https://mqt.readthedocs.io/projects/qecc">
@@ -132,6 +134,9 @@ Windows support is currently experimental.
 
 If you use our tool for your research, we will be thankful if you refer to it by citing the appropriate publication:
 
+- [![a](https://img.shields.io/static/v1?label=arXiv&message=2311.01328&color=inactive&style=flat-square)](https://arxiv.org/abs/2311.01328)
+  L. Berent, T. Hillmann, J. Eisert, R. Wille, and J. Roffe, "Analog information decoding of bosonic quantum LDPC codes".
+
 - [![a](https://img.shields.io/static/v1?label=arXiv&message=2303.14237&color=inactive&style=flat-square)](https://arxiv.org/abs/2303.14237)
   L. Berent, L. Burgholzer, P.J. Derks, J. Eisert, and R. Wille, "Decoding quantum color codes with MaxSAT".
 
@@ -144,3 +149,13 @@ If you use our tool for your research, we will be thankful if you refer to it by
   L. Berent, L. Burgholzer, and R.
   Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
   in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
+
+## Credits
+
+The authors of this software are:
+
+- Lucas Berent
+- Lukas Burgholzer
+- Thomas Grurl
+- Peter-Jan H.S. Derks
+- Timo Hillmann

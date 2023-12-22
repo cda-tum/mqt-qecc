@@ -16,6 +16,12 @@ nox.options.sessions = ["lint", "pylint", "tests"]
 
 PYTHON_ALL_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
+BUILD_REQUIREMENTS = [
+    "scikit-build-core[pyproject]>=0.6.1",
+    "setuptools_scm>=7",
+    "pybind11>=2.11",
+]
+
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
 
@@ -25,19 +31,6 @@ def lint(session: nox.Session) -> None:
     """Run the linter."""
     session.install("pre-commit")
     session.run("pre-commit", "run", "--all-files", *session.posargs)
-
-
-@nox.session(reuse_venv=True)
-def pylint(session: nox.Session) -> None:
-    """Run PyLint.
-
-    Simply execute `nox -rs pylint` to run PyLint.
-    """
-    session.install(
-        "scikit-build-core[pyproject]<0.6", "setuptools_scm", "pybind11"
-    )  # TODO: remove upper cap once scikit-build-core is updated
-    session.install("--no-build-isolation", "-ve.", "pylint")
-    session.run("pylint", "mqt.qecc", *session.posargs)
 
 
 def _run_tests(
@@ -51,21 +44,15 @@ def _run_tests(
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
 
     if os.environ.get("CI", None) and sys.platform == "win32":
-        env["SKBUILD_CMAKE_ARGS"] = "-T ClangCL"
+        env["CMAKE_GENERATOR"] = "Ninja"
 
     _extras = ["test", *extras]
     if "--cov" in posargs:
         _extras.append("coverage")
         posargs.append("--cov-config=pyproject.toml")
 
-    session.install(
-        "scikit-build-core[pyproject]<0.6",
-        "setuptools_scm",
-        "pybind11",
-        *install_args,
-        env=env,
-    )  # TODO: remove upper cap once scikit-build-core is updated
-    install_arg = f"-ve.[{','.join(_extras)}]"
+    session.install(*BUILD_REQUIREMENTS, *install_args, env=env)
+    install_arg = f".[{','.join(_extras)}]"
     session.install("--no-build-isolation", install_arg, *install_args, env=env)
     session.run("pytest", *run_args, *posargs, env=env)
 
@@ -98,13 +85,8 @@ def docs(session: nox.Session) -> None:
     if args.builder != "html" and args.serve:
         session.error("Must not specify non-HTML builder with --serve")
 
-    build_requirements = [
-        "scikit-build-core[pyproject]<0.6",
-        "setuptools_scm",
-        "pybind11",
-    ]  # TODO: remove upper cap once scikit-build-core is updated
     extra_installs = ["sphinx-autobuild"] if args.serve else []
-    session.install(*build_requirements, *extra_installs)
+    session.install(*BUILD_REQUIREMENTS, *extra_installs)
     session.install("--no-build-isolation", "-ve.[docs]")
     session.chdir("docs")
 
