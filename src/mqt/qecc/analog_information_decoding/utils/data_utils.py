@@ -1,10 +1,12 @@
 """This module contains utility functions for loading and processing raw simulation data."""
+
 from __future__ import annotations
 
 import itertools
 import json
 import os
 from dataclasses import dataclass, fields
+from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,7 @@ class BpParams:
 
     @classmethod
     def from_dict(cls, dict_: dict[str, Any]) -> BpParams:
+        """Creates a BpParams object from a dictionary."""
         class_fields = {f.name for f in fields(cls)}
         return BpParams(**{k: v for k, v in dict_.items() if k in class_fields})
 
@@ -36,7 +39,7 @@ def extract_settings(filename: str) -> dict[str, list[str]]:
     """Extracts all settings from a parameter file and returns them as a dictionary."""
     keyword_lists: dict[str, list[str]] = {}
 
-    with open(filename) as file:
+    with Path(filename).open() as file:
         for line in file:
             json_data = json.loads(line.strip())
             for keyword, value in json_data.items():
@@ -85,6 +88,7 @@ def calculate_error_rates(
 
 
 def is_converged(x_success: int, z_success: int, runs: int, code_params: dict[str, int], precision: float) -> bool:
+    """Checks if the logical error rates for X and Z are converged."""
     x_cond = _check_convergence(x_success, runs, code_params, precission_cutoff=precision)
     z_cond = _check_convergence(z_success, runs, code_params, precission_cutoff=precision)
     return x_cond == z_cond is True
@@ -98,8 +102,7 @@ def _check_convergence(
         if ler_eb / ler < precission_cutoff:
             return True
         return None
-    else:
-        return False
+    return False
 
 
 def create_outpath(
@@ -111,13 +114,13 @@ def create_outpath(
     sus_th_depth: int | None = None,
     rounds: int | None = None,
     identifier: int = 0,
-    overwrite: bool = False,
     analog_info: bool = False,
     analog_tg: bool = False,
     repetitions: int | None = None,
     experiment: str = "wer_per_round",
     **kwargs: dict[str, Any],
 ) -> str:
+    """Creates a path for storing simulation results."""
     path = f"results/{experiment:s}/"
     if analog_info:
         path += "analog_info/"  # ranvendraan et al analog info decoder
@@ -156,18 +159,14 @@ def create_outpath(
     else:
         path += f"per_{kwargs['data_err_rate']:.3e}_ser_{kwargs['syndr_err_rate']:.3e}/"
 
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
+    Path(path).mkdir(parents=True, exist_ok=True)
 
-    if overwrite is False:
+    f_loc = path + f"id_{identifier}.json"
+    while Path(f_loc).exists():
+        identifier += 1
         f_loc = path + f"id_{identifier}.json"
-        while os.path.exists(f_loc):
-            identifier += 1
-            f_loc = path + f"id_{identifier}.json"
 
-    while not os.path.exists(f_loc):
-        open(f_loc, "w").close()
-
+    Path(f_loc).touch()
     return f_loc
 
 
@@ -182,7 +181,7 @@ def replace_inf(lst: list[str]) -> list[str]:
     return new_lst
 
 
-def product_dict(**kwargs: Any) -> Any:
+def product_dict(**kwargs: Any) -> Any:  # noqa: ANN401
     """Generate a iterator of dictionaries where each dictionary is a cartesian product.
 
     of the values associated with each key in the input dictionary.
@@ -193,17 +192,13 @@ def product_dict(**kwargs: Any) -> Any:
         yield dict(zip(keys, instance))
 
 
-def zip_dict(**kwargs: dict[str, Any]) -> Any:
-    """Create a iterator of dictionaries where each dictionary contains the zip() of the
-    values associated with each key in the input dictionary.
-    """
+def zip_dict(**kwargs: dict[str, Any]) -> Any:  # noqa: ANN401
+    """Create a iterator of dictionaries where each dictionary contains the zip() of the values associated with each key in the input dictionary."""
     return (dict(zip(kwargs.keys(), values)) for values in zip(*kwargs.values()))
 
 
 def _update_error_rates(success_cnt: int, runs: int, code_k: int) -> tuple[float, float, float, float]:
-    """Calculates logical error rate, logical error rate error bar, word error rate,
-    and word error rate error bar.
-    """
+    """Calculates logical error rate, logical error rate error bar, word error rate, and word error rate error bar."""
     logical_err_rate = 1.0 - (success_cnt / runs)
     logical_err_rate_eb = np.sqrt((1 - logical_err_rate) * logical_err_rate / runs)
     word_error_rate = 1.0 - (1 - logical_err_rate) ** (1 / code_k)
@@ -217,8 +212,9 @@ def _update_error_rates(success_cnt: int, runs: int, code_k: int) -> tuple[float
 
 
 def merge_datasets(datasets: list[dict[str, Any]]) -> dict[str, Any]:
-    """Merges a list of dictionaries into a single dictionary. The values for the fields "nr_runs",
-    "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
+    """Merges a list of dictionaries into a single dictionary.
+
+    The values for the fields "nr_runs", "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
 
     Args:
         datasets (List[Dict[str, Any]]): A list of dictionaries to be merged.
@@ -263,8 +259,9 @@ def merge_datasets(datasets: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
-    """Merges a list of dictionaries into a single dictionary. The values for the fields "nr_runs",
-    "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
+    """Merges a list of dictionaries into a single dictionary.
+
+    The values for the fields "nr_runs", "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
 
     Args:
         datasets (List[Dict[str, Any]]): A list of dictionaries to be merged.
@@ -365,9 +362,6 @@ def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
     return merged_data
 
 
-from json.decoder import JSONDecodeError
-
-
 def merge_json_files(input_path: str) -> None:
     """Iterates through all subfolders in the input folder, loads all JSON files in each subfolder.
 
@@ -381,14 +375,14 @@ def merge_json_files(input_path: str) -> None:
         None
     """
     output_data: list[dict[str, Any]] = []
-    for folder_name in os.listdir(input_path):
-        folder_path = os.path.join(input_path, folder_name)
-        if os.path.isdir(folder_path):
+    for folder_name in Path(input_path).iterdir():
+        folder_path = input_path / folder_name
+        if folder_path.is_dir():
             data: list[dict[str, Any]] = []
-            for filename in os.listdir(folder_path):
-                if filename.endswith(".json"):
-                    file_path = os.path.join(folder_path, filename)
-                    with open(file_path) as file:
+            for filename in folder_path.iterdir():
+                if filename.suffix == ".json":
+                    file_path = folder_path / filename
+                    with file_path.open() as file:
                         try:
                             json_data = json.load(file)
                             data.append(json_data)
@@ -400,9 +394,9 @@ def merge_json_files(input_path: str) -> None:
                 output_data.append(merged_data)
 
     # save output to parent directory
-    code_name = os.path.basename(os.path.normpath(input_path))
-    parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
-    with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
+    code_name = Path(input_path).name
+    parent_dir = (Path(input_path) / os.pardir).resolve()
+    with (parent_dir / f"{code_name:s}.json").open("w") as output_file:
         json.dump(output_data, output_file, ensure_ascii=False, indent=4)
 
 
@@ -419,14 +413,13 @@ def merge_json_files_x(input_path: str) -> None:
         None
     """
     output_data: list[dict[str, Any]] = []
-    for folder_name in os.listdir(input_path):
-        folder_path = os.path.join(input_path, folder_name)
-        if os.path.isdir(folder_path):
+    for folder_name in Path(input_path).iterdir():
+        folder_path = input_path / folder_name
+        if folder_path.is_dir():
             data: list[dict[str, Any]] = []
-            for filename in os.listdir(folder_path):
-                if filename.endswith(".json"):
-                    file_path = os.path.join(folder_path, filename)
-                    with open(file_path) as file:
+            for filename in folder_path.iterdir():
+                if filename.suffix == ".json":
+                    with (folder_path / filename).open() as file:
                         try:
                             json_data = json.load(file)
                             data.append(json_data)
@@ -438,9 +431,9 @@ def merge_json_files_x(input_path: str) -> None:
                 output_data.append(merged_data)
 
     # save output to parent directory
-    code_name = os.path.basename(os.path.normpath(input_path))
-    parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
-    with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
+    code_name = Path(input_path).name
+    parent_dir = (Path(input_path) / os.pardir).resolve()
+    with (parent_dir / f"{code_name:s}.json").open("w") as output_file:
         json.dump(output_data, output_file, ensure_ascii=False, indent=4)
 
 
@@ -457,28 +450,27 @@ def merge_json_files_z(input_path: str) -> None:
         None
     """
     output_data: list[dict[str, Any]] = []
-    for folder_name in os.listdir(input_path):
-        folder_path = os.path.join(input_path, folder_name)
-        if os.path.isdir(folder_path):
+    for folder_name in Path(input_path).iterdir():
+        folder_path = input_path / folder_name
+        if folder_path.is_dir():
             data: list[dict[str, Any]] = []
-            for filename in os.listdir(folder_path):
-                if filename.endswith(".json"):
-                    file_path = os.path.join(folder_path, filename)
-                    with open(file_path) as file:
+            for filename in folder_path.iterdir():
+                if filename.suffix == ".json":
+                    with (folder_path / filename).open() as file:
                         try:
                             json_data = json.load(file)
                             data.append(json_data)
                         except JSONDecodeError:
-                            # don't caer about json decode error here
+                            # don't care about json decode error here
                             pass
             merged_data = _merge_datasets_z(data)
             if merged_data:
                 output_data.append(merged_data)
 
     # save output to parent directory
-    code_name = os.path.basename(os.path.normpath(input_path))
-    parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
-    with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
+    code_name = Path(input_path).name
+    parent_dir = (Path(input_path) / os.pardir).resolve()
+    with (parent_dir / f"{code_name:s}.json").open("w") as output_file:
         json.dump(output_data, output_file, ensure_ascii=False, indent=4)
 
 
@@ -495,22 +487,19 @@ def merge_json_files_xz(input_path: str) -> None:
         None
     """
     output_data: list[dict[str, Any]] = []
-    for folder_name in os.listdir(input_path):
-        folder_path = os.path.join(input_path, folder_name)
-        if os.path.isdir(folder_path):
+    for folder_name in Path(input_path).iterdir():
+        folder_path = input_path / folder_name
+        if folder_path.is_dir():
             data: list[dict[str, Any]] = []
-            for filename in os.listdir(folder_path):
-                if filename.endswith(".json"):
-                    file_path = os.path.join(folder_path, filename)
-                    with open(file_path) as file:
+            for filename in folder_path.iterdir():
+                if filename.suffix == ".json":
+                    with (folder_path / filename).open() as file:
                         try:
                             json_data = json.load(file)
                             data.append(json_data)
                         except JSONDecodeError:
                             # don't care about json decode error here
                             pass
-            # print(folder_path, filename)
-            # print(data)
             merged_data_x = _merge_datasets_x(data)
             merged_data_z = _merge_datasets_z(data)
             merged_data = _combine_xz_data(merged_data_x, merged_data_z)
@@ -518,9 +507,9 @@ def merge_json_files_xz(input_path: str) -> None:
                 output_data.append(merged_data)
 
     # save output to parent directory
-    code_name = os.path.basename(os.path.normpath(input_path))
-    parent_dir = os.path.abspath(os.path.join(input_path, os.pardir))
-    with open(os.path.join(parent_dir, f"{code_name:s}.json"), "w") as output_file:
+    code_name = Path(input_path).name
+    parent_dir = (Path(input_path) / os.pardir).resolve()
+    with (parent_dir / f"{code_name:s}.json").open("w") as output_file:
         json.dump(output_data, output_file, ensure_ascii=False, indent=4)
 
 
@@ -536,11 +525,11 @@ def _combine_xz_data(xdata: dict[str, Any] | None, zdata: dict[str, Any] | None)
         zdata["z_runs"] = zdata.pop("nr_runs")
         xdata.update(zdata)
         return xdata
-    elif xdata:
+    if xdata:
         xdata["x_runs"] = xdata.pop("nr_runs")
         return xdata
-    elif zdata:
+    if zdata:
         zdata["z_runs"] = zdata.pop("nr_runs")
         return zdata
-    else:
-        return {}
+
+    return {}

@@ -1,4 +1,5 @@
 """ example simulation script """
+
 import numpy as np
 import scipy
 from matplotlib import pyplot as plt
@@ -42,14 +43,12 @@ for bp_method in ["msl"]:
                 out = sim.run(samples=1500)
 
                 ler = (
-                        out["z_ler"] * (1 - out["x_ler"])
-                        + out["x_ler"] * (1 - out["z_ler"])
-                        + out["x_ler"] * out["z_ler"]
+                    out["z_ler"] * (1 - out["x_ler"]) + out["x_ler"] * (1 - out["z_ler"]) + out["x_ler"] * out["z_ler"]
                 )
                 ler_eb = (
-                        out["z_ler_eb"] * (1 - out["x_ler_eb"])
-                        + out["x_ler_eb"] * (1 - out["z_ler_eb"])
-                        + out["x_ler_eb"] * out["z_ler_eb"]
+                    out["z_ler_eb"] * (1 - out["x_ler_eb"])
+                    + out["x_ler_eb"] * (1 - out["z_ler_eb"])
+                    + out["x_ler_eb"] * out["z_ler_eb"]
                 )
                 lers.append(ler)
                 ebs.append(ler_eb)

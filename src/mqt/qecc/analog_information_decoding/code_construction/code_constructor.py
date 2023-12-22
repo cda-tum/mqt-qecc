@@ -47,14 +47,14 @@ def generate_4d_product_code(
 ) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]:
     """Generate 4D product code."""
     r, c = p.shape
-    id_r:NDArray[np.int32] = np.identity(r, dtype=np.int32)
-    id_c:NDArray[np.int32] = np.identity(c, dtype=np.int32)
-    id_n0:NDArray[np.int32] = np.identity(a_1.shape[0], dtype=np.int32)
-    id_n1:NDArray[np.int32] = np.identity(a_2.shape[0], dtype=np.int32)
-    id_n2:NDArray[np.int32] = np.identity(a_3.shape[0], dtype=np.int32)
-    id_n3:NDArray[np.int32] = np.identity(a_3.shape[1], dtype=np.int32)
+    id_r: NDArray[np.int32] = np.identity(r, dtype=np.int32)
+    id_c: NDArray[np.int32] = np.identity(c, dtype=np.int32)
+    id_n0: NDArray[np.int32] = np.identity(a_1.shape[0], dtype=np.int32)
+    id_n1: NDArray[np.int32] = np.identity(a_2.shape[0], dtype=np.int32)
+    id_n2: NDArray[np.int32] = np.identity(a_3.shape[0], dtype=np.int32)
+    id_n3: NDArray[np.int32] = np.identity(a_3.shape[1], dtype=np.int32)
 
-    d_1:NDArray[np.int32] = np.hstack((np.kron(a_1, id_r), np.kron(id_n0, p))).astype(np.int32)
+    d_1: NDArray[np.int32] = np.hstack((np.kron(a_1, id_r), np.kron(id_n0, p))).astype(np.int32)
 
     x = np.hstack((np.kron(a_2, id_r), np.kron(id_n1, p)))
     y = np.kron(a_1, id_c)
@@ -66,9 +66,9 @@ def generate_4d_product_code(
     y = np.kron(a_2, id_c)
     dims = (y.shape[0], x.shape[1] - y.shape[1])
     z = np.hstack((np.zeros(dims, dtype=np.int32), y))
-    d_3:NDArray[np.int32] = np.vstack((x, z)).astype(np.int32)
+    d_3: NDArray[np.int32] = np.vstack((x, z)).astype(np.int32)
 
-    d_4:NDArray[np.int32] = np.vstack((np.kron(id_n3, p), np.kron(a_3, id_c)))
+    d_4: NDArray[np.int32] = np.vstack((np.kron(id_n3, p), np.kron(a_3, id_c)))
 
     if checks:
         run_checks_scipy(d_1, d_2, d_3, d_4)
@@ -81,21 +81,21 @@ def generate_3d_product_code(
 ) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]:
     """Generate 3D product code."""
     r, c = p.shape
-    id_r:NDArray[np.int32] = np.identity(r, dtype=np.int32)
-    id_c:NDArray[np.int32] = np.identity(c, dtype=np.int32)
-    id_n0:NDArray[np.int32] = np.identity(a_1.shape[0], dtype=np.int32)
-    id_n1:NDArray[np.int32] = np.identity(a_2.shape[0], dtype=np.int32)
-    id_n2:NDArray[np.int32] = np.identity(a_2.shape[1], dtype=np.int32)
+    id_r: NDArray[np.int32] = np.identity(r, dtype=np.int32)
+    id_c: NDArray[np.int32] = np.identity(c, dtype=np.int32)
+    id_n0: NDArray[np.int32] = np.identity(a_1.shape[0], dtype=np.int32)
+    id_n1: NDArray[np.int32] = np.identity(a_2.shape[0], dtype=np.int32)
+    id_n2: NDArray[np.int32] = np.identity(a_2.shape[1], dtype=np.int32)
 
-    d_1:NDArray[np.int32] = np.hstack((np.kron(a_1, id_r), np.kron(id_n0, p)))
+    d_1: NDArray[np.int32] = np.hstack((np.kron(a_1, id_r), np.kron(id_n0, p)))
 
     x = np.hstack((np.kron(a_2, id_r), np.kron(id_n1, p)))
     y = np.kron(a_1, id_c)
     dims = (y.shape[0], x.shape[1] - y.shape[1])
     z = np.hstack((np.zeros(dims, dtype=np.int32), y))
-    d_2:NDArray[np.int32] = np.vstack((x, z))
+    d_2: NDArray[np.int32] = np.vstack((x, z))
 
-    d_3:NDArray[np.int32] = np.vstack((np.kron(id_n2, p), np.kron(a_2, id_c)))
+    d_3: NDArray[np.int32] = np.vstack((np.kron(id_n2, p), np.kron(a_2, id_c)))
 
     if not (is_all_zeros(d_1 @ d_2 % 2) and is_all_zeros(d_2 @ d_3 % 2)):
         msg = "Error generating 3D code, boundary maps do not square to zero"

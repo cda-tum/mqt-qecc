@@ -190,14 +190,13 @@ extend-include = ["*.ipynb"]
 src = ["src"]
 preview = true
 unsafe-fixes = true
+
+[tool.ruff.lint]
 exclude = [
     "*/code_construction/*",
-    "*/data_utils.py",
     "scripts/*",
     "*/cc_decoder/plots.py"
 ]
-
-[tool.ruff.lint]
 extend-select = [
     "A",           # flake8-builtins
     "ANN",         # flake8-annotations
@@ -273,8 +272,6 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"src/mqt/core/_compat/**.py" = ["TID251"]
-"src/mqt/core/evaluation.py" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
