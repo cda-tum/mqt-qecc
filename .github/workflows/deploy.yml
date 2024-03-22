@@ -39,7 +39,7 @@ jobs:
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
           cd flint2 && ./configure && make -j 3 && make install
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16
+        uses: pypa/cibuildwheel@v2.17
       - name: Verify clean directory
         run: git diff --exit-code
         shell: bash
