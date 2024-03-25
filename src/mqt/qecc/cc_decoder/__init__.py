@@ -19,10 +19,10 @@ def code_from_string(lattice_type: str, distance: int) -> ColorCode:
 
 
 __all__ = [
-    "tn_decoder",
-    "HexagonalColorCode",
     "ColorCode",
+    "HexagonalColorCode",
     "LatticeType",
     "SquareOctagonColorCode",
     "code_from_string",
+    "tn_decoder",
 ]
