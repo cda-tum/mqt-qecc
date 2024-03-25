@@ -23,19 +23,19 @@ from .pyqecc import (
 )
 
 __all__ = [
-    "__version__",
+    "AnalogTannergraphDecoder",
+    "AtdSimulator",
     "Code",
     "Decoder",
-    "UFHeuristic",
-    "UFDecoder",
-    "GrowthVariant",
     "DecodingResult",
     "DecodingResultStatus",
     "DecodingRunInformation",
-    "sample_iid_pauli_err",
-    "apply_ecc",
-    "AnalogTannergraphDecoder",
-    "AtdSimulator",
+    "GrowthVariant",
     # "SoftInfoDecoder",
     "QssSimulator",
+    "UFDecoder",
+    "UFHeuristic",
+    "__version__",
+    "apply_ecc",
+    "sample_iid_pauli_err",
 ]
