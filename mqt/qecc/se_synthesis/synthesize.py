@@ -30,7 +30,7 @@ class SyndromeExtractionEncoder:
         Args:
             x_checks (np.array): The x-check matrix of the code.
             z_checks (np.array): The z-check matrix of the code.
-            T (int): The maximal (CNOT) depth of the encoder circuit.
+            T (int): The maximal (CNOT) depth of the decoder circuit.
         """
         self.solver = z3.Solver()
         self.qubit_variables = [[[] for t in range(T)] for _ in range(x_checks.shape[1])]
@@ -91,7 +91,22 @@ class SyndromeExtractionEncoder:
         return z3.Or([z3.And(x_check[cnot][k], z3.Or(z_check[cnot][k+1:])) for k in range(self.T)])
 
     def _assert_check_order_constraint(self, i, j):
-        self.solver.add(z3.Or(z3.And(list(self._cnot_order_constraint_x[(i, j)].values())), z3.And(list(self._cnot_order_constraint_z[(j, i)].values()))))
+        x_constraints = list(self._cnot_order_constraint_x[(i, j)].values())
+        if len(x_constraints) == 0:
+            return
+        formula = x_constraints[0]
+        for constr in x_constraints[1:]:
+            formula = z3.Xor(formula, constr)
+        self.solver.add(formula)
+
+        z_constraints = list(self._cnot_order_constraint_z[(j, i)].values())
+        if len(z_constraints) == 0:
+            return
+        formula = z_constraints[0]
+        for constr in z_constraints[1:]:
+            formula = z3.Xor(formula, constr)
+        self.solver.add(formula)
+
 
     def _cnots_not_overlapping_constraint(self, qubit, t):
         return z3.PbLe([(x, 1) for x in self.qubit_variables[qubit][t]], 1)
