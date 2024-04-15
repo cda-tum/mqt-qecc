@@ -33,7 +33,7 @@ def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementa
     for i in range(m):
         columns = [item for item in alist_file[i + 4].split() if item.isdigit()]
         columns_two: NDArray[np.int32] = np.array(columns, dtype=np.int32)
-        columns_two = columns_two - 1  # convert to zero indexing
+        columns_two -= 1  # convert to zero indexing
         mat[i, columns_two] = 1
 
     return mat

@@ -1,4 +1,4 @@
-""" example simulation script """
+"""example simulation script"""
 
 import numpy as np
 import scipy
