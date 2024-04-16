@@ -41,8 +41,7 @@ dependencies = [
     "qecsim",
     "ldpc>=0.1.50",
     "numpy",
-    "qiskit-terra>=0.23.0",
-    "qiskit-aer>=0.12.1",
+    "qiskit[qasm3-import]>=1.0.0",
     "bposd",
     "numba",
     "pymatching",
@@ -65,7 +64,6 @@ docs = [
     "nbsphinx",
     "sphinxext-opengraph",
     "sphinx-autodoc-typehints",
-    "qiskit-terra[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]
@@ -179,7 +177,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qiskit_aer.*", "qecsim.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+module = ["qiskit.*", "qecsim.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
     "z3.*", "bposd.*", "numba.*", "pymatching.*"]
 ignore_missing_imports = true
 
