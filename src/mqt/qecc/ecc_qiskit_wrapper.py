@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 import pathlib
 from typing import TYPE_CHECKING
-from qiskit.qasm2 import dump
 
 from qiskit import QuantumCircuit
+from qiskit.qasm2 import dump
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (
     NoiseModel,
