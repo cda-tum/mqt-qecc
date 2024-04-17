@@ -153,7 +153,7 @@ filterwarnings = [
     "ignore:.*qiskit.utils.algorithm_globals.QiskitAlgorithmGlobals*:DeprecationWarning:qiskit",
     "ignore:.*Building a flow controller with keyword arguments is going to be deprecated*:PendingDeprecationWarning:qiskit",
     "ignore:.*qiskit.extensions module is pending deprecation*:PendingDeprecationWarning:qiskit",
-    "ignore:.*The retworkx package is deprecated*:PendingDeprecationWarning:pymatching",
+    "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
 ]
 
 [tool.coverage]
