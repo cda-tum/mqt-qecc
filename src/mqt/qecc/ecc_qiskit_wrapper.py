@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import pathlib
 from typing import TYPE_CHECKING
+from qiskit.qasm2 import dump
 
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
@@ -177,7 +179,8 @@ def main() -> None:
 
     if ecc_export_filename is not None:
         print("Exporting circuit to: " + str(ecc_export_filename))  # noqa: T201
-        circ.qasm(filename=ecc_export_filename)
+        with pathlib.Path(ecc_export_filename).open("w") as f:
+            dump(circ, f)
         return
 
     size = circ.num_qubits
