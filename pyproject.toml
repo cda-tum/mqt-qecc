@@ -178,7 +178,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qecsim.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+module = ["qiskit.*", "qecsim.*","qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
     "z3.*", "bposd.*", "numba.*", "pymatching.*"]
 ignore_missing_imports = true
 
