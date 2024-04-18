@@ -42,7 +42,7 @@ dependencies = [
     "ldpc>=0.1.50",
     "numpy",
     "qiskit[qasm3-import]>=1.0.0",
-    "qiskit-aer>=0.12.1",
+    "qiskit-aer>=0.14.0",
     "bposd",
     "numba",
     "pymatching",
