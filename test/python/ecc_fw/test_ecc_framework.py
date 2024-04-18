@@ -58,23 +58,23 @@ def test_failing_simulators(circ: QuantumCircuit, script_runner: ScriptRunner) -
     """Testing the script with unsupported ecc."""
     with pathlib.Path("dummyCircuit.qasm").open("w") as f:
         dump(circ, f)
-        ret = script_runner.run([
-            "ecc_qiskit_wrapper",
-            "-m",
-            "D",
-            "-p",
-            "0.001",
-            "-n",
-            "1000",
-            "-s",
-            "1",
-            "-fs",
-            "extended_stabilizer",
-            "-ecc",
-            "UnsupportedEcc",
-            "-f",
-            "dummyCircuit.qasm",
-        ])
+    ret = script_runner.run([
+        "ecc_qiskit_wrapper",
+        "-m",
+        "D",
+        "-p",
+        "0.001",
+        "-n",
+        "1000",
+        "-s",
+        "1",
+        "-fs",
+        "extended_stabilizer",
+        "-ecc",
+        "UnsupportedEcc",
+        "-f",
+        "dummyCircuit.qasm",
+    ])
     file_to_remove = pathlib.Path("dummyCircuit.qasm")
     file_to_remove.unlink()
     assert not ret.success
