@@ -165,7 +165,7 @@ def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     error: NDArray[np.int32] = np.zeros_like(channel_probs, dtype=np.int32)
 
     for i, p in np.ndenumerate(channel_probs):
-        rand = np.random.random()
+        rand = np.random.default_rng()
 
         if rand < p:
             error[i] = 1
