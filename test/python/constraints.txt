@@ -1,9 +1,9 @@
-scikit-build-core==0.5.0
+scikit-build-core==0.6.1
 setuptools-scm==7.0.0
 pybind11==2.11.0
 pytest==7.0.0
 pytest-console-scripts==1.4
 z3-solver~=4.11.0
 ldpc==0.1.50
-qiskit-terra==0.23.0
-qiskit-aer==0.12.1
+qiskit==1.0.0
+qiskit-aer==0.14.0.1

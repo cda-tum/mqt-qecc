@@ -20,7 +20,6 @@
 #include "nlohmann/json.hpp"
 #include "pybind11/pybind11.h"
 #include "pybind11_json/pybind11_json.hpp"
-#include "python/qiskit/QasmQobjExperiment.hpp"
 #include "python/qiskit/QuantumCircuit.hpp"
 
 #include <pybind11/stl.h>
@@ -39,12 +38,9 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
         auto&& file = circ.cast<std::string>();
         qc->import(file);
     } else {
-        py::object const quantumCircuit       = py::module::import("qiskit").attr("QuantumCircuit");
-        py::object const pyQasmQobjExperiment = py::module::import("qiskit.qobj").attr("QasmQobjExperiment");
+        py::object const quantumCircuit = py::module::import("qiskit").attr("QuantumCircuit");
         if (py::isinstance(circ, quantumCircuit)) {
             qc::qiskit::QuantumCircuit::import(*qc, circ);
-        } else if (py::isinstance(circ, pyQasmQobjExperiment)) {
-            qc::qiskit::QasmQobjExperiment::import(*qc, circ);
         }
     }
 

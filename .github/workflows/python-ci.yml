@@ -40,7 +40,7 @@ jobs:
           windows_compile_environment: msvc
           override_cache_key: python-tests-${{ matrix.runs-on }}-${{ matrix.python-version }}
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -76,7 +76,7 @@ jobs:
           prepend_symlinks_to_path: false
           override_cache_key: python-coverage-${{ matrix.python-version }}
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -87,13 +87,8 @@ jobs:
       - name: Run session
         run: pipx run nox -s tests-${{ matrix.python-version }} -- --cov --cov-report=xml
       - name: Upload coverage to Codecov
-        # Coverage uploads can be flaky, so we retry them a few times.
-        uses: Wandalen/wretry.action@v1.3.0
+        uses: codecov/codecov-action@v4
         with:
-          action: codecov/codecov-action@v3
-          attempt_limit: 5
-          attempt_delay: 2000
-          with: |
-            fail_ci_if_error: true
-            flags: python
-            token: ${{ secrets.token }}
+          fail_ci_if_error: true
+          flags: python
+          token: ${{ secrets.CODECOV_TOKEN }}
