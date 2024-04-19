@@ -196,7 +196,8 @@ unsafe-fixes = true
 exclude = [
     "scripts/*",
     "*/cc_decoder/plots.py",
-    "*/analog_information_decoding/code_construction.py",
+    "*/analog_information_decoding/code_construction/*",
+    "*/analog_information_decoding/utils/data_utils.py",
 
 ]
 extend-select = [
