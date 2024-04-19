@@ -87,13 +87,8 @@ jobs:
       - name: Run session
         run: pipx run nox -s tests-${{ matrix.python-version }} -- --cov --cov-report=xml
       - name: Upload coverage to Codecov
-        # Coverage uploads can be flaky, so we retry them a few times.
-        uses: Wandalen/wretry.action@v1.3.0
+        uses: codecov/codecov-action@v4
         with:
-          action: codecov/codecov-action@v3
-          attempt_limit: 5
-          attempt_delay: 2000
-          with: |
-            fail_ci_if_error: true
-            flags: python
-            token: ${{ secrets.token }}
+          fail_ci_if_error: true
+          flags: python
+          token: ${{ secrets.CODECOV_TOKEN }}
