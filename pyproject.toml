@@ -41,8 +41,8 @@ dependencies = [
     "qecsim",
     "ldpc>=0.1.50",
     "numpy",
-    "qiskit-terra>=0.23.0",
-    "qiskit-aer>=0.12.1",
+    "qiskit[qasm3-import]>=1.0.0",
+    "qiskit-aer>=0.14.0",
     "bposd",
     "numba",
     "pymatching",
@@ -65,7 +65,7 @@ docs = [
     "nbsphinx",
     "sphinxext-opengraph",
     "sphinx-autodoc-typehints",
-    "qiskit-terra[visualization]",
+    "qiskit[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]
@@ -154,6 +154,7 @@ filterwarnings = [
     "ignore:.*qiskit.utils.algorithm_globals.QiskitAlgorithmGlobals*:DeprecationWarning:qiskit",
     "ignore:.*Building a flow controller with keyword arguments is going to be deprecated*:PendingDeprecationWarning:qiskit",
     "ignore:.*qiskit.extensions module is pending deprecation*:PendingDeprecationWarning:qiskit",
+    "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
 ]
 
 [tool.coverage]
@@ -179,7 +180,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qiskit_aer.*", "qecsim.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+module = ["qiskit.*", "qecsim.*","qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
     "z3.*", "bposd.*", "numba.*", "pymatching.*"]
 ignore_missing_imports = true
 
