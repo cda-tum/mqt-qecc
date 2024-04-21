@@ -5,8 +5,8 @@ project(
   LANGUAGES CXX
   DESCRIPTION "QECC - An MQT Library for Quantum Error Correcting Codes")
 
-option(BUILD_MQT_QCEC_TESTS "Also build tests for the MQT QCEC project" ON)
-option(BUILD_MQT_QCEC_BINDINGS "Build the MQT QCEC Python bindings" OFF)
+option(BUILD_MQT_QECC_TESTS "Also build tests for the MQT QECC project" ON)
+option(BUILD_MQT_QECC_BINDINGS "Build the MQT QECC Python bindings" OFF)
 
 if(BUILD_MQT_QECC_BINDINGS)
   # ensure that the BINDINGS option is set
