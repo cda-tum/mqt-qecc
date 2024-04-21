@@ -33,7 +33,7 @@ def alist2numpy(fname: str) -> NDArray[np.int32]:  # current original implementa
     for i in range(m):
         columns = [item for item in alist_file[i + 4].split() if item.isdigit()]
         columns_two: NDArray[np.int32] = np.array(columns, dtype=np.int32)
-        columns_two = columns_two - 1  # convert to zero indexing
+        columns_two -= 1  # convert to zero indexing
         mat[i, columns_two] = 1
 
     return mat
@@ -98,7 +98,7 @@ def generate_err(
     residual_err_z = residual_err[1]
 
     for i in range(nr_qubits):
-        rand = np.random.random()  # this returns a random float in [0,1)
+        rand = np.random.default_rng().random()  # this returns a random float in [0,1)
         # e.g. if err channel is p = 0.3, then an error will be applied if rand < p
         if rand < channel_probs_z[i]:  # if probability for z error high enough, rand < p, apply
             # if there is a z error on the i-th bit, flip the bit but take residual error into account
@@ -165,7 +165,7 @@ def generate_syndr_err(channel_probs: NDArray[np.float64]) -> NDArray[np.int32]:
     error: NDArray[np.int32] = np.zeros_like(channel_probs, dtype=np.int32)
 
     for i, p in np.ndenumerate(channel_probs):
-        rand = np.random.random()
+        rand = np.random.default_rng().random()
 
         if rand < p:
             error[i] = 1
