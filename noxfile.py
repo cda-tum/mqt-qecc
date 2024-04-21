@@ -12,7 +12,7 @@ import nox
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-nox.options.sessions = ["lint", "pylint", "tests"]
+nox.options.sessions = ["lint", "tests"]
 
 PYTHON_ALL_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 

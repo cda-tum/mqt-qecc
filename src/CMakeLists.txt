@@ -1,8 +1,3 @@
-# add MQT::QFR library
-set(BUILD_MQT_CORE_TESTS
-    OFF
-    CACHE BOOL "Build MQT Core tests")
-add_subdirectory("${PROJECT_SOURCE_DIR}/extern/mqt-core" "extern/mqt-core" EXCLUDE_FROM_ALL)
 # main project library
 add_library(
   ${PROJECT_NAME}_lib
@@ -32,8 +27,11 @@ target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 find_package(FLINT REQUIRED)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)
 
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::ProjectWarnings
+        MQT::ProjectOptions)
+
 # add MQT alias
-add_library(MQT::${PROJECT_NAME}_lib ALIAS ${PROJECT_NAME}_lib)
+add_library(MQT::QCEC ALIAS ${PROJECT_NAME})
 
 if(BUILD_MQT_QECC_BINDINGS)
   add_subdirectory(python)
