@@ -19,7 +19,7 @@ PYTHON_ALL_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 BUILD_REQUIREMENTS = [
     "scikit-build-core[pyproject]>=0.6.1",
     "setuptools_scm>=7",
-    "pybind11>=2.11",
+    "pybind11>=2.12",
 ]
 
 if os.environ.get("CI", None):
