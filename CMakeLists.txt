@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.19...3.27)
+cmake_minimum_required(VERSION 3.19...3.28)
 
 project(
   mqt-qecc
   LANGUAGES CXX
   DESCRIPTION "QECC - An MQT Library for Quantum Error Correcting Codes")
 
-option(BUILD_MQT_QECC_BINDINGS "Build the MQT QECC Python bindings" OFF)
+option(BUILD_MQT_QCEC_TESTS "Also build tests for the MQT QCEC project" ON)
+option(BUILD_MQT_QCEC_BINDINGS "Build the MQT QCEC Python bindings" OFF)
+
 if(BUILD_MQT_QECC_BINDINGS)
   # ensure that the BINDINGS option is set
   set(BINDINGS
@@ -29,8 +31,7 @@ if(BUILD_MQT_QECC_BINDINGS)
     OPTIONAL_COMPONENTS Development.SABIModule)
 endif()
 
-# Add path for custom modules
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(cmake/ExternalDependencies.cmake)
 
 # add main library code
 add_subdirectory(src)
