@@ -6,7 +6,6 @@ import argparse
 import os
 import sys
 from typing import TYPE_CHECKING
-
 import nox
 
 if TYPE_CHECKING:
