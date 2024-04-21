@@ -24,7 +24,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE MQT::ProjectWarnings MQT::ProjectO
 
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
 
-find_package(FLINT REQUIRED)
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)
 
 # add MQT alias

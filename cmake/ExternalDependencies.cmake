@@ -83,5 +83,7 @@ if(BUILD_MQT_QECC_BINDINGS)
   endif()
 endif()
 
+find_package(FLINT REQUIRED)
+
 # Make all declared dependencies available.
 FetchContent_MakeAvailable(${FETCH_PACKAGES})
