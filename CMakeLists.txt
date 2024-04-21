@@ -9,14 +9,15 @@ option(BUILD_MQT_QECC_BINDINGS "Build the MQT QECC Python bindings" OFF)
 if(BUILD_MQT_QECC_BINDINGS)
   # ensure that the BINDINGS option is set
   set(BINDINGS
-      ON CACHE INTERNAL "Enable settings related to Python bindings")
+      ON
+      CACHE INTERNAL "Enable settings related to Python bindings")
   # Some common settings for finding Python
   set(Python_FIND_VIRTUALENV
       FIRST
       CACHE STRING "Give precedence to virtualenvs when searching for Python")
   set(Python_FIND_FRAMEWORK
-          LAST
-          CACHE STRING "Prefer Brew/Conda to Apple framework Python")
+      LAST
+      CACHE STRING "Prefer Brew/Conda to Apple framework Python")
   set(Python_ARTIFACTS_INTERACTIVE
       ON
       CACHE BOOL "Prevent multiple searches for Python and instead cache the results.")
@@ -42,9 +43,7 @@ if(BUILD_MQT_QECC_TESTS)
   add_subdirectory(test)
 endif()
 
-nfigure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
-add_custom_target(
-        uninstall COMMAND ${CMAKE_COMMAND} -P
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+nfigure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
+             ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
+add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P
+                                    ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
