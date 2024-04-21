@@ -18,8 +18,8 @@ set_target_properties(
         CXX_EXTENSIONS OFF)
 
 package_add_test(
-        mqt-qcec-test
-        MQT::QCEC
+        mqt-qecc-test
+        MQT::QECC
         test_ufdheuristic.cpp
         test_utils.cpp
         test_originalUfd.cpp

@@ -86,7 +86,7 @@ Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 minimum-version = "0.6.1"
 
 # Set the wheel install directory
-wheel.install-dir = "mqt/qcec"
+wheel.install-dir = "mqt/qecc"
 
 # Set required CMake and Ninja versions
 cmake.minimum-version = "3.19"

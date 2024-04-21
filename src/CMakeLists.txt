@@ -31,7 +31,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE MQT::ProjectWarnings
         MQT::ProjectOptions)
 
 # add MQT alias
-add_library(MQT::QCEC ALIAS ${PROJECT_NAME})
+add_library(MQT::QECC ALIAS ${PROJECT_NAME})
 
 if(BUILD_MQT_QECC_BINDINGS)
   add_subdirectory(python)
