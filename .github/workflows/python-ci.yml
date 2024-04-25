@@ -22,14 +22,14 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         include:
           - runs-on: macos-13
             python-version: 3.8
           - runs-on: macos-13
-            python-version: 3.12
+            python-version: 3.11
           - runs-on: macos-14
-            python-version: 3.12
+            python-version: 3.11
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,7 +66,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.8", "3.11"]
     steps:
       - uses: actions/checkout@v4
         with:
