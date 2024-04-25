@@ -138,7 +138,7 @@ If you use our tool for your research, we will be thankful if you refer to it by
   L. Berent, L. Burgholzer, P.J. Derks, J. Eisert, and R. Wille, "Decoding quantum color codes with MaxSAT".
 
   The dataset used in the paper evaluation on decoding quantum color codes is available on Zenodo:
- [![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.7760135&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.7760135)
+  [![a](https://img.shields.io/static/v1?label=DOI&message=10.5281/zenodo.7760135&color=inactive&style=flat-square)](https://doi.org/10.5281/zenodo.7760135)
 
 - [![a](https://img.shields.io/static/v1?label=arXiv&message=2301.05731&color=inactive&style=flat-square)](https://arxiv.org/pdf/2301.05731)
   T. Grurl, C. Pichler, J. Fuss and R. Wille, "Automatic Implementation and Evaluation of Error-Correcting Codes for
