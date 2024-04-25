@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 3
-  CTEST_PARALLEL_LEVEL: 3
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+  CTEST_PARALLEL_LEVEL: 4
 
 defaults:
   run:
