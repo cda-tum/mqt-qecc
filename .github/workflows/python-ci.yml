@@ -24,9 +24,9 @@ jobs:
         runs-on: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         include:
-          - runs-on: macos-latest
+          - runs-on: macos-13
             python-version: 3.8
-          - runs-on: macos-latest
+          - runs-on: macos-13
             python-version: 3.11
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
         if: matrix.runs-on == 'ubuntu-latest'
         run: sudo apt-get install libflint-dev
       - name: Install flint (macOS)
-        if: matrix.runs-on == 'macos-latest'
+        if: runner.os == 'macOS'
         run: |
           brew install gmp mpfr ntl
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
