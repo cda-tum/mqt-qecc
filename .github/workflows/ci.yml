@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 3
-  CTEST_PARALLEL_LEVEL: 3
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+  CTEST_PARALLEL_LEVEL: 4
 
 defaults:
   run:
@@ -47,7 +47,11 @@ jobs:
 
   cpp-tests-macos:
     name: 🍎 Release
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [macos-13]
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,7 +60,7 @@ jobs:
         uses: Chocobo1/setup-ccache-action@v1
         with:
           prepend_symlinks_to_path: false
-          override_cache_key: c++-tests-macos-latest
+          override_cache_key: c++-tests-macos-13
       - name: Install Ninja
         run: pipx install ninja
       - if: runner.os == 'macOS'

@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-11]
+        runs-on: [ubuntu-latest, macos-13]
     steps:
       - uses: actions/checkout@v4
         with:
