@@ -5,10 +5,12 @@
 [![codecov](https://img.shields.io/codecov/c/github/cda-tum/mqt-qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/mqt-qecc)
 
 <p align="center">
+<a href="https://mqt.readthedocs.io">
   <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/mqt-qecc/main/docs/_static/mqt_light.png" width="60%">
-   <a href="https://github.com/cda-tum/mqt"><img src="https://raw.githubusercontent.com/cda-tum/mqt-qecc/main/docs/_static/mqt_dark.png" width="60%"></a>
+   <img src="https://raw.githubusercontent.com/cda-tum/mqt-qecc/main/docs/_static/mqt_dark.png" width="60%">
  </picture>
+</a>
   </p>
 
 # MQT QECC: A tool for Quantum Error Correcting Codes written in C++
