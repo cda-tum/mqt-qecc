@@ -196,7 +196,6 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
 
 
 def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
-    """Generate the plots for the tensor network decoder."""
     # read in all generated data
     data = []
     for file in results_dir.glob("*.json"):
@@ -204,7 +203,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
             data.append(json.loads(f.read()))
 
     # prepare code to per,ler map and print
-    code_to_xys: dict[float, Any] = {}
+    code_to_xys = {}
     for run in data:
         xys = code_to_xys.setdefault(run["n_k_d"][-1], [])
         xys.append((run["physical_error_rate"], run["logical_failure_rate"]))
@@ -212,7 +211,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     for xys in code_to_xys.values():
         xys.sort(key=lambda xy: xy[0])
 
-    _, ax = plt.subplots(2, 2, figsize=(12, 10))
+    fig, ax = plt.subplots(2, 2, figsize=(12, 10))
     # add data
     for code, xys in sorted(code_to_xys.items()):
         ax[0][0].plot(*zip(*xys), "x-", label=f"d={code}")
@@ -233,31 +232,56 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     for code, xys in sorted(code_to_xys.items()):
         ax[1][0].plot(*zip(*xys), "x-", label=f"d={code}")
     ax[1][0].set_xlabel("Physical error rate")
-    ax[1][0].set_ylabel("Average time per run (microseconds)")
+    ax[1][0].set_ylabel("Average time per run (µs)")
     ax[1][0].legend()
     ax[1][0].set_ylim(0, 300000)
 
     ds = []
-    p_data: dict[float, Any] = {}
-    pers = [0.001, 0.021, 0.051, 0.081, 0.111]
-    for d, cdata in sorted(code_to_xys.items()):
+    p_data = {}
+    pers = [ 0.051, 0.081, 0.111] # 0.001, 0.021,
+    for d, data in sorted(code_to_xys.items()):
         ds.append(d)
-        for p, t in cdata:
+        for idx,(p,t) in enumerate(data):
             if p in pers:
                 if p not in p_data:
                     p_data[p] = {"d": [], "t": []}
                 p_data[p]["d"].append(d)
                 p_data[p]["t"].append(t)
-    for p, pdata in sorted(p_data.items()):
-        ax[1][1].plot(ds, pdata["t"], label="p=" + str(p))
+
+    for p, data in sorted(p_data.items()):
+        ax[1][1].plot(ds, data["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
-    ax[1][1].set_ylabel("Average time per run (microseconds)")
+    ax[1][1].set_ylabel("Average time per run (µs)")
     ax[1][1].legend()
-    # ax[1][1].set_yscale("log")
+    ax[1][1].set_yscale("log")
     ax[1][1].set_xticks(ds)
     ax[1][1].set_ylim(0, 300000)
+
+    data = []
+    for file in results_dir.glob("*.json"):
+        with file.open() as f:
+            data.append(json.loads(f.read()))
+    metrics = {}
+    per_metrics = {}
+
     # save plot as vector graphic
+    for result in data:
+        d = result["n_k_d"][2]
+        p = result['physical_error_rate']
+
+        if d not in metrics:
+            metrics[d] = {
+                "p": [],
+                "logical_error_rate": [],
+            }
+        if p not in per_metrics:
+            per_metrics[p] = {}
+
+        metrics[d]["p"].append(p)
+        metrics[d]["logical_error_rate"].append(result["logical_failure_rate"])
+    print(f"chi = {data[0]['decoder']}")
+    calculate_threshold(code_dict=metrics, ax=ax[0][1], title="Threshold")
     plt.savefig(results_file, bbox_inches="tight")
 
 
