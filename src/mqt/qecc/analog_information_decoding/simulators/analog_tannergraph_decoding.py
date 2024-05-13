@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import locale
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -304,7 +305,7 @@ class AtdSimulator:
         }
 
         output.update(self.input_values)
-        with Path(self.outfile).open(mode="w") as f:
+        with Path(self.outfile).open(mode="w", encoding=locale.getpreferredencoding(False)) as f:
             json.dump(output, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__)
         return output
 

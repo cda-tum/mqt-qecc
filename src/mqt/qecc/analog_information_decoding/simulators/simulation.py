@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import locale
 from pathlib import Path
 from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
@@ -699,7 +700,7 @@ class SingleShotSimulator:
         output.update(self.input_values)
         output["bias"] = replace_inf(output["bias"])  # type: ignore[assignment, arg-type]
 
-        with Path(self.outfile).open() as f:
+        with Path(self.outfile).open(encoding=locale.getpreferredencoding(False)) as f:
             f.write(
                 json.dumps(
                     output,
