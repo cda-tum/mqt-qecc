@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import locale
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -274,6 +275,6 @@ def save_results(
 
     output.update(input_vals)
     output["bias"] = replace_inf(output["bias"])
-    with Path(outfile).open(mode="w") as out:
+    with Path(outfile).open(mode="w", encoding=locale.getpreferredencoding(False)) as out:
         json.dump(output, out, ensure_ascii=False, indent=4, default=lambda o: o.__dict__)
     return output

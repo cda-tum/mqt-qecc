@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import locale
 import pathlib
 from typing import TYPE_CHECKING
 
@@ -179,7 +180,7 @@ def main() -> None:
 
     if ecc_export_filename is not None:
         print("Exporting circuit to: " + str(ecc_export_filename))  # noqa: T201
-        with pathlib.Path(ecc_export_filename).open("w") as f:
+        with pathlib.Path(ecc_export_filename).open("w", encoding=locale.getpreferredencoding(False)) as f:
             dump(circ, f)
         return
 

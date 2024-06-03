@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import locale
 import subprocess  # noqa: S404
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -138,7 +139,9 @@ class LightsOut:
             wcnf = str(self.optimizer)
             # Note: This merely calls the solver. It does not interpret the output.
             #       This is just to measure the time it takes to solve the problem.
-            with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open("a+") as out:
+            with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
+                "a+", encoding=locale.getpreferredencoding(False)
+            ) as out:
                 start = datetime.datetime.now()
                 subprocess.run([solver_path, wcnf], stdout=out, check=False)  # noqa: S603
                 solve_time = datetime.datetime.now() - start
