@@ -1,3 +1,4 @@
+# This script is used to run the color code phenomenological noise simulation.
 import numpy as np
 import sinter
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import sinter_dec
 
 
 def generate_example_tasks():
+    """ Generate example stim tasks """
     for p in np.arange(0.001, 0.03, 0.001):
         for d in [3,4,5]:
             pcm, l_op = gen_pcm_and_logical(d)
@@ -23,6 +25,7 @@ def generate_example_tasks():
 
 
 def main():
+    """ Run the simulation """
     samples = sinter.collect(
         num_workers=10,
         max_shots=10_000,
@@ -67,4 +70,5 @@ def main():
 
 
 if __name__ == '__main__':
+    """ Run the main function """
     main()
