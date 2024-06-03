@@ -13,6 +13,9 @@ from matplotlib import pyplot as plt
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+import locale
+import operator
+
 from scipy.optimize import curve_fit
 
 ler_k = "logical_error_rates"
@@ -32,7 +35,7 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_yscale("log")
     ax.legend()
     ax.set_ylabel("Logical failure rate")
-    ax.set_xlabel(r"Code distance $\it{d}$")
+    ax.set_xlabel(rf"Code distance $\it{d}$")
 
 
 def threshold_fit(
@@ -80,7 +83,6 @@ def calculate_threshold(
     popt, _ = curve_fit(threshold_fit, (per_data, distance_data), ler_data, maxfev=10000)
     if ax is not None:
         ax.axvline(x=popt[-1], color="black", linestyle="dashed")
-        print("threshold: ", popt[-1])
 
     distance_array = [int(distance) for distance in code_dict]
     distance_array.sort()
@@ -209,9 +211,9 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         xys.append((run["physical_error_rate"], run["logical_failure_rate"]))
 
     for xys in code_to_xys.values():
-        xys.sort(key=lambda xy: xy[0])
+        xys.sort(key=operator.itemgetter(0))
 
-    fig, ax = plt.subplots(2, 2, figsize=(12, 10))
+    _fig, ax = plt.subplots(2, 2, figsize=(12, 10))
     # add data
     for code, xys in sorted(code_to_xys.items()):
         ax[0][0].plot(*zip(*xys), "x-", label=f"d={code}")
@@ -227,7 +229,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         xys.append((run["error_probability"], (run["wall_time"] / run["n_run"]) * 1e6))
 
     for xys in code_to_xys.values():
-        xys.sort(key=lambda xy: xy[0])
+        xys.sort(key=operator.itemgetter(0))
 
     for code, xys in sorted(code_to_xys.items()):
         ax[1][0].plot(*zip(*xys), "x-", label=f"d={code}")
@@ -238,10 +240,10 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
 
     ds = []
     p_data = {}
-    pers = [ 0.051, 0.081, 0.111] # 0.001, 0.021,
+    pers = [0.051, 0.081, 0.111]  # 0.001, 0.021,
     for d, data in sorted(code_to_xys.items()):
         ds.append(d)
-        for idx,(p,t) in enumerate(data):
+        for p, t in data:
             if p in pers:
                 if p not in p_data:
                     p_data[p] = {"d": [], "t": []}
@@ -268,7 +270,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     # save plot as vector graphic
     for result in data:
         d = result["n_k_d"][2]
-        p = result['physical_error_rate']
+        p = result["physical_error_rate"]
 
         if d not in metrics:
             metrics[d] = {
@@ -280,7 +282,6 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
 
         metrics[d]["p"].append(p)
         metrics[d]["logical_error_rate"].append(result["logical_failure_rate"])
-    print(f"chi = {data[0]['decoder']}")
     calculate_threshold(code_dict=metrics, ax=ax[0][1], title="Threshold")
     plt.savefig(results_file, bbox_inches="tight")
 
@@ -313,7 +314,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             idx += 1
         for f in files:
             fp = subdir + "/" + f
-            with Path(fp).open() as ff:
+            with Path(fp).open(encoding=locale.getpreferredencoding(False)) as ff:
                 data.append(json.loads(ff.read()))
 
         metrics: dict[int, dict[str, Any]] = {}

@@ -1,4 +1,5 @@
 """LightsOut MaxSAT-based decoder for the hexagonal color code."""
+
 from __future__ import annotations
 
 import datetime
@@ -68,17 +69,14 @@ class LightsOut:
         Soft constraints are added to the optimizer with default weights.
         """
         if self.switch_vars is None:
-            self.switch_vars = [Bool(f"switch_{i}") for i in range(
-                len(self.switches_to_lights))]
+            self.switch_vars = [Bool(f"switch_{i}") for i in range(len(self.switches_to_lights))]
 
         for light, switches in self.lights_to_switches.items():
             if light not in self.helper_vars:
                 if len(switches) > 1:
-                    self.helper_vars[light] = [
-                        Bool(f"helper_{light}_{i}") for i in range(len(switches) - 1)]
+                    self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches) - 1)]
                 else:
-                    self.helper_vars[light] = [
-                        Bool(f"helper_{light}_{i}") for i in range(len(switches))]
+                    self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches))]
             self.preconstruct_parity_constraint(light, switches)
 
         for idx, switch in enumerate(self.switch_vars):
@@ -100,9 +98,7 @@ class LightsOut:
         assert self.switch_vars is not None
         return sum(1 for var in self.switch_vars if model[var])
 
-    def solve(
-            self, lights: list[bool], solver_path: str = "z3"
-    ) -> tuple[list[int], bool, datetime.timedelta]:
+    def solve(self, lights: list[bool], solver_path: str = "z3") -> tuple[list[int], bool, datetime.timedelta]:
         """Solve the lights-out problem for a given pattern.
 
         Assumes that the z3 instance has already been pre-constructed.
@@ -114,7 +110,7 @@ class LightsOut:
         start = datetime.datetime.now()
         for light, val in enumerate(lights):
             self.complete_parity_constraint(light, self.lights_to_switches[light], val)
-        constr_time = datetime.datetime.now() - start
+        datetime.datetime.now() - start
         switches: list[int] = []
         if solver_path == "z3":
             # solve the problem
@@ -127,7 +123,7 @@ class LightsOut:
 
             # validate the model
             model = self.optimizer.model()
-            if self.validate_model(model, lights) == False:
+            if self.validate_model(model, lights) is False:
                 self.optimizer.pop()
 
                 assert self.validate_model(model, lights), "Model is invalid"

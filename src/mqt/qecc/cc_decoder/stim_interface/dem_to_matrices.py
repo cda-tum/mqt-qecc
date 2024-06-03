@@ -1,14 +1,17 @@
 # Author: Oscar Higgott https://github.com/oscarhiggott/stimbposd/blob/main/src/stimbposd/dem_to_matrices.py
-from typing import List, FrozenSet, Dict, Tuple
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from scipy.sparse import csc_matrix
 import numpy as np
+from scipy.sparse import csc_matrix
 
-import stim
+if TYPE_CHECKING:
+    import stim
 
 
-def iter_set_xor(set_list: List[List[int]]) -> FrozenSet[int]:
+def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
     out = set()
     for x in set_list:
         s = set(x)
@@ -16,11 +19,8 @@ def iter_set_xor(set_list: List[List[int]]) -> FrozenSet[int]:
     return frozenset(out)
 
 
-def dict_to_csc_matrix(
-        elements_dict: Dict[int, FrozenSet[int]], shape: Tuple[int, int]
-) -> csc_matrix:
-    """
-    Constructs a `scipy.sparse.csc_matrix` check matrix from a dictionary `elements_dict` giving the indices of nonzero
+def dict_to_csc_matrix(elements_dict: dict[int, frozenset[int]], shape: tuple[int, int]) -> csc_matrix:
+    """Constructs a `scipy.sparse.csc_matrix` check matrix from a dictionary `elements_dict` giving the indices of nonzero
     rows in each column.
 
     Parameters
@@ -31,7 +31,7 @@ def dict_to_csc_matrix(
     shape : Tuple[int, int]
         The dimensions of the matrix to be returned
 
-    Returns
+    Returns:
     -------
     scipy.sparse.csc_matrix
         The `scipy.sparse.csc_matrix` check matrix defined by `elements_dict` and `shape`
@@ -60,10 +60,9 @@ class DemMatrices:
 
 
 def detector_error_model_to_check_matrices(
-        dem: stim.DetectorErrorModel, allow_undecomposed_hyperedges: bool = True
+    dem: stim.DetectorErrorModel, allow_undecomposed_hyperedges: bool = True
 ) -> DemMatrices:
-    """
-    Convert a `stim.DetectorErrorModel` into a `DemMatrices` object.
+    """Convert a `stim.DetectorErrorModel` into a `DemMatrices` object.
 
     Parameters
     ----------
@@ -73,21 +72,20 @@ def detector_error_model_to_check_matrices(
         If True, don't raise an exception if a hyperedge is not decomposable. Instead, the hyperedge `h` is still added
         to the `DemMatrices.check_matrix`, `DemMatrices.observables_matrix` and `DemMatrices.priors` but it will not
         have any edges in its decomposition in `DemMatrices.hyperedge_to_edge_matrix[:, h]`.
-    Returns
+
+    Returns:
     -------
     DemMatrices
         A collection of matrices representing the stim DetectorErrorModel
     """
-    hyperedge_ids: Dict[FrozenSet[int], int] = {}
-    edge_ids: Dict[FrozenSet[int], int] = {}
-    hyperedge_obs_map: Dict[int, FrozenSet[int]] = {}
-    edge_obs_map: Dict[int, FrozenSet[int]] = {}
-    priors_dict: Dict[int, float] = {}
-    hyperedge_to_edge: Dict[int, FrozenSet[int]] = {}
+    hyperedge_ids: dict[frozenset[int], int] = {}
+    edge_ids: dict[frozenset[int], int] = {}
+    hyperedge_obs_map: dict[int, frozenset[int]] = {}
+    edge_obs_map: dict[int, frozenset[int]] = {}
+    priors_dict: dict[int, float] = {}
+    hyperedge_to_edge: dict[int, frozenset[int]] = {}
 
-    def handle_error(
-            prob: float, detectors: List[List[int]], observables: List[List[int]]
-    ) -> None:
+    def handle_error(prob: float, detectors: list[list[int]], observables: list[list[int]]) -> None:
         hyperedge_dets = iter_set_xor(detectors)
         hyperedge_obs = iter_set_xor(observables)
 
@@ -105,13 +103,13 @@ def detector_error_model_to_check_matrices(
 
             if len(e_dets) > 2:
                 if not allow_undecomposed_hyperedges:
-                    raise ValueError(
+                    msg = (
                         "A hyperedge error mechanism was found that was not decomposed into edges. "
                         "This can happen if you do not set `decompose_errors=True` as required when "
                         "calling `circuit.detector_error_model`."
                     )
-                else:
-                    continue
+                    raise ValueError(msg)
+                continue
 
             if e_dets not in edge_ids:
                 edge_ids[e_dets] = len(edge_ids)
@@ -124,8 +122,8 @@ def detector_error_model_to_check_matrices(
 
     for instruction in dem.flattened():
         if instruction.type == "error":
-            dets: List[List[int]] = [[]]
-            frames: List[List[int]] = [[]]
+            dets: list[list[int]] = [[]]
+            frames: list[list[int]] = [[]]
             t: stim.DemTarget
             p = instruction.args_copy()[0]
             for t in instruction.targets_copy():
@@ -137,31 +135,23 @@ def detector_error_model_to_check_matrices(
                     dets.append([])
                     frames.append([])
             handle_error(p, dets, frames)
-        elif instruction.type == "detector":
-            pass
-        elif instruction.type == "logical_observable":
+        elif instruction.type in {"detector", "logical_observable"}:
             pass
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
     check_matrix = dict_to_csc_matrix(
         {v: k for k, v in hyperedge_ids.items()},
         shape=(dem.num_detectors, len(hyperedge_ids)),
     )
-    observables_matrix = dict_to_csc_matrix(
-        hyperedge_obs_map, shape=(dem.num_observables, len(hyperedge_ids))
-    )
+    observables_matrix = dict_to_csc_matrix(hyperedge_obs_map, shape=(dem.num_observables, len(hyperedge_ids)))
     priors = np.zeros(len(hyperedge_ids))
     for i, p in priors_dict.items():
         priors[i] = p
-    hyperedge_to_edge_matrix = dict_to_csc_matrix(
-        hyperedge_to_edge, shape=(len(edge_ids), len(hyperedge_ids))
-    )
+    hyperedge_to_edge_matrix = dict_to_csc_matrix(hyperedge_to_edge, shape=(len(edge_ids), len(hyperedge_ids)))
     edge_check_matrix = dict_to_csc_matrix(
         {v: k for k, v in edge_ids.items()}, shape=(dem.num_detectors, len(edge_ids))
     )
-    edge_observables_matrix = dict_to_csc_matrix(
-        edge_obs_map, shape=(dem.num_observables, len(edge_ids))
-    )
+    edge_observables_matrix = dict_to_csc_matrix(edge_obs_map, shape=(dem.num_observables, len(edge_ids)))
     return DemMatrices(
         check_matrix=check_matrix,
         observables_matrix=observables_matrix,
