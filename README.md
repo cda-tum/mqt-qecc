@@ -155,6 +155,7 @@ If you use our tool for your research, we will be thankful if you refer to it by
 ## Credits
 
 The contributors to this tool are:
+
 - Lucas Berent
 - Lukas Burgholzer
 - Thomas Grurl

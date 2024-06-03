@@ -1,20 +1,26 @@
-import pathlib
-from typing import Dict
-from sinter import Decoder, CompiledDecoder
-import numpy as np
-from stimbposd import SinterDecoder_BPOSD
+from __future__ import annotations
+
+import locale
+from typing import TYPE_CHECKING
 
 import stim
+from sinter import CompiledDecoder, Decoder
+from stimbposd import SinterDecoder_BPOSD
 
 from mqt.qecc.cc_decoder.stim_interface.max_sat_stim_decoder import MaxSatStim
 
+if TYPE_CHECKING:
+    import pathlib
+
+    import numpy as np
+
 
 class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
-    def __init__(self, decoder: "MAXSAT", **kwargs):
+    def __init__(self, decoder: MAXSAT, **kwargs) -> None:
         self.decoder = decoder
 
         if kwargs:
-            self.convergence_cnt = 0 
+            self.convergence_cnt = 0
             self.not_convergence_cnt = 0
             self.d = kwargs["d"]
             self.p = kwargs["p"]
@@ -22,13 +28,12 @@ class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
         else:
             self.measure_convergence = False
 
-
     def decode_shots_bit_packed(
-            self,
-            *,
-            bit_packed_detection_event_data: "np.ndarray",
-    ) -> "np.ndarray":
-        predictions, converged_cnt, not_converged_cnt =self.decoder.decode_batch(
+        self,
+        *,
+        bit_packed_detection_event_data: np.ndarray,
+    ) -> np.ndarray:
+        predictions, converged_cnt, not_converged_cnt = self.decoder.decode_batch(
             shots=bit_packed_detection_event_data,
             bit_packed_shots=True,
             bit_packed_predictions=True,
@@ -36,41 +41,48 @@ class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
         if self.measure_convergence:
             self.convergence_cnt += converged_cnt
             self.not_convergence_cnt += not_converged_cnt
-            with open('convergence_rate.txt', 'a') as self.f:
-                self.f.write(str(self.d) + ' ' + str(self.p) + ' ' + str(self.convergence_cnt) + ' ' + str(self.not_convergence_cnt) + '\n')
+            with open("convergence_rate.txt", "a", encoding=locale.getpreferredencoding(False)) as self.f:
+                self.f.write(
+                    str(self.d)
+                    + " "
+                    + str(self.p)
+                    + " "
+                    + str(self.convergence_cnt)
+                    + " "
+                    + str(self.not_convergence_cnt)
+                    + "\n"
+                )
 
         return predictions
 
 
 class SinterDecoder_MAXSAT(Decoder):
     def __init__(
-            self,
-            **maxsat_kwargs,
-    ):
+        self,
+        **maxsat_kwargs,
+    ) -> None:
         self.maxsat_kwargs = maxsat_kwargs
-        
 
-    def compile_decoder_for_dem(
-            self, *, dem: stim.DetectorErrorModel
-    ) -> CompiledDecoder:
+    def compile_decoder_for_dem(self, *, dem: stim.DetectorErrorModel) -> CompiledDecoder:
         maxsat = MaxSatStim(
             model=dem,
-#            **self.maxsat_kwargs,
+            #            **self.maxsat_kwargs,
         )
         return SinterCompiledDecoder_MAXSAT(maxsat, **self.maxsat_kwargs)
 
     def decode_via_files(
-            self,
-            *,
-            num_shots: int,
-            num_dets: int,
-            num_obs: int,
-            dem_path: pathlib.Path,
-            dets_b8_in_path: pathlib.Path,
-            obs_predictions_b8_out_path: pathlib.Path,
-            tmp_dir: pathlib.Path,
+        self,
+        *,
+        num_shots: int,
+        num_dets: int,
+        num_obs: int,
+        dem_path: pathlib.Path,
+        dets_b8_in_path: pathlib.Path,
+        obs_predictions_b8_out_path: pathlib.Path,
+        tmp_dir: pathlib.Path,
     ) -> None:
         """Performs decoding by reading problems from, and writing solutions to, file paths.
+
         Args:
             num_shots: The number of times the circuit was sampled. The number of problems
                 to be solved.
@@ -110,7 +122,7 @@ class SinterDecoder_MAXSAT(Decoder):
             num_detectors=dem.num_detectors,
             bit_packed=False,
         )
-        predictions, _, _ = max_sat.decode_batch(shots)        
+        predictions, _, _ = max_sat.decode_batch(shots)
         stim.write_shot_data_file(
             data=predictions,
             path=obs_predictions_b8_out_path,
@@ -119,5 +131,5 @@ class SinterDecoder_MAXSAT(Decoder):
         )
 
 
-def sinter_decoders(**kwargs) -> Dict[str, Decoder]:
+def sinter_decoders(**kwargs) -> dict[str, Decoder]:
     return {"maxsat": SinterDecoder_MAXSAT(**kwargs), "bposd": SinterDecoder_BPOSD()}
