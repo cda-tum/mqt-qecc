@@ -9,8 +9,8 @@ from mqt.qecc.cc_decoder.stim_interface.color_code_stim import gen_pcm_and_logic
 from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import sinter_decoders
 
 
-def generate_example_tasks()->None:
-    """ Generate example stim tasks """
+def generate_example_tasks() -> None:
+    """Generate example stim tasks."""
     for p in np.arange(0.001, 0.03, 0.001):
         for d in [3, 4, 5]:
             pcm, l_op = gen_pcm_and_logical(d)
@@ -27,7 +27,7 @@ def generate_example_tasks()->None:
 
 
 def main() -> None:
-    """ Run the simulation """
+    """Run the simulation."""
     samples = sinter.collect(
         num_workers=10,
         max_shots=10_000,
@@ -69,6 +69,6 @@ def main() -> None:
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """ Run the main function """
     main()
