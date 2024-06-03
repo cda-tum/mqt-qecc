@@ -1,4 +1,4 @@
-# This script is used to run the color code phenomenological noise simulation.
+""" This script is used to run the color code phenomenological noise simulation."""
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
