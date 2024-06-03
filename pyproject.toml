@@ -159,6 +159,7 @@ filterwarnings = [
     'ignore:.*qiskit.tools.events*:DeprecationWarning:qiskit',
     'ignore:.*qiskit.qasm*:DeprecationWarning:qiskit',
     'ignore:.*Qiskit with Python 3.8.*:DeprecationWarning:',
+    'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
 ]
 
 [tool.coverage]
