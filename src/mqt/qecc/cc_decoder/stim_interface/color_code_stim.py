@@ -1,14 +1,16 @@
-"""Generate stim circuit for the 2D color code"""
+"""Generate stim circuit for the 2D color code."""
+
 from __future__ import annotations
-from typing import Any
-import stim
+
 import itertools as it
+from typing import Any
+
 import numpy as np
 import stim
 
 
 def neighbors(perm: np.NDArray[int]) -> list[np.NDArray[int]]:
-    """ Return the neighbors of a lattice point in the 2D color code."""
+    """Return the neighbors of a lattice point in the 2D color code."""
     node_sw = (perm[0] + 1, perm[1], perm[2] - 1)
     node_se = (perm[0], perm[1] + 1, perm[2] - 1)
     node_e = (perm[0] - 1, perm[1] + 1, perm[2])
@@ -47,7 +49,7 @@ def gen_pcm_and_logical(distance: int) -> tuple[np.NDArray[bool], set[int]]:
 
 
 def add_checks_one_round(pcm: np.NDArray[int], circuit: Any, detectors: bool, error_probability: float) -> Any:
-    """ Add one round of checks to the circuit."""
+    """Add one round of checks to the circuit."""
     for check in pcm:
         if error_probability == 0:
             mpp_X_instruction = "MPP "
@@ -70,8 +72,9 @@ def add_checks_one_round(pcm: np.NDArray[int], circuit: Any, detectors: bool, er
     return circuit
 
 
-def gen_stim_circuit_memory_experiment(pcm: np.NDArray[int], logical_operator: np.NDArray[int],
-                                       distance: int, error_probability: float) -> Any:
+def gen_stim_circuit_memory_experiment(
+    pcm: np.NDArray[int], logical_operator: np.NDArray[int], distance: int, error_probability: float
+) -> Any:
     """Generate a stim circuit for a memory experiment on the 2D color code."""
     data_qubits = range(len(pcm[0]))
     circuit = stim.Circuit()
