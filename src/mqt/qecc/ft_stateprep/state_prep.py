@@ -6,8 +6,8 @@ from ldpc import mod2
 from code import CSSCode
 import numpy as np
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit.quantum_info import Clifford, StabilizerState, PauliList
-from qiskit.converters import circuit_to_dag, dag_to_circuit
+from qiskit.quantum_info import PauliList
+from qiskit.converters import circuit_to_dag
 from collections import deque
 from qiskit.dagcircuit import DAGOutNode
 import z3
@@ -17,7 +17,6 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     SymOrBool = z3.BoolRef | bool
     SymVec = list[SymOrBool] | npt.NDArray[SymOrBool]
-
 
 class StatePrepCircuit:
     """Represents a state preparation circuit for a CSS code."""
@@ -39,138 +38,7 @@ class StatePrepCircuit:
         self.fault_sets = [None for _ in range((code.distance-1) // 2 + 1)]
         self.max_measurements = len(self.orthogonal_checks)
 
-    def gate_optimal_verification_stabilizers(self, n_errors: int = 1, min_timeout=10, max_timeout=3600) -> list[npt.NDArray[int]]:
-        """Return a verification circuit for the state preparation circuit.
-
-        Args:
-            n_errors: The number of errors to detect.
-            reduce: If True, reduce the fault set before computing the verification circuit.
-
-        Returns:
-            The verification circuit.
-        """
-        layers = [None for _ in range(n_errors)]
-        # Find the optimal circuit for every number of errors in the preparation circuit
-        for num_errors in range(1, (self.code.distance-1) // 2 + 1):
-            # Start with maximal number of ancillas
-            # Minimal CNOT solution must be achievable with these
-            num_anc = self.max_measurements
-            min_cnots = np.min(np.sum(self.orthogonal_checks, axis=1))
-            max_cnots = np.sum(self.orthogonal_checks)
-
-            measurements, num_cnots = iterative_search_with_timeout(lambda num_cnots: self.verification_stabilizers(num_anc, num_cnots, num_errors), min_cnots, max_cnots, min_timeout, max_timeout)
-
-            if measurements is None or (isinstance(measurements, str) and measurements == "timeout"):
-                return None  # No solution found
-
-            # If any measurements are unused we can reduce the number of ancillas at least by that
-            num_anc = np.sum([np.any(m) for m in measurements])
-            measurements = [m for m in measurements if np.any(m)]
-            
-            # Iterate backwards to find the minimal number of cnots
-            num_cnots -= 1
-            while num_cnots > 0:
-                res = self.verification_stabilizers(num_anc, num_cnots, num_errors)
-                if res is None or res == "timeout":
-                    break
-                num_cnots -= 1
-                measurements = res
-                
-            # If the number of CNOTs is minimal, we can reduce the number of ancillas
-            num_anc -= 1
-            while num_anc > 0:
-                res = self.verification_stabilizers(num_anc, num_cnots, num_errors)
-                if res is None or res == "timeout":
-                    break
-                num_anc -= 1
-                measurements = res
-
-            layers[num_errors-1] = measurements
-
-        self.gate_optimal_layers = layers
-        return layers
-
-    def gate_optimal_verification_circuit(self, n_errors: int = 1, min_timeout: int=10, max_timeout: int=3600) -> QuantumCircuit:
-        """Return a verified state preparation circuit."""
-        layers = self.gate_optimal_verification_stabilizers(n_errors, min_timeout, max_timeout)
-        if layers is None:
-            return None
-        return self._measure_stabs([measurement for layer in layers for measurement in layer])
-
-    def _measure_stabs(self, measurements: list(npt.NDArray[np.int_])) -> QuantumCircuit:
-        # Create the verification circuit
-        num_anc = len(measurements)
-        q = QuantumRegister(self.num_qubits, "q")
-        anc = AncillaRegister(num_anc, "anc")
-        c = ClassicalRegister(num_anc, "c")
-        circ = QuantumCircuit(q, anc, c)
-
-        circ.compose(self.circ, inplace=True)
-        current_anc = 0
-        for measurement in measurements:
-            if not self.zero_state:
-                circ.h(q)
-            for qubit in np.where(measurement == 1)[0]:
-                if self.zero_state:
-                    circ.cx(q[qubit], anc[current_anc])
-                else:
-                    circ.cx(anc[current_anc], q[qubit])
-            if not self.zero_state:
-                circ.h(q)
-            current_anc += 1
-        return circ
-
-    def verification_stabilizers(self, num_anc, num_cnots, num_errors):
-        """Return a verification circuit for the state preparation circuit.
-
-        Args:
-            num_anc: The maximum number of ancilla qubits to use.
-            num_cnots: The maximumg number of CNOT gates to use.
-            num_errors: The number of errors occur in the state prep circuit.
-        """
-        # Measurements are written as sums of generators
-        # The variables indicate which generators are non-zero in the sum
-        measurement_vars = [[z3.Bool("m_{}_{}".format(anc, i))
-                             for i in range(self.max_measurements)]
-                            for anc in range(num_anc)]
-        solver = z3.Solver()
-
-        def vars_to_stab(measurement):
-            measurement_stab = _symbolic_scalar_mult(self.orthogonal_checks[0], measurement[0])
-            for i, scalar in enumerate(measurement[1:]):
-                measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(self.orthogonal_checks[i+1], scalar))
-            return measurement_stab
-
-        measurement_stabs = [vars_to_stab(vars_) for vars_ in measurement_vars]
-
-        # assert that each error is detected
-        errors = self._compute_fault_set(num_errors)
-        solver.add(z3.And([z3.PbGe([(_odd_overlap(measurement, error), 1)
-                                    for measurement in measurement_stabs], 1)
-                           for error in errors]))
-
-        # assert that not too many CNOTs are used
-        solver.add(z3.PbLe([(measurement[q], 1)
-                            for measurement in measurement_stabs
-                            for q in range(self.num_qubits)],
-                           num_cnots))
-
-        if solver.check() == z3.sat:
-            model = solver.model()
-            # Extract stabilizer measurements from model
-            actual_measurements = []
-            for m in measurement_vars:
-                v = np.zeros(self.num_qubits, dtype=int)
-                for g in range(self.max_measurements):
-                    if model[m[g]]:
-                        v += self.orthogonal_checks[g]
-                actual_measurements.append(v % 2)
-
-            return np.array(actual_measurements)
-
-        return None
-
-    def _compute_fault_set(self, n_errors=1, reduce=True) -> npt.NDArray[np.bool_]:
+    def compute_fault_set(self, n_errors=1, reduce=True) -> npt.NDArray[np.bool_]:
         """Compute the fault set of the state.
 
         Args:
@@ -227,6 +95,22 @@ class StatePrepCircuit:
         return faults
 
 
+class NDFTStatePrepCircuit:
+    """Non-deterministic fault-tolerant state preparation circuit for a CSS code."""
+
+    def __init__(self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True):
+        """Initialize a state preparation circuit.
+
+        Args:
+            circ: The state preparation circuit.
+            code: The CSS code to prepare the state for.
+            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+        """
+        self.circ = circ
+        self.code = code
+        self.zero_state = zero_state
+        
+        
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True):
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
 
@@ -393,7 +277,6 @@ def _generate_circ_with_bounded_gates(checks, max_cnots: int, zero_state=True):
     return None
 
 
-
 def _optimal_circuit(code: CSSCode, prep_func, zero_state: bool=True, min_param=1, max_param=10, min_timeout=1, max_timeout=3600) -> QuantumCircuit:
     """Synthesize a state preparation circuit for a CSS code that minimizes the circuit w.r.t. some metric param according to prep_func.
 
@@ -454,7 +337,6 @@ def gate_optimal_prep_circuit(code: CSSCode, zero_state: bool=True, min_gates=1,
         max_timeout: maximum timeout to reach
     """
     return _optimal_circuit(code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout)
-
 
 
 def _build_circuit_from_list_and_checks(cnots: list[tuple], checks: npt.NDArray[np.int_], zero_state=True) -> QuantumCircuit:
@@ -524,6 +406,140 @@ def iterative_search_with_timeout(fun, min_param, max_param, min_timeout, max_ti
     return None, max_param
 
 
+def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, n_errors: int = 1, min_timeout=10, max_timeout=3600) -> list[npt.NDArray[int]]:
+    """Return a verification circuit for the state preparation circuit.
+
+    Args:
+        n_errors: The number of errors to detect.
+        reduce: If True, reduce the fault set before computing the verification circuit.
+
+    Returns:
+        The verification circuit.
+    """
+    layers = [None for _ in range(n_errors)]
+    # Find the optimal circuit for every number of errors in the preparation circuit
+    for num_errors in range(1, (sp_circ.code.distance-1) // 2 + 1):
+        # Start with maximal number of ancillas
+        # Minimal CNOT solution must be achievable with these
+        num_anc = sp_circ.max_measurements
+        min_cnots = np.min(np.sum(sp_circ.orthogonal_checks, axis=1))
+        max_cnots = np.sum(sp_circ.orthogonal_checks)
+
+        measurements, num_cnots = iterative_search_with_timeout(lambda num_cnots: verification_stabilizers(sp_circ, num_anc, num_cnots, num_errors), min_cnots, max_cnots, min_timeout, max_timeout)
+
+        if measurements is None or (isinstance(measurements, str) and measurements == "timeout"):
+            return None  # No solution found
+
+        # If any measurements are unused we can reduce the number of ancillas at least by that
+        num_anc = np.sum([np.any(m) for m in measurements])
+        measurements = [m for m in measurements if np.any(m)]
+
+        # Iterate backwards to find the minimal number of cnots
+        num_cnots -= 1
+        while num_cnots > 0:
+            res = verification_stabilizers(sp_circ, num_anc, num_cnots, num_errors)
+            if res is None or res == "timeout":
+                break
+            num_cnots -= 1
+            measurements = res
+
+        # If the number of CNOTs is minimal, we can reduce the number of ancillas
+        num_anc -= 1
+        while num_anc > 0:
+            res = verification_stabilizers(sp_circ, num_anc, num_cnots, num_errors)
+            if res is None or res == "timeout":
+                break
+            num_anc -= 1
+            measurements = res
+
+        layers[num_errors-1] = measurements
+
+    return layers
+
+def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, n_errors: int = 1, min_timeout: int=10, max_timeout: int=3600) -> QuantumCircuit:
+    """Return a verified state preparation circuit."""
+    layers = gate_optimal_verification_stabilizers(sp_circ, n_errors, min_timeout, max_timeout)
+    if layers is None:
+        return None
+
+    measured_circ = _measure_stabs(sp_circ.circ, [measurement for layer in layers for measurement in layer])
+    return NDFTStatePrepCircuit(sp_circ.code, measured_circ, zero_state=sp_circ.zero_state)
+
+
+def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_])) -> QuantumCircuit:
+    # Create the verification circuit
+    num_anc = len(measurements)
+    q = QuantumRegister(circ.num_qubits, "q")
+    anc = AncillaRegister(num_anc, "anc")
+    c = ClassicalRegister(num_anc, "c")
+    measured_circ = QuantumCircuit(q, anc, c)
+
+    measured_circ.compose(circ, inplace=True)
+    current_anc = 0
+    for measurement in measurements:
+        if not self.zero_state:
+            measured_circ.h(q)
+        for qubit in np.where(measurement == 1)[0]:
+            if self.zero_state:
+                measured_circ.cx(q[qubit], anc[current_anc])
+            else:
+                measured_circ.cx(anc[current_anc], q[qubit])
+        if not self.zero_state:
+            measured_circ.h(q)
+        current_anc += 1
+    return measured_circ
+
+def verification_stabilizers(self, num_anc, num_cnots, num_errors):
+    """Return a verification circuit for the state preparation circuit.
+
+    Args:
+        num_anc: The maximum number of ancilla qubits to use.
+        num_cnots: The maximumg number of CNOT gates to use.
+        num_errors: The number of errors occur in the state prep circuit.
+    """
+    # Measurements are written as sums of generators
+    # The variables indicate which generators are non-zero in the sum
+    measurement_vars = [[z3.Bool("m_{}_{}".format(anc, i))
+                         for i in range(self.max_measurements)]
+                        for anc in range(num_anc)]
+    solver = z3.Solver()
+
+    def vars_to_stab(measurement):
+        measurement_stab = _symbolic_scalar_mult(self.orthogonal_checks[0], measurement[0])
+        for i, scalar in enumerate(measurement[1:]):
+            measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(self.orthogonal_checks[i+1], scalar))
+        return measurement_stab
+
+    measurement_stabs = [vars_to_stab(vars_) for vars_ in measurement_vars]
+
+    # assert that each error is detected
+    errors = self._compute_fault_set(num_errors)
+    solver.add(z3.And([z3.PbGe([(_odd_overlap(measurement, error), 1)
+                                for measurement in measurement_stabs], 1)
+                       for error in errors]))
+
+    # assert that not too many CNOTs are used
+    solver.add(z3.PbLe([(measurement[q], 1)
+                        for measurement in measurement_stabs
+                        for q in range(self.num_qubits)],
+                       num_cnots))
+
+    if solver.check() == z3.sat:
+        model = solver.model()
+        # Extract stabilizer measurements from model
+        actual_measurements = []
+        for m in measurement_vars:
+            v = np.zeros(self.num_qubits, dtype=int)
+            for g in range(self.max_measurements):
+                if model[m[g]]:
+                    v += self.orthogonal_checks[g]
+            actual_measurements.append(v % 2)
+
+        return np.array(actual_measurements)
+
+    return None
+
+    
 def _symbolic_scalar_mult(v: npt.NDArray[np.int_], a: z3.BoolRef | bool):
     """Multiply a concrete vector by a symbolic scalar."""
     return [a if s == 1 else False for s in v]
