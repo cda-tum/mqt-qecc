@@ -18,6 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
     SymOrBool = z3.BoolRef | bool
     SymVec = list[SymOrBool] | npt.NDArray[SymOrBool]
 
+    
 class StatePrepCircuit:
     """Represents a state preparation circuit for a CSS code."""
 
@@ -94,22 +95,6 @@ class StatePrepCircuit:
         self.fault_sets[n_errors] = np.array(faults)
         return faults
 
-
-class NDFTStatePrepCircuit:
-    """Non-deterministic fault-tolerant state preparation circuit for a CSS code."""
-
-    def __init__(self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True):
-        """Initialize a state preparation circuit.
-
-        Args:
-            circ: The state preparation circuit.
-            code: The CSS code to prepare the state for.
-            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
-        """
-        self.circ = circ
-        self.code = code
-        self.zero_state = zero_state
-        
         
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True):
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
@@ -456,6 +441,7 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, n_errors: i
 
     return layers
 
+
 def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, n_errors: int = 1, min_timeout: int=10, max_timeout: int=3600) -> QuantumCircuit:
     """Return a verified state preparation circuit."""
     layers = gate_optimal_verification_stabilizers(sp_circ, n_errors, min_timeout, max_timeout)
@@ -463,7 +449,7 @@ def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, n_errors: int =
         return None
 
     measured_circ = _measure_stabs(sp_circ.circ, [measurement for layer in layers for measurement in layer])
-    return NDFTStatePrepCircuit(sp_circ.code, measured_circ, zero_state=sp_circ.zero_state)
+    return measured_circ
 
 
 def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_])) -> QuantumCircuit:
