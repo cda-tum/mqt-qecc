@@ -1,12 +1,21 @@
 """Class for representing quantum error correction codes."""
 
 from __future__ import annotations
-
-from enum import Enum
 from typing import TYPE_CHECKING
 
 import numpy as np
+
 from ldpc import mod2
+from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
+
+try:
+    from importlib import resources as impresources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as impresources
+
+from . import sample_codes  # relative-import the *package* containing the templates
+
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -59,3 +68,58 @@ class CSSCode:
     def is_self_dual(self) -> bool:
         """Check if the code is self-dual."""
         return mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, self.Hz]))
+
+    @staticmethod
+    def from_code_name(code_name: str, distance: int=None) -> CSSCode:
+        """Return CSSCode object for a known code.
+
+        The following codes are supported:
+        - [[7, 1, 3]] Steane (\"Steane\")
+        - [[15, 1, 3]] tetrahedral code (\"Tetrahedral\")
+        - [[15, 7, 3]] Hamming code (\"Hamming\")
+        - [[9, 1, 3]] Shore code (\"Shor\")
+        - [[9, 1, 3]] rotated surface code (\"Surface, 3\")
+        - [[25, 1, 5]] rotated surface code (\"Surface, 5\")
+        - [[17, 1, 5]] 4,8,8 color code (\"CC_4_8_8, 5\")
+        - 6,6,6 color code for arbitrary distances (\"CC_6_6_6, d\")
+        
+        Args:
+            code_name: The name of the code.
+        """
+        prefix = impresources.files(sample_codes)
+        paths = {
+            "steane": prefix / "steane/",
+            "tetrahedral": prefix / "tetrahedral/",
+            "hamming": prefix / "hamming/",
+            "shor": prefix / "shor/",
+            "surface, 3": prefix / "rotated_surface_d3/",
+            "surface, 5": prefix / "rotated_surface_d5/",
+            "cc_4_8_8 5": prefix / "cc_4_8_8_d5/",
+        }
+
+        distances = {
+            "steane": 3,
+            "tetrahedral": 3,
+            "hamming": 3,
+            "shor": 3,
+            "cc_4_8_8 5": 5,
+        }
+
+        code_name = code_name.lower()
+        if code_name == "cc_6_6_6":
+            if distance is None:
+                raise ValueError("Distance is not specified for CC_6_6_6")
+            cc = HexagonalColorCode(distance)
+            cc.construct_layout()
+            return CSSCode(distance, cc.H, cc.H)
+            
+        elif code_name in paths:
+            hx = np.load(paths[code_name] / "hx.npy")
+            hz = np.load(paths[code_name] / "hz.npy")
+            if code_name in distances:
+                distance = distances[code_name]
+            elif distance is None:
+                raise ValueError(f"Distance is not specified for {code_name}")
+            return CSSCode(distance, hx, hz)
+        else:
+            raise ValueError(f"Unknown code name: {code_name}")

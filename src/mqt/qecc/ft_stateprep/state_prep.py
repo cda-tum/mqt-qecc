@@ -1,9 +1,9 @@
 """Synthesizing state preparation circuits for CSS codes."""
 
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from ldpc import mod2
-from code import CSSCode
 import numpy as np
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.quantum_info import PauliList
@@ -12,6 +12,8 @@ from collections import deque
 from qiskit.dagcircuit import DAGOutNode
 import z3
 import multiprocessing
+
+from .code import CSSCode
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -448,11 +450,11 @@ def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, n_errors: int =
     if layers is None:
         return None
 
-    measured_circ = _measure_stabs(sp_circ.circ, [measurement for layer in layers for measurement in layer])
+    measured_circ = _measure_stabs(sp_circ.circ, [measurement for layer in layers for measurement in layer], sp_circ.zero_state)
     return measured_circ
 
 
-def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_])) -> QuantumCircuit:
+def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_]), z_measurements=True) -> QuantumCircuit:
     # Create the verification circuit
     num_anc = len(measurements)
     q = QuantumRegister(circ.num_qubits, "q")
@@ -463,15 +465,16 @@ def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_]
     measured_circ.compose(circ, inplace=True)
     current_anc = 0
     for measurement in measurements:
-        if not self.zero_state:
+        if not z_measurements:
             measured_circ.h(q)
         for qubit in np.where(measurement == 1)[0]:
-            if self.zero_state:
+            if z_measurements:
                 measured_circ.cx(q[qubit], anc[current_anc])
             else:
                 measured_circ.cx(anc[current_anc], q[qubit])
-        if not self.zero_state:
+        if not z_measurements:
             measured_circ.h(q)
+        measured_circ.measure(anc[current_anc], c[current_anc])
         current_anc += 1
     return measured_circ
 
@@ -499,7 +502,7 @@ def verification_stabilizers(self, num_anc, num_cnots, num_errors):
     measurement_stabs = [vars_to_stab(vars_) for vars_ in measurement_vars]
 
     # assert that each error is detected
-    errors = self._compute_fault_set(num_errors)
+    errors = self.compute_fault_set(num_errors)
     solver.add(z3.And([z3.PbGe([(_odd_overlap(measurement, error), 1)
                                 for measurement in measurement_stabs], 1)
                        for error in errors]))
