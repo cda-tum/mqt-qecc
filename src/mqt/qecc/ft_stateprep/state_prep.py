@@ -44,7 +44,7 @@ class StatePrepCircuit:
         self.fault_sets = [None for _ in range((code.distance-1) // 2 + 1)]
         self.max_measurements = len(self.orthogonal_checks)
 
-    def compute_fault_set(self, n_errors=1, reduce=True) -> npt.NDArray[np.bool_]:
+    def compute_fault_set(self, num_errors=1) -> npt.NDArray[np.bool_]:
         """Compute the fault set of the state.
 
         Args:
@@ -53,8 +53,8 @@ class StatePrepCircuit:
         Returns:
             The fault set of the state.
         """
-        if self.fault_sets[n_errors] is not None:
-            return self.fault_sets[n_errors]
+        if self.fault_sets[num_errors] is not None:
+            return self.fault_sets[num_errors]
 
         dag = circuit_to_dag(self.circ)
         for node in dag.front_layer(): # remove hadamards
@@ -67,7 +67,7 @@ class StatePrepCircuit:
         faults = _remove_stabilizer_equivalent_faults(faults, self.code.Hx)
 
         # combine faults to generate higher weight errors
-        for k in range(1, n_errors):
+        for k in range(1, num_errors):
             new_faults = []
             # Append single_qubit errors
             for i, fault in enumerate(faults):
@@ -96,7 +96,7 @@ class StatePrepCircuit:
         # remove stabilizer equivalent faults
 
         faults = _remove_stabilizer_equivalent_faults(faults, self.checks)
-        self.fault_sets[n_errors] = np.array(faults)
+        self.fault_sets[num_errors] = np.array(faults)
         return faults
 
         
@@ -395,20 +395,24 @@ def iterative_search_with_timeout(fun, min_param, max_param, min_timeout, max_ti
     return None, max_param
 
 
-def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, n_errors: int = 1, min_timeout=10, max_timeout=3600) -> list[npt.NDArray[int]]:
+def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, num_errors: int = 1, min_timeout=10, max_timeout=3600) -> list[npt.NDArray[int]]:
     """Return a verification circuit for the state preparation circuit.
 
     Args:
-        n_errors: The number of errors to detect.
+        num_errors: The number of errors to detect.
         reduce: If True, reduce the fault set before computing the verification circuit.
 
     Returns:
         The verification circuit.
     """
-    layers = [None for _ in range(n_errors)]
+    layers = [None for _ in range(num_errors)]
     # Find the optimal circuit for every number of errors in the preparation circuit
     for num_errors in range(1, (sp_circ.code.distance-1) // 2 + 1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
+        if len(sp_circ.compute_fault_set(num_errors)) == 0:
+            logging.info(f"No non-trivial faults for {num_errors} errors")
+            layers[num_errors-1] = []
+            continue
         # Start with maximal number of ancillas
         # Minimal CNOT solution must be achievable with these
         num_anc = sp_circ.max_measurements
@@ -426,40 +430,44 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, n_errors: i
         # If any measurements are unused we can reduce the number of ancillas at least by that
         num_anc = np.sum([np.any(m) for m in measurements])
         measurements = [m for m in measurements if np.any(m)]
-
+        
         # Iterate backwards to find the minimal number of cnots
         logging.info(f"Finding minimal number of CNOTs for {num_errors} errors")
         while num_cnots-1 > 0:
-            logging.info(f"Trying {num_cnots} CNOTs")
+            logging.info(f"Trying {num_cnots-1} CNOTs")
             res = verification_stabilizers(sp_circ, num_anc, num_cnots-1, num_errors)
             if res is None or isinstance(res, str) and res == "timeout":
                 break
             num_cnots -= 1
             measurements = res
-        logging.info(f"Found minimal number of CNOTs for {num_errors} errors: {num_cnots}")
+        logging.info(f"Minimal number of CNOTs for {num_errors} errors is: {num_cnots}")
 
         # If the number of CNOTs is minimal, we can reduce the number of ancillas
         logging.info(f"Finding minimal number of ancillas for {num_errors} errors")
         while num_anc-1 > 0:
-            logging.info(f"Trying {num_anc} ancillas")
+            logging.info(f"Trying {num_anc-1} ancillas")
             res = verification_stabilizers(sp_circ, num_anc-1, num_cnots, num_errors)
             if res is None or isinstance(res, str) and res == "timeout":
                 break
             num_anc -= 1
             measurements = res
-        logging.info(f"Found minimal number of ancillas for {num_errors} errors: {num_anc}")
+        logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
         layers[num_errors-1] = measurements
         
     return layers
 
 
-def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, n_errors: int = 1, min_timeout: int=10, max_timeout: int=3600) -> QuantumCircuit:
+def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, num_errors: int = 1, min_timeout: int=10, max_timeout: int=3600) -> QuantumCircuit:
     """Return a verified state preparation circuit."""
-    layers = gate_optimal_verification_stabilizers(sp_circ, n_errors, min_timeout, max_timeout)
+    layers = gate_optimal_verification_stabilizers(sp_circ, num_errors, min_timeout, max_timeout)
     if layers is None:
         return None
 
-    measured_circ = _measure_stabs(sp_circ.circ, [measurement for layer in layers for measurement in layer], sp_circ.zero_state)
+    measurements = [measurement for layer in layers for measurement in layer]
+    if len(measurements) == 0:
+        return sp_circ.circ
+    
+    measured_circ = _measure_stabs(sp_circ.circ, measurements, sp_circ.zero_state)
     return measured_circ
 
 
@@ -475,14 +483,14 @@ def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_]
     current_anc = 0
     for measurement in measurements:
         if not z_measurements:
-            measured_circ.h(q)
+            measured_circ.h(anc[current_anc])
         for qubit in np.where(measurement == 1)[0]:
             if z_measurements:
                 measured_circ.cx(q[qubit], anc[current_anc])
             else:
                 measured_circ.cx(anc[current_anc], q[qubit])
         if not z_measurements:
-            measured_circ.h(q)
+            measured_circ.h(anc[current_anc])
         measured_circ.measure(anc[current_anc], c[current_anc])
         current_anc += 1
     return measured_circ
