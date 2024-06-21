@@ -33,9 +33,8 @@ class CSSCode:
         self.Hz = Hz
         self.n = Hx.shape[1]
         self.k = self.n - Hx.shape[0] - Hz.shape[0]
-        
-        self.Lx = CSSCode._compute_logical(self.Hx, self.Hz)
-        self.Lz = CSSCode._compute_logical(self.Hz, self.Hx)
+        self.Lx = CSSCode._compute_logical(self.Hz, self.Hx)
+        self.Lz = CSSCode._compute_logical(self.Hx, self.Hz)
         
     def __hash__(self) -> int:
         """Compute a hash for the CSS code."""
@@ -92,9 +91,9 @@ class CSSCode:
             "tetrahedral": prefix / "tetrahedral/",
             "hamming": prefix / "hamming/",
             "shor": prefix / "shor/",
-            "surface, 3": prefix / "rotated_surface_d3/",
-            "surface, 5": prefix / "rotated_surface_d5/",
-            "cc_4_8_8 5": prefix / "cc_4_8_8_d5/",
+            "surface_3": prefix / "rotated_surface_d3/",
+            "surface_5": prefix / "rotated_surface_d5/",
+            "cc_4_8_8": prefix / "cc_4_8_8_d5/",
         }
 
         distances = {
@@ -106,6 +105,10 @@ class CSSCode:
         }
 
         code_name = code_name.lower()
+        if code_name == "surface":
+            code_name = code_name + "_%d" % distance
+
+            
         if code_name == "cc_6_6_6":
             if distance is None:
                 raise ValueError("Distance is not specified for CC_6_6_6")
