@@ -386,26 +386,38 @@ def iterative_search_with_timeout(fun, min_param, max_param, min_timeout, max_ti
     param_type = type(min_param)
     while curr_timeout <= max_timeout:
         while curr_param <= max_param:
+            logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
             res = _run_with_timeout(fun, curr_param, timeout=curr_timeout)
-            if res is not None or (isinstance(res, str) and res != "timeout"):
+            if res is not None and (not isinstance(res, str) or res != "timeout"):
                 return res, curr_param
+            if curr_param == max_param:
+                break
+            
+            if curr_param > max_param:
+                curr_param = max_param
             curr_param = param_type(curr_param*param_factor)
+            
         curr_timeout *= timeout_factor
         curr_param = min_param
     return None, max_param
 
 
-def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, num_errors: int = 1, min_timeout=10, max_timeout=3600) -> list[npt.NDArray[int]]:
+def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout=10, max_timeout=3600, max_ancillas: int=None) -> list[npt.NDArray[int]]:
     """Return a verification circuit for the state preparation circuit.
 
     Args:
         num_errors: The number of errors to detect.
-        reduce: If True, reduce the fault set before computing the verification circuit.
+        min_timeout: The minimum time to allow for each iteration.
+        max_ancillas: The maximum number of ancillas to use in each layer. If None, use the maximum possible. For larger circuits it is recommended to set this to a lower value. Per default the maximum number of ancillas is equal to the number of stabilizer generators of the code which is potentially much higher than necessary.
+        max_timeout: The maximum time to allow for each iteration.
 
     Returns:
         The verification circuit.
     """
-    layers = [None for _ in range(num_errors)]
+    max_errors = (sp_circ.code.distance-1) // 2 + 1
+    layers = [None for _ in range(max_errors)]
+    if max_ancillas is None:
+        max_ancillas = sp_circ.max_measurements
     # Find the optimal circuit for every number of errors in the preparation circuit
     for num_errors in range(1, (sp_circ.code.distance-1) // 2 + 1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
@@ -415,7 +427,7 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, num_errors:
             continue
         # Start with maximal number of ancillas
         # Minimal CNOT solution must be achievable with these
-        num_anc = sp_circ.max_measurements
+        num_anc = max_ancillas
         min_cnots = np.min(np.sum(sp_circ.orthogonal_checks, axis=1))
         max_cnots = np.sum(sp_circ.orthogonal_checks)
 
@@ -435,7 +447,7 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, num_errors:
         logging.info(f"Finding minimal number of CNOTs for {num_errors} errors")
         while num_cnots-1 > 0:
             logging.info(f"Trying {num_cnots-1} CNOTs")
-            res = verification_stabilizers(sp_circ, num_anc, num_cnots-1, num_errors)
+            res = _run_with_timeout(lambda cnots: verification_stabilizers(sp_circ, num_anc, cnots, num_errors), num_cnots-1, timeout=max_timeout)
             if res is None or isinstance(res, str) and res == "timeout":
                 break
             num_cnots -= 1
@@ -446,6 +458,7 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, num_errors:
         logging.info(f"Finding minimal number of ancillas for {num_errors} errors")
         while num_anc-1 > 0:
             logging.info(f"Trying {num_anc-1} ancillas")
+            res = _run_with_timeout(lambda anc: verification_stabilizers(sp_circ, anc, num_cnots, num_errors), num_cnots-1, timeout=max_timeout)
             res = verification_stabilizers(sp_circ, num_anc-1, num_cnots, num_errors)
             if res is None or isinstance(res, str) and res == "timeout":
                 break
@@ -457,9 +470,9 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, num_errors:
     return layers
 
 
-def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, num_errors: int = 1, min_timeout: int=10, max_timeout: int=3600) -> QuantumCircuit:
+def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, num_errors: int = 1, min_timeout: int=10, max_timeout: int=3600, max_ancillas: int=None) -> QuantumCircuit:
     """Return a verified state preparation circuit."""
-    layers = gate_optimal_verification_stabilizers(sp_circ, num_errors, min_timeout, max_timeout)
+    layers = gate_optimal_verification_stabilizers(sp_circ, num_errors, min_timeout, max_timeout, max_ancillas)
     if layers is None:
         return None
 
@@ -467,6 +480,92 @@ def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, num_errors: int
     if len(measurements) == 0:
         return sp_circ.circ
     
+    measured_circ = _measure_stabs(sp_circ.circ, measurements, sp_circ.zero_state)
+    return measured_circ
+
+
+def heuristic_verification_circuit(sp_circ: StatePrepCircuit, max_covering_sets=10000, find_coset_leaders=True) -> QuantumCircuit:
+    """Return a verified state preparation circuit.
+
+    Args:
+        sp_circ: The state preparation circuit to verify.
+        max_covering_sets: The maximum number of covering sets to consider.
+        find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
+    """
+    logging.info("Finding verification stabilizers using heuristic method")
+    max_errors = (sp_circ.code.distance-1) // 2
+    layers = [None for _ in range(max_errors)]
+    for num_errors in range(1, max_errors+1):
+        logging.info(f"Finding verification stabilizers for {num_errors} errors")
+        faults = sp_circ.compute_fault_set(num_errors)
+        if len(faults) == 0:
+            layers[num_errors-1] = []
+            continue
+        
+        syndromes = sp_circ.orthogonal_checks @ faults.T % 2
+        candidates = np.where(np.any(syndromes != 0, axis=1))[0]
+        non_candidates = np.where(np.all(syndromes == 0, axis=1))[0]
+        candidate_checks = sp_circ.orthogonal_checks[candidates]
+        non_candidate_checks = sp_circ.orthogonal_checks[non_candidates]
+        
+        def covers(s):
+            return frozenset(np.where(s@faults.T % 2 != 0)[0])
+
+        candidate_sets = [covers(s) for s in candidate_checks]
+        mapping = {cand: candidate_checks[i] for i, cand in enumerate(candidate_sets)}
+        candidate_sets = set(candidate_sets)
+
+        def set_cover(n, cands):
+            universe = set(range(n))
+            cover = []
+            while universe:
+                best = max(cands, key=lambda s: (len(s & universe), -np.sum(mapping[s])))
+                cover.append(best)
+                universe -= best
+            return cover
+
+        improved = True
+        cover = set_cover(len(faults), candidate_sets)
+        cost = len(cover)
+        prev_candidates = candidate_sets.copy()
+        while improved or len(candidate_sets) < max_covering_sets:
+            improved = False
+            # add all symmetric differences to candidates
+            to_remove = set()
+            to_add = set()
+            for c1 in candidate_sets:
+                for c2 in candidate_sets:
+                    if len(to_add) >= max_covering_sets:
+                        break
+                    comb = c1 ^ c2
+                    if c1 == c2 or comb in candidate_sets or comb in to_add or comb in to_remove:
+                        continue
+
+                    mapping[comb] = (mapping[c1] + mapping[c2]) % 2
+                    if len(c1 & c2) == 0:
+                        to_remove.add(c1)
+                        to_remove.add(c2)
+                    to_add.add(comb)
+            candidate_sets = candidate_sets.union(to_add)
+            new_cover = set_cover(len(faults), candidate_sets)
+            print(new_cover)
+            new_cost = len(new_cover)
+            if new_cost < cost:
+                cover = new_cover
+                cost = new_cost
+                improved = True
+            elif candidate_sets == prev_candidates:
+                break
+            prev_candidates = candidate_sets
+
+        logging.info(f"Found covering set of size {len(cover)} for {num_errors} errors")
+        measurements = [mapping[c] for c in cover]
+        if find_coset_leaders and len(non_candidates) > 0:
+            logging.info(f"Finding coset leaders for {num_errors} errors")
+            measurements = [_coset_leader(m, non_candidate_checks) for m in measurements]
+        layers[num_errors-1] = measurements
+
+    measurements = [measurement for layer in layers for measurement in layer]
     measured_circ = _measure_stabs(sp_circ.circ, measurements, sp_circ.zero_state)
     return measured_circ
 
@@ -495,6 +594,14 @@ def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_]
         current_anc += 1
     return measured_circ
 
+
+def _vars_to_stab(measurement, generators: npt.NDArray[np.int_]):
+    measurement_stab = _symbolic_scalar_mult(generators[0], measurement[0])
+    for i, scalar in enumerate(measurement[1:]):
+        measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(generators[i+1], scalar))
+    return measurement_stab
+    
+    
 def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_errors):
     """Return a verification circuit for the state preparation circuit.
 
@@ -510,13 +617,7 @@ def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_
                         for anc in range(num_anc)]
     solver = z3.Solver()
 
-    def vars_to_stab(measurement):
-        measurement_stab = _symbolic_scalar_mult(sp_circ.orthogonal_checks[0], measurement[0])
-        for i, scalar in enumerate(measurement[1:]):
-            measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(sp_circ.orthogonal_checks[i+1], scalar))
-        return measurement_stab
-
-    measurement_stabs = [vars_to_stab(vars_) for vars_ in measurement_vars]
+    measurement_stabs = [_vars_to_stab(vars_, sp_circ.orthogonal_checks) for vars_ in measurement_vars]
 
     # assert that each error is detected
     errors = sp_circ.compute_fault_set(num_errors)
@@ -544,6 +645,27 @@ def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_
         return np.array(actual_measurements)
     return None
 
+
+def _coset_leader(error, generators):
+    if len(generators) == 0:
+        return error
+    s = z3.Optimize()
+    leader = [z3.Bool(f"e_{i}") for i in range(len(error))]
+    coeff = [z3.Bool(f"c_{i}") for i in range(len(generators))]
+
+    g = _vars_to_stab(coeff, generators)
+
+    print(error)
+    print(g)
+    s.add(_symbolic_vector_eq(leader, _symbolic_vector_add(error.astype(bool), g)))
+    s.minimize(z3.Sum(leader))
+
+    if s.check() == z3.sat:
+        m = s.model()
+        print([bool(m[leader[i]]) for i in range(len(error))])
+        return np.array([bool(m[leader[i]]) for i in range(len(error))]).astype(int)
+    return None
+
     
 def _symbolic_scalar_mult(v: npt.NDArray[np.int_], a: z3.BoolRef | bool):
     """Multiply a concrete vector by a symbolic scalar."""
@@ -560,15 +682,17 @@ def _symbolic_vector_add(v1: SymVec, v2: SymVec):
     v_new = [False for _ in range(len(v1))]
     for i in range(len(v1)):
         # If one of the elements is a bool, we can simplify the expression
-        v1_i_is_bool = isinstance(v1[i], bool)
-        v2_i_is_bool = isinstance(v2[i], bool)
+        v1_i_is_bool = isinstance(v1[i], bool) or isinstance(v1[i], np.bool_)
+        v2_i_is_bool = isinstance(v2[i], bool) or isinstance(v2[i], np.bool_)
         if v1_i_is_bool:
+            v1[i] = bool(v1[i])
             if v1[i]:
                 v_new[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
             else:
                 v_new[i] = v2[i]
 
         elif v2_i_is_bool:
+            v2[i] = bool(v2[i])
             if v2[i]:
                 v_new[i] = z3.Not(v1[i]) if not v1_i_is_bool else not v1[i]
             else:

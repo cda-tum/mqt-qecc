@@ -93,7 +93,7 @@ class CSSCode:
             "shor": prefix / "shor/",
             "surface_3": prefix / "rotated_surface_d3/",
             "surface_5": prefix / "rotated_surface_d5/",
-            "cc_4_8_8": prefix / "cc_4_8_8_d5/",
+            "cc_4_8_8_5": prefix / "cc_4_8_8_d5/",
         }
 
         distances = {
@@ -105,7 +105,7 @@ class CSSCode:
         }
 
         code_name = code_name.lower()
-        if code_name == "surface":
+        if code_name == "surface" or code_name == "cc_4_8_8":
             code_name = code_name + "_%d" % distance
 
             

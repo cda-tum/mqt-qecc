@@ -211,8 +211,6 @@ class NoisyNDFTStatePrepSimulator:
             estimates = self.decoder.batch_decode_z(checks)
 
         corrected = state + estimates
-        # print(np.sum(np.any(corrected @ observables.T % 2!=0, axis=1)))
-
         
         num_discarded = detection_events.shape[0]-filtered_events.shape[0]
         num_logical_errors = np.sum(np.any(corrected @ observables.T % 2!=0, axis=1))  # number of non-commuting corrected states
@@ -255,7 +253,7 @@ class LUTDecoder:
         if self.x_LUT is not None:
             return
 
-        self.x_LUT = self._generate_LUT(self.code.Hx)
+        self.x_LUT = self._generate_LUT(self.code.Hz)
         if self.code.is_self_dual():
             self.z_LUT = self.x_LUT
 
@@ -263,7 +261,7 @@ class LUTDecoder:
         """Generate the lookup table for the Z errors."""
         if self.z_LUT is not None:
             return
-        self.z_LUT = self._generate_LUT(self.code.Hz)
+        self.z_LUT = self._generate_LUT(self.code.Hx)
         if self.code.is_self_dual():
             self.z_LUT = self.x_LUT
         
