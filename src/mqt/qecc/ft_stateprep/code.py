@@ -20,22 +20,22 @@ from . import sample_codes  # relative-import the *package* containing the templ
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
 
-    
+
 class CSSCode:
     """A class for representing CSS codes."""
     def __init__(self, distance: int, Hx: npt.NDArray[np.int_], Hz: npt.NDArray[np.int_]):
         """Initialize the code."""
         self.distance = distance
-        
+
         assert Hx.shape[1] == Hz.shape[1], "Hx and Hz must have the same number of columns"
-        
+
         self.Hx = Hx
         self.Hz = Hz
         self.n = Hx.shape[1]
         self.k = self.n - Hx.shape[0] - Hz.shape[0]
         self.Lx = CSSCode._compute_logical(self.Hz, self.Hx)
         self.Lz = CSSCode._compute_logical(self.Hx, self.Hz)
-        
+
     def __hash__(self) -> int:
         """Compute a hash for the CSS code."""
         return hash(self.Hx.tobytes() ^ self.Hz.tobytes())
@@ -46,7 +46,7 @@ class CSSCode:
             return NotImplemented
         return mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, other.Hx])) and \
                mod2.rank(self.Hz) == mod2.rank(np.vstack([self.Hz, other.Hz]))
-    
+
     def _compute_logical(m1: npt.NDArray[np.int_], m2: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
         """Compute the logical matrix L."""
         ker_m1 = mod2.nullspace(m1)  # compute the kernel basis of m1
@@ -80,8 +80,10 @@ class CSSCode:
         - [[9, 1, 3]] rotated surface code (\"Surface, 3\")
         - [[25, 1, 5]] rotated surface code (\"Surface, 5\")
         - [[17, 1, 5]] 4,8,8 color code (\"CC_4_8_8, 5\")
+        - [[23, 1, 7]] golay code (\"Golay\")
         - 6,6,6 color code for arbitrary distances (\"CC_6_6_6, d\")
-        
+
+
         Args:
             code_name: The name of the code.
         """
@@ -94,6 +96,7 @@ class CSSCode:
             "surface_3": prefix / "rotated_surface_d3/",
             "surface_5": prefix / "rotated_surface_d5/",
             "cc_4_8_8_5": prefix / "cc_4_8_8_d5/",
+            "golay": prefix / "golay/",
         }
 
         distances = {
@@ -102,20 +105,21 @@ class CSSCode:
             "hamming": 3,
             "shor": 3,
             "cc_4_8_8 5": 5,
+            "golay": 7,
         }
 
         code_name = code_name.lower()
         if code_name == "surface" or code_name == "cc_4_8_8":
             code_name = code_name + "_%d" % distance
 
-            
+
         if code_name == "cc_6_6_6":
             if distance is None:
                 raise ValueError("Distance is not specified for CC_6_6_6")
             cc = HexagonalColorCode(distance)
             cc.construct_layout()
             return CSSCode(distance, cc.H, cc.H)
-            
+
         elif code_name in paths:
             hx = np.load(paths[code_name] / "hx.npy")
             hz = np.load(paths[code_name] / "hz.npy")
