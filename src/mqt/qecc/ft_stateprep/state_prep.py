@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
     SymOrBool = z3.BoolRef | bool
     SymVec = list[SymOrBool] | npt.NDArray[SymOrBool]
 
-    
+
 class StatePrepCircuit:
     """Represents a state preparation circuit for a CSS code."""
 
@@ -44,7 +44,7 @@ class StatePrepCircuit:
         self.fault_sets = [None for _ in range((code.distance-1) // 2 + 1)]
         self.max_measurements = len(self.orthogonal_checks)
 
-    def compute_fault_set(self, num_errors=1) -> npt.NDArray[np.bool_]:
+    def compute_fault_set(self, num_errors=1, reduce=True) -> npt.NDArray[np.bool_]:
         """Compute the fault set of the state.
 
         Args:
@@ -53,33 +53,41 @@ class StatePrepCircuit:
         Returns:
             The fault set of the state.
         """
-        if self.fault_sets[num_errors] is not None:
+        if self.fault_sets[num_errors] is not None:  # Memoization
             return self.fault_sets[num_errors]
 
-        dag = circuit_to_dag(self.circ)
-        for node in dag.front_layer(): # remove hadamards
-            dag.remove_op_node(node)
-        faults = []
-        # propagate every error before a control
-        for node in dag.topological_op_nodes():
-            error = _propagate_error(dag, node, zero_state=self.zero_state)
-            faults.append(error)
-        faults = _remove_stabilizer_equivalent_faults(faults, self.code.Hx)
+        if num_errors == 1:
+            logging.info("Computing fault set for 1 error.")
+            dag = circuit_to_dag(self.circ)
+            for node in dag.front_layer(): # remove hadamards
+                dag.remove_op_node(node)
+            faults = []
+            # propagate every error before a control
+            for node in dag.topological_op_nodes():
+                error = _propagate_error(dag, node, zero_state=self.zero_state)
+                faults.append(error)
+            faults = _remove_stabilizer_equivalent_faults(faults, self.code.Hx)
 
-        # combine faults to generate higher weight errors
-        for k in range(1, num_errors):
-            new_faults = []
-            # Append single_qubit errors
-            for i, fault in enumerate(faults):
-                for j, fault2 in enumerate(faults[i+1:]):
-                    new_faults.append((fault+fault2) % 2)
+        else:
+            logging.info(f"Computing fault set for {num_errors} errors.")
+            faults = self.compute_fault_set(num_errors-1)
+            single_faults = self.compute_fault_set(1)
+            # combine faults to generate higher weight errors
+            for k in range(1, num_errors):
+                new_faults = []
+                # Append single_qubit errors
+                for i, fault in enumerate(faults):
+                    for j, fault2 in enumerate(single_faults):
+                        new_faults.append((fault+fault2) % 2)
 
-                for j in range(self.num_qubits):
-                    single_fault = np.array([0]*self.num_qubits)
-                    single_fault[j] = 1
-                    new_faults.append((fault+single_fault) % 2)
-            faults = new_faults
+                    for j in range(self.num_qubits):
+                        single_fault = np.array([0]*self.num_qubits)
+                        single_fault[j] = 1
+                        new_faults.append((fault+single_fault) % 2)
+                faults = new_faults
+
         # reduce faults by stabilizer
+        logging.info("Reducing fault set.")
         reduced = True
         while reduced:
             reduced = False
@@ -91,15 +99,17 @@ class StatePrepCircuit:
                         reduced = True
                         break
         # remove trivial faults
+        logging.info("Removing trivial faults.")
         faults = np.array(faults)
         faults = faults[np.where(np.sum(faults, axis=1) > (self.code.distance-1) // 2)[0]]
         # remove stabilizer equivalent faults
-
-        faults = _remove_stabilizer_equivalent_faults(faults, self.checks)
+        if reduce:
+            logging.info("Removing stabilizer equivalent faults.")
+            faults = _remove_stabilizer_equivalent_faults(faults, self.checks)
         self.fault_sets[num_errors] = np.array(faults)
         return faults
 
-        
+
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True):
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
 
@@ -392,11 +402,11 @@ def iterative_search_with_timeout(fun, min_param, max_param, min_timeout, max_ti
                 return res, curr_param
             if curr_param == max_param:
                 break
-            
+
             if curr_param > max_param:
                 curr_param = max_param
             curr_param = param_type(curr_param*param_factor)
-            
+
         curr_timeout *= timeout_factor
         curr_param = min_param
     return None, max_param
@@ -433,7 +443,7 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout
 
         logging.info(f"Finding verification stabilizers for {num_errors} errors with {min_cnots} to {max_cnots} CNOTs using {num_anc} ancillas")
         measurements, num_cnots = iterative_search_with_timeout(lambda num_cnots: verification_stabilizers(sp_circ, num_anc, num_cnots, num_errors), min_cnots, max_cnots, min_timeout, max_timeout)
-        
+
         if measurements is None or (isinstance(measurements, str) and measurements == "timeout"):
             logging.info(f"No verification stabilizers found for {num_errors} errors")
             return None  # No solution found
@@ -442,7 +452,7 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout
         # If any measurements are unused we can reduce the number of ancillas at least by that
         num_anc = np.sum([np.any(m) for m in measurements])
         measurements = [m for m in measurements if np.any(m)]
-        
+
         # Iterate backwards to find the minimal number of cnots
         logging.info(f"Finding minimal number of CNOTs for {num_errors} errors")
         while num_cnots-1 > 0:
@@ -466,20 +476,20 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout
             measurements = res
         logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
         layers[num_errors-1] = measurements
-        
+
     return layers
 
 
-def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, num_errors: int = 1, min_timeout: int=10, max_timeout: int=3600, max_ancillas: int=None) -> QuantumCircuit:
+def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, min_timeout: int=10, max_timeout: int=3600, max_ancillas: int=None) -> QuantumCircuit:
     """Return a verified state preparation circuit."""
-    layers = gate_optimal_verification_stabilizers(sp_circ, num_errors, min_timeout, max_timeout, max_ancillas)
+    layers = gate_optimal_verification_stabilizers(sp_circ, min_timeout, max_timeout, max_ancillas)
     if layers is None:
         return None
 
     measurements = [measurement for layer in layers for measurement in layer]
     if len(measurements) == 0:
         return sp_circ.circ
-    
+
     measured_circ = _measure_stabs(sp_circ.circ, measurements, sp_circ.zero_state)
     return measured_circ
 
@@ -501,13 +511,13 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, max_covering_sets=
         if len(faults) == 0:
             layers[num_errors-1] = []
             continue
-        
+
         syndromes = sp_circ.orthogonal_checks @ faults.T % 2
         candidates = np.where(np.any(syndromes != 0, axis=1))[0]
         non_candidates = np.where(np.all(syndromes == 0, axis=1))[0]
         candidate_checks = sp_circ.orthogonal_checks[candidates]
         non_candidate_checks = sp_circ.orthogonal_checks[non_candidates]
-        
+
         def covers(s):
             return frozenset(np.where(s@faults.T % 2 != 0)[0])
 
@@ -600,8 +610,8 @@ def _vars_to_stab(measurement, generators: npt.NDArray[np.int_]):
     for i, scalar in enumerate(measurement[1:]):
         measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(generators[i+1], scalar))
     return measurement_stab
-    
-    
+
+
 def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_errors):
     """Return a verification circuit for the state preparation circuit.
 
@@ -666,7 +676,7 @@ def _coset_leader(error, generators):
         return np.array([bool(m[leader[i]]) for i in range(len(error))]).astype(int)
     return None
 
-    
+
 def _symbolic_scalar_mult(v: npt.NDArray[np.int_], a: z3.BoolRef | bool):
     """Multiply a concrete vector by a symbolic scalar."""
     return [a if s == 1 else False for s in v]
@@ -770,12 +780,12 @@ def _remove_stabilizer_equivalent_faults(faults: np.array, stabilizers: np.array
     stabilizers = stabilizers.copy()
     removed = set()
 
+    logging.debug(f"Removing stabilizer equivalent faults from {len(faults)} faults.")
     for i, f1 in enumerate(faults):
         if i in removed:
             continue
         A = np.vstack((stabilizers, f1))
-        A = mod2.reduced_row_echelon(A)[0]
-        if np.all(A[-1] == 0):
+        if mod2.rank(A) == mod2.rank(stabilizers):
             removed.add(i)
             continue
 
@@ -783,11 +793,11 @@ def _remove_stabilizer_equivalent_faults(faults: np.array, stabilizers: np.array
             if j+i+1 in removed:
                 continue
             S = np.vstack((A, f2))
-            S = mod2.reduced_row_echelon(S)[0]
 
-            if np.all(S[-1] == 0):
+            if mod2.rank(S) == mod2.rank(A):
                 removed.add(j+i+1)
 
+    logging.debug(f"Removed {len(removed)} stabilizer equivalent faults.")
     indices = np.array(list(set(range(len(faults)))-removed))
     if len(indices) == 0:
         return np.array([])
