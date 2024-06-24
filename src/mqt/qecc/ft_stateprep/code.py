@@ -88,6 +88,7 @@ class CSSCode:
 
         Args:
             code_name: The name of the code.
+            distance: The distance of the code.
         """
         prefix = impresources.files(sample_codes)
         paths = {

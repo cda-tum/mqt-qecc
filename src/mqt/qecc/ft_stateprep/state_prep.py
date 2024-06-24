@@ -11,7 +11,7 @@ from qiskit.converters import circuit_to_dag
 from collections import deque
 from qiskit.dagcircuit import DAGOutNode
 import z3
-import multiprocessing
+import multiprocess
 import logging
 
 from .code import CSSCode
@@ -38,13 +38,15 @@ class StatePrepCircuit:
         self.circ = circ
         self.code = code
         self.zero_state = zero_state
-        self.checks = code.Hx.copy() if zero_state else code.Hz.copy()
-        self.orthogonal_checks = np.vstack((code.Hz.copy(), code.Lz.copy())) if zero_state else np.vstack((code.Hx.copy(), code.Lx.copy()))
+        self.x_checks = code.Hx.copy() if zero_state else np.vstack((code.Lx.copy(), code.Hx.copy()))
+        self.z_checks = code.Hz.copy() if not zero_state else np.vstack((code.Lz.copy(), code.Hz.copy()))
         self.num_qubits = circ.num_qubits
-        self.fault_sets = [None for _ in range((code.distance-1) // 2 + 1)]
-        self.max_measurements = len(self.orthogonal_checks)
+        self.x_fault_sets = [None for _ in range((code.distance-1) // 2 + 1)]
+        self.z_fault_sets = [None for _ in range((code.distance-1) // 2 + 1)]
+        self.max_x_measurements = len(self.x_checks)
+        self.max_z_measurements = len(self.z_checks)
 
-    def compute_fault_set(self, num_errors=1, reduce=True) -> npt.NDArray[np.bool_]:
+    def compute_fault_set(self, num_errors=1, x_errors=True, reduce=True) -> npt.NDArray[np.bool_]:
         """Compute the fault set of the state.
 
         Args:
@@ -53,8 +55,10 @@ class StatePrepCircuit:
         Returns:
             The fault set of the state.
         """
-        if self.fault_sets[num_errors] is not None:  # Memoization
-            return self.fault_sets[num_errors]
+        if x_errors and self.x_fault_sets[num_errors] is not None:
+            return self.x_fault_sets[num_errors]
+        if not x_errors and self.z_fault_sets[num_errors] is not None:
+            return self.z_fault_sets[num_errors]
 
         if num_errors == 1:
             logging.info("Computing fault set for 1 error.")
@@ -64,49 +68,50 @@ class StatePrepCircuit:
             faults = []
             # propagate every error before a control
             for node in dag.topological_op_nodes():
-                error = _propagate_error(dag, node, zero_state=self.zero_state)
+                error = _propagate_error(dag, node, x_errors=x_errors)
                 faults.append(error)
-            faults = _remove_stabilizer_equivalent_faults(faults, self.code.Hx)
-
+            faults = np.array(faults, np.int8)
+            faults = np.unique(faults, axis=0)
         else:
             logging.info(f"Computing fault set for {num_errors} errors.")
-            faults = self.compute_fault_set(num_errors-1)
-            single_faults = self.compute_fault_set(1)
-            # combine faults to generate higher weight errors
-            for k in range(1, num_errors):
-                new_faults = []
-                # Append single_qubit errors
-                for i, fault in enumerate(faults):
-                    for j, fault2 in enumerate(single_faults):
-                        new_faults.append((fault+fault2) % 2)
-
-                    for j in range(self.num_qubits):
-                        single_fault = np.array([0]*self.num_qubits)
-                        single_fault[j] = 1
-                        new_faults.append((fault+single_fault) % 2)
-                faults = new_faults
+            faults = self.compute_fault_set(num_errors-1, x_errors, reduce=reduce)
+            single_faults = self.compute_fault_set(1, x_errors, reduce=reduce)
+            new_faults = (faults[:, None, :] + single_faults).reshape(-1, self.num_qubits) % 2
+            non_propagated_single_errors = np.eye(self.num_qubits, dtype=int)
+            faults = (new_faults[:, None, :] + non_propagated_single_errors).reshape(-1, self.num_qubits) % 2
+            # remove duplicates
+            faults = np.unique(faults, axis=0)
 
         # reduce faults by stabilizer
         logging.info("Reducing fault set.")
         reduced = True
-        while reduced:
-            reduced = False
-            for i, fault in enumerate(faults):
-                for check in self.checks:
-                    reduced_fault = (fault+check) % 2
+
+        stabs = self.x_checks if x_errors else self.z_checks
+        for i, fault in enumerate(faults):
+            while reduced:
+                reduced = False
+                for stab in stabs:
+                    reduced_fault = (fault+stab) % 2
                     if np.sum(fault) > np.sum(reduced_fault):
                         faults[i] = reduced_fault
+                        fault = reduced_fault
                         reduced = True
                         break
+
         # remove trivial faults
         logging.info("Removing trivial faults.")
-        faults = np.array(faults)
-        faults = faults[np.where(np.sum(faults, axis=1) > (self.code.distance-1) // 2)[0]]
+        for i, fault in enumerate(faults):
+            faults[i] = _coset_leader(fault, stabs)
+        faults = faults[np.where(np.sum(faults, axis=1) > num_errors)[0]]
+
         # remove stabilizer equivalent faults
         if reduce:
             logging.info("Removing stabilizer equivalent faults.")
-            faults = _remove_stabilizer_equivalent_faults(faults, self.checks)
-        self.fault_sets[num_errors] = np.array(faults)
+            faults = _remove_stabilizer_equivalent_faults(faults, stabs)
+        if x_errors:
+            self.x_fault_sets[num_errors] = np.array(faults, np.int8)
+        else:
+            self.z_fault_sets[num_errors] = np.array(faults, np.int8)
         return faults
 
 
@@ -373,9 +378,9 @@ def _run_with_timeout(func, *args, timeout: int=10):
         args: The arguments to pass to the function.
         timeout: The maximum time to allow the function to run for in seconds.
     """
-    manager = multiprocessing.Manager()
+    manager = multiprocess.Manager()
     return_list = manager.list()
-    p = multiprocessing.Process(target=lambda: return_list.append(func(*args)))
+    p = multiprocess.Process(target=lambda: return_list.append(func(*args)))
     p.start()
     p.join(timeout)
     if p.is_alive():
@@ -415,7 +420,7 @@ def iterative_search_with_timeout(fun, min_param, max_param, min_timeout, max_ti
     return None, max_param
 
 
-def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout=10, max_timeout=3600, max_ancillas: int=None) -> list[npt.NDArray[int]]:
+def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, x_errors=True, min_timeout=10, max_timeout=3600, max_ancillas: int=None) -> list[npt.NDArray[int]]:
     """Return a verification circuit for the state preparation circuit.
 
     Args:
@@ -430,22 +435,24 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout
     max_errors = (sp_circ.code.distance-1) // 2
     layers = [None for _ in range(max_errors)]
     if max_ancillas is None:
-        max_ancillas = sp_circ.max_measurements
+        max_ancillas = sp_circ.max_z_measurements if x_errors else sp_circ.max_x_measurements
     # Find the optimal circuit for every number of errors in the preparation circuit
     for num_errors in range(1, max_errors + 1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
-        if len(sp_circ.compute_fault_set(num_errors)) == 0:
+        faults = sp_circ.compute_fault_set(num_errors, x_errors)
+        if len(faults) == 0:
             logging.info(f"No non-trivial faults for {num_errors} errors")
             layers[num_errors-1] = []
             continue
         # Start with maximal number of ancillas
         # Minimal CNOT solution must be achievable with these
         num_anc = max_ancillas
-        min_cnots = np.min(np.sum(sp_circ.orthogonal_checks, axis=1))
-        max_cnots = np.sum(sp_circ.orthogonal_checks)
+        checks = sp_circ.z_checks if x_errors else sp_circ.x_checks
+        min_cnots = np.min(np.sum(checks, axis=1))
+        max_cnots = np.sum(checks)
 
         logging.info(f"Finding verification stabilizers for {num_errors} errors with {min_cnots} to {max_cnots} CNOTs using {num_anc} ancillas")
-        measurements, num_cnots = iterative_search_with_timeout(lambda num_cnots: verification_stabilizers(sp_circ, num_anc, num_cnots, num_errors), min_cnots, max_cnots, min_timeout, max_timeout)
+        measurements, num_cnots = iterative_search_with_timeout(lambda num_cnots: verification_stabilizers(sp_circ, num_anc, num_cnots, num_errors, x_errors=x_errors), min_cnots, max_cnots, min_timeout, max_timeout)
 
         if measurements is None or (isinstance(measurements, str) and measurements == "timeout"):
             logging.info(f"No verification stabilizers found for {num_errors} errors")
@@ -485,19 +492,25 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout
 
 def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, min_timeout: int=10, max_timeout: int=3600, max_ancillas: int=None) -> QuantumCircuit:
     """Return a verified state preparation circuit."""
-    layers = gate_optimal_verification_stabilizers(sp_circ, min_timeout, max_timeout, max_ancillas)
-    if layers is None:
+    logging.info("Finding optimal verification stabilizers for X errors")
+    x_layers = gate_optimal_verification_stabilizers(sp_circ, True, min_timeout, max_timeout, max_ancillas)
+    if x_layers is not None:
+        measurements = [measurement for layer in x_layers for measurement in layer]
+        if len(measurements) != 0:
+            measured_circ = _measure_stabs(sp_circ.circ, measurements, True)
+
+    z_layers = gate_optimal_verification_stabilizers(sp_circ, False, min_timeout, max_timeout, max_ancillas)
+    if z_layers is None:
         return None
 
-    measurements = [measurement for layer in layers for measurement in layer]
-    if len(measurements) == 0:
-        return sp_circ.circ
+    measurements = [measurement for layer in z_layers for measurement in layer]
+    if len(measurements) != 0:
+        measured_circ = _measure_stabs(measured_circ, measurements, False)
 
-    measured_circ = _measure_stabs(sp_circ.circ, measurements, sp_circ.zero_state)
     return measured_circ
 
 
-def heuristic_verification_circuit(sp_circ: StatePrepCircuit, max_covering_sets=10000, find_coset_leaders=True) -> QuantumCircuit:
+def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max_covering_sets=10000, find_coset_leaders=True) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
     Args:
@@ -510,16 +523,17 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, max_covering_sets=
     layers = [None for _ in range(max_errors)]
     for num_errors in range(1, max_errors+1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
-        faults = sp_circ.compute_fault_set(num_errors)
+        faults = sp_circ.compute_fault_set(num_errors, x_errors=x_errors)
         if len(faults) == 0:
             layers[num_errors-1] = []
             continue
 
-        syndromes = sp_circ.orthogonal_checks @ faults.T % 2
+        orthogonal_checks = sp_circ.x_checks if x_errors else sp_circ.z_checks
+        syndromes = orthogonal_checks @ faults.T % 2
         candidates = np.where(np.any(syndromes != 0, axis=1))[0]
         non_candidates = np.where(np.all(syndromes == 0, axis=1))[0]
-        candidate_checks = sp_circ.orthogonal_checks[candidates]
-        non_candidate_checks = sp_circ.orthogonal_checks[non_candidates]
+        candidate_checks = orthogonal_checks[candidates]
+        non_candidate_checks = orthogonal_checks[non_candidates]
 
         def covers(s):
             return frozenset(np.where(s@faults.T % 2 != 0)[0])
@@ -561,7 +575,6 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, max_covering_sets=
                     to_add.add(comb)
             candidate_sets = candidate_sets.union(to_add)
             new_cover = set_cover(len(faults), candidate_sets)
-            print(new_cover)
             new_cost = len(new_cover)
             if new_cost < cost:
                 cover = new_cover
@@ -615,7 +628,7 @@ def _vars_to_stab(measurement, generators: npt.NDArray[np.int_]):
     return measurement_stab
 
 
-def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_errors):
+def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_errors, x_errors=True):
     """Return a verification circuit for the state preparation circuit.
 
     Args:
@@ -625,15 +638,18 @@ def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_
     """
     # Measurements are written as sums of generators
     # The variables indicate which generators are non-zero in the sum
+    gens = sp_circ.z_checks if x_errors else sp_circ.x_checks
+    n_gens = gens.shape[0]
+
     measurement_vars = [[z3.Bool("m_{}_{}".format(anc, i))
-                         for i in range(sp_circ.max_measurements)]
+                         for i in range(n_gens)]
                         for anc in range(num_anc)]
     solver = z3.Solver()
 
-    measurement_stabs = [_vars_to_stab(vars_, sp_circ.orthogonal_checks) for vars_ in measurement_vars]
+    measurement_stabs = [_vars_to_stab(vars_, gens) for vars_ in measurement_vars]
 
     # assert that each error is detected
-    errors = sp_circ.compute_fault_set(num_errors)
+    errors = sp_circ.compute_fault_set(num_errors, x_errors)
     solver.add(z3.And([z3.PbGe([(_odd_overlap(measurement, error), 1)
                                 for measurement in measurement_stabs], 1)
                        for error in errors]))
@@ -650,9 +666,9 @@ def verification_stabilizers(sp_circ: StatePrepCircuit, num_anc, num_cnots, num_
         actual_measurements = []
         for m in measurement_vars:
             v = np.zeros(sp_circ.num_qubits, dtype=int)
-            for g in range(sp_circ.max_measurements):
+            for g in range(n_gens):
                 if model[m[g]]:
-                    v += sp_circ.orthogonal_checks[g]
+                    v += gens[g]
             actual_measurements.append(v % 2)
 
         return np.array(actual_measurements)
@@ -668,14 +684,11 @@ def _coset_leader(error, generators):
 
     g = _vars_to_stab(coeff, generators)
 
-    print(error)
-    print(g)
     s.add(_symbolic_vector_eq(leader, _symbolic_vector_add(error.astype(bool), g)))
     s.minimize(z3.Sum(leader))
 
     if s.check() == z3.sat:
         m = s.model()
-        print([bool(m[leader[i]]) for i in range(len(error))])
         return np.array([bool(m[leader[i]]) for i in range(len(error))]).astype(int)
     return None
 
@@ -754,10 +767,10 @@ def _final_matrix_constraint(columns):
     return z3.PbEq([(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])], columns.shape[2]-columns.shape[1])
 
 
-def _propagate_error(dag, node, zero_state=True) -> PauliList:
+def _propagate_error(dag, node, x_errors=True) -> PauliList:
     """Propagates a Pauli error through a circuit beginning from control of node."""
     control = node.qargs[0]._index
-    error = np.array([0]*dag.num_qubits())
+    error = np.array([0]*dag.num_qubits(), dtype=np.int8)
     error[control] = 1
     # propagate error through circuit via bfs
     q = deque([node])
@@ -768,10 +781,10 @@ def _propagate_error(dag, node, zero_state=True) -> PauliList:
             continue
         control = node.qargs[0]._index
         target = node.qargs[1]._index
-        if zero_state:
-            error[target] = (error[target] + error[control])%2
+        if x_errors:
+            error[target] = (error[target] + error[control]) % 2
         else:
-            error[control] = (error[target] + error[control])%2
+            error[control] = (error[target] + error[control]) % 2
         for succ in dag.successors(node):
             q.append(succ)
     return error
