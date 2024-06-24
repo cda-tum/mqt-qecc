@@ -296,17 +296,20 @@ def _optimal_circuit(code: CSSCode, prep_func, zero_state: bool=True, min_param=
     if not circ:
         return None
 
+    logging.info(f"Solution found with param {curr_param}")
     # Solving a SAT instance is much faster than proving unsat in this case
     # so we iterate backwards until we find an unsat instance or hit a timeout
-    curr_param -= 1
+    logging.info(f"Trying to minimize param")
     while True:
-        res = _run_with_timeout(prep_func, checks, curr_param, timeout=max_timeout)
+        logging.info(f"Trying param {curr_param-1}")
+        res = _run_with_timeout(prep_func, checks, curr_param-1, timeout=max_timeout)
 
         if res is not None or res == "timeout":
             break
         circ = res
         curr_param -= 1
 
+    logging.info(f"Optimal param: {curr_param}")
     return StatePrepCircuit(circ, code, zero_state)
 
 
@@ -424,12 +427,12 @@ def gate_optimal_verification_stabilizers(sp_circ: StatePrepCircuit, min_timeout
     Returns:
         The verification circuit.
     """
-    max_errors = (sp_circ.code.distance-1) // 2 + 1
+    max_errors = (sp_circ.code.distance-1) // 2
     layers = [None for _ in range(max_errors)]
     if max_ancillas is None:
         max_ancillas = sp_circ.max_measurements
     # Find the optimal circuit for every number of errors in the preparation circuit
-    for num_errors in range(1, (sp_circ.code.distance-1) // 2 + 1):
+    for num_errors in range(1, max_errors + 1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
         if len(sp_circ.compute_fault_set(num_errors)) == 0:
             logging.info(f"No non-trivial faults for {num_errors} errors")

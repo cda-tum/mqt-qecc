@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import os.path
 
 from ldpc import mod2
 from mqt.qecc.cc_decoder.hexagonal_color_code import HexagonalColorCode
@@ -82,6 +83,7 @@ class CSSCode:
         - [[17, 1, 5]] 4,8,8 color code (\"CC_4_8_8, 5\")
         - [[23, 1, 7]] golay code (\"Golay\")
         - 6,6,6 color code for arbitrary distances (\"CC_6_6_6, d\")
+        - [[225, 9, 4]] hypergraph product code (\"HPG, 4\")
 
 
         Args:
@@ -97,6 +99,7 @@ class CSSCode:
             "surface_5": prefix / "rotated_surface_d5/",
             "cc_4_8_8_5": prefix / "cc_4_8_8_d5/",
             "golay": prefix / "golay/",
+            "hpg": prefix / "hpg_225_9_4/"
         }
 
         distances = {
@@ -106,6 +109,7 @@ class CSSCode:
             "shor": 3,
             "cc_4_8_8 5": 5,
             "golay": 7,
+            "hpg": 4
         }
 
         code_name = code_name.lower()
@@ -123,6 +127,7 @@ class CSSCode:
         elif code_name in paths:
             hx = np.load(paths[code_name] / "hx.npy")
             hz = np.load(paths[code_name] / "hz.npy")
+                
             if code_name in distances:
                 distance = distances[code_name]
             elif distance is None:
@@ -130,3 +135,27 @@ class CSSCode:
             return CSSCode(distance, hx, hz)
         else:
             raise ValueError(f"Unknown code name: {code_name}")
+
+
+class ClassicalCode:
+    """A class for representing classical codes."""
+    
+    def __init__(self, distance: int, H: npt.NDArray[np.int_]):
+        """Initialize the code."""
+        self.distance = distance
+        self.H = H
+        self.n = H.shape[1]
+        self.k = self.n - H.shape[0]
+
+        
+class HyperGraphProductCode(CSSCode):
+    """A class for representing hypergraph product codes."""
+    def __init__(self, c1: ClassicalCode, c2: ClassicalCode):
+        """Initialize the code."""
+
+        Hx = np.hstack((np.kron(c1.H.T, np.eye(c2.H.shape[0])),
+                        np.kron(np.eye(c1.n), c2.H)))
+        Hz = np.hstack((np.kron(np.eye(c1.H.shape[0]), c2.H.T),
+                        np.kron(c1.H, np.eye(c2.n))))
+        super().__init__(np.min(c1.distance, c2.distance), Hx, Hz)
+        
