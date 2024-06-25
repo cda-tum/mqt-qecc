@@ -46,6 +46,7 @@ dependencies = [
     "bposd",
     "numba",
     "pymatching",
+    "stim >= 1.13.0",
 ]
 dynamic = ["version"]
 
