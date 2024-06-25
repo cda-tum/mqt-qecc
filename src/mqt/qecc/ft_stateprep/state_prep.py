@@ -14,7 +14,7 @@ import z3
 import multiprocess
 import logging
 
-from .code import CSSCode
+from ..code import CSSCode
 
 logger = logging.getLogger(__name__)
 

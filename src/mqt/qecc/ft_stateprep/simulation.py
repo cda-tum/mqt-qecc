@@ -9,7 +9,7 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 import numpy as np
 from collections import defaultdict
 
-from .code import CSSCode
+from ..code import CSSCode
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
