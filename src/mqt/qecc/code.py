@@ -76,6 +76,11 @@ class CSSCode:
         """Check if the code is self-dual."""
         return self.Hx.shape[0] == self.Hz.shape[0] and mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, self.Hz]))
 
+    def stabs_as_pauli_strings(self) -> tuple[list[str], list[str]]:
+        """Return the stabilizers as Pauli strings."""
+        return ["".join(["I" if x == 0 else "X" for x in row]) for row in self.Hx], \
+               ["".join(["I" if z == 0 else "Z" for z in row]) for row in self.Hz]
+    
     @staticmethod
     def from_code_name(code_name: str, distance: int=None) -> CSSCode:
         """Return CSSCode object for a known code.
