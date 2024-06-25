@@ -574,7 +574,7 @@ def heuristic_verification_stabilizers(sp_circ: StatePrepCircuit, x_errors=True,
         logging.info(f"Initial set cover has {len(cover)} sets")
         cost = len(cover)
         prev_candidates = candidate_sets.copy()
-        while improved or len(candidate_sets) < max_covering_sets:
+        while improved and len(candidate_sets) < max_covering_sets:
             improved = False
             # add all symmetric differences to candidates
             to_remove = set()
