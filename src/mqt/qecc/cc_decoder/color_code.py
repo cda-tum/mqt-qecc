@@ -6,6 +6,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 import numpy as np
+
 from ..code import CSSCode
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,7 +25,6 @@ class ColorCode(CSSCode):
 
     def __init__(self, distance: int, lattice_type: LatticeType) -> None:
         """Initialize the color code."""
-        self.distance = distance
         self.ancilla_qubits: set[tuple[int, int]] = set()
         self.data_qubits: set[tuple[int, int]] = set()
         self.qubits_to_faces: dict[int, list[int]] = {}
@@ -32,7 +32,7 @@ class ColorCode(CSSCode):
         self.lattice_type = lattice_type
         self.add_qubits()
         self.H: npt.NDArray[np.int_] = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-        super(ColorCode, self).__init__(self.distance, self.H, self.H)
+        super().__init__(distance, self.H, self.H)
         self.L = self.Lz
         self.construct_layout()
         self.n = len(self.qubits_to_faces)
@@ -53,10 +53,10 @@ class ColorCode(CSSCode):
     def construct_layout(self) -> None:
         """Construct the adjacency lists of the code from the qubits lists. Assumes add_qubits was called."""
 
-    def compute_logical(self) ->None:
+    def compute_logical(self) -> None:
         """Compute the logical operators of the code."""
         self.L = self._compute_logical(self.H, self.H)
-        
+
     def get_syndrome(self, error: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
         """Compute the syndrome of the error."""
         return self.H @ error % 2
@@ -64,7 +64,3 @@ class ColorCode(CSSCode):
     def check_if_logical_error(self, residual: npt.NDArray[np.int_]) -> bool:
         """Check if the residual is a logical error."""
         return (self.L @ residual % 2).any() is True
-
-    def is_self_dual(self) -> bool:
-        """Check if the code is self-dual."""
-        return True

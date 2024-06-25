@@ -47,6 +47,7 @@ dependencies = [
     "numba",
     "pymatching",
     "stim >= 1.13.0",
+    "multiprocess",
 ]
 dynamic = ["version"]
 
