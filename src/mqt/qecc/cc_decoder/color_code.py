@@ -53,6 +53,10 @@ class ColorCode(CSSCode):
     def construct_layout(self) -> None:
         """Construct the adjacency lists of the code from the qubits lists. Assumes add_qubits was called."""
 
+    def compute_logical(self) ->None:
+        """Compute the logical operators of the code."""
+        self.L = self._compute_logical(self.H, self.H)
+        
     def get_syndrome(self, error: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
         """Compute the syndrome of the error."""
         return self.H @ error % 2
