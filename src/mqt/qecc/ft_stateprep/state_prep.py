@@ -494,23 +494,38 @@ def gate_optimal_verification_circuit(sp_circ: StatePrepCircuit, min_timeout: in
     """Return a verified state preparation circuit."""
     logging.info("Finding optimal verification stabilizers for X errors")
     x_layers = gate_optimal_verification_stabilizers(sp_circ, True, min_timeout, max_timeout, max_ancillas)
-    if x_layers is not None:
-        measurements = [measurement for layer in x_layers for measurement in layer]
-        if len(measurements) != 0:
-            measured_circ = _measure_stabs(sp_circ.circ, measurements, True)
 
     z_layers = gate_optimal_verification_stabilizers(sp_circ, False, min_timeout, max_timeout, max_ancillas)
     if z_layers is None:
         return None
 
-    measurements = [measurement for layer in z_layers for measurement in layer]
-    if len(measurements) != 0:
-        measured_circ = _measure_stabs(measured_circ, measurements, False)
+    z_measurements = [measurement for layer in z_layers for measurement in layer] if z_layers is not None else []
+    x_measurements = [measurement for layer in x_layers for measurement in layer] if x_layers is not None else []
+    measured_circ = _measure_stabs(sp_circ.circ, x_measurements, z_measurements)
 
     return measured_circ
 
 
-def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max_covering_sets=10000, find_coset_leaders=True) -> QuantumCircuit:
+def heuristic_verification_circuit(sp_circ: StatePrepCircuit, max_covering_sets=10000, find_coset_leaders=True) -> QuantumCircuit:
+    """Return a verified state preparation circuit.
+
+    Args:
+        sp_circ: The state preparation circuit to verify.
+        max_covering_sets: The maximum number of covering sets to consider.
+        max_covering_sets: The maximum number of covering sets to consider.
+        find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
+    """
+    x_layers = heuristic_verification_stabilizers(sp_circ, True, max_covering_sets, find_coset_leaders)
+    z_layers = heuristic_verification_stabilizers(sp_circ, False, max_covering_sets, find_coset_leaders)
+
+    z_measurements = [measurement for layer in z_layers for measurement in layer] if z_layers is not None else []
+    x_measurements = [measurement for layer in x_layers for measurement in layer] if x_layers is not None else []
+    measured_circ = _measure_stabs(sp_circ.circ, x_measurements, z_measurements)
+
+    return measured_circ
+
+
+def heuristic_verification_stabilizers(sp_circ: StatePrepCircuit, x_errors=True, max_covering_sets=10000, find_coset_leaders=True):
     """Return a verified state preparation circuit.
 
     Args:
@@ -523,12 +538,13 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max
     layers = [None for _ in range(max_errors)]
     for num_errors in range(1, max_errors+1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
-        faults = sp_circ.compute_fault_set(num_errors, x_errors=x_errors)
+        faults = sp_circ.compute_fault_set(num_errors, x_errors)
+        logging.info(f"There are {len(faults)} faults")
         if len(faults) == 0:
             layers[num_errors-1] = []
             continue
 
-        orthogonal_checks = sp_circ.x_checks if x_errors else sp_circ.z_checks
+        orthogonal_checks = sp_circ.z_checks if x_errors else sp_circ.x_checks
         syndromes = orthogonal_checks @ faults.T % 2
         candidates = np.where(np.any(syndromes != 0, axis=1))[0]
         non_candidates = np.where(np.all(syndromes == 0, axis=1))[0]
@@ -538,8 +554,9 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max
         def covers(s):
             return frozenset(np.where(s@faults.T % 2 != 0)[0])
 
+        logging.info("Converting Stabilizer Checks to covering sets")
         candidate_sets = [covers(s) for s in candidate_checks]
-        mapping = {cand: candidate_checks[i] for i, cand in enumerate(candidate_sets)}
+        mapping = {cand: _coset_leader(candidate_checks[i], non_candidate_checks) for i, cand in enumerate(candidate_sets)}
         candidate_sets = set(candidate_sets)
 
         def set_cover(n, cands):
@@ -552,7 +569,9 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max
             return cover
 
         improved = True
+        logging.info("Finding initial set cover")
         cover = set_cover(len(faults), candidate_sets)
+        logging.info(f"Initial set cover has {len(cover)} sets")
         cost = len(cover)
         prev_candidates = candidate_sets.copy()
         while improved or len(candidate_sets) < max_covering_sets:
@@ -575,6 +594,7 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max
                     to_add.add(comb)
             candidate_sets = candidate_sets.union(to_add)
             new_cover = set_cover(len(faults), candidate_sets)
+            logging.info(f"New Covering set has {len(new_cover)} sets")
             new_cost = len(new_cover)
             if new_cost < cost:
                 cover = new_cover
@@ -589,35 +609,39 @@ def heuristic_verification_circuit(sp_circ: StatePrepCircuit, x_errors=True, max
         if find_coset_leaders and len(non_candidates) > 0:
             logging.info(f"Finding coset leaders for {num_errors} errors")
             measurements = [_coset_leader(m, non_candidate_checks) for m in measurements]
+        logging.info(f"Found {np.sum(measurements)} CNOTS for {num_errors} errors")
         layers[num_errors-1] = measurements
 
-    measurements = [measurement for layer in layers for measurement in layer]
-    measured_circ = _measure_stabs(sp_circ.circ, measurements, sp_circ.zero_state)
-    return measured_circ
+    return layers
 
 
-def _measure_stabs(circ: QuantumCircuit, measurements: list(npt.NDArray[np.int_]), z_measurements=True) -> QuantumCircuit:
+def _measure_stabs(circ: QuantumCircuit, x_measurements: list(npt.NDArray[np.int_]), z_measurements: list(npt.NDArray[np.int_])) -> QuantumCircuit:
     # Create the verification circuit
-    num_anc = len(measurements)
+    num_z_anc = len(z_measurements)
+    num_x_anc = len(x_measurements)
     q = QuantumRegister(circ.num_qubits, "q")
-    anc = AncillaRegister(num_anc, "anc")
-    c = ClassicalRegister(num_anc, "c")
-    measured_circ = QuantumCircuit(q, anc, c)
+    z_anc = AncillaRegister(num_z_anc, "z_anc")
+    x_anc = AncillaRegister(num_x_anc, "x_anc")
+    z_c = ClassicalRegister(num_z_anc, "z_c")
+    x_c = ClassicalRegister(num_x_anc, "x_c")
+    measured_circ = QuantumCircuit(q, x_anc, z_anc, x_c, z_c)
 
     measured_circ.compose(circ, inplace=True)
     current_anc = 0
-    for measurement in measurements:
-        if not z_measurements:
-            measured_circ.h(anc[current_anc])
+    for measurement in z_measurements:
         for qubit in np.where(measurement == 1)[0]:
-            if z_measurements:
-                measured_circ.cx(q[qubit], anc[current_anc])
-            else:
-                measured_circ.cx(anc[current_anc], q[qubit])
-        if not z_measurements:
-            measured_circ.h(anc[current_anc])
-        measured_circ.measure(anc[current_anc], c[current_anc])
+            measured_circ.cx(q[qubit], z_anc[current_anc])
+        measured_circ.measure(z_anc[current_anc], z_c[current_anc])
+
+    current_anc = 0
+    for measurement in x_measurements:
+        measured_circ.h(x_anc[current_anc])
+        for qubit in np.where(measurement == 1)[0]:
+            measured_circ.cx(x_anc[current_anc], q[qubit])
+        measured_circ.h(x_anc[current_anc])
+        measured_circ.measure(x_anc[current_anc], x_c[current_anc])
         current_anc += 1
+
     return measured_circ
 
 
