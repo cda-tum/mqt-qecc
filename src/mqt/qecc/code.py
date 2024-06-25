@@ -80,6 +80,14 @@ class CSSCode:
         """Return the stabilizers as Pauli strings."""
         return ["".join(["I" if x == 0 else "X" for x in row]) for row in self.Hx], \
                ["".join(["I" if z == 0 else "Z" for z in row]) for row in self.Hz]
+
+    def z_logicals_as_pauli_string(self) -> str:
+        """Return the logical Z operator as a Pauli string."""
+        return "".join(["I" if z == 0 else "Z" for z in self.Lx[0]])
+
+    def x_logicals_as_pauli_string(self) -> str:
+        """Return the logical X operator as a Pauli string."""
+        return "".join(["I" if x == 0 else "X" for x in self.Lz[0]])
     
     @staticmethod
     def from_code_name(code_name: str, distance: int=None) -> CSSCode:
@@ -120,15 +128,14 @@ class CSSCode:
             "tetrahedral": 3,
             "hamming": 3,
             "shor": 3,
-            "cc_4_8_8 5": 5,
+            "cc_4_8_8": 5,
             "golay": 7,
             "hpg": 4
         }
 
         code_name = code_name.lower()
-        if code_name == "surface" or code_name == "cc_4_8_8":
+        if code_name == "surface":
             code_name = code_name + "_%d" % distance
-
 
         if code_name in paths:
             hx = np.load(paths[code_name] / "hx.npy")
