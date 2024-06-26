@@ -25,5 +25,4 @@ __all__ = [
     "heuristic_prep_circuit",
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
-    "lutDecoder",
 ]
