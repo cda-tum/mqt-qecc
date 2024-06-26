@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .simulation import LUTDecoder, NoisyNDFTStatePrepSimulator
+from .simulation import LutDecoder, NoisyNDFTStatePrepSimulator
 from .state_prep import (
     StatePrepCircuit,
     depth_optimal_prep_circuit,
@@ -15,7 +15,7 @@ from .state_prep import (
 )
 
 __all__ = [
-    "LUTDecoder",
+    "LutDecoder",
     "NoisyNDFTStatePrepSimulator",
     "StatePrepCircuit",
     "depth_optimal_prep_circuit",
@@ -25,4 +25,5 @@ __all__ = [
     "heuristic_prep_circuit",
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
+    "lutDecoder",
 ]

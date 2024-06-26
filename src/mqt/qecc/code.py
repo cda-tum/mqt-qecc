@@ -2,18 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+from importlib.resources import files  # noqa: TID251
 from typing import TYPE_CHECKING
 
 import numpy as np
 from ldpc import mod2
-
-try:
-    from importlib import resources as impresources
-except ImportError:
-    # Try backported to PY<37 `importlib_resources`.
-    import importlib_resources as impresources  # pylint: disable=no-redef
-
-from . import sample_codes  # relative-import the *package* containing the templates
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -22,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class CSSCode:
     """A class for representing CSS codes."""
 
-    def __init__(self, distance: int, Hx: npt.NDArray[np.int_], Hz: npt.NDArray[np.int_]) -> None:
+    def __init__(self, distance: int, Hx: npt.NDArray[np.int_], Hz: npt.NDArray[np.int_]) -> None:  # noqa: N803
         """Initialize the code."""
         self.distance = distance
 
@@ -37,7 +31,7 @@ class CSSCode:
 
     def __hash__(self) -> int:
         """Compute a hash for the CSS code."""
-        return hash(self.Hx.tobytes() ^ self.Hz.tobytes())
+        return hash(int.from_bytes(self.Hx.tobytes(), sys.byteorder) ^ int.from_bytes(self.Hz.tobytes(), sys.byteorder))
 
     def __eq__(self, other: object) -> bool:
         """Check if two CSS codes are equal."""
@@ -113,7 +107,7 @@ class CSSCode:
             code_name: The name of the code.
             distance: The distance of the code.
         """
-        prefix = impresources.files(sample_codes)
+        prefix = files("sample_codes")
         paths = {
             "steane": prefix / "steane/",
             "tetrahedral": prefix / "tetrahedral/",
@@ -138,7 +132,7 @@ class CSSCode:
 
             if code_name in distances:
                 distance = distances[code_name]
-            elif distance is None:
+            else:
                 msg = f"Distance is not specified for {code_name}"
                 raise ValueError(msg)
             return CSSCode(distance, hx, hz)
@@ -149,7 +143,7 @@ class CSSCode:
 class ClassicalCode:
     """A class for representing classical codes."""
 
-    def __init__(self, distance: int, H: npt.NDArray[np.int_]) -> None:
+    def __init__(self, distance: int, H: npt.NDArray[np.int_]) -> None:  # noqa: N803
         """Initialize the code."""
         self.distance = distance
         self.H = H
@@ -162,6 +156,6 @@ class HyperGraphProductCode(CSSCode):
 
     def __init__(self, c1: ClassicalCode, c2: ClassicalCode) -> None:
         """Initialize the code."""
-        Hx = np.hstack((np.kron(c1.H.T, np.eye(c2.H.shape[0])), np.kron(np.eye(c1.n), c2.H)))
-        Hz = np.hstack((np.kron(np.eye(c1.H.shape[0]), c2.H.T), np.kron(c1.H, np.eye(c2.n))))
+        Hx = np.hstack((np.kron(c1.H.T, np.eye(c2.H.shape[0])), np.kron(np.eye(c1.n), c2.H)))  # noqa: N806
+        Hz = np.hstack((np.kron(np.eye(c1.H.shape[0]), c2.H.T), np.kron(c1.H, np.eye(c2.n))))  # noqa: N806
         super().__init__(np.min(c1.distance, c2.distance), Hx, Hz)

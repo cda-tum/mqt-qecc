@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
@@ -26,7 +27,7 @@ class NoisyNDFTStatePrepSimulator:
             state_prep_circ: The state preparation circuit.
             code: The code to simulate.
             p: The error rate.
-        zero_state: Whether thezero state is prepared or nor.
+            zero_state: Whether thezero state is prepared or nor.
         """
         self.circ = state_prep_circ
         self.num_qubits = state_prep_circ.num_qubits
@@ -41,7 +42,7 @@ class NoisyNDFTStatePrepSimulator:
         self.data_measurements = []  # type: list[int]
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
-        self.decoder = LUTDecoder(code)
+        self.decoder = LutDecoder(code)
         self.set_p(p)
 
     def set_p(self, p: float) -> None:
@@ -192,18 +193,22 @@ class NoisyNDFTStatePrepSimulator:
         num_logical_errors = 0
 
         if self.zero_state:
-            self.decoder.generate_x_LUT()
+            self.decoder.generate_x_lut()
         else:
-            self.decoder.generate_z_LUT()
+            self.decoder.generate_z_lut()
 
         i = 1
         while i <= int(np.ceil(shots / batch)) or at_least_min_errors:
             num_logical_errors_batch, discarded_batch = self._simulate_batch(batch)
 
+            logging.log(
+                logging.INFO,
+                f"Batch {i}: {num_logical_errors_batch} logical errors and {discarded_batch} discarded shots. {batch - discarded_batch} shots used.",
+            )
             if discarded_batch != batch:
                 p_l_batch = num_logical_errors_batch / (batch - discarded_batch)
                 p_l = ((i - 1) * p_l + p_l_batch) / i
-                
+
             r_a_batch = 1 - discarded_batch / batch
 
             # Update statistics
@@ -247,22 +252,22 @@ class NoisyNDFTStatePrepSimulator:
         return num_logical_errors, num_discarded
 
 
-class LUTDecoder:
+class LutDecoder:
     """Lookup table decoder for a CSSState."""
 
-    def __init__(self, code: CSSCode, init_LUTs: bool = True) -> None:
+    def __init__(self, code: CSSCode, init_luts: bool = True) -> None:
         """Initialize the decoder.
 
         Args:
             code: The code to decode.
-            init_LUTs: Whether to initialize the lookup tables at object creation.
+            init_luts: Whether to initialize the lookup tables at object creation.
         """
         self.code = code
-        self.x_LUT = {}  # type: dict[bytes, npt.NDArray[np.int8]]
-        self.z_LUT = {}  # type: dict[bytes, npt.NDArray[np.int8]]
-        if init_LUTs:
-            self.generate_x_LUT()
-            self.generate_z_LUT()
+        self.x_lut = {}  # type: dict[bytes, npt.NDArray[np.int8]]
+        self.z_lut = {}  # type: dict[bytes, npt.NDArray[np.int8]]
+        if init_luts:
+            self.generate_x_lut()
+            self.generate_z_lut()
 
     def batch_decode_x(self, syndromes: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Decode the X errors given a batch of syndromes."""
@@ -274,35 +279,35 @@ class LUTDecoder:
 
     def decode_x(self, syndrome: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Decode the X errors given a syndrome."""
-        if len(self.x_LUT) == 0:
-            self.generate_x_LUT()
-        return self.x_LUT[syndrome.tobytes()]
+        if len(self.x_lut) == 0:
+            self.generate_x_lut()
+        return self.x_lut[syndrome.tobytes()]
 
     def decode_z(self, syndrome: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Decode the Z errors given a syndrome."""
-        if len(self.z_LUT) == 0:
-            self.generate_z_LUT()
-        return self.z_LUT[syndrome.tobytes()]
+        if len(self.z_lut) == 0:
+            self.generate_z_lut()
+        return self.z_lut[syndrome.tobytes()]
 
-    def generate_x_LUT(self) -> None:
+    def generate_x_lut(self) -> None:
         """Generate the lookup table for the X errors."""
-        if len(self.x_LUT) != 0:
+        if len(self.x_lut) != 0:
             return
 
-        self.x_LUT = LUTDecoder._generate_LUT(self.code.Hz)
+        self.x_lut = LutDecoder._generate_lut(self.code.Hz)
         if self.code.is_self_dual():
-            self.z_LUT = self.x_LUT
+            self.z_lut = self.x_lut
 
-    def generate_z_LUT(self) -> None:
+    def generate_z_lut(self) -> None:
         """Generate the lookup table for the Z errors."""
-        if len(self.z_LUT) != 0:
+        if len(self.z_lut) != 0:
             return
-        self.z_LUT = LUTDecoder._generate_LUT(self.code.Hx)
+        self.z_lut = LutDecoder._generate_lut(self.code.Hx)
         if self.code.is_self_dual():
-            self.z_LUT = self.x_LUT
+            self.z_lut = self.x_lut
 
     @staticmethod
-    def _generate_LUT(checks: npt.NDArray[np.int_]) -> dict[bytes, npt.NDArray[np.int_]]:
+    def _generate_lut(checks: npt.NDArray[np.int_]) -> dict[bytes, npt.NDArray[np.int_]]:
         """Generate a lookup table for the stabilizer state.
 
         The lookup table maps error syndromes to their errors.
@@ -317,7 +322,7 @@ class LUTDecoder:
             syndromes[syndrome.astype(np.int8).tobytes()].append(state)
 
         # Sort according to weight
-        for key, v in lut.items():
+        for key, v in syndromes.items():
             lut[key] = np.array(min(v, key=np.sum))
 
         return lut
