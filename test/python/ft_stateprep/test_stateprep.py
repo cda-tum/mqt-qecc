@@ -50,9 +50,9 @@ def get_stabs(qc: QuantumCircuit) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.
     """Return the stabilizers of a quantum circuit."""
     cliff = Clifford(qc)
     x = cliff.stab_x.astype(int)
-    x = np.where(np.logical_not(np.all(x == 0, axis=1)))[0]
+    x = x[np.where(np.logical_not(np.all(x == 0, axis=1)))[0]]
     z = cliff.stab_z.astype(int)
-    z = np.where(np.logical_not(np.all(z == 0, axis=1)))[0]
+    z = z[np.where(np.logical_not(np.all(z == 0, axis=1)))[0]]
     return x, z
 
 
@@ -76,7 +76,8 @@ def test_heuristic_prep_consistent(code_name: str) -> None:
 def test_gate_optimal_prep_consistent(code_name: str) -> None:
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
-    sp_circ = gate_optimal_prep_circuit(code, max_timeout=10)
+    sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
+    assert sp_circ is not None
     circ = sp_circ.circ
     max_cnots = np.sum(code.Hx) + np.sum(code.Hz)
 
@@ -88,11 +89,12 @@ def test_gate_optimal_prep_consistent(code_name: str) -> None:
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.parametrize("code", ["steane", "surface"])
+@pytest.mark.parametrize("code_name", ["steane", "surface"])
 def test_depth_optimal_prep_consistent(code_name: str) -> None:
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
-    sp_circ = gate_optimal_prep_circuit(code, max_timeout=10)
+    sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
+    assert sp_circ is not None
     circ = sp_circ.circ
     max_cnots = np.sum(code.Hx) + np.sum(code.Hz)
 
@@ -107,11 +109,11 @@ def test_depth_optimal_prep_consistent(code_name: str) -> None:
 def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = heuristic_prep_circuit(steane_code)
-    ver_stabs = gate_optimal_verification_stabilizers(circ, x_errors=True)
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_timeout=2)
 
-    assert len(ver_stabs) == 1  # 1 Ancilla measurement
+    assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement
 
-    ver_stabs = ver_stabs[0]
+    ver_stabs = ver_stabs_layers[0]
 
     assert np.sum(ver_stabs) == 3  # 3 CNOTs
     z_gens = np.vstack((steane_code.Hz, steane_code.Lz))
@@ -120,7 +122,7 @@ def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
         assert in_span(z_gens, stab)
 
     errors = circ.compute_fault_set(1)
-    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0))[0]
+    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0, axis=1))[0]
     assert len(non_detected) == 0
 
     # Check that circuit is correct
@@ -133,11 +135,11 @@ def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
 def test_heuristic_steane_verification_circuit(steane_code: CSSCode) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = heuristic_prep_circuit(steane_code)
-    ver_stabs = heuristic_verification_stabilizers(circ, x_errors=True)
+    ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
 
-    assert len(ver_stabs) == 1  # 1 Ancilla measurement
+    assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement
 
-    ver_stabs = ver_stabs[0]
+    ver_stabs = ver_stabs_layers[0]
 
     assert np.sum(ver_stabs) == 3  # 3 CNOTs
     z_gens = np.vstack((steane_code.Hz, steane_code.Lz))
@@ -146,7 +148,7 @@ def test_heuristic_steane_verification_circuit(steane_code: CSSCode) -> None:
         assert in_span(z_gens, stab)
 
     errors = circ.compute_fault_set(1)
-    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0))[0]
+    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0, axis=1))[0]
     assert len(non_detected) == 0
 
     # Check that circuit is correct

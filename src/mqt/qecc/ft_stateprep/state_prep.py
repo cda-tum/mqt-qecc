@@ -354,7 +354,7 @@ def _optimal_circuit(
         opt_res = _run_with_timeout(prep_func, checks, curr_param - 1, timeout=max_timeout)  # type: ignore[arg-type]
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
-        circ = res
+        circ = opt_res
         curr_param -= 1
 
     logging.info(f"Optimal param: {curr_param}")
@@ -495,7 +495,7 @@ def iterative_search_with_timeout(
 def gate_optimal_verification_stabilizers(
     sp_circ: StatePrepCircuit,
     x_errors: bool = True,
-    min_timeout: int = 10,
+    min_timeout: int = 1,
     max_timeout: int = 3600,
     max_ancillas: int | None = None,
 ) -> list[list[npt.NDArray[np.int8]]]:
@@ -605,7 +605,7 @@ def gate_optimal_verification_stabilizers(
 
 
 def gate_optimal_verification_circuit(
-    sp_circ: StatePrepCircuit, min_timeout: int = 10, max_timeout: int = 3600, max_ancillas: int | None = None
+    sp_circ: StatePrepCircuit, min_timeout: int = 1, max_timeout: int = 3600, max_ancillas: int | None = None
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -682,16 +682,24 @@ def heuristic_verification_stabilizers(
             return frozenset(np.where(s @ faults.T % 2 != 0)[0])
 
         logging.info("Converting Stabilizer Checks to covering sets")
-        candidate_sets = {covers(s, faults) for s in candidate_checks}
-        mapping = {cand: _coset_leader(candidate_checks, non_candidate_checks) for cand in candidate_sets}
+        candidate_sets_ordered = [(covers(s, faults), s, i) for i, s in enumerate(candidate_checks)]
+        candidate_sets_ordered.sort(key=lambda x: -np.sum(x[1]))
+        mapping = {
+            cand: _coset_leader(candidate_checks[i], non_candidate_checks) for cand, _, i in candidate_sets_ordered
+        }
+        candidate_sets = {cand for cand, _, _ in candidate_sets_ordered}
 
         def set_cover(
             n: int, cands: set[frozenset[int]], mapping: dict[frozenset[int], npt.NDArray[np.int8]]
         ) -> list[frozenset[int]]:
             universe = set(range(n))
             cover = []
+
+            def sort_key(stab: frozenset[int], universe: set[int] = universe) -> tuple[int, np.int_]:
+                return (len(stab & universe), -np.sum(mapping[stab]))  # noqa: B023
+
             while universe:
-                best = max(cands, key=lambda stab: (len(stab & universe), -np.sum(mapping[stab])))
+                best = max(cands, key=sort_key)
                 cover.append(best)
                 universe -= best
             return cover
@@ -700,7 +708,8 @@ def heuristic_verification_stabilizers(
         logging.info("Finding initial set cover")
         cover = set_cover(len(faults), candidate_sets, mapping)
         logging.info(f"Initial set cover has {len(cover)} sets")
-        cost = len(cover)
+        cost1 = len(cover)
+        cost2 = sum(np.sum(mapping[stab]) for stab in cover)
         prev_candidates = candidate_sets.copy()
         while improved and len(candidate_sets) < max_covering_sets:
             improved = False
@@ -723,10 +732,12 @@ def heuristic_verification_stabilizers(
             candidate_sets = candidate_sets.union(to_add)
             new_cover = set_cover(len(faults), candidate_sets, mapping)
             logging.info(f"New Covering set has {len(new_cover)} sets")
-            new_cost = len(new_cover)
-            if new_cost < cost:
+            new_cost1 = len(new_cover)
+            new_cost2 = sum(np.sum(mapping[stab]) for stab in new_cover)
+            if new_cost1 < cost1 or (new_cost1 == cost1 and new_cost2 < cost2):
                 cover = new_cover
-                cost = new_cost
+                cost1 = new_cost1
+                cost2 = new_cost2
                 improved = True
             elif candidate_sets == prev_candidates:
                 break
@@ -862,7 +873,7 @@ def _symbolic_vector_add(
     v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]
 ) -> npt.NDArray[z3.BoolRef | bool]:
     """Add two symbolic vectors."""
-    v_new = np.zeros((len(v1)), dtype=bool)  # type: ignore[var-annotated]
+    v_new = [False for _ in range(len(v1))]
     for i in range(len(v1)):
         # If one of the elements is a bool, we can simplify the expression
         v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
@@ -884,7 +895,7 @@ def _symbolic_vector_add(
         else:
             v_new[i] = z3.Xor(v1[i], v2[i])
 
-    return v_new
+    return np.array(v_new)
 
 
 def _odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
@@ -894,7 +905,27 @@ def _odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.in
 
 def _symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
     """Return assertion that two symbolic vectors should be equal."""
-    return z3.And([v1[i] == v2[i] for i in range(len(v1))])
+    constraints = [False for _ in v1]
+    for i in range(len(v1)):
+        # If one of the elements is a bool, we can simplify the expression
+        v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
+        v2_i_is_bool = isinstance(v2[i], (bool, np.bool_))
+        if v1_i_is_bool:
+            v1[i] = bool(v1[i])
+            if v1[i]:
+                constraints[i] = v2[i]
+            else:
+                constraints[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
+
+        elif v2_i_is_bool:
+            v2[i] = bool(v2[i])
+            if v2[i]:
+                constraints[i] = v1[i]
+            else:
+                constraints[i] = z3.Not(v1[i])
+        else:
+            constraints[i] = v1[i] == v2[i]
+    return z3.And(constraints)
 
 
 def _column_addition_contraint(

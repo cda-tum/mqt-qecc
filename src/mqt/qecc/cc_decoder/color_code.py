@@ -25,6 +25,7 @@ class ColorCode(CSSCode):
 
     def __init__(self, distance: int, lattice_type: LatticeType) -> None:
         """Initialize the color code."""
+        self.distance = distance
         self.ancilla_qubits: set[tuple[int, int]] = set()
         self.data_qubits: set[tuple[int, int]] = set()
         self.qubits_to_faces: dict[int, list[int]] = {}
@@ -32,10 +33,9 @@ class ColorCode(CSSCode):
         self.lattice_type = lattice_type
         self.add_qubits()
         self.H: npt.NDArray[np.int_] = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
-        super().__init__(distance, self.H, self.H)
-        self.L = self.Lz
         self.construct_layout()
-        self.n = len(self.qubits_to_faces)
+        CSSCode.__init__(self, distance, self.H, self.H)
+        self.L = self.Lz
 
     def __hash__(self) -> int:
         """Compute a hash for the color code."""
