@@ -12,6 +12,7 @@ from .state_prep import (
     heuristic_prep_circuit,
     heuristic_verification_circuit,
     heuristic_verification_stabilizers,
+    naive_verification_circuit
 )
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "heuristic_prep_circuit",
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
+    "naive_verification_circuit"
 ]
