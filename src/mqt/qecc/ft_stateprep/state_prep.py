@@ -45,6 +45,9 @@ class StatePrepCircuit:
         self.num_qubits = circ.num_qubits
         self.x_fault_sets = [None for _ in range((code.distance - 1) // 2 + 1)]  # type: list[npt.NDArray[np.int8] | None]
         self.z_fault_sets = [None for _ in range((code.distance - 1) // 2 + 1)]  # type: list[npt.NDArray[np.int8] | None]
+        self.x_fault_sets_unreduced = [None for _ in range((code.distance - 1) // 2 + 1)]  # type: list[npt.NDArray[np.int8] | None]
+        self.z_fault_sets_unreduced = [None for _ in range((code.distance - 1) // 2 + 1)]  # type: list[npt.NDArray[np.int8] | None]
+
         self.max_x_measurements = len(self.x_checks)
         self.max_z_measurements = len(self.z_checks)
 
@@ -78,40 +81,48 @@ class StatePrepCircuit:
                 fault_list.append(error)
             faults = np.array(fault_list, dtype=np.int8)
             faults = np.unique(faults, axis=0)
+
+            if x_errors and self.x_fault_sets_unreduced[1] is None:
+                non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)  # type: npt.NDArray[np.int8]
+                self.x_fault_sets_unreduced[1] = np.vstack((faults, non_propagated_single_errors))
+            elif not x_errors and self.z_fault_sets[1] is None:
+                non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)  # type: npt.NDArray[np.int8]
+                self.z_fault_sets_unreduced[1] = np.vstack((faults, non_propagated_single_errors))
         else:
             logging.info(f"Computing fault set for {num_errors} errors.")
-            faults = self.compute_fault_set(num_errors - 1, x_errors, reduce=reduce)
+            self.compute_fault_set(num_errors - 1, x_errors, reduce=reduce)
+            if x_errors:
+                faults = self.x_fault_sets_unreduced[num_errors - 1]
+                single_faults = self.x_fault_sets_unreduced[1]
+            else:
+                faults = self.z_fault_sets_unreduced[num_errors - 1]
+                single_faults = self.z_fault_sets_unreduced[1]
+
             assert faults is not None
-            single_faults = self.compute_fault_set(1, x_errors, reduce=reduce)
+            assert single_faults is not None
+
             new_faults = (faults[:, np.newaxis, :] + single_faults).reshape(-1, self.num_qubits) % 2
-            non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)  # type: npt.NDArray[np.int8]
-            faults = (new_faults[:, np.newaxis, :] + non_propagated_single_errors).reshape(-1, self.num_qubits) % 2
             # remove duplicates
-            faults = np.unique(faults, axis=0)
+            faults = np.unique(new_faults, axis=0)
+            if x_errors:
+                self.x_fault_sets_unreduced[num_errors] = faults.copy()
+            else:
+                self.z_fault_sets_unreduced[num_errors] = faults.copy()
 
         # reduce faults by stabilizer
-        logging.info("Reducing fault set.")
-        reduced = True
-
         stabs = self.x_checks if x_errors else self.z_checks
-        for i, fault in enumerate(faults):
-            while reduced:
-                reduced = False
-                prev_fault = fault
-                for stab in stabs:
-                    reduced_fault = (prev_fault + stab) % 2
-                    if np.sum(prev_fault) > np.sum(reduced_fault):
-                        faults[i] = reduced_fault
-                        prev_fault = reduced_fault
-                        reduced = True
-                        break
-
         # remove trivial faults
         logging.info("Removing trivial faults.")
+        d_error = self.code.x_distance if x_errors else self.code.z_distance
+        t_error = (d_error - 1) // 2
+        t = (self.code.distance - 1) // 2
+        max_w = t_error // t
         for i, fault in enumerate(faults):
             faults[i] = _coset_leader(fault, stabs)
-        faults = faults[np.where(np.sum(faults, axis=1) > num_errors)[0]]
+        faults = faults[np.where(np.sum(faults, axis=1) > max_w * num_errors)[0]]
 
+        # unique faults
+        faults = np.unique(faults, axis=0)
         # remove stabilizer equivalent faults
         if reduce:
             logging.info("Removing stabilizer equivalent faults.")
@@ -558,9 +569,8 @@ def gate_optimal_verification_stabilizers(
 
         logging.info(f"Found verification stabilizers for {num_errors} errors with {num_cnots} CNOTs")
         # If any measurements are unused we can reduce the number of ancillas at least by that
-        num_anc = np.sum([np.any(m) for m in measurements])
         measurements = [m for m in measurements if np.any(m)]
-
+        num_anc = len(measurements)
         # Iterate backwards to find the minimal number of cnots
         logging.info(f"Finding minimal number of CNOTs for {num_errors} errors")
 
@@ -591,7 +601,7 @@ def gate_optimal_verification_stabilizers(
 
             anc_opt = _run_with_timeout(
                 search_anc,
-                num_cnots - 1,
+                num_anc - 1,
                 timeout=max_timeout,
             )
             if anc_opt is None or (isinstance(anc_opt, str) and anc_opt == "timeout"):
@@ -768,20 +778,18 @@ def _measure_stabs(
     measured_circ = QuantumCircuit(q, x_anc, z_anc, x_c, z_c)
 
     measured_circ.compose(circ, inplace=True)
-    current_anc = 0
-    for measurement in z_measurements:
+
+    for current_anc, measurement in enumerate(z_measurements):
         for qubit in np.where(measurement == 1)[0]:
             measured_circ.cx(q[qubit], z_anc[current_anc])
         measured_circ.measure(z_anc[current_anc], z_c[current_anc])
 
-    current_anc = 0
-    for measurement in x_measurements:
+    for current_anc, measurement in enumerate(x_measurements):
         measured_circ.h(x_anc[current_anc])
         for qubit in np.where(measurement == 1)[0]:
             measured_circ.cx(x_anc[current_anc], q[qubit])
         measured_circ.h(x_anc[current_anc])
         measured_circ.measure(x_anc[current_anc], x_c[current_anc])
-        current_anc += 1
 
     return measured_circ
 
@@ -1027,3 +1035,11 @@ def _remove_stabilizer_equivalent_faults(
         return np.array([])
 
     return faults[indices]
+
+
+def naive_verification_circuit(sp_circ: StatePrepCircuit):
+    """Naive verification circuit for a state preparation circuit."""
+    z_measurements = list(sp_circ.code.Hx)
+    x_measurements = list(sp_circ.code.Hz)
+    reps = (sp_circ.code.distance - 1) // 2
+    return _measure_stabs(sp_circ.circ, x_measurements * reps, z_measurements * reps)
