@@ -61,9 +61,12 @@ class NoisyNDFTStatePrepSimulator:
         self.data_measurements = []
         self.n_measurements = 0
         self.p = p
+        self._reused_qubits = 0
         self.stim_circ = self.to_stim_circ()
-        self.num_qubits = self.stim_circ.num_qubits - (
-            len(self.x_verification_measurements) + len(self.z_verification_measurements)
+        self.num_qubits = (
+            self.stim_circ.num_qubits
+            - (len(self.x_verification_measurements) + len(self.z_verification_measurements))
+            + self._reused_qubits
         )
         self.measure_stabilizers()
         if self.zero_state:
@@ -99,6 +102,7 @@ class NoisyNDFTStatePrepSimulator:
         used_qubits = []  # type: list[int]
 
         targets = set()
+        measured = defaultdict(int)
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -138,13 +142,17 @@ class NoisyNDFTStatePrepSimulator:
                 elif gate[0].name == "measure":
                     anc = self.circ.find_bit(gate[1][0])[0]
                     stim_circuit.append_operation("X_ERROR", [anc for q in gate[1]], [2 * self.p / 3])
-                    stim_circuit.append_operation("M", [anc for q in gate[1]])
+                    stim_circuit.append_operation("MR", [anc for q in gate[1]])
                     if anc in targets:
                         self.z_verification_measurements.append(self.n_measurements)
                     else:
                         self.x_verification_measurements.append(self.n_measurements)
                     self.n_measurements += 1
                     used_qubits.extend([anc])
+                    initialized[anc] = False
+                    measured[anc] += 1
+                    if measured[anc] == 2:
+                        self._reused_qubits += 1
 
         return stim_circuit
 
