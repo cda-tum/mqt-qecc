@@ -16,10 +16,13 @@ if TYPE_CHECKING:  # pragma: no cover
 class CSSCode:
     """A class for representing CSS codes."""
 
-    def __init__(self, distance: int, Hx: npt.NDArray[np.int8], Hz: npt.NDArray[np.int8]) -> None:  # noqa: N803
+    def __init__(self, distance: int, Hx: npt.NDArray[np.int8], Hz: npt.NDArray[np.int8], x_distance: int|None=None, z_distance: int|None=None) -> None:  # noqa: N803
         """Initialize the code."""
         self.distance = distance
+        self.x_distance = x_distance if x_distance is not None else distance
+        self.z_distance = z_distance if z_distance is not None else distance
 
+        assert self.distance <= min(self.x_distance, self.z_distance), "The distance must be less than or equal to the x and z distances"
         assert Hx.shape[1] == Hz.shape[1], "Hx and Hz must have the same number of columns"
 
         self.Hx = Hx
@@ -68,6 +71,20 @@ class CSSCode:
         """Check if the residual is a logical error."""
         return (self.Lx @ residual % 2).any() is True
 
+    def stabilizer_eq_x_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
+        """Check if two X errors are in the same coset."""
+        m1 = np.vstack([self.Hx, error_1])
+        m2 = np.vstack([self.Hx, error_2])
+        m3 = np.vstack([self.Hx, error_1, error_2])
+        return mod2.rank(m1) == mod2.rank(m2) == mod2.rank(m3)
+
+    def stabilizer_eq_z_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
+        """Check if two Z errors are in the same coset."""
+        m1 = np.vstack([self.Hz, error_1])
+        m2 = np.vstack([self.Hz, error_2])
+        m3 = np.vstack([self.Hz, error_1, error_2])
+        return mod2.rank(m1) == mod2.rank(m2) == mod2.rank(m3)
+    
     def is_self_dual(self) -> bool:
         """Check if the code is self-dual."""
         return self.Hx.shape[0] == self.Hz.shape[0] and mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, self.Hz]))
@@ -118,7 +135,7 @@ class CSSCode:
             "golay": prefix / "golay/",
         }
 
-        distances = {"steane": 3, "tetrahedral": 3, "hamming": 3, "shor": 3, "cc_4_8_8": 5, "golay": 7}
+        distances = {"steane": (3, 3), "tetrahedral": (7, 3), "hamming": (3, 3), "shor": (3, 3), "cc_4_8_8": (5, 5), "golay": (7, 7)}  # X, Z distances
 
         code_name = code_name.lower()
         if code_name == "surface":
@@ -131,11 +148,12 @@ class CSSCode:
             hz = np.load(paths[code_name] / "hz.npy")
 
             if code_name in distances:
-                distance = distances[code_name]
+                x_distance, z_distance = distances[code_name]
+                distance = min(x_distance, z_distance)
             elif distance is None:
                 msg = f"Distance is not specified for {code_name}"
                 raise ValueError(msg)
-            return CSSCode(distance, hx, hz)
+            return CSSCode(distance, hx, hz, x_distance=x_distance, z_distance=z_distance)
         msg = f"Unknown code name: {code_name}"
         raise ValueError(msg)
 
