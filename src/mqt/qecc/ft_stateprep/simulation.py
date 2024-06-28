@@ -36,7 +36,8 @@ class NoisyNDFTStatePrepSimulator:
         self.zero_state = zero_state
         # Store which measurements are X, Z or data measurements.
         # The indices refer to the indices of the measurements in the stim circuit.
-        self.verification_measurements = []  # type: list[int]
+        self.x_verification_measurements = []  # type: list[int]
+        self.z_verification_measurements = []  # type: list[int]
         self.x_measurements = []  # type: list[int]
         self.z_measurements = []  # type: list[int]
         self.data_measurements = []  # type: list[int]
@@ -53,14 +54,17 @@ class NoisyNDFTStatePrepSimulator:
         Args:
         p: The error rate.
         """
-        self.verification_measurements = []
+        self.x_verification_measurements = []
+        self.z_verification_measurements = []
         self.x_measurements = []
         self.z_measurements = []
         self.data_measurements = []
         self.n_measurements = 0
         self.p = p
         self.stim_circ = self.to_stim_circ()
-        self.num_qubits = self.stim_circ.num_qubits - len(self.verification_measurements)
+        self.num_qubits = self.stim_circ.num_qubits - (
+            len(self.x_verification_measurements) + len(self.z_verification_measurements)
+        )
         self.measure_stabilizers()
         if self.zero_state:
             self.measure_z()
@@ -94,6 +98,7 @@ class NoisyNDFTStatePrepSimulator:
         layers = dag.layers()
         used_qubits = []  # type: list[int]
 
+        targets = set()
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -104,11 +109,17 @@ class NoisyNDFTStatePrepSimulator:
             used_qubits = []
             for gate in layer_circ.data:
                 if gate[0].name == "h":
-                    ctrls.append(self.circ.find_bit(gate[1][0])[0])
+                    qubit = self.circ.find_bit(gate[1][0])[0]
+                    ctrls.append(qubit)
+                    if initialized[qubit]:
+                        stim_circuit.append_operation("H", [qubit])
+                        stim_circuit.append_operation("DEPOLARIZE1", [qubit], [2 * self.p / 3])
+                        used_qubits.append(qubit)
 
                 elif gate[0].name == "cx":
                     ctrl = self.circ.find_bit(gate[1][0])[0]
                     target = self.circ.find_bit(gate[1][1])[0]
+                    targets.add(target)
                     if not initialized[ctrl]:
                         if ctrl in ctrls:
                             stim_circuit.append_operation("H", [ctrl])
@@ -125,13 +136,15 @@ class NoisyNDFTStatePrepSimulator:
                     used_qubits.extend([ctrl, target])
 
                 elif gate[0].name == "measure":
-                    stim_circuit.append_operation(
-                        "X_ERROR", [self.circ.find_bit(q)[0] for q in gate[1]], [2 * self.p / 3]
-                    )
-                    stim_circuit.append_operation("M", [self.circ.find_bit(q)[0] for q in gate[1]])
-                    self.verification_measurements.append(self.n_measurements)
+                    anc = self.circ.find_bit(gate[1][0])[0]
+                    stim_circuit.append_operation("X_ERROR", [anc for q in gate[1]], [2 * self.p / 3])
+                    stim_circuit.append_operation("M", [anc for q in gate[1]])
+                    if anc in targets:
+                        self.z_verification_measurements.append(self.n_measurements)
+                    else:
+                        self.x_verification_measurements.append(self.n_measurements)
                     self.n_measurements += 1
-                    used_qubits.extend([self.circ.find_bit(q)[0] for q in gate[1]])
+                    used_qubits.extend([anc])
 
         return stim_circuit
 
@@ -205,9 +218,8 @@ class NoisyNDFTStatePrepSimulator:
                 logging.INFO,
                 f"Batch {i}: {num_logical_errors_batch} logical errors and {discarded_batch} discarded shots. {batch - discarded_batch} shots used.",
             )
-            if discarded_batch != batch:
-                p_l_batch = num_logical_errors_batch / (batch - discarded_batch)
-                p_l = ((i - 1) * p_l + p_l_batch) / i
+            p_l_batch = num_logical_errors_batch / (batch - discarded_batch) if discarded_batch != batch else 0.0
+            p_l = ((i - 1) * p_l + p_l_batch) / i
 
             r_a_batch = 1 - discarded_batch / batch
 
@@ -226,7 +238,8 @@ class NoisyNDFTStatePrepSimulator:
         detection_events = sampler.sample(shots)
 
         # Filter events where the verification circuit flagged
-        index_array = np.where(np.all(np.logical_not(detection_events[:, self.verification_measurements]), axis=1))[0]
+        verification_measurements = self.x_verification_measurements + self.z_verification_measurements
+        index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
         filtered_events = detection_events[index_array].astype(np.int8)
 
         if len(filtered_events) == 0:  # All events were discarded
@@ -253,7 +266,7 @@ class NoisyNDFTStatePrepSimulator:
 
 
 class LutDecoder:
-    """Lookup table decoder for a CSSState."""
+    """Lookup table decoder for a CSSCode."""
 
     def __init__(self, code: CSSCode, init_luts: bool = True) -> None:
         """Initialize the decoder.
@@ -269,11 +282,11 @@ class LutDecoder:
             self.generate_x_lut()
             self.generate_z_lut()
 
-    def batch_decode_x(self, syndromes: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+    def batch_decode_x(self, syndromes: npt.NDArray[np.int_]) -> npt.NDArray[np.int8]:
         """Decode the X errors given a batch of syndromes."""
         return np.apply_along_axis(self.decode_x, 1, syndromes)
 
-    def batch_decode_z(self, syndromes: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+    def batch_decode_z(self, syndromes: npt.NDArray[np.int_]) -> npt.NDArray[np.int8]:
         """Decode the Z errors given a batch of syndromes."""
         return np.apply_along_axis(self.decode_z, 1, syndromes)
 
