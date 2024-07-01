@@ -40,7 +40,7 @@ dependencies = [
     "z3-solver>=4.11,<4.14",
     "qecsim",
     "ldpc>=0.1.50",
-    "numpy < 2",
+    "numpy < 2",  # some of our dependencies are not yet compatible with numpy 2.0
     "qiskit[qasm3-import]>=1.0.0",
     "qiskit-aer>=0.14.0",
     "bposd",
