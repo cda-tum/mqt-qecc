@@ -60,6 +60,10 @@ def get_stabs(qc: QuantumCircuit) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.
 def test_heuristic_prep_consistent(code_name: str) -> None:
     """Check that heuristic_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
+
+    assert code.Hx is not None, f"Code {code_name} does not have X stabilizers."
+    assert code.Hz is not None, f"Code {code_name} does not have Z stabilizers."
+
     sp_circ = heuristic_prep_circuit(code)
     circ = sp_circ.circ
     max_cnots = np.sum(code.Hx) + np.sum(code.Hz)
@@ -76,6 +80,10 @@ def test_heuristic_prep_consistent(code_name: str) -> None:
 def test_gate_optimal_prep_consistent(code_name: str) -> None:
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
+
+    assert code.Hx is not None, f"Code {code_name} does not have X stabilizers."
+    assert code.Hz is not None, f"Code {code_name} does not have Z stabilizers."
+
     sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
     assert sp_circ is not None
     circ = sp_circ.circ
@@ -93,6 +101,10 @@ def test_gate_optimal_prep_consistent(code_name: str) -> None:
 def test_depth_optimal_prep_consistent(code_name: str) -> None:
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
+
+    assert code.Hx is not None, f"Code {code_name} does not have X stabilizers."
+    assert code.Hz is not None, f"Code {code_name} does not have Z stabilizers."
+
     sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
     assert sp_circ is not None
     circ = sp_circ.circ
@@ -109,6 +121,10 @@ def test_depth_optimal_prep_consistent(code_name: str) -> None:
 def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = heuristic_prep_circuit(steane_code)
+
+    assert steane_code.Hx is not None, "Steane code does not have X stabilizers."
+    assert steane_code.Hz is not None, "Steane code does not have Z stabilizers."
+
     ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_timeout=2)
 
     assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement
@@ -135,6 +151,10 @@ def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
 def test_heuristic_steane_verification_circuit(steane_code: CSSCode) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = heuristic_prep_circuit(steane_code)
+
+    assert steane_code.Hx is not None, "Steane code does not have X stabilizers."
+    assert steane_code.Hz is not None, "Steane code does not have Z stabilizers."
+
     ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
 
     assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement

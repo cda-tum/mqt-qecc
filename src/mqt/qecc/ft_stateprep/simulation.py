@@ -10,6 +10,8 @@ import numpy as np
 import stim
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
+from ..code import InvalidCSSCodeError
+
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import QuantumCircuit
@@ -29,6 +31,10 @@ class NoisyNDFTStatePrepSimulator:
             p: The error rate.
             zero_state: Whether thezero state is prepared or nor.
         """
+        if code.Hx is None or code.Hz is None:
+            msg = "The code must have both X and Z checks."
+            raise InvalidCSSCodeError(msg)
+
         self.circ = state_prep_circ
         self.num_qubits = state_prep_circ.num_qubits
         self.code = code
@@ -102,7 +108,7 @@ class NoisyNDFTStatePrepSimulator:
         used_qubits = []  # type: list[int]
 
         targets = set()
-        measured = defaultdict(int)
+        measured = defaultdict(int)  # type: defaultdict[int, int]
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -161,6 +167,9 @@ class NoisyNDFTStatePrepSimulator:
 
         An ancilla is used for each measurement.
         """
+        assert self.code.Hx is not None
+        assert self.code.Hz is not None
+
         for check in self.code.Hx:
             supp = _support(check)
             anc = self.stim_circ.num_qubits
@@ -315,6 +324,7 @@ class LutDecoder:
         if len(self.x_lut) != 0:
             return
 
+        assert self.code.Hz is not None, "The code does not have a Z stabilizer matrix."
         self.x_lut = LutDecoder._generate_lut(self.code.Hz)
         if self.code.is_self_dual():
             self.z_lut = self.x_lut
@@ -323,6 +333,8 @@ class LutDecoder:
         """Generate the lookup table for the Z errors."""
         if len(self.z_lut) != 0:
             return
+
+        assert self.code.Hx is not None, "The code does not have an X stabilizer matrix."
         self.z_lut = LutDecoder._generate_lut(self.code.Hx)
         if self.code.is_self_dual():
             self.z_lut = self.x_lut
