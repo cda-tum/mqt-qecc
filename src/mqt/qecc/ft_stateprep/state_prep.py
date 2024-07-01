@@ -743,9 +743,10 @@ def heuristic_verification_stabilizers(
         if x_errors
         else sp_circ.z_fault_sets
     )
+
     for num_errors in range(1, max_errors + 1):
         logging.info(f"Finding verification stabilizers for {num_errors} errors")
-        faults = fault_sets[num_errors - 1]
+        faults = fault_sets[num_errors]
         logging.info(f"There are {len(faults)} faults")
         if len(faults) == 0:
             layers[num_errors - 1] = []
