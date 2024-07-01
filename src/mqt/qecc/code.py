@@ -221,10 +221,11 @@ class CSSCode:
             if code_name in distances:
                 x_distance, z_distance = distances[code_name]
                 distance = min(x_distance, z_distance)
-            elif distance is None:
+                return CSSCode(distance, hx, hz, x_distance=x_distance, z_distance=z_distance)
+
+            if distance is None:
                 msg = f"Distance is not specified for {code_name}"
                 raise InvalidCSSCodeError(msg)
-            return CSSCode(distance, hx, hz, x_distance=x_distance, z_distance=z_distance)
         msg = f"Unknown code name: {code_name}"
         raise InvalidCSSCodeError(msg)
 

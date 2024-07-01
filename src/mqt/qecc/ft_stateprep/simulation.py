@@ -147,8 +147,8 @@ class NoisyNDFTStatePrepSimulator:
 
                 elif gate[0].name == "measure":
                     anc = self.circ.find_bit(gate[1][0])[0]
-                    stim_circuit.append_operation("X_ERROR", [anc for q in gate[1]], [2 * self.p / 3])
-                    stim_circuit.append_operation("MR", [anc for q in gate[1]])
+                    stim_circuit.append_operation("X_ERROR", [anc], [2 * self.p / 3])
+                    stim_circuit.append_operation("MR", [anc])
                     if anc in targets:
                         self.z_verification_measurements.append(self.n_measurements)
                     else:
