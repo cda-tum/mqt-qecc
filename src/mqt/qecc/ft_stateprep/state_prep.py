@@ -674,20 +674,29 @@ def _verification_circuit(
     verification_stabs_fun: Callable[
         [StatePrepCircuit, bool, npt.NDArray[np.int8] | None], list[list[npt.NDArray[np.int8]]]
     ],
+    full_fault_tolerance: bool = True,
 ) -> QuantumCircuit:
     logging.info("Finding verification stabilizers for the state preparation circuit")
     layers_1 = verification_stabs_fun(sp_circ, sp_circ.zero_state)  # type: ignore[call-arg]
     measurements_1 = [measurement for layer in layers_1 for measurement in layer]
-    additional_errors = _hook_errors(measurements_1)
-    layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+
+    if full_fault_tolerance:
+        additional_errors = _hook_errors(measurements_1)
+        layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+    else:
+        layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state)  # type: ignore[call-arg]
     measurements_2 = [measurement for layer in layers_2 for measurement in layer]
     if sp_circ.zero_state:
-        return _measure_ft_stabs(sp_circ, measurements_2, measurements_1)
-    return _measure_ft_stabs(sp_circ, measurements_1, measurements_2)
+        return _measure_ft_stabs(sp_circ, measurements_2, measurements_1, full_fault_tolerance=full_fault_tolerance)
+    return _measure_ft_stabs(sp_circ, measurements_1, measurements_2, full_fault_tolerance=full_fault_tolerance)
 
 
 def gate_optimal_verification_circuit(
-    sp_circ: StatePrepCircuit, min_timeout: int = 1, max_timeout: int = 3600, max_ancillas: int | None = None
+    sp_circ: StatePrepCircuit,
+    min_timeout: int = 1,
+    max_timeout: int = 3600,
+    max_ancillas: int | None = None,
+    full_fault_tolerance: bool = True,
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -700,20 +709,26 @@ def gate_optimal_verification_circuit(
         min_timeout: The minimum time to allow each search to run for.
         max_timeout: The maximum time to allow each search to run for.
         max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
+        full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
     """
 
     def verification_stabs_fun(
-        sp_circ: StatePrepCircuit, zero_state: bool, additional_errors: npt.NDArray[np.int8] | None = None
+        sp_circ: StatePrepCircuit,
+        zero_state: bool,
+        additional_errors: npt.NDArray[np.int8] | None = None,
     ) -> list[list[npt.NDArray[np.int8]]]:
         return gate_optimal_verification_stabilizers(
             sp_circ, zero_state, min_timeout, max_timeout, max_ancillas, additional_errors
         )
 
-    return _verification_circuit(sp_circ, verification_stabs_fun)
+    return _verification_circuit(sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance)
 
 
 def heuristic_verification_circuit(
-    sp_circ: StatePrepCircuit, max_covering_sets: int = 10000, find_coset_leaders: bool = True
+    sp_circ: StatePrepCircuit,
+    max_covering_sets: int = 10000,
+    find_coset_leaders: bool = True,
+    full_fault_tolerance: bool = True,
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -723,6 +738,7 @@ def heuristic_verification_circuit(
         sp_circ: The state preparation circuit to verify.
         max_covering_sets: The maximum number of covering sets to consider.
         find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
+        full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
     """
 
     def verification_stabs_fun(
@@ -732,7 +748,7 @@ def heuristic_verification_circuit(
             sp_circ, zero_state, max_covering_sets, find_coset_leaders, additional_errors
         )
 
-    return _verification_circuit(sp_circ, verification_stabs_fun)
+    return _verification_circuit(sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance)
 
 
 def heuristic_verification_stabilizers(
@@ -894,7 +910,10 @@ def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]]
 
 
 def _measure_ft_stabs(
-    sp_circ: StatePrepCircuit, x_measurements: list[npt.NDArray[np.int8]], z_measurements: list[npt.NDArray[np.int8]]
+    sp_circ: StatePrepCircuit,
+    x_measurements: list[npt.NDArray[np.int8]],
+    z_measurements: list[npt.NDArray[np.int8]],
+    full_fault_tolerance: bool = True,
 ) -> QuantumCircuit:
     # Create the verification circuit
     q = QuantumRegister(sp_circ.num_qubits, "q")
@@ -903,10 +922,12 @@ def _measure_ft_stabs(
 
     if sp_circ.zero_state:
         _measure_ft_z(measured_circ, z_measurements)
-        _measure_ft_x(measured_circ, x_measurements, flags=True)
+        if full_fault_tolerance:
+            _measure_ft_x(measured_circ, x_measurements, flags=True)
     else:
         _measure_ft_x(measured_circ, x_measurements)
-        _measure_ft_z(measured_circ, z_measurements, flags=True)
+        if full_fault_tolerance:
+            _measure_ft_z(measured_circ, z_measurements, flags=True)
 
     return measured_circ
 
