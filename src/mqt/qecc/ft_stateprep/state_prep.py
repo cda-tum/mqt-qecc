@@ -683,9 +683,10 @@ def _verification_circuit(
     if full_fault_tolerance:
         additional_errors = _hook_errors(measurements_1)
         layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+        measurements_2 = [measurement for layer in layers_2 for measurement in layer]
     else:
-        layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state)  # type: ignore[call-arg]
-    measurements_2 = [measurement for layer in layers_2 for measurement in layer]
+        measurements_2 = []
+
     if sp_circ.zero_state:
         return _measure_ft_stabs(sp_circ, measurements_2, measurements_1, full_fault_tolerance=full_fault_tolerance)
     return _measure_ft_stabs(sp_circ, measurements_1, measurements_2, full_fault_tolerance=full_fault_tolerance)
