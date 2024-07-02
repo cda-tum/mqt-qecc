@@ -77,7 +77,7 @@ dev = ["mqt.qecc[coverage, docs, visualization]"]
 
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
-Documentation = "https://github.com/cda-tum/mqt-qecc"
+Documentation = "https://mqt.readthedocs.io/projects/qecc"
 Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 
