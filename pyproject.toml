@@ -44,7 +44,7 @@ dependencies = [
     "numpy>=1.24,<2; python_version <= '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
     "qiskit[qasm3-import]>=1.0.0",
     "qiskit-aer>=0.14.0",
-    "bposd",
+    "bposd>=1.6",
     "numba>=0.59; python_version > '3.11'",
     "numpy>=0.57; python_version <= '3.11'",
     "pymatching>=2",
@@ -140,7 +140,7 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
-    "error",
+#    "error",  # temporary fix until https://github.com/quantumgizmos/ldpc/pull/42 is merged and released
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*Qiskit with Python 3.8.*:DeprecationWarning:',
