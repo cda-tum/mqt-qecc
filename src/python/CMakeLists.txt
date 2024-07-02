@@ -1,4 +1,4 @@
-target_compile_definitions(py${PROJECT_NAME} PRIVATE Z3_FOUND)
+target_compile_definitions(pyqecc PRIVATE Z3_FOUND)
 
 pybind11_add_module(
   pyqecc

@@ -1,6 +1,6 @@
 # main project library
 add_library(
-  ${PROJECT_NAME}_lib
+  ${PROJECT_NAME}
   ${PROJECT_SOURCE_DIR}/include/Code.hpp
   ${PROJECT_SOURCE_DIR}/include/Codes.hpp
   ${PROJECT_SOURCE_DIR}/include/Decoder.hpp
@@ -16,15 +16,14 @@ add_library(
   UFHeuristic.cpp)
 
 # set include directories
-target_include_directories(${PROJECT_NAME}_lib PUBLIC ${PROJECT_SOURCE_DIR}/include
-                                                      ${PROJECT_BINARY_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include
+                                                  ${PROJECT_BINARY_DIR}/include)
 
 # add options and warnings to the library
-target_link_libraries(${PROJECT_NAME} PRIVATE MQT::ProjectWarnings MQT::ProjectOptions)
-
-target_link_libraries(${PROJECT_NAME}_lib PUBLIC nlohmann_json)
-
-target_link_libraries(${PROJECT_NAME}_lib PUBLIC flint)
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE MQT::ProjectWarnings MQT::ProjectOptions
+  PUBLIC nlohmann_json flint)
 
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})
