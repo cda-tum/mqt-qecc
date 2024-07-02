@@ -180,6 +180,7 @@ warn_unreachable = true
 explicit_package_bases = true
 pretty = true
 exclude = [
+    "*/cc_decoder/plotting/*",
     "code_construction*",
     "^data_utils\\.py$"
 ]
@@ -200,7 +201,7 @@ unsafe-fixes = true
 [tool.ruff.lint]
 exclude = [
     "scripts/*",
-    "*/cc_decoder/plots.py",
+    "*/cc_decoder/plotting/*",
     "*/analog_information_decoding/code_construction/*",
     "*/analog_information_decoding/utils/data_utils.py",
 
