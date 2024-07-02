@@ -32,9 +32,22 @@ def non_ft_steane_zero(steane_code: CSSCode) -> QuantumCircuit:
 
 
 @pytest.fixture()
-def ft_steane_circ(steane_code: CSSCode) -> QuantumCircuit:
+def non_ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
+    """Return a non fault-tolerant Steane code state preparation circuit."""
+    return heuristic_prep_circuit(steane_code, zero_state=False).circ
+
+
+@pytest.fixture()
+def ft_steane_zero(steane_code: CSSCode) -> QuantumCircuit:
     """Return a fault-tolerant Steane code state preparation circuit."""
     circ = heuristic_prep_circuit(steane_code)
+    return heuristic_verification_circuit(circ)
+
+
+@pytest.fixture()
+def ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
+    """Return a fault-tolerant Steane code state preparation circuit."""
+    circ = heuristic_prep_circuit(steane_code, zero_state=False)
     return heuristic_verification_circuit(circ)
 
 
@@ -84,8 +97,8 @@ def test_lut(steane_code: CSSCode) -> None:
     assert np.sum(estimate_3) == 0
 
 
-def test_non_ft_sim(steane_code: CSSCode, non_ft_steane_zero: QuantumCircuit) -> None:
-    """Test the simulation of a non fault-tolerant state preparation circuit."""
+def test_non_ft_sim_zero(steane_code: CSSCode, non_ft_steane_zero: QuantumCircuit) -> None:
+    """Test the simulation of a non fault-tolerant state preparation circuit for the Steane |0>."""
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
@@ -95,12 +108,34 @@ def test_non_ft_sim(steane_code: CSSCode, non_ft_steane_zero: QuantumCircuit) ->
     assert p_l - tol > lower
 
 
-def test_ft_sim(steane_code: CSSCode, ft_steane_circ: QuantumCircuit) -> None:
-    """Test the simulation of a fault-tolerant state preparation circuit."""
+def test_ft_sim_zero(steane_code: CSSCode, ft_steane_zero: QuantumCircuit) -> None:
+    """Test the simulation of a fault-tolerant state preparation circuit for the Steane |0>."""
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(ft_steane_circ, steane_code, p=p)
+    simulator = NoisyNDFTStatePrepSimulator(ft_steane_zero, steane_code, p=p)
+    p_l, _, _, _ = simulator.logical_error_rate()
+
+    assert p_l - tol < lower
+
+
+def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircuit) -> None:
+    """Test the simulation of a non fault-tolerant state preparation circuit for the Steane |0>."""
+    tol = 5e-4
+    p = 1e-3
+    lower = 1e-4
+    simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_plus, steane_code, p=p, zero_state=False)
+    p_l, _, _, _ = simulator.logical_error_rate()
+
+    assert p_l - tol > lower
+
+
+def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit) -> None:
+    """Test the simulation of a fault-tolerant state preparation circuit for the Steane |0>."""
+    tol = 5e-4
+    p = 1e-3
+    lower = 1e-4
+    simulator = NoisyNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, zero_state=False)
     p_l, _, _, _ = simulator.logical_error_rate()
 
     assert p_l - tol < lower
