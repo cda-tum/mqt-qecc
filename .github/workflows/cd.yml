@@ -1,0 +1,37 @@
+name: CD
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/cd.yml
+
+jobs:
+  python-packaging:
+    name: 🐍 Packaging
+    uses: ./.github/workflows/reusable-python-packaging.yml
+
+  deploy:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    name: 🚀 Deploy to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/mqt.qecc
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    needs: [python-packaging]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+      - name: Generate artifact attestation for sdist and wheel(s)
+        uses: actions/attest-build-provenance@v1.3.2
+        with:
+          subject-path: "dist/*"
+      - uses: pypa/gh-action-pypi-publish@release/v1

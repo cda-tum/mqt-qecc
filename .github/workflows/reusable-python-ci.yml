@@ -1,20 +1,41 @@
-name: Python
+name: 🐍 • CI
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_call:
 
 env:
   FORCE_COLOR: 3
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: 🚨 Lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
+      # set up ccache for faster C++ builds
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          prepend_symlinks_to_path: false
+          override_cache_key: lint
+      # set up mold as linker for faster C++ builds
+      - name: Set up mold as linker
+        uses: rui314/setup-mold@v1
+      # set up uv for faster Python package management
+      - uses: yezz123/setup-uv@v4
+      # set up nox for convenient linting
+      - uses: wntrblm/nox@2024.04.15
+        with:
+          python-versions: "3.12"
+      # run the nox lint session (assumes a nox session named "lint" exists, and `mypy` is configured in pre-commit)
+      - name: Run mypy
+        run: nox -s lint -- mypy
+      # run check-sdist to ensure the package sdist is correct
+      - name: Run check-sdist
+        run: pipx run check-sdist --inject-junk
+
   python-tests:
     name: 🐍 ${{ matrix.python-version }} Tests on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}

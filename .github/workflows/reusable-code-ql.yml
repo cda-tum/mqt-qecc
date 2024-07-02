@@ -1,18 +1,9 @@
-name: "CodeQL"
-
+name: 📝 • CodeQL
 on:
-  push:
-  pull_request:
-  merge_group:
-  schedule:
-    - cron: "15 21 * * 6"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  workflow_call:
 
 env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 3
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
 
 jobs:
   analyze:

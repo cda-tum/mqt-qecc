@@ -1,15 +1,7 @@
-name: Python Packaging
-on:
-  release:
-    types: [published]
-  workflow_dispatch:
-  pull_request:
-    paths:
-      - .github/workflows/deploy.yml
+name: 🐍 • Packaging
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+on:
+  workflow_call:
 
 jobs:
   build_wheels:
@@ -33,6 +25,7 @@ jobs:
       - if: runner.os == 'macOS'
         name: Install flint
         run: |
+          brew install gmp mpfr
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
           cd flint2
           export MACOSX_DEPLOYMENT_TARGET=11.0
@@ -76,21 +69,3 @@ jobs:
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
-
-  upload_pypi:
-    needs: [build_wheels, build_sdist]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    name: 🚀 Deploy to PyPI
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/mqt.qecc
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: cibw-*
-          path: dist
-          merge-multiple: true
-      - uses: pypa/gh-action-pypi-publish@release/v1
