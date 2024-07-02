@@ -22,12 +22,20 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         include:
           - runs-on: macos-13
             python-version: 3.8
           - runs-on: macos-13
             python-version: 3.11
+          - runs-on: macos-13
+            python-version: 3.12
+          - runs-on: macos-14
+            python-version: 3.8
+          - runs-on: macos-14
+            python-version: 3.11
+          - runs-on: macos-14
+            python-version: 3.12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,15 +45,9 @@ jobs:
         uses: Chocobo1/setup-ccache-action@v1
         with:
           prepend_symlinks_to_path: false
-          windows_compile_environment: msvc
           override_cache_key: python-tests-${{ matrix.runs-on }}-${{ matrix.python-version }}
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
       - name: Install flint (Linux)
-        if: matrix.runs-on == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: sudo apt-get install libflint-dev
       - name: Install flint (macOS)
         if: runner.os == 'macOS'
@@ -53,42 +55,46 @@ jobs:
           brew install gmp mpfr ntl
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
           cd flint2 && ./configure && make -j 3 && make install
+      # set up mold as linker for faster C++ builds (Linux only)
       - name: Set up mold as linker (Linux only)
         uses: rui314/setup-mold@v1
+      # set up uv for faster Python package management
+      - uses: yezz123/setup-uv@v4
+      # set up nox for convenient testing
+      - uses: wntrblm/nox@2024.04.15
+        with:
+          python-versions: ${{ matrix.python-version }}
+      # run the nox minimums session (assumes a nox session named "minimums" exists) with coverage
+      - name: Test on 🐍 ${{ matrix.python-version }} with minimal versions
+        run: nox -s minimums-${{ matrix.python-version }} --verbose -- --cov --cov-report=xml:coverage-${{ matrix.python-version }}-${{ matrix.runs-on }}.xml
+      # run the nox tests session (assumes a nox session named "tests" exists) with coverage
       - name: Test on 🐍 ${{ matrix.python-version }}
-        run: pipx run nox -s tests-${{ matrix.python-version }} --verbose
+        run: nox -s tests-${{ matrix.python-version }} --verbose -- --cov --cov-report=xml:coverage-${{ matrix.python-version }}-${{ matrix.runs-on }}.xml --cov-append
+      # upload the report as an artifact to GitHub so that it can later be uploaded to Codecov
+      - name: Upload coverage report for 🐍 ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}-${{ matrix.runs-on }}
+          path: coverage-*
 
-  coverage:
-    name: 🐍 ${{ matrix.python-version }} Coverage
+  python-coverage-upload:
+    name: 📈
+    needs: [python-tests]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.8", "3.11"]
+    permissions:
+      id-token: write
     steps:
+      # check out the repository (mostly for the codecov config)
       - uses: actions/checkout@v4
+      # download coverage reports from all jobs
+      - uses: actions/download-artifact@v4
         with:
-          submodules: recursive
-          fetch-depth: 0
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
-          prepend_symlinks_to_path: false
-          override_cache_key: python-coverage-${{ matrix.python-version }}
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-      - name: Install dependencies
-        run: sudo apt-get install libflint-dev
-      - name: Set up mold as linker (Linux only)
-        uses: rui314/setup-mold@v1
-      - name: Run session
-        run: pipx run nox -s tests-${{ matrix.python-version }} -- --cov --cov-report=xml
+          pattern: coverage-*
+          path: coverage-reports
+          merge-multiple: true
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: true
           flags: python
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
