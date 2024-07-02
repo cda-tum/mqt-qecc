@@ -23,7 +23,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE MQT::ProjectWarnings MQT::ProjectOptions
-  PUBLIC nlohmann_json flint GMP::gmp GMP::gmpxx)
+  PUBLIC nlohmann_json flint)
 
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})

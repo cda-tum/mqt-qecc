@@ -1,3 +1,6 @@
+find_package(GMP REQUIRED)
+find_package(MPFR REQUIRED)
+
 set(FLINT_ROOT
     ""
     CACHE PATH "Root of flint distribution.")
@@ -86,4 +89,5 @@ if(NOT TARGET flint)
   add_library(flint UNKNOWN IMPORTED)
   set_target_properties(flint PROPERTIES IMPORTED_LOCATION ${FLINT_LIBRARY})
   target_include_directories(flint INTERFACE ${FLINT_INCLUDE_DIR})
+  target_link_libraries(flint INTERFACE GMP::gmp GMP::gmpxx MPFR::mpfr)
 endif()
