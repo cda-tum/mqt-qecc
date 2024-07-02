@@ -1,5 +1,3 @@
-target_compile_definitions(pyqecc PRIVATE Z3_FOUND)
-
 pybind11_add_module(
   pyqecc
   # Prefer thin LTO if available
@@ -8,6 +6,7 @@ pybind11_add_module(
   OPT_SIZE
   # Source code goes here
   bindings.cpp)
+target_compile_definitions(pyqecc PRIVATE Z3_FOUND)
 target_link_libraries(pyqecc PRIVATE MQT::QECC MQT::CorePython pybind11_json MQT::ProjectOptions
                                      MQT::ProjectWarnings)
 
