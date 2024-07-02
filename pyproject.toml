@@ -39,19 +39,21 @@ requires-python = ">=3.8"
 dependencies = [
     "z3-solver>=4.11,<4.14",
     "qecsim",
-    "ldpc>=0.1.50",
-    "numpy < 2",  # some of our dependencies are not yet compatible with numpy 2.0
+    "ldpc>=0.1.51",
+    "numpy>=1.26,<2; python_version > '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
+    "numpy>=1.24,<2; python_version <= '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
     "qiskit[qasm3-import]>=1.0.0",
     "qiskit-aer>=0.14.0",
     "bposd",
-    "numba",
-    "pymatching",
+    "numba>=0.59; python_version > '3.11'",
+    "numpy>=0.57; python_version <= '3.11'",
+    "pymatching>=2",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
-coverage = ["mqt.qecc[test]", "pytest-cov"]
+test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
+coverage = ["mqt.qecc[test]", "pytest-cov>=4"]
 docs = [
     "furo>=2023.08.17",
     "sphinx",
