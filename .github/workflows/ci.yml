@@ -21,19 +21,30 @@ defaults:
 
 jobs:
   cpp-tests-ubuntu:
-    name: 🐧 Release
-    runs-on: ubuntu-latest
+    name: 🇨‌ • CI • ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, macos-13, macos-14]
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
       - name: Setup ccache
         uses: Chocobo1/setup-ccache-action@v1
         with:
           prepend_symlinks_to_path: false
-          override_cache_key: c++-tests-ubuntu-latest
+          override_cache_key: c++-tests-${{ matrix.runs-on }}
+      - if: runner.os == 'macOS'
+        name: Install flint on macOS
+        run: |
+          brew install gmp mpfr ntl
+          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
+          cd flint2 && ./configure && make -j 3 && make install
+      - if: runner.os == 'Linux'
+        name: Install flint on Linux
+        run: sudo apt-get install libflint-dev
       - name: Set up mold as linker
         uses: rui314/setup-mold@v1
       - name: Install Ninja
@@ -44,41 +55,18 @@ jobs:
         run: cmake --build build --config Release
       - name: Test
         run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
-
-  cpp-tests-macos:
-    name: 🍎 Release
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [macos-13]
-    runs-on: ${{ matrix.runs-on }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
-          prepend_symlinks_to_path: false
-          override_cache_key: c++-tests-macos-13
-      - name: Install Ninja
-        run: pipx install ninja
-      - if: runner.os == 'macOS'
-        name: Install flint
-        run: |
-          brew install gmp mpfr ntl
-          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
-          cd flint2 && ./configure && make -j 3 && make install
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Configure CMake (debug)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Debug
       - name: Test
-        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
+        run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
 
   coverage:
     name: 📈 Coverage
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -105,4 +93,4 @@ jobs:
         with:
           fail_ci_if_error: true
           flags: cpp
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
