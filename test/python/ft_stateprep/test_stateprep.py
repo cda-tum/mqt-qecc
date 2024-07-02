@@ -27,19 +27,49 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 @pytest.fixture()
-def steane_code_sp() -> StatePrepCircuit:
+def steane_code() -> CSSCode:
+    """Return the Steane code."""
+    return CSSCode.from_code_name("Steane")
+
+
+@pytest.fixture()
+def surface_code() -> CSSCode:
+    """Return the distance 3 rotated Surface Code."""
+    return CSSCode.from_code_name("surface", 3)
+
+
+@pytest.fixture()
+def tetrahedral_code() -> CSSCode:
+    """Return the tetrahedral code."""
+    return CSSCode.from_code_name("tetrahedral")
+
+
+@pytest.fixture()
+def cc_4_8_8_code() -> CSSCode:
+    """Return the d=5 4,8,8 color code."""
+    return CSSCode.from_code_name("cc_4_8_8")
+
+
+@pytest.fixture()
+def steane_code_sp(steane_code: CSSCode) -> StatePrepCircuit:
     """Return a non-ft state preparation circuit for the Steane code."""
-    code = CSSCode.from_code_name("Steane")
-    sp_circ = heuristic_prep_circuit(code)
+    sp_circ = heuristic_prep_circuit(steane_code)
     sp_circ.compute_fault_sets()
     return sp_circ
 
 
 @pytest.fixture()
-def color_code_d5_sp() -> StatePrepCircuit:
+def tetrahedral_code_sp(tetrahedral_code: CSSCode) -> StatePrepCircuit:
+    """Return a non-ft state preparation circuit for the tetrahedral code."""
+    sp_circ = heuristic_prep_circuit(tetrahedral_code)
+    sp_circ.compute_fault_sets()
+    return sp_circ
+
+
+@pytest.fixture()
+def color_code_d5_sp(cc_4_8_8_code: CSSCode) -> StatePrepCircuit:
     """Return a non-ft state preparation circuit for the d=5 4,8,8 color code."""
-    code = CSSCode.from_code_name("cc_4_8_8")
-    sp_circ = heuristic_prep_circuit(code)
+    sp_circ = heuristic_prep_circuit(cc_4_8_8_code)
     sp_circ.compute_fault_sets()
     return sp_circ
 
@@ -81,13 +111,14 @@ def test_heuristic_prep_consistent(code_name: str) -> None:
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("code_name", ["steane", "surface"])
-def test_gate_optimal_prep_consistent(code_name: str) -> None:
+@pytest.mark.parametrize("code", ["steane_code", "surface_code"])
+def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
-    code = CSSCode.from_code_name(code_name)
-
+    code = request.getfixturevalue(code)
     sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
     assert sp_circ is not None
+    assert sp_circ.zero_state
+
     circ = sp_circ.circ
     max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
 
@@ -99,10 +130,10 @@ def test_gate_optimal_prep_consistent(code_name: str) -> None:
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("code_name", ["steane", "surface"])
-def test_depth_optimal_prep_consistent(code_name: str) -> None:
+@pytest.mark.parametrize("code", ["steane", "surface"])
+def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
-    code = CSSCode.from_code_name(code_name)
+    code = request.getfixturevalue(code)
 
     sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
     assert sp_circ is not None
@@ -115,6 +146,71 @@ def test_depth_optimal_prep_consistent(code_name: str) -> None:
     x, z = get_stabs(circ)
     assert eq_span(code.Hx, x)  # type: ignore[arg-type]
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("code", ["steane_code", "surface_code"])
+def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
+    """Test synthesis of the plus state."""
+    code = request.getfixturevalue(code)
+    sp_circ_plus = gate_optimal_prep_circuit(code, max_timeout=2, zero_state=False)
+
+    assert sp_circ_plus is not None
+    assert not sp_circ_plus.zero_state
+
+    circ_plus = sp_circ_plus.circ
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+
+    assert circ_plus.num_qubits == code.n
+    assert circ_plus.num_nonlocal_gates() <= max_cnots
+
+    x, z = get_stabs(circ_plus)
+    assert eq_span(code.Hz, z)  # type: ignore[arg-type]
+    assert eq_span(np.vstack((code.Hx, code.Lx)), x)  # type: ignore[arg-type]
+
+    sp_circ_zero = gate_optimal_prep_circuit(code, max_timeout=2, zero_state=True)
+
+    assert sp_circ_zero is not None
+
+    circ_zero = sp_circ_zero.circ
+    x_zero, z_zero = get_stabs(circ_zero)
+
+    if code.is_self_dual():
+        assert np.array_equal(x, z_zero)
+        assert np.array_equal(z, x_zero)
+    else:
+        assert not np.array_equal(x, z_zero)
+        assert np.array_equal(z, x_zero)
+
+
+@pytest.mark.parametrize("code", ["steane_code", "surface_code", "tetrahedral_code"])
+def test_plus_state_heuristic(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
+    """Test synthesis of the plus state."""
+    code = request.getfixturevalue(code)
+    sp_circ_plus = heuristic_prep_circuit(code, zero_state=False)
+
+    assert sp_circ_plus is not None
+    assert not sp_circ_plus.zero_state
+
+    circ_plus = sp_circ_plus.circ
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+
+    assert circ_plus.num_qubits == code.n
+    assert circ_plus.num_nonlocal_gates() <= max_cnots
+
+    x, z = get_stabs(circ_plus)
+    assert eq_span(code.Hz, z)  # type: ignore[arg-type]
+    assert eq_span(np.vstack((code.Hx, code.Lx)), x)  # type: ignore[arg-type]
+
+    sp_circ_zero = heuristic_prep_circuit(code, zero_state=True)
+    circ_zero = sp_circ_zero.circ
+    x_zero, z_zero = get_stabs(circ_zero)
+
+    if code.is_self_dual():
+        assert np.array_equal(x, z_zero)
+        assert np.array_equal(z, x_zero)
+    else:
+        assert not np.array_equal(x, z_zero)
+        assert not np.array_equal(z, x_zero)
 
 
 def test_optimal_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -> None:
@@ -146,6 +242,66 @@ def test_optimal_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -
 def test_heuristic_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = steane_code_sp
+
+    ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
+
+    assert len(ver_stabs_layers) == 1  # 1 layer of verification measurements
+
+    ver_stabs = ver_stabs_layers[0]
+    assert len(ver_stabs) == 1  # 1 Ancilla measurement
+    assert np.sum(ver_stabs[0]) == 3  # 3 CNOTs
+    z_gens = circ.z_checks
+
+    for stab in ver_stabs:
+        assert in_span(z_gens, stab)
+
+    errors = circ.compute_fault_set(1)
+    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0, axis=1))[0]
+    assert len(non_detected) == 0
+
+    # Check that circuit is correct
+    circ_ver = heuristic_verification_circuit(circ)
+    assert circ_ver.num_qubits == circ.num_qubits + 1
+    assert circ_ver.num_nonlocal_gates() == np.sum(ver_stabs) + circ.circ.num_nonlocal_gates()
+    assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
+
+
+def test_optimal_tetrahedral_verification_circuit(tetrahedral_code_sp: StatePrepCircuit) -> None:
+    """Test the optimal verification circuit for the tetrahedral code is correct.
+
+    The tetrahedral code has an x-distance of 7. We expect that the verification only checks for a single propagated error since the tetrahedral code has a distance of 3.
+    """
+    circ = tetrahedral_code_sp
+
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=1, max_timeout=2)
+
+    assert len(ver_stabs_layers) == 1  # 1 layer of verification measurements
+
+    ver_stabs = ver_stabs_layers[0]
+    assert len(ver_stabs) == 1  # 1 Ancilla measurement
+    assert np.sum(ver_stabs[0]) == 3  # 3 CNOTs
+    z_gens = circ.z_checks
+
+    for stab in ver_stabs:
+        assert in_span(z_gens, stab)
+
+    errors = circ.compute_fault_set(1)
+    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0, axis=1))[0]
+    assert len(non_detected) == 0
+
+    # Check that circuit is correct
+    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=1, max_timeout=2)
+    assert circ_ver.num_qubits == circ.num_qubits + 1
+    assert circ_ver.num_nonlocal_gates() == np.sum(ver_stabs) + circ.circ.num_nonlocal_gates()
+    assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
+
+
+def test_heuristic_tetrahedral_verification_circuit(tetrahedral_code_sp: StatePrepCircuit) -> None:
+    """Test the optimal verification circuit for the tetrahedral code is correct.
+
+    The tetrahedral code has an x-distance of 7. We expect that the verification only checks for a single propagated error since the tetrahedral code has a distance of 3.
+    """
+    circ = tetrahedral_code_sp
 
     ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
 
