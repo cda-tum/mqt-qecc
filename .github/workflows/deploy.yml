@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-13]
+        runs-on: [ubuntu-latest, macos-13, macos-14]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,14 +30,20 @@ jobs:
         uses: Chocobo1/setup-ccache-action@v1
         with:
           prepend_symlinks_to_path: false
-          windows_compile_environment: msvc
           override_cache_key: wheels-${{ matrix.runs-on }}
       - if: runner.os == 'macOS'
         name: Install flint
         run: |
-          brew install gmp mpfr ntl
+          brew install gmp mpfr
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
-          cd flint2 && ./configure && make -j 3 && make install
+          cd flint2
+          export MACOSX_DEPLOYMENT_TARGET=11.0
+          ./configure --with-gmp=$(readlink -f $(brew --prefix gmp)) --with-mpfr=$(readlink -f $(brew --prefix mpfr))
+          make -j 4
+          make install
+      # set up uv for faster Python package management
+      - if: runner.os == 'macOS'
+        uses: yezz123/setup-uv@v4
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19
       - name: Verify clean directory
@@ -49,19 +55,26 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_sdist:
-    name: sdist
+    name: 📦 SDist
     runs-on: ubuntu-latest
     steps:
+      # check out the repository (including submodules and all history)
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           submodules: recursive
+          fetch-depth: 0
+      # install flint
       - name: Install flint
         run: sudo apt-get install libflint-dev
+      # set up uv for faster Python package management
+      - uses: yezz123/setup-uv@v4
+      # build the source distribution
       - name: Build SDist
-        run: pipx run build --sdist
+        run: pipx run build --sdist --installer uv
+      # check the metadata of the source distribution
       - name: Check metadata
         run: pipx run twine check dist/*
+      # upload the source distribution as an artifact
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-sdist
