@@ -6,6 +6,7 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numpy as np
 import stim
 from qiskit.converters import circuit_to_dag, dag_to_circuit
@@ -280,6 +281,41 @@ class NoisyNDFTStatePrepSimulator:
             np.any(corrected @ observables.T % 2 != 0, axis=1)
         )  # number of non-commuting corrected states
         return num_logical_errors, num_discarded
+
+    def plot_state_prep(self, ps: list[float], min_errors: int = 500, name: str | None = None) -> None:
+        """Plot the logical error rate and accaptence rate as a function of the physical error rate.
+
+        Args:
+            ps: The physical error rates to plot.
+            min_errors: The minimum number of errors to find before stopping.
+            name: The name of the plot.
+        """
+        p_ls = []
+        r_as = []
+        for p in ps:
+            self.set_p(p)
+            p_l, r_a, _num_logical_errors, _num_shots = self.logical_error_rate(min_errors=min_errors)
+            p_ls.append(p_l)
+            r_as.append(r_a)
+
+        plt.subplot(1, 2, 1)
+        plt.plot(ps, p_ls, marker="o", label=name)
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.xlabel("Physical error rate")
+        plt.ylabel("Logical error rate")
+
+        if name is not None:
+            plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(ps, r_as, marker="o", label=name)
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.xlabel("Physical error rate")
+        plt.ylabel("Acceptance rate")
+        if name is not None:
+            plt.legend()
 
 
 class LutDecoder:
