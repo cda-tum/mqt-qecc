@@ -289,7 +289,8 @@ before-all = [
 environment = { DEPLOY = "ON" }
 
 [tool.cibuildwheel.macos]
-environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
+repair-wheel-command = "delocate-wheel --exclude mpfr --exclude gmp --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
 before-build = "pip install delvewheel>=1.4.0"
