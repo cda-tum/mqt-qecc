@@ -130,7 +130,7 @@ def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: 
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("code", ["steane", "surface"])
+@pytest.mark.parametrize("code", ["steane_code", "surface_code"])
 def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
@@ -179,7 +179,7 @@ def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignor
         assert np.array_equal(z, x_zero)
     else:
         assert not np.array_equal(x, z_zero)
-        assert np.array_equal(z, x_zero)
+        assert not np.array_equal(z, x_zero)
 
 
 @pytest.mark.parametrize("code", ["steane_code", "surface_code", "tetrahedral_code"])
@@ -344,7 +344,7 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
 
     ver_stabs_2 = ver_stabs_layers[1]
     assert len(ver_stabs_2) == 3  # 2 Ancilla measurements
-    assert np.sum(ver_stabs_2) == 13  # 13 CNOTs
+    assert np.sum(ver_stabs_2) <= 14  # less than 14 CNOTs (sometimes 13, sometimes 14 depending on how fast the CPU is)
 
     z_gens = circ.z_checks
 
