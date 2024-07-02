@@ -12,4 +12,4 @@ target_link_libraries(pyqecc PRIVATE MQT::QECC MQT::CorePython pybind11_json MQT
                                      MQT::ProjectWarnings)
 
 # Install directive for scikit-build-core
-install(TARGETS pyqecc LIBRARY DESTINATION .)
+install(TARGETS pyqecc LIBRARY DESTINATION . COMPONENT mqt-qecc_Python)
