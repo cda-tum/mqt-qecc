@@ -909,15 +909,15 @@ def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]]
     qc.add_register(x_anc)
     qc.add_register(x_c)
 
-    qc.h(x_anc)
     for i, m in enumerate(x_measurements):
         stab = np.where(m != 0)[0]
         if flags:
             measure_flagged(qc, stab, x_anc[i], x_c[i], z_measurement=False)
         else:
+            qc.h(x_anc)
             qc.cx([x_anc[i]] * len(stab), stab)
-    qc.h(x_anc)
-    qc.measure(x_anc, x_c)
+            qc.h(x_anc)
+            qc.measure(x_anc, x_c)
 
 
 def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]], flags: bool = False) -> None:
@@ -1276,8 +1276,6 @@ def _flag_reset(qc: QuantumCircuit, flag: AncillaQubit, z_measurement: bool) -> 
 def _flag_init(qc: QuantumCircuit, flag: AncillaQubit, z_measurement: bool) -> None:
     if z_measurement:
         qc.h(flag)
-    else:
-        qc.x(flag)
 
 
 def _measure_stab_unflagged(
