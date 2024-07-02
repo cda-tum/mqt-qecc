@@ -9,5 +9,5 @@ IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: false
 PointerAlignment: Left
 SpacesInContainerLiterals: false
-Standard: c++20
+Standard: c++17
 TabWidth: 4

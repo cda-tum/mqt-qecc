@@ -19,9 +19,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install flint
         run: sudo apt-get install libflint-dev
-      - uses: actions/setup-python@v5
+      # set up ccache for faster C++ builds
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
         with:
-          python-version: "3.10"
-      - uses: pre-commit/action@v3.0.1
+          prepend_symlinks_to_path: false
+          override_cache_key: lint
+      # set up mold as linker for faster C++ builds
+      - name: Set up mold as linker
+        uses: rui314/setup-mold@v1
+      # set up uv for faster Python package management
+      - uses: yezz123/setup-uv@v4
+      # set up nox for convenient linting
+      - uses: wntrblm/nox@2024.04.15
         with:
-          extra_args: mypy --all-files
+          python-versions: "3.12"
+      # run the nox lint session (assumes a nox session named "lint" exists, and `mypy` is configured in pre-commit)
+      - name: Run mypy
+        run: nox -s lint -- mypy

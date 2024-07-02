@@ -7,8 +7,7 @@ import locale
 import pathlib
 from typing import TYPE_CHECKING
 
-from qiskit import QuantumCircuit
-from qiskit.qasm2 import dump
+from qiskit.qasm2 import dump, load, loads
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (
     NoiseModel,
@@ -166,7 +165,7 @@ def main() -> None:
     else:
         noise_model = NoiseModel()
 
-    circ = QuantumCircuit.from_qasm_file(open_qasm_file)
+    circ = load(open_qasm_file)
 
     if not any(gate[0].name == "measure" for gate in circ.data):
         print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")  # noqa: T201
@@ -176,7 +175,7 @@ def main() -> None:
     if ecc is not None:
         # Applying error correction to the circuit
         result = apply_ecc(circ, ecc, ecc_frequency)
-        circ = QuantumCircuit().from_qasm_str(result["circ"])
+        circ = loads(result["circ"])
 
     if ecc_export_filename is not None:
         print("Exporting circuit to: " + str(ecc_export_filename))  # noqa: T201
