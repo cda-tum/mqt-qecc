@@ -300,4 +300,7 @@ environment = { CMAKE_ARGS = "-T ClangCL" }
 [[tool.cibuildwheel.overrides]]
 select = "cp312-*"
 # the following should allow to actually build the ldpc package for the tests on Python 3.12
-before-test = "uv pip install 'numpy<2' Cython setuptools wheel ldpc --no-build-isolation"
+before-test = [
+  "uv pip install 'numpy<2' Cython setuptools wheel",
+  "uv pip install ldpc --no-build-isolation"
+]
