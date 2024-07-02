@@ -23,17 +23,25 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import QuantumCircuit
 
-
-@pytest.fixture()
-def steane_code() -> CSSCode:
-    """Return the Steane code."""
-    return CSSCode.from_code_name("steane")
+    from mqt.qecc.ft_stateprep import StatePrepCircuit
 
 
 @pytest.fixture()
-def surface_code() -> CSSCode:
-    """Return the surface code."""
-    return CSSCode.from_code_name("surface")
+def steane_code_sp() -> StatePrepCircuit:
+    """Return a non-ft state preparation circuit for the Steane code."""
+    code = CSSCode.from_code_name("Steane")
+    sp_circ = heuristic_prep_circuit(code)
+    sp_circ.compute_fault_sets()
+    return sp_circ
+
+
+@pytest.fixture()
+def color_code_d5_sp() -> StatePrepCircuit:
+    """Return a non-ft state preparation circuit for the d=5 4,8,8 color code."""
+    code = CSSCode.from_code_name("cc_4_8_8")
+    sp_circ = heuristic_prep_circuit(code)
+    sp_circ.compute_fault_sets()
+    return sp_circ
 
 
 def eq_span(a: npt.NDArray[np.int_], b: npt.NDArray[np.int_]) -> bool:
@@ -61,19 +69,16 @@ def test_heuristic_prep_consistent(code_name: str) -> None:
     """Check that heuristic_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
 
-    assert code.Hx is not None, f"Code {code_name} does not have X stabilizers."
-    assert code.Hz is not None, f"Code {code_name} does not have Z stabilizers."
-
     sp_circ = heuristic_prep_circuit(code)
     circ = sp_circ.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ)
-    assert eq_span(code.Hx, x)
-    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
+    assert eq_span(code.Hx, x)  # type: ignore[arg-type]
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize("code_name", ["steane", "surface"])
@@ -81,20 +86,17 @@ def test_gate_optimal_prep_consistent(code_name: str) -> None:
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
 
-    assert code.Hx is not None, f"Code {code_name} does not have X stabilizers."
-    assert code.Hz is not None, f"Code {code_name} does not have Z stabilizers."
-
     sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
     assert sp_circ is not None
     circ = sp_circ.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ)
-    assert eq_span(code.Hx, x)
-    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
+    assert eq_span(code.Hx, x)  # type: ignore[arg-type]
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize("code_name", ["steane", "surface"])
@@ -102,29 +104,22 @@ def test_depth_optimal_prep_consistent(code_name: str) -> None:
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)
 
-    assert code.Hx is not None, f"Code {code_name} does not have X stabilizers."
-    assert code.Hz is not None, f"Code {code_name} does not have Z stabilizers."
-
     sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
     assert sp_circ is not None
     circ = sp_circ.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ)
-    assert eq_span(code.Hx, x)
-    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
+    assert eq_span(code.Hx, x)  # type: ignore[arg-type]
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
-def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
+def test_optimal_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
-    circ = heuristic_prep_circuit(steane_code)
-
-    assert steane_code.Hx is not None, "Steane code does not have X stabilizers."
-    assert steane_code.Hz is not None, "Steane code does not have Z stabilizers."
-
+    circ = steane_code_sp
     ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_timeout=2)
 
     assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement
@@ -132,7 +127,7 @@ def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
     ver_stabs = ver_stabs_layers[0]
 
     assert np.sum(ver_stabs) == 3  # 3 CNOTs
-    z_gens = np.vstack((steane_code.Hz, steane_code.Lz))
+    z_gens = circ.z_checks
 
     for stab in ver_stabs:
         assert in_span(z_gens, stab)
@@ -148,21 +143,18 @@ def test_optimal_steane_verification_circuit(steane_code: CSSCode) -> None:
     assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
 
 
-def test_heuristic_steane_verification_circuit(steane_code: CSSCode) -> None:
+def test_heuristic_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
-    circ = heuristic_prep_circuit(steane_code)
-
-    assert steane_code.Hx is not None, "Steane code does not have X stabilizers."
-    assert steane_code.Hz is not None, "Steane code does not have Z stabilizers."
+    circ = steane_code_sp
 
     ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
 
-    assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement
+    assert len(ver_stabs_layers) == 1  # 1 layer of verification measurements
 
     ver_stabs = ver_stabs_layers[0]
-
-    assert np.sum(ver_stabs) == 3  # 3 CNOTs
-    z_gens = np.vstack((steane_code.Hz, steane_code.Lz))
+    assert len(ver_stabs) == 1  # 1 Ancilla measurement
+    assert np.sum(ver_stabs[0]) == 3  # 3 CNOTs
+    z_gens = circ.z_checks
 
     for stab in ver_stabs:
         assert in_span(z_gens, stab)
@@ -176,3 +168,103 @@ def test_heuristic_steane_verification_circuit(steane_code: CSSCode) -> None:
     assert circ_ver.num_qubits == circ.num_qubits + 1
     assert circ_ver.num_nonlocal_gates() == np.sum(ver_stabs) + circ.circ.num_nonlocal_gates()
     assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
+
+
+def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
+    """Test that the optimal verification is also correct for higher distance.
+
+    Ignore Z errors.
+    Due to time constraints, we set the timeout for each search to 2 seconds.
+    """
+    circ = color_code_d5_sp
+
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=2)
+
+    assert len(ver_stabs_layers) == 2  # 2 layers of verification measurements
+
+    ver_stabs_1 = ver_stabs_layers[0]
+    assert len(ver_stabs_1) == 2  # 2 Ancilla measurements
+    assert np.sum(ver_stabs_1) == 9  # 9 CNOTs
+
+    ver_stabs_2 = ver_stabs_layers[1]
+    assert len(ver_stabs_2) == 3  # 2 Ancilla measurements
+    assert np.sum(ver_stabs_2) == 13  # 13 CNOTs
+
+    z_gens = circ.z_checks
+
+    for stab in np.vstack((ver_stabs_1, ver_stabs_2)):
+        assert in_span(z_gens, stab)
+
+    errors_1 = circ.compute_fault_set(1)
+    non_detected = np.where(np.all(ver_stabs_1 @ errors_1.T % 2 == 0, axis=1))[0]
+    assert len(non_detected) == 0
+
+    errors_2 = circ.compute_fault_set(2)
+    non_detected = np.where(np.all(ver_stabs_2 @ errors_2.T % 2 == 0, axis=1))[0]
+    assert len(non_detected) == 0
+
+    # Check that circuit is correct
+    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)
+    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=False)
+    assert circ_ver.num_qubits == circ.num_qubits + 5
+    assert circ_ver.num_nonlocal_gates() == n_cnots + circ.circ.num_nonlocal_gates()
+
+
+def test_not_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
+    """Test that the optimal verification circuit for the Steane code is correct.
+
+    Ignore Z errors.
+    """
+    circ = color_code_d5_sp
+    ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
+
+    assert len(ver_stabs_layers) == 2  # 2 layers of verification measurements
+
+    ver_stabs_1 = ver_stabs_layers[0]
+    ver_stabs_2 = ver_stabs_layers[1]
+
+    z_gens = circ.z_checks
+
+    for stab in np.vstack((ver_stabs_1, ver_stabs_2)):
+        assert in_span(z_gens, stab)
+
+    errors_1 = circ.compute_fault_set(1)
+    non_detected = np.where(np.all(ver_stabs_1 @ errors_1.T % 2 == 0, axis=1))[0]
+    assert len(non_detected) == 0
+
+    errors_2 = circ.compute_fault_set(2)
+    non_detected = np.where(np.all(ver_stabs_2 @ errors_2.T % 2 == 0, axis=1))[0]
+    assert len(non_detected) == 0
+
+    # Check that circuit is correct
+    circ_ver = heuristic_verification_circuit(circ, full_fault_tolerance=False)
+    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)
+    assert circ_ver.num_qubits == circ.num_qubits + len(ver_stabs_1) + len(ver_stabs_2)
+    assert circ_ver.num_nonlocal_gates() == n_cnots + circ.circ.num_nonlocal_gates()
+
+
+def test_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
+    """Test that the optimal verification is also correct for higher distance.
+
+    Include Z errors.
+    Due to time constraints, we set the timeout for each search to 2 seconds.
+    """
+    circ = color_code_d5_sp
+
+    circ_ver_full_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=True)
+    circ_ver_x_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=False)
+    assert circ_ver_full_ft.num_nonlocal_gates() > circ_ver_x_ft.num_nonlocal_gates()
+    assert circ_ver_full_ft.depth() > circ_ver_x_ft.depth()
+
+
+def test_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
+    """Test that the optimal verification is also correct for higher distance.
+
+    Include Z errors.
+    """
+    circ = color_code_d5_sp
+
+    circ_ver_full_ft = heuristic_verification_circuit(circ, full_fault_tolerance=True)
+    circ_ver_x_ft = gate_optimal_verification_circuit(circ, full_fault_tolerance=False)
+    assert circ_ver_full_ft.num_nonlocal_gates() > circ_ver_x_ft.num_nonlocal_gates()
+    assert circ_ver_full_ft.depth() > circ_ver_x_ft.depth()
