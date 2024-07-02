@@ -284,7 +284,7 @@ build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 before-all = [
     "yum -y install mpfr-devel",
     "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
-    "cd flint2 && ./configure && make -j 3 && make install"
+    "cd flint2 && ./configure && make -j 4 && make install"
 ]
 environment = { DEPLOY = "ON" }
 
