@@ -19,7 +19,7 @@ mark_as_advanced(MPFR_INCLUDE_DIR MPFR_LIB)
 
 # Report if package was found
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(MPFR DEFAULT_MSG MPFR_INCLUDE_DIR MPFR_LIB)
+find_package_handle_standard_args(MPFR DEFAULT_MSG MPFR_LIB MPFR_INCLUDE_DIR)
 
 # Set target
 if(MPFR_FOUND)
