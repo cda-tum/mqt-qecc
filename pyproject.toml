@@ -296,3 +296,8 @@ repair-wheel-command = "delocate-wheel --exclude mpfr --exclude gmp --require-ar
 before-build = "uv pip install delvewheel>=1.4.0"
 repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
 environment = { CMAKE_ARGS = "-T ClangCL" }
+
+[[tool.cibuildwheel.overrides]]
+select = "cp312-*"
+# the following should allow to actually build the ldpc package for the tests on Python 3.12
+before-test = "uv pip install 'numpy<2' Cython setuptools wheel ldpc --no-build-isolation"
