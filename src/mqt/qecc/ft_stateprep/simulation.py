@@ -316,6 +316,7 @@ class NoisyNDFTStatePrepSimulator:
         plt.ylabel("Acceptance rate")
         if name is not None:
             plt.legend()
+        plt.tight_layout()
 
 
 class LutDecoder:
