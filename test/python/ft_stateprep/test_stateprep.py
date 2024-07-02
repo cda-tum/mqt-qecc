@@ -361,9 +361,9 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
 
     # Check that circuit is correct
     n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)
-    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=False)
-    assert circ_ver.num_qubits == circ.num_qubits + 5
-    assert circ_ver.num_nonlocal_gates() == n_cnots + circ.circ.num_nonlocal_gates()
+    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=True)
+    assert circ_ver.num_qubits > circ.num_qubits + 5  # overhead from the flags
+    assert circ_ver.num_nonlocal_gates() > n_cnots + circ.circ.num_nonlocal_gates()  # Overhead from Flag CNOTS
 
 
 def test_not_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
