@@ -61,7 +61,6 @@ jobs:
       - name: Setup ccache
         uses: Chocobo1/setup-ccache-action@v1
         with:
-          prepend_symlinks_to_path: false
           override_cache_key: python-tests-${{ matrix.runs-on }}-${{ matrix.python-version }}
       - name: Install flint (Linux)
         if: runner.os == 'Linux'
@@ -71,6 +70,8 @@ jobs:
         run: |
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
           cd flint2
+          export CC="ccache clang"
+          export CXX="ccache clang++"
           ./configure --with-gmp=$(readlink -f $(brew --prefix gmp)) --with-mpfr=$(readlink -f $(brew --prefix mpfr))
           make -j 4 && sudo make install
       # set up mold as linker for faster C++ builds (Linux only)

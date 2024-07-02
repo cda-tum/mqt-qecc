@@ -25,9 +25,10 @@ jobs:
       - if: runner.os == 'macOS'
         name: Install flint
         run: |
-          brew install gmp mpfr
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
           cd flint2
+          export CC="ccache clang"
+          export CXX="ccache clang++"
           export MACOSX_DEPLOYMENT_TARGET=11.0
           ./configure --with-gmp=$(readlink -f $(brew --prefix gmp)) --with-mpfr=$(readlink -f $(brew --prefix mpfr))
           make -j 4 && sudo make install
