@@ -1,4 +1,4 @@
-file(COPY ${PROJECT_SOURCE_DIR}/test/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 package_add_test_with_working_dir(
   mqt-qecc-test
