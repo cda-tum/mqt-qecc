@@ -116,7 +116,7 @@ sdist.exclude = [
 BUILD_MQT_QECC_TESTS = "OFF"
 BUILD_MQT_QECC_BINDINGS = "ON"
 ENABLE_IPO = "ON"
-
+FLINT_ROOT="/usr/local"
 
 [tool.check-sdist]
 sdist-only = ["src/mqt/qecc/_version.py"]
