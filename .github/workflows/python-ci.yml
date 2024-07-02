@@ -54,7 +54,10 @@ jobs:
         run: |
           brew install gmp mpfr ntl
           git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
-          cd flint2 && ./configure && make -j 3 && make install
+          cd flint2
+          ./configure --with-gmp=$(readlink -f $(brew --prefix gmp)) --with-mpfr=$(readlink -f $(brew --prefix mpfr))
+          make -j 4
+          make install
       # set up mold as linker for faster C++ builds (Linux only)
       - name: Set up mold as linker (Linux only)
         uses: rui314/setup-mold@v1
