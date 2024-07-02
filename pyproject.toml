@@ -278,7 +278,7 @@ skip = "*-musllinux*"
 archs = "auto64"
 test-command = "python -c \"from mqt import qecc\""
 test-skip = "*-macosx_arm64-*"
-build-frontend = "build[uv]"
+build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 
 [tool.cibuildwheel.linux]
 before-all = [
