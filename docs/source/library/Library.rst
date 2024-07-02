@@ -15,3 +15,4 @@ Library
     DecodingRunInformation
     SamplePauliError
     LightsOutDecoder
+    StatePrep
