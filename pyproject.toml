@@ -271,6 +271,19 @@ isort.required-imports = ["from __future__ import annotations"]
 convention = "google"
 
 
+[tool.typos]
+[tool.typos.default.extend-words]
+wille = "wille"
+ser = "ser"
+aer = "aer"
+
+
+[tool.repo-review]
+ignore = [
+  "PC160" # "Uses codespell" -> switched to https://github.com/crate-ci/typos
+]
+
+
 [tool.cibuildwheel]
 build = "cp3*"
 skip = "*-musllinux*"
