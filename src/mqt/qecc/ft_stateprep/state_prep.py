@@ -403,7 +403,7 @@ def _optimal_circuit(
     logging.info("Trying to minimize param")
     while True:
         logging.info(f"Trying param {curr_param - 1}")
-        opt_res = _run_with_timeout(prep_func, checks, curr_param - 1, timeout=max_timeout)  # type: ignore[arg-type]
+        opt_res = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
         circ = opt_res
