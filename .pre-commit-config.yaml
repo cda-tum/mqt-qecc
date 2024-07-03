@@ -21,11 +21,13 @@ repos:
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-merge-conflict
+      - id: check-symlinks
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
+      - id: requirements-txt-fixer
       - id: trailing-whitespace
 
   # Clean jupyter notebooks
@@ -33,6 +35,11 @@ repos:
     rev: 3.3.0
     hooks:
       - id: nb-clean
+        args:
+          - --remove-empty-cells
+          - --preserve-cell-metadata
+          - raw_mimetype
+          - --
 
   # Handling unwanted unicode characters
   - repo: https://github.com/sirosen/texthooks
@@ -75,12 +82,9 @@ repos:
         exclude: "code_construction* | ^data_utils\\.py$"
         args: []
         additional_dependencies:
-          - importlib_resources
           - numpy
           - pytest
           - pytest-mock
-          - ldpc
-          - bposd
           - numba
 
   # Check for spelling
@@ -121,3 +125,24 @@ repos:
         language: pygrep
         entry: PyBind|Numpy|Cmake|CCache|Github|PyTest|Mqt|Tum
         exclude: .pre-commit-config.yaml
+
+  # Check best practices for scientific Python code
+  - repo: https://github.com/scientific-python/cookie
+    rev: 2024.04.23
+    hooks:
+      - id: sp-repo-review
+        additional_dependencies: ["repo-review[cli]"]
+
+  # Check JSON schemata
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.28.6
+    hooks:
+      - id: check-dependabot
+      - id: check-github-workflows
+      - id: check-readthedocs
+
+  # Check the pyproject.toml file
+  - repo: https://github.com/henryiii/validate-pyproject-schema-store
+    rev: 2024.07.01
+    hooks:
+      - id: validate-pyproject
