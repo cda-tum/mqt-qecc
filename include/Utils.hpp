@@ -35,7 +35,6 @@ public:
             throw QeccException("size of matrix too large for flint");
         }
         if (inmat.size() != vec.size()) { // NOLINT(readability-else-after-return)
-            std::cerr << "Cannot solve system, dimensions do not match\n";
             throw QeccException("Cannot solve system, dimensions do not match");
         }
 
@@ -312,20 +311,18 @@ public:
         std::ifstream inFile(filepath);
         gf2Mat        result;
 
-        if (inFile) {
-            while (getline(inFile, line, '\n')) {
-                gf2Vec             tempVec;
-                std::istringstream instream(line);
-                while (instream >> word) {
-                    tempVec.push_back(static_cast<bool>(word));
-                }
-                result.emplace_back(tempVec);
-            }
-        } else {
-            std::cerr << "File " << filepath << " cannot be opened.\n";
+        if (!inFile) {
+            throw QeccException("Cannot open file");
         }
 
-        inFile.close();
+        while (getline(inFile, line, '\n')) {
+            gf2Vec             tempVec;
+            std::istringstream instream(line);
+            while (instream >> word) {
+                tempVec.push_back(static_cast<bool>(word));
+            }
+            result.emplace_back(tempVec);
+        }
         return result;
     }
     [[maybe_unused]] static void printTimePerSampleRun(const std::map<std::string, std::size_t, std::less<>>& avgSampleRuns) {

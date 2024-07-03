@@ -190,6 +190,10 @@ TEST(UtilsTest, ImportCode) {
     EXPECT_TRUE(res == matrix);
 }
 
+TEST(UtilsTest, ImportCodeFileNotExists) {
+    EXPECT_THROW(Utils::importGf2MatrixFromFile("code_that_does_not_exist.txt"), QeccException);
+}
+
 TEST(UtilsTest, GetFlintMatrix) {
     const gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                            {0, 1, 0, 1, 1, 0, 1},
