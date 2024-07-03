@@ -9,9 +9,9 @@
 #include "nlohmann/json.hpp"
 
 #include <cassert>
-#include <flint/nmod_matxx.h>
 #include <fstream>
 #include <iostream>
+#include <nmod_matxx.h>
 #include <ostream>
 #include <random>
 #include <set>
