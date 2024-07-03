@@ -1,13 +1,9 @@
-//
-// Created by lucas on 09/06/22.
-//
-#ifndef QUNIONFIND_UTILS_HPP
-#define QUNIONFIND_UTILS_HPP
+#pragma once
 
 #include "QeccException.hpp"
 #include "TreeNode.hpp"
-#include "nlohmann/json.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -38,7 +34,7 @@ public:
             throw QeccException("size of matrix too large for flint");
         }
         if (inmat.size() != vec.size()) { // NOLINT(readability-else-after-return)
-            std::cerr << "Cannot solve system, dimensions do not match" << std::endl;
+            std::cerr << "Cannot solve system, dimensions do not match\n";
             throw QeccException("Cannot solve system, dimensions do not match");
         }
 
@@ -241,7 +237,7 @@ public:
         const auto&       nrows = matrix.size();
         const auto&       ncols = matrix.at(0).size();
         std::stringstream s;
-        s << nrows << "x" << ncols << "matrix [" << std::endl;
+        s << nrows << "x" << ncols << "matrix [\n";
         for (std::size_t i = 0; i < nrows; i++) {
             s << "[";
             for (std::size_t j = 0; j < ncols; j++) {
@@ -254,7 +250,7 @@ public:
             if (i != nrows - 1) {
                 s << ",";
             }
-            s << std::endl;
+            s << '\n';
         }
         s << "]";
         return s.str();
@@ -325,15 +321,18 @@ public:
                 result.emplace_back(tempVec);
             }
         } else {
-            std::cerr << "File " << filepath << " cannot be opened." << std::endl;
+            std::cerr << "File " << filepath << " cannot be opened.\n";
         }
 
         inFile.close();
         return result;
     }
     [[maybe_unused]] static void printTimePerSampleRun(const std::map<std::string, std::size_t, std::less<>>& avgSampleRuns) {
-        const nlohmann::json avgData = avgSampleRuns;
-        std::cout << "trial:timesum = " << avgData.dump(2U) << std::endl;
+        std::cout << "trial:timesum = {\n";
+        for (const auto& [key, value] : avgSampleRuns) {
+            std::cout << "  " << key << ":" << value << ",\n";
+        }
+        std::cout << "}\n";
     }
 
     [[maybe_unused]] static void readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths) {
@@ -342,4 +341,3 @@ public:
         }
     }
 };
-#endif // QUNIONFIND_UTILS_HPP
