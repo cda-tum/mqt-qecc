@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class NoisyNDFTStatePrepSimulator:
-    """A noisy state preparation circuit."""
+    """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
 
     def __init__(self, state_prep_circ: QuantumCircuit, code: CSSCode, p: float, zero_state: bool = True) -> None:
         """Initialize the simulator.
