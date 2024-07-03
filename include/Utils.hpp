@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
+#include <flint/nmod_matxx.h>
 #include <fstream>
 #include <iostream>
-#include <nmod_matxx.h>
 #include <ostream>
 #include <random>
 #include <set>

@@ -35,6 +35,12 @@ find_package_handle_standard_args(FLINT DEFAULT_MSG FLINT_LIBRARY FLINT_INCLUDE_
 if(FLINT_FOUND)
   add_library(flint UNKNOWN IMPORTED)
   set_target_properties(flint PROPERTIES IMPORTED_LOCATION ${FLINT_LIBRARY})
+
+  # Strip the trailing "flint" from the include directory
+  if("${FLINT_INCLUDE_DIR}" MATCHES "flint$")
+    get_filename_component(FLINT_INCLUDE_DIR ${FLINT_INCLUDE_DIR} DIRECTORY)
+  endif()
+
   target_include_directories(flint INTERFACE ${FLINT_INCLUDE_DIR})
   target_link_libraries(flint INTERFACE GMP::gmp GMP::gmpxx MPFR::mpfr)
 endif()
