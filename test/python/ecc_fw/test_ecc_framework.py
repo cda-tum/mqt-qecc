@@ -87,7 +87,7 @@ def test_unavailable_backend(circ: QuantumCircuit, script_runner: ScriptRunner) 
     """Testing the script with unsupported backend."""
     with pathlib.Path("dummyCircuit.qasm").open("w", encoding=locale.getpreferredencoding(False)) as f:
         dump(circ, f)
-    ret = script_runner.run(["ecc_qiskit_wrapper", "-fs", "dummyBackedn", "-f", "dummyCircuit.qasm"])
+    ret = script_runner.run(["ecc_qiskit_wrapper", "-fs", "dummyBackend", "-f", "dummyCircuit.qasm"])
     file_to_remove = pathlib.Path("dummyCircuit.qasm")
     file_to_remove.unlink()
     assert not ret.success

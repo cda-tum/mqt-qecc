@@ -31,8 +31,8 @@ with Path(outpath).open("w") as outfile:
             result = decoder.result.estimate
             if not code.is_stabilizer(result):
                 nr_failed_runs += 1
-        frac_failes = nr_failed_runs / runs_per_p
-        wer = frac_failes / code_k
+        frac_fails = nr_failed_runs / runs_per_p
+        wer = frac_fails / code_k
         res = str(curr_p) + ":" + str(wer) + "\n"
         print(res)
         outfile.write(res)

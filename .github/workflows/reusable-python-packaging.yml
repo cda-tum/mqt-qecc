@@ -1,0 +1,96 @@
+name: 🐍 • Packaging
+
+on:
+  workflow_call:
+
+jobs:
+  build_wheels:
+    name: ${{ matrix.runs-on }} wheels
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, macos-13, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - if: matrix.runs-on != 'ubuntu-latest'
+        name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          prepend_symlinks_to_path: false
+          override_cache_key: wheels-${{ matrix.runs-on }}
+      - if: runner.os == 'macOS'
+        name: Install gmp from source
+        run: |
+          curl -L https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJ
+          cd gmp-6.3.0
+          export CC="ccache clang"
+          export CXX="ccache clang++"
+          export MACOSX_DEPLOYMENT_TARGET=11.0
+          ./configure --enable-cxx --prefix=/usr/local
+          make -j 4 && sudo make install
+          echo GMP_ROOT="/usr/local" >> $GITHUB_ENV
+      - if: runner.os == 'macOS'
+        name: Install mpfr from source
+        run: |
+          curl -L https://www.mpfr.org/mpfr-current/mpfr-4.2.1.tar.xz | tar xJ
+          cd mpfr-4.2.1
+          export CC="ccache clang"
+          export CXX="ccache clang++"
+          export MACOSX_DEPLOYMENT_TARGET=11.0
+          # use the GMP install from above
+          ./configure --prefix=/usr/local --with-gmp=/usr/local
+          make -j 4 && sudo make install
+          echo MPFR_ROOT="/usr/local" >> $GITHUB_ENV
+      - if: runner.os == 'macOS'
+        name: Install flint
+        run: |
+          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
+          cd flint2
+          export CC="ccache clang"
+          export CXX="ccache clang++"
+          export MACOSX_DEPLOYMENT_TARGET=11.0
+          ./configure --prefix=/usr/local --with-gmp=/usr/local --with-mpfr=/usr/local
+          make -j 4 && sudo make install
+          echo FLINT_ROOT="/usr/local" >> $GITHUB_ENV
+      # set up uv for faster Python package management
+      - if: runner.os == 'macOS'
+        uses: yezz123/setup-uv@v4
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.19
+      - name: Verify clean directory
+        run: git diff --exit-code
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.runs-on }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: 📦 SDist
+    runs-on: ubuntu-latest
+    steps:
+      # check out the repository (including submodules and all history)
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      # install flint
+      - name: Install flint
+        run: sudo apt-get install libflint-dev
+      # set up uv for faster Python package management
+      - uses: yezz123/setup-uv@v4
+      # build the source distribution
+      - name: Build SDist
+        run: pipx run build --sdist --installer uv
+      # check the metadata of the source distribution
+      - name: Check metadata
+        run: pipx run twine check dist/*
+      # upload the source distribution as an artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz

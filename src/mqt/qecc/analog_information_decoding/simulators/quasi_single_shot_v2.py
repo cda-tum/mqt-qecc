@@ -81,7 +81,7 @@ class QssSimulator:
         self.bp_params = bp_params
         self.decoding_method = decoding_method
         self.save_interval = kwargs.get("save_interval", 50)
-        self.eb_precission = kwargs.get("eb_precission", 1e-2)
+        self.eb_precision = kwargs.get("eb_precision", 1e-2)
         self.analog_tg = analog_tg
         self.repetitions = repetitions
         if repetitions % 2 != 0:
@@ -282,7 +282,7 @@ class QssSimulator:
             success_cnt += self._single_sample()
             if run % self.save_interval == 1:
                 self._save_results(success_cnt, run)
-                if _check_convergence(success_cnt, run, self.code_params, self.eb_precission):
+                if _check_convergence(success_cnt, run, self.code_params, self.eb_precision):
                     print("Converged")  # noqa: T201
                     break
         return self._save_results(success_cnt, run)

@@ -53,6 +53,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+*.profraw
 
 # Translations
 *.mo
@@ -73,6 +74,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/
 
 # PyBuilder
 .pybuilder/
@@ -169,3 +171,6 @@ Thumbs.db
 /docs/**/build
 .vs
 out/build
+
+node_modules/
+wheelhouse/

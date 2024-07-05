@@ -1,16 +1,6 @@
-name: cpp-linter
-
+name: 🇨 • Lint
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-  merge_group:
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  workflow_call:
 
 jobs:
   lint:
@@ -24,6 +14,7 @@ jobs:
           submodules: recursive
       - name: Install flint
         run: sudo apt-get install libflint-dev
+      # install a specific version of clang
       - name: Install clang-${{ env.clang-version }}
         run: |
           sudo apt-get update
@@ -37,7 +28,7 @@ jobs:
           fi
           echo "CC=clang-${{ env.clang-version }}" >> $GITHUB_ENV
           echo "CXX=clang++-${{ env.clang-version }}" >> $GITHUB_ENV
-
+      # generate a compilation database (assumes that the CMake project has `CMAKE_EXPORT_COMPILE_COMMANDS` set)
       - name: Generate compilation database
         run: |
           echo $CC
@@ -45,7 +36,7 @@ jobs:
           $CC --version
           $CXX --version
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-
+      # runs the cpp-linter action using the generated compilation database and the specified clang version
       - name: Run cpp-linter
         uses: cpp-linter/cpp-linter-action@v2
         id: linter
@@ -56,12 +47,11 @@ jobs:
           tidy-checks: ""
           version: ${{ env.clang-version }}
           ignore: "build|include/python|src/python"
-          thread-comments: ${{ github.event_name == 'pull_request' }}
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
           step-summary: true
           database: "build"
           extra-args: -std=c++17
           files-changed-only: true
-
       - name: Fail if linter found errors
         if: steps.linter.outputs.checks-failed > 0
         run: echo "Linter found errors" && exit 1

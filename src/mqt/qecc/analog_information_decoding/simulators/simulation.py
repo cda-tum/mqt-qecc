@@ -79,7 +79,7 @@ class SingleShotSimulator:
         self.analog_info = analog_info
         self.cutoff = cutoff
         self.save_interval = kwargs.get("save_interval", 50)
-        self.eb_precission = kwargs.get("eb_precission", 1e-1)
+        self.eb_precision = kwargs.get("eb_precision", 1e-1)
         self.analog_tg = analog_tg
         self.x_bp_iters = 0
         self.z_bp_iters = 0
@@ -733,7 +733,7 @@ class SingleShotSimulator:
                     z_success_cnt,
                     runs,
                     self.code_params,
-                    self.eb_precission,
+                    self.eb_precision,
                 ):
                     print("Result has converged.")  # noqa: T201
                     break
