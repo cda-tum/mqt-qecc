@@ -15,25 +15,25 @@ if TYPE_CHECKING:
 from mqt.qecc.cc_decoder import SquareOctagonColorCode
 
 
-@pytest.fixture()
+@pytest.fixture
 def d3_so_code() -> SquareOctagonColorCode:
     """Distance of the hexagonal color code."""
     return SquareOctagonColorCode(distance=3)
 
 
-@pytest.fixture()
+@pytest.fixture
 def p() -> float:
     """Return error rate."""
     return 0.1
 
 
-@pytest.fixture()
+@pytest.fixture
 def nr_sims() -> int:
     """Return number of simulations."""
     return 1
 
 
-@pytest.fixture()
+@pytest.fixture
 def results_dir() -> str:
     """Return directory to store results."""
     return "./results/test/"
