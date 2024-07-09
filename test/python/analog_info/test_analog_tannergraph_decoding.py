@@ -19,25 +19,25 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@pytest.fixture()
+@pytest.fixture
 def code_params() -> dict[str, int]:
     """Return code parameters."""
     return {"n": 7, "k": 3, "d": 2}
 
 
-@pytest.fixture()
+@pytest.fixture
 def error_channel() -> NDArray[np.int32]:
     """Return error channel."""
     return np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]).astype(np.int32)
 
 
-@pytest.fixture()
+@pytest.fixture
 def pcm() -> NDArray[np.int32]:
     """Return parity check matrix."""
     return np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 1, 1], [0, 0, 1, 0, 1, 0, 1]]).astype(np.int32)
 
 
-@pytest.fixture()
+@pytest.fixture
 def atd(error_channel: NDArray[np.float64], pcm: NDArray[np.int32]) -> AnalogTannergraphDecoder:
     """Return distance of the hexagonal color code."""
     return AnalogTannergraphDecoder(
@@ -49,7 +49,7 @@ def atd(error_channel: NDArray[np.float64], pcm: NDArray[np.int32]) -> AnalogTan
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def atd_simulator_sigma(pcm: NDArray[np.int32], code_params: dict[str, int]) -> AtdSimulator:
     """Return AtdSimulator using sigma to initialize syndrome channel."""
     return AtdSimulator(
@@ -67,7 +67,7 @@ def atd_simulator_sigma(pcm: NDArray[np.int32], code_params: dict[str, int]) -> 
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def atd_simulator_ser(pcm: NDArray[np.int32], code_params: dict[str, int]) -> AtdSimulator:
     """Return AtdSimulator using error rate to initialize syndrome channel."""
     per = 0.1

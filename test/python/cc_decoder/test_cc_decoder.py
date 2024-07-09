@@ -16,37 +16,37 @@ if TYPE_CHECKING:
 from mqt.qecc.cc_decoder import HexagonalColorCode, code_from_string, decoder
 
 
-@pytest.fixture()
+@pytest.fixture
 def distance() -> int:
     """Return distance of the hexagonal color code."""
     return 3
 
 
-@pytest.fixture()
+@pytest.fixture
 def p() -> float:
     """Return error rate."""
     return 0.1
 
 
-@pytest.fixture()
+@pytest.fixture
 def nr_sims() -> int:
     """Return number of simulations."""
     return 1
 
 
-@pytest.fixture()
+@pytest.fixture
 def results_dir() -> str:
     """Return directory to store results."""
     return "./results/test/"
 
 
-@pytest.fixture()
+@pytest.fixture
 def code(distance: int) -> HexagonalColorCode:
     """Hexagonal color code."""
     return HexagonalColorCode(distance=distance)
 
 
-@pytest.fixture()
+@pytest.fixture
 def d3_hexcode() -> HexagonalColorCode:
     """Distance of the hexagonal color code."""
     return HexagonalColorCode(distance=3)
