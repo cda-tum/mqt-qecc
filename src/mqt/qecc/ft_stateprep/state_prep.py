@@ -148,6 +148,8 @@ class StatePrepCircuit:
             x_errors: If True, combine the fault sets for X errors. If False, combine the fault sets for Z errors.
         """
         self.compute_fault_sets()
+        if len(additional_faults) == 0:
+            return self.x_fault_sets if x_errors else self.z_fault_sets
 
         fault_sets_unreduced = self.x_fault_sets_unreduced.copy() if x_errors else self.z_fault_sets_unreduced.copy()
         assert fault_sets_unreduced[1] is not None
