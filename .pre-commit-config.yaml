@@ -15,28 +15,35 @@ ci:
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-merge-conflict
+      - id: check-symlinks
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
+      - id: requirements-txt-fixer
       - id: trailing-whitespace
 
   # Clean jupyter notebooks
   - repo: https://github.com/srstevenson/nb-clean
-    rev: 3.0.1
+    rev: 3.3.0
     hooks:
       - id: nb-clean
+        args:
+          - --remove-empty-cells
+          - --preserve-cell-metadata
+          - raw_mimetype
+          - --
 
   # Handling unwanted unicode characters
   - repo: https://github.com/sirosen/texthooks
-    rev: 0.5.0
+    rev: 0.6.6
     hooks:
       - id: fix-ligatures
       - id: fix-smartquotes
@@ -49,26 +56,49 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
 
-  # Run ruff (subsumes pyupgrade, isort, flake8+plugins, and more)
+  #  Python linting and formatting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.291
+    rev: v0.5.1
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
-
-  # Run code formatting with Black
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1 # Keep in sync with blacken-docs
-    hooks:
-      - id: black-jupyter
+        types_or: [python, pyi, jupyter]
+      - id: ruff-format
+        types_or: [python, pyi, jupyter]
 
   # Also run Black on examples in the documentation
-  - repo: https://github.com/asottile/blacken-docs
-    rev: 1.16.0
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: 1.18.0
     hooks:
       - id: blacken-docs
+        additional_dependencies: [black==24.*]
+
+  # Check static types with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.1
+    hooks:
+      - id: mypy
+        files: ^(src/mqt|test/python)
+        exclude: "code_construction* | ^data_utils\\.py$"
+        args: []
         additional_dependencies:
-          - black==23.9.1 # keep in sync with black hook
+          - numpy
+          - pytest
+          - pytest-mock
+          - numba
+
+  # Check for spelling
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.23.1
+    hooks:
+      - id: typos
+
+  # Clang-format the C++ part of the code base automatically
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c++, c, cuda]
 
   # CMake format and lint the CMakeLists.txt files
   - repo: https://github.com/cheshirekow/cmake-format-precommit
@@ -76,40 +106,42 @@ repos:
     hooks:
       - id: cmake-format
         additional_dependencies: [pyyaml]
-      - id: cmake-lint
-        additional_dependencies: [pyyaml]
-
-  # Clang-format the C++ part of the code base automatically
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v16.0.6
-    hooks:
-      - id: clang-format
-        types_or: [c++, c, cuda]
+        types: [file]
+        files: (\.cmake|CMakeLists.txt)(.in)?$
 
   # Format configuration files with prettier
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.3
+    rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
-  # Check static types with mypy
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+  # Catch common capitalization mistakes
+  - repo: local
     hooks:
-      - id: mypy
-        files: ^(mqt/qecc|test/python|setup.py)
-        args: []
-        additional_dependencies:
-          - importlib_resources
-          - numpy
-          - pytest
-          - types-setuptools
-          - pytest_mock
+      - id: disallow-caps
+        name: Disallow improper capitalization
+        language: pygrep
+        entry: PyBind|Numpy|Cmake|CCache|Github|PyTest|Mqt|Tum
+        exclude: .pre-commit-config.yaml
 
-  # Check for spelling
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+  # Check best practices for scientific Python code
+  - repo: https://github.com/scientific-python/cookie
+    rev: 2024.04.23
     hooks:
-      - id: codespell
-        args: ["-L", "wille,linz", "--skip", "*.ipynb"]
+      - id: sp-repo-review
+        additional_dependencies: ["repo-review[cli]"]
+
+  # Check JSON schemata
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.28.6
+    hooks:
+      - id: check-dependabot
+      - id: check-github-workflows
+      - id: check-readthedocs
+
+  # Check the pyproject.toml file
+  - repo: https://github.com/henryiii/validate-pyproject-schema-store
+    rev: 2024.07.01
+    hooks:
+      - id: validate-pyproject

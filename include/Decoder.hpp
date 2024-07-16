@@ -73,7 +73,7 @@ public:
     GrowthVariant  growth = GrowthVariant::AllComponents; // standard
 
     Decoder() = default;
-    virtual void decode(const std::vector<bool>&){}; // NOLINT(readability-named-parameter)
+    virtual void decode(const std::vector<bool>&) {}; // NOLINT(readability-named-parameter)
     virtual ~Decoder() = default;
 
     [[nodiscard]] const std::unique_ptr<Code>& getCode() const {
@@ -92,6 +92,6 @@ public:
             this->code = std::make_unique<Code>(*c.gethZ()->pcm, *c.gethX()->pcm);
         }
     }
-    virtual void reset(){};
+    virtual void reset() {};
 };
 #endif // QUNIONFIND_DECODER_HPP

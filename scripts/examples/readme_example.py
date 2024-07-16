@@ -1,4 +1,5 @@
 """Example of using the UF heuristic decoder."""
+
 from __future__ import annotations
 
 import numpy as np

@@ -1,94 +1,74 @@
-name: C++
-
+name: CI
 on:
-  pull_request:
   push:
     branches:
       - main
+  pull_request:
+  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 3
-  CTEST_PARALLEL_LEVEL: 3
-
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  ubuntu-tests:
-    name: Tests ubuntu-latest
+  change-detection:
+    name: 🔍 Change
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.1.4
+
+  cpp-tests:
+    name: 🇨‌ Test
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-cpp-tests)
+    uses: ./.github/workflows/reusable-cpp-ci.yml
+
+  cpp-linter:
+    name: 🇨‌ Lint
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
+    uses: ./.github/workflows/reusable-cpp-linter.yml
+
+  python-tests:
+    name: 🐍 Test
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-python-tests)
+    uses: ./.github/workflows/reusable-python-ci.yml
+
+  code-ql:
+    name: 📝 CodeQL
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-code-ql)
+    uses: ./.github/workflows/reusable-code-ql.yml
+
+  required-checks-pass: # This job does nothing and is only used for branch protection
+    name: 🚦 Check
+    if: always()
+    needs:
+      - change-detection
+      - cpp-tests
+      - cpp-linter
+      - python-tests
+      - code-ql
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
         with:
-          submodules: recursive
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "ubuntu"
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_QECC_TESTS=ON -DENABLE_COVERAGE=ON
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
-        with:
-          fail_ci_if_error: true
-          flags: cpp
-          gcov: true
-          gcov_ignore: "extern/**/*"
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-  macos-tests:
-    name: Tests macos-11
-    runs-on: macos-11
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "macOS"
-      - name: Install flint
-        run: brew install flint
-      - name: Configure CMake
-        run: cmake -S . -B build -DBUILD_QECC_TESTS=ON
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 300
-#  windows-tests: TODO
-#    name: Tests windows-2022
-#    runs-on: windows-2022
-#    defaults:
-#      run:
-#        shell: msys2 {0}
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          submodules: recursive
-#      - uses: msys2/setup-msys2@v2
-#        with:
-#          install: mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-clang mingw-w64-clang-x86_64-flint
-#      - name: Debug flint location
-#        run: pacman -Ql mingw-w64-clang-x86_64-flint
-#      - name: Configure CMake
-#        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_QECC_TESTS=ON -DBINDINGS=ON -DFLINT_ROOT=/clang64
-#        env:
-#          CC: clang
-#          CXX: clang++
-#      - name: Build
-#        run: cmake --build build --config Release --parallel 3
-#      - name: Test
-#        working-directory: build\Release\test
-#        run: ctest -C Release --output-on-failure
+          allowed-skips: >-
+            ${{
+              fromJSON(needs.change-detection.outputs.run-cpp-tests)
+              && '' || 'cpp-tests,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-cpp-linter)
+              && '' || 'cpp-linter,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-python-tests)
+              && '' || 'python-tests,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-code-ql)
+              && '' || 'code-ql,'
+            }}
+          jobs: ${{ toJSON(needs) }}

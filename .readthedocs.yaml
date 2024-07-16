@@ -7,10 +7,19 @@ submodules:
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.9"
+    python: "3.11"
   apt_packages:
-    - cmake
     - libflint-dev
+  jobs:
+    post_checkout:
+      # Skip docs build if the commit message contains "skip ci"
+      - (git --no-pager log --pretty="tformat:%s -- %b" -1 | grep -viq "skip ci") || exit 183
+      # Skip docs build if there are no changes related to docs
+      - |
+        if [ "$READTHEDOCS_VERSION_TYPE" = "external" ] && git diff --quiet origin/main -- docs/ .readthedocs.yaml src/mqt/ src/python include/python .github/contributing* .github/workflows/support*;
+        then
+          exit 183;
+        fi
 
 sphinx:
   configuration: docs/source/conf.py

@@ -1,4 +1,5 @@
 """Construction of HGP codes."""
+
 from __future__ import annotations
 
 import numpy as np

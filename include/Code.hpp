@@ -1,14 +1,10 @@
-//
-// Created by lucas on 26/04/2022.
-//
-
-#ifndef QUNIONFIND_CODE_HPP
-#define QUNIONFIND_CODE_HPP
+#pragma once
 #include "QeccException.hpp"
 #include "TreeNode.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -337,4 +333,3 @@ public:
         return this->to_json().dump(2U);
     }
 };
-#endif // QUNIONFIND_CODE_HPP

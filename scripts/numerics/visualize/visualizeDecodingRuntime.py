@@ -1,4 +1,5 @@
 """Plot the decoding runtime for different code lengths and different error probabilities."""
+
 from __future__ import annotations
 
 import json
@@ -66,9 +67,9 @@ def runtime() -> None:
 
     for i in range(len(x_data)):
         col, val = colors.popitem()
-        if col in ("w", "k"):
+        if col in {"w", "k"}:
             col, val = colors.popitem()
-            if col in ("w", "k"):
+            if col in {"w", "k"}:
                 col, val = colors.popitem()
                 cols.append(col)
         label = "% 6.3f" % pers[i]
@@ -84,7 +85,7 @@ def runtime() -> None:
     plt.show()
 
 
-def runtime_comparison() -> None:  # noqa: PLR0915
+def runtime_comparison() -> None:
     """Compare the runtime of the original and the heuristic decoding algorithm."""
     plt.rcParams.update({"font.size": 14})
     input_filen = ""
@@ -126,9 +127,9 @@ def runtime_comparison() -> None:  # noqa: PLR0915
 
     for i in range(len(x_data)):
         col, val = colors.popitem()
-        if col in ("w", "k"):
+        if col in {"w", "k"}:
             col, val = colors.popitem()
-            if col in ("w", "k"):
+            if col in {"w", "k"}:
                 col, val = colors.popitem()
                 cols.append(col)
         label = "%2.2f" % pers[i]
@@ -138,7 +139,13 @@ def runtime_comparison() -> None:  # noqa: PLR0915
         plt.plot(xfinal[i], yfinal[i], "o", label="UFH, p=" + label, color=col)
         start = 0
         optimized_parameters, pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
-        plt.plot(xfinal[i][start:], lin_fun(xfinal[i][start:], *optimized_parameters), "--", color=col, label=r"$O(n)$")
+        plt.plot(
+            xfinal[i][start:],
+            lin_fun(xfinal[i][start:], *optimized_parameters),
+            "--",
+            color=col,
+            label=r"$O(n)$",
+        )
 
     # general qlpd decoder data
     label = "%2.2f" % pers2
@@ -149,7 +156,11 @@ def runtime_comparison() -> None:  # noqa: PLR0915
     start = 0
     optimized_parameters2, pcov = opt.curve_fit(quad_fun, xfinal2[start:], yfinal2[start:])
     plt.plot(
-        xfinal2[start:], quad_fun(xfinal2[start:], *optimized_parameters2), "--", color="green", label=r"$O(n^{2})$"
+        xfinal2[start:],
+        quad_fun(xfinal2[start:], *optimized_parameters2),
+        "--",
+        color="green",
+        label=r"$O(n^{2})$",
     )
 
     plt.legend()

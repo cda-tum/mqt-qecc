@@ -1,4 +1,5 @@
 """Generate the lifted hypergraph product of the protographs a and b. From Roffe's LDPC library."""  # noqa: EXE002
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,7 +22,12 @@ def identity(n: int) -> npt.NDArray[np.int_]:
 class LiftedHgp(css_code):
     """Lifted Hypergraph Product code."""
 
-    def __init__(self, lift_parameter: int, a: npt.NDArray[np.int_], b: npt.NDArray[np.int_] | None = None) -> None:
+    def __init__(
+        self,
+        lift_parameter: int,
+        a: npt.NDArray[np.int_],
+        b: npt.NDArray[np.int_] | None = None,
+    ) -> None:
         """Generate the lifted hypergraph product of the protographs a and b."""
         self.a = a
 
@@ -44,7 +50,10 @@ class LiftedHgp(css_code):
 
         self.lift_parameter = lift_parameter
 
-        super().__init__(self.hx_proto.to_binary(lift_parameter), self.hz_proto.to_binary(lift_parameter))
+        super().__init__(
+            self.hx_proto.to_binary(lift_parameter),
+            self.hz_proto.to_binary(lift_parameter),
+        )
 
     @property
     def protograph(self) -> npt.NDArray[np.int_]:
@@ -77,7 +86,12 @@ class LiftedHgp(css_code):
 class BiasTailoredLiftedProduct(stab_code):
     """Generate the bias-tailored lifted hypergraph product of the protographs a and b. From Roffe's LDPC library."""
 
-    def __init__(self, lift_parameter: int, a: npt.NDArray[np.int_], b: npt.NDArray[np.int_] | None = None) -> None:
+    def __init__(
+        self,
+        lift_parameter: int,
+        a: npt.NDArray[np.int_],
+        b: npt.NDArray[np.int_] | None = None,
+    ) -> None:
         """Generate the bias-tailored lifted hypergraph product of the protographs a and b."""
         lhgp = LiftedHgp(lift_parameter, a, b)
 
@@ -89,7 +103,10 @@ class BiasTailoredLiftedProduct(stab_code):
         temp2 = pt.hstack([pt.zeros(lhgp.hz1_proto.shape), lhgp.hx2_proto])
         self.hz_proto = pt.vstack([temp1, temp2])
 
-        super().__init__(self.hx_proto.to_binary(lift_parameter), self.hz_proto.to_binary(lift_parameter))
+        super().__init__(
+            self.hx_proto.to_binary(lift_parameter),
+            self.hz_proto.to_binary(lift_parameter),
+        )
 
     @property
     def protograph(self) -> npt.NDArray[np.int_]:

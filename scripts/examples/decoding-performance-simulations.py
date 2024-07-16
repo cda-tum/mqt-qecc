@@ -1,11 +1,15 @@
 """Simulate the decoding performance of the UF heuristic decoder."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 from mqt import qecc
 
-code = qecc.Code("../../examples/lp_(4,8)-[[1024,18,nan]]_hx.txt", "../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt")
+code = qecc.Code(
+    "../../examples/lp_(4,8)-[[1024,18,nan]]_hx.txt",
+    "../../examples/lp_(4,8)-[[1024,18,nan]]_hz.txt",
+)
 code.K = 18
 outpath = "./dp-sims-bindings.out"
 
@@ -27,8 +31,8 @@ with Path(outpath).open("w") as outfile:
             result = decoder.result.estimate
             if not code.is_stabilizer(result):
                 nr_failed_runs += 1
-        frac_failes = nr_failed_runs / runs_per_p
-        wer = frac_failes / code_k
+        frac_fails = nr_failed_runs / runs_per_p
+        wer = frac_fails / code_k
         res = str(curr_p) + ":" + str(wer) + "\n"
         print(res)
         outfile.write(res)

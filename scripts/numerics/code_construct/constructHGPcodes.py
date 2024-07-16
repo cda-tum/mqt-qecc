@@ -1,4 +1,7 @@
 """Hypergraph product code construction from Roffe's LDPC library."""
+
+from __future__ import annotations
+
 import ldpc.protograph as pt
 import numpy as np
 from bposd.hgp import hgp
@@ -18,7 +21,12 @@ print(qcode.hx)
 np.savetxt(f"./hgp_{qcode.code_params}_hx.txt", qcode.hx, fmt="%d", newline="\n")
 
 # larger code
-a1 = pt.array([[(0), (11), (7), (12)], [(1), (8), (1), (8)], [(11), (0), (4), (8)], [(6), (2), (4), (12)]])
+a1 = pt.array([
+    [(0), (11), (7), (12)],
+    [(1), (8), (1), (8)],
+    [(11), (0), (4), (8)],
+    [(6), (2), (4), (12)],
+])
 H = a1.to_binary(lift_parameter=10)
 qcode = hgp(H, H, compute_distance=True)
 qcode.test()

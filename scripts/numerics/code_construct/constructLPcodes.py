@@ -1,10 +1,18 @@
 """Constructs the lifted parity check codes for the lifted parity check codes."""
+
 # using tools from https://github.com/quantumgizmos/bp_osd
+from __future__ import annotations
+
 import ldpc.protograph as pt
 import numpy as np
 from lifted_hgp import LiftedHgp
 
-a1 = pt.array([[(0), (11), (7), (12)], [(1), (8), (1), (8)], [(11), (0), (4), (8)], [(6), (2), (4), (12)]])
+a1 = pt.array([
+    [(0), (11), (7), (12)],
+    [(1), (8), (1), (8)],
+    [(11), (0), (4), (8)],
+    [(6), (2), (4), (12)],
+])
 
 qcode = LiftedHgp(lift_parameter=32, a=a1, b=a1)
 if qcode.test:

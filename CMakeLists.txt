@@ -1,43 +1,50 @@
-cmake_minimum_required(VERSION 3.19)
-
-# This avoids googletest complaining that this (IPO) policy is not set
-cmake_policy(SET CMP0069 NEW)
-set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+cmake_minimum_required(VERSION 3.19...3.28)
 
 project(
-  qecc
+  mqt-qecc
   LANGUAGES CXX
   DESCRIPTION "QECC - An MQT Library for Quantum Error Correcting Codes")
 
-# check whether `modulename` is correctly cloned in the `/extern` directory.
-macro(CHECK_SUBMODULE_PRESENT modulename)
-  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/${modulename}/CMakeLists.txt")
-    message(
-      FATAL_ERROR
-        "${modulename} submodule not cloned properly. \
-        Please run `git submodule update --init --recursive` \
-        from the main project directory")
-  endif()
-endmacro()
+option(BUILD_MQT_QECC_TESTS "Also build tests for the MQT QECC project" ON)
+option(BUILD_MQT_QECC_BINDINGS "Build the MQT QECC Python bindings" OFF)
 
-check_submodule_present(mqt-core)
+if(BUILD_MQT_QECC_BINDINGS)
+  # ensure that the BINDINGS option is set
+  set(BINDINGS
+      ON
+      CACHE INTERNAL "Enable settings related to Python bindings")
+  # Some common settings for finding Python
+  set(Python_FIND_VIRTUALENV
+      FIRST
+      CACHE STRING "Give precedence to virtualenvs when searching for Python")
+  set(Python_FIND_FRAMEWORK
+      LAST
+      CACHE STRING "Prefer Brew/Conda to Apple framework Python")
+  set(Python_ARTIFACTS_INTERACTIVE
+      ON
+      CACHE BOOL "Prevent multiple searches for Python and instead cache the results.")
 
-# Add path for custom modules
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+  # top-level call to find Python
+  find_package(
+    Python 3.8 REQUIRED
+    COMPONENTS Interpreter Development.Module
+    OPTIONAL_COMPONENTS Development.SABIModule)
+endif()
+
+include(cmake/ExternalDependencies.cmake)
 
 # add main library code
 add_subdirectory(src)
 
 # add test code
-option(BUILD_QECC_TESTS "Also build tests for project")
-if(BUILD_QECC_TESTS)
+option(BUILD_MQT_QECC_TESTS "Also build tests for project" ON)
+if(BUILD_MQT_QECC_TESTS)
   enable_testing()
   include(GoogleTest)
   add_subdirectory(test)
 endif()
 
-# add Python binding code
-option(BINDINGS "Configure for building Python bindings")
-if(BINDINGS)
-  add_subdirectory(mqt/qecc)
-endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
+               ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
+add_custom_target(mqt-qecc-uninstall COMMAND ${CMAKE_COMMAND} -P
+                                             ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
