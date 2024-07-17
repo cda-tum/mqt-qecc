@@ -19,32 +19,32 @@ if TYPE_CHECKING:  # pragma: no cover
     from qiskit import QuantumCircuit
 
 
-@pytest.fixture()
+@pytest.fixture
 def steane_code() -> CSSCode:
     """Return the Steane code."""
     return CSSCode.from_code_name("steane")
 
 
-@pytest.fixture()
+@pytest.fixture
 def non_ft_steane_zero(steane_code: CSSCode) -> QuantumCircuit:
     """Return a non fault-tolerant Steane code state preparation circuit."""
     return heuristic_prep_circuit(steane_code).circ
 
 
-@pytest.fixture()
+@pytest.fixture
 def non_ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
     """Return a non fault-tolerant Steane code state preparation circuit."""
     return heuristic_prep_circuit(steane_code, zero_state=False).circ
 
 
-@pytest.fixture()
+@pytest.fixture
 def ft_steane_zero(steane_code: CSSCode) -> QuantumCircuit:
     """Return a fault-tolerant Steane code state preparation circuit."""
     circ = heuristic_prep_circuit(steane_code)
     return heuristic_verification_circuit(circ)
 
 
-@pytest.fixture()
+@pytest.fixture
 def ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
     """Return a fault-tolerant Steane code state preparation circuit."""
     circ = heuristic_prep_circuit(steane_code, zero_state=False)

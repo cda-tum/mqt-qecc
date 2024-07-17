@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
 
 
-@pytest.fixture()
+@pytest.fixture
 def rep_code() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None]:
     """Return the parity check matrices for the repetition code."""
     hx = np.array([[1, 1, 0], [0, 0, 1]])
@@ -21,7 +21,7 @@ def rep_code() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None
     return hx, hz
 
 
-@pytest.fixture()
+@pytest.fixture
 def steane_code() -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
     """Return the check matrices for the Steane code."""
     hx = np.array([[1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 1], [0, 1, 1, 0, 1, 1, 0]])

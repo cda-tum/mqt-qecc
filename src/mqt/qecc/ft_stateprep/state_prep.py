@@ -255,7 +255,7 @@ def _generate_circ_with_bounded_depth(
     # create initial matrix
     columns[0, :, :] = checks.astype(bool)
 
-    s.add(_column_addition_contraint(columns, additions))
+    s.add(_column_addition_constraint(columns, additions))
 
     # qubit can be involved in at most one addition at each depth
     for d in range(max_depth):
@@ -327,7 +327,7 @@ def _generate_circ_with_bounded_gates(
 
     # create initial matrix
     columns[0, :, :] = checks.astype(bool)
-    s.add(_column_addition_contraint(columns, additions))
+    s.add(_column_addition_constraint(columns, additions))
 
     for d in range(1, max_cnots + 1):
         # qubit cannot be control and target at the same time
@@ -1110,7 +1110,7 @@ def _symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.B
     return z3.And(constraints)
 
 
-def _column_addition_contraint(
+def _column_addition_constraint(
     columns: npt.NDArray[z3.BoolRef | bool],
     col_add_vars: npt.NDArray[z3.BoolRef],
 ) -> z3.BoolRef:

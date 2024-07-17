@@ -26,31 +26,31 @@ if TYPE_CHECKING:  # pragma: no cover
     from mqt.qecc.ft_stateprep import StatePrepCircuit
 
 
-@pytest.fixture()
+@pytest.fixture
 def steane_code() -> CSSCode:
     """Return the Steane code."""
     return CSSCode.from_code_name("Steane")
 
 
-@pytest.fixture()
+@pytest.fixture
 def surface_code() -> CSSCode:
     """Return the distance 3 rotated Surface Code."""
     return CSSCode.from_code_name("surface", 3)
 
 
-@pytest.fixture()
+@pytest.fixture
 def tetrahedral_code() -> CSSCode:
     """Return the tetrahedral code."""
     return CSSCode.from_code_name("tetrahedral")
 
 
-@pytest.fixture()
+@pytest.fixture
 def cc_4_8_8_code() -> CSSCode:
     """Return the d=5 4,8,8 color code."""
     return CSSCode.from_code_name("cc_4_8_8")
 
 
-@pytest.fixture()
+@pytest.fixture
 def steane_code_sp(steane_code: CSSCode) -> StatePrepCircuit:
     """Return a non-ft state preparation circuit for the Steane code."""
     sp_circ = heuristic_prep_circuit(steane_code)
@@ -58,7 +58,7 @@ def steane_code_sp(steane_code: CSSCode) -> StatePrepCircuit:
     return sp_circ
 
 
-@pytest.fixture()
+@pytest.fixture
 def tetrahedral_code_sp(tetrahedral_code: CSSCode) -> StatePrepCircuit:
     """Return a non-ft state preparation circuit for the tetrahedral code."""
     sp_circ = heuristic_prep_circuit(tetrahedral_code)
@@ -66,7 +66,7 @@ def tetrahedral_code_sp(tetrahedral_code: CSSCode) -> StatePrepCircuit:
     return sp_circ
 
 
-@pytest.fixture()
+@pytest.fixture
 def color_code_d5_sp(cc_4_8_8_code: CSSCode) -> StatePrepCircuit:
     """Return a non-ft state preparation circuit for the d=5 4,8,8 color code."""
     sp_circ = heuristic_prep_circuit(cc_4_8_8_code)
