@@ -31,7 +31,13 @@ if(BUILD_MQT_QECC_BINDINGS)
     OPTIONAL_COMPONENTS Development.SABIModule)
 endif()
 
+# Add path for custom modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(cmake/ExternalDependencies.cmake)
+
+# set the include directory for the build tree
+set(MQT_QECC_INCLUDE_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # add main library code
 add_subdirectory(src)

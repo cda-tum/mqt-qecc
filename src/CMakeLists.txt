@@ -16,14 +16,12 @@ add_library(
   UFHeuristic.cpp)
 
 # set include directories
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include
-                                                  ${PROJECT_BINARY_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
 
 # add options and warnings to the library
-target_link_libraries(
-  ${PROJECT_NAME}
-  PRIVATE MQT::ProjectWarnings MQT::ProjectOptions
-  PUBLIC nlohmann_json)
+target_link_libraries(${PROJECT_NAME} PUBLIC MQT::Core nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::ProjectWarnings MQT::ProjectOptions)
+
 
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})
