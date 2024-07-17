@@ -421,6 +421,6 @@ def test_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     circ = color_code_d5_sp
 
     circ_ver_full_ft = heuristic_verification_circuit(circ, full_fault_tolerance=True)
-    circ_ver_x_ft = gate_optimal_verification_circuit(circ, full_fault_tolerance=False)
+    circ_ver_x_ft = heuristic_verification_circuit(circ, full_fault_tolerance=False)
     assert circ_ver_full_ft.num_nonlocal_gates() > circ_ver_x_ft.num_nonlocal_gates()
     assert circ_ver_full_ft.depth() > circ_ver_x_ft.depth()

@@ -37,7 +37,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "z3-solver>=4.11,<4.14",
+    "z3-solver>=4.12,<4.14",
     "qecsim",
     "ldpc>=0.1.51",
     "numpy>=1.26,<2; python_version > '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
