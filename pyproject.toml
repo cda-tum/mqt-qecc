@@ -45,7 +45,7 @@ dependencies = [
     "qiskit[qasm3-import]>=1.0.0",
     "qiskit-aer>=0.14.0",
     "stim >= 1.13.0",
-    "multiprocess",
+    "multiprocess >= 0.70",
     "bposd>=1.6",
     "numba>=0.59; python_version > '3.11'",
     "numpy>=0.57; python_version <= '3.11'",
