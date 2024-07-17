@@ -1,0 +1,3 @@
+[submodule "extern/ldpc_v2"]
+	path = extern/ldpc_v2
+	url = https://github.com/quantumgizmos/ldpc_v2.git

@@ -292,11 +292,6 @@ test-skip = "*-macosx_arm64-*"
 build-frontend = "build[uv]"
 
 [tool.cibuildwheel.linux]
-before-all = [
-    "yum -y install mpfr-devel",
-    "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
-    "cd flint2 && ./configure && make -j 4 && make install"
-]
 environment = { DEPLOY = "ON" }
 
 [tool.cibuildwheel.macos]
