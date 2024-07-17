@@ -16,14 +16,14 @@ import locale
 from qiskit import QuantumCircuit
 
 
-@pytest.fixture()
+@pytest.fixture
 def circ() -> QuantumCircuit:
     """Fixture for a quantum circuit."""
     qasm_circuit = 'OPENQASM 2.0;\n include "qelib1.inc";\n qreg q[1];\n creg c[1];\n x q[0];\n measure q[0] -> c[0];\n'
     return QuantumCircuit().from_qasm_str(qasm_circuit)
 
 
-@pytest.fixture()
+@pytest.fixture
 def circ_no_measure() -> QuantumCircuit:
     """Fixture for a quantum circuit without measure."""
     qasm_circuit_no_measure = 'OPENQASM 2.0;\n include "qelib1.inc";\n qreg q[1];\n creg c[1];\n x q[0];\n'
@@ -87,7 +87,7 @@ def test_unavailable_backend(circ: QuantumCircuit, script_runner: ScriptRunner) 
     """Testing the script with unsupported backend."""
     with pathlib.Path("dummyCircuit.qasm").open("w", encoding=locale.getpreferredencoding(False)) as f:
         dump(circ, f)
-    ret = script_runner.run(["ecc_qiskit_wrapper", "-fs", "dummyBackedn", "-f", "dummyCircuit.qasm"])
+    ret = script_runner.run(["ecc_qiskit_wrapper", "-fs", "dummyBackend", "-f", "dummyCircuit.qasm"])
     file_to_remove = pathlib.Path("dummyCircuit.qasm")
     file_to_remove.unlink()
     assert not ret.success

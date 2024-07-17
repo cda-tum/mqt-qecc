@@ -1,108 +1,74 @@
-name: C++
-
+name: CI
 on:
-  pull_request:
   push:
     branches:
       - main
+  pull_request:
+  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 4
-  CTEST_PARALLEL_LEVEL: 4
-
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  cpp-tests-ubuntu:
-    name: 🐧 Release
+  change-detection:
+    name: 🔍 Change
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.1.4
+
+  cpp-tests:
+    name: 🇨‌ Test
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-cpp-tests)
+    uses: ./.github/workflows/reusable-cpp-ci.yml
+
+  cpp-linter:
+    name: 🇨‌ Lint
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
+    uses: ./.github/workflows/reusable-cpp-linter.yml
+
+  python-tests:
+    name: 🐍 Test
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-python-tests)
+    uses: ./.github/workflows/reusable-python-ci.yml
+
+  code-ql:
+    name: 📝 CodeQL
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-code-ql)
+    uses: ./.github/workflows/reusable-code-ql.yml
+
+  required-checks-pass: # This job does nothing and is only used for branch protection
+    name: 🚦 Check
+    if: always()
+    needs:
+      - change-detection
+      - cpp-tests
+      - cpp-linter
+      - python-tests
+      - code-ql
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
         with:
-          submodules: recursive
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
-          prepend_symlinks_to_path: false
-          override_cache_key: c++-tests-ubuntu-latest
-      - name: Set up mold as linker
-        uses: rui314/setup-mold@v1
-      - name: Install Ninja
-        run: pipx install ninja
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --config Release
-      - name: Test
-        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
-
-  cpp-tests-macos:
-    name: 🍎 Release
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [macos-13]
-    runs-on: ${{ matrix.runs-on }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
-          prepend_symlinks_to_path: false
-          override_cache_key: c++-tests-macos-13
-      - name: Install Ninja
-        run: pipx install ninja
-      - if: runner.os == 'macOS'
-        name: Install flint
-        run: |
-          brew install gmp mpfr ntl
-          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
-          cd flint2 && ./configure && make -j 3 && make install
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --config Release
-      - name: Test
-        run: ctest -C Release --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
-
-  coverage:
-    name: 📈 Coverage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
-          prepend_symlinks_to_path: false
-          override_cache_key: c++-coverage
-      - name: Set up mold as linker
-        uses: rui314/setup-mold@v1
-      - name: Install Ninja
-        run: pipx install ninja
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
-      - name: Build
-        run: cmake --build build --config Debug
-      - name: Test
-        run: ctest -C Debug --output-on-failure --test-dir build --repeat until-pass:3 --timeout 600
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          fail_ci_if_error: true
-          flags: cpp
-          token: ${{ secrets.CODECOV_TOKEN }}
+          allowed-skips: >-
+            ${{
+              fromJSON(needs.change-detection.outputs.run-cpp-tests)
+              && '' || 'cpp-tests,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-cpp-linter)
+              && '' || 'cpp-linter,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-python-tests)
+              && '' || 'python-tests,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-code-ql)
+              && '' || 'code-ql,'
+            }}
+          jobs: ${{ toJSON(needs) }}

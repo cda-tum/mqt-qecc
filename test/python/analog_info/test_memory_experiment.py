@@ -19,31 +19,31 @@ if TYPE_CHECKING:
     from scipy.sparse import csr_matrix
 
 
-@pytest.fixture()
+@pytest.fixture
 def pcm() -> NDArray[np.int32]:
     """Fixture for parity check matrix of a rep code."""
     return np.array([[1, 1, 0], [0, 1, 1]])
 
 
-@pytest.fixture()
+@pytest.fixture
 def repetitions() -> int:
     """Fixture for number of repetitions for multiround decoding."""
     return 3
 
 
-@pytest.fixture()
+@pytest.fixture
 def h3d(pcm: NDArray[np.int32], repetitions: int) -> csr_matrix:
     """Fixture for multiround parity check matrix."""
     return build_multiround_pcm(pcm, repetitions - 1)
 
 
-@pytest.fixture()
+@pytest.fixture
 def channel_probs(repetitions: int, pcm: NDArray[np.int32]) -> NDArray[np.float64]:
     """Fixture for error channel."""
     return np.full(shape=repetitions * pcm.shape[1] + repetitions * pcm.shape[0], fill_value=0.1)
 
 
-@pytest.fixture()
+@pytest.fixture
 def decoder(channel_probs: NDArray[np.float64], h3d: NDArray[np.int32]) -> bposd_decoder:
     """Fixture for decoder."""
     return bposd_decoder(

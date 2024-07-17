@@ -83,7 +83,7 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
     std::shared_ptr<qc::QuantumComputation> const qcECC = mapper->apply();
 
     std::ostringstream oss{};
-    qcECC->dump(oss, qc::Format::OpenQASM);
+    qcECC->dump(oss, qc::Format::OpenQASM2);
 
     return py::dict("circ"_a = oss.str());
 }

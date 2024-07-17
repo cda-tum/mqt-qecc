@@ -16,19 +16,19 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@pytest.fixture()
+@pytest.fixture
 def pcm() -> NDArray[np.int32]:
     """Return parity check matrix."""
     return np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 1, 1], [0, 0, 1, 0, 1, 0, 1]]).astype(np.int32)
 
 
-@pytest.fixture()
+@pytest.fixture
 def code_params() -> dict[str, int]:
     """Return code parameters."""
     return {"n": 7, "k": 3, "d": 2}
 
 
-@pytest.fixture()
+@pytest.fixture
 def qss_simulator(pcm: NDArray[np.int32], code_params: dict[str, int]) -> QssSimulator:
     """Return QSS simulator object."""
     return QssSimulator(

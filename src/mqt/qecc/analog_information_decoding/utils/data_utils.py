@@ -89,17 +89,17 @@ def calculate_error_rates(
 
 def is_converged(x_success: int, z_success: int, runs: int, code_params: dict[str, int], precision: float) -> bool:
     """Checks if the logical error rates for X and Z are converged."""
-    x_cond = _check_convergence(x_success, runs, code_params, precission_cutoff=precision)
-    z_cond = _check_convergence(z_success, runs, code_params, precission_cutoff=precision)
+    x_cond = _check_convergence(x_success, runs, code_params, precision_cutoff=precision)
+    z_cond = _check_convergence(z_success, runs, code_params, precision_cutoff=precision)
     return x_cond == z_cond is True
 
 
 def _check_convergence(
-    success_cnt: int, runs: int, code_params: dict[str, int], precission_cutoff: float
+    success_cnt: int, runs: int, code_params: dict[str, int], precision_cutoff: float
 ) -> bool | None:
     _, _, ler, ler_eb = calculate_error_rates(success_cnt, runs, code_params)
     if ler_eb != 0.0:
-        if ler_eb / ler < precission_cutoff:
+        if ler_eb / ler < precision_cutoff:
             return True
         return None
     return False
