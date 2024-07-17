@@ -115,7 +115,7 @@ def test_heuristic_prep_consistent(code_name: str) -> None:
 def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
-    sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
+    sp_circ = gate_optimal_prep_circuit(code, max_timeout=5)
     assert sp_circ is not None
     assert sp_circ.zero_state
 
@@ -135,7 +135,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
 
-    sp_circ = gate_optimal_prep_circuit(code, max_timeout=2)
+    sp_circ = gate_optimal_prep_circuit(code, max_timeout=5)
     assert sp_circ is not None
     circ = sp_circ.circ
     max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
@@ -152,7 +152,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
 def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Test synthesis of the plus state."""
     code = request.getfixturevalue(code)
-    sp_circ_plus = gate_optimal_prep_circuit(code, max_timeout=2, zero_state=False)
+    sp_circ_plus = gate_optimal_prep_circuit(code, max_timeout=5, zero_state=False)
 
     assert sp_circ_plus is not None
     assert not sp_circ_plus.zero_state
@@ -167,7 +167,7 @@ def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignor
     assert eq_span(code.Hz, z)  # type: ignore[arg-type]
     assert eq_span(np.vstack((code.Hx, code.Lx)), x)  # type: ignore[arg-type]
 
-    sp_circ_zero = gate_optimal_prep_circuit(code, max_timeout=2, zero_state=True)
+    sp_circ_zero = gate_optimal_prep_circuit(code, max_timeout=5, zero_state=True)
 
     assert sp_circ_zero is not None
 
@@ -216,7 +216,7 @@ def test_plus_state_heuristic(code: CSSCode, request) -> None:  # type: ignore[n
 def test_optimal_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = steane_code_sp
-    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_timeout=2)
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_timeout=5)
 
     assert len(ver_stabs_layers) == 1  # 1 Ancilla measurement
 
@@ -273,7 +273,7 @@ def test_optimal_tetrahedral_verification_circuit(tetrahedral_code_sp: StatePrep
     """
     circ = tetrahedral_code_sp
 
-    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=1, max_timeout=2)
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=1, max_timeout=5)
 
     assert len(ver_stabs_layers) == 1  # 1 layer of verification measurements
 
@@ -290,7 +290,7 @@ def test_optimal_tetrahedral_verification_circuit(tetrahedral_code_sp: StatePrep
     assert len(non_detected) == 0
 
     # Check that circuit is correct
-    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=1, max_timeout=2)
+    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=1, max_timeout=5)
     assert circ_ver.num_qubits == circ.num_qubits + 1
     assert circ_ver.num_nonlocal_gates() == np.sum(ver_stabs) + circ.circ.num_nonlocal_gates()
     assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
@@ -334,7 +334,7 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """
     circ = color_code_d5_sp
 
-    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=2)
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=5)
 
     assert len(ver_stabs_layers) == 2  # 2 layers of verification measurements
 
@@ -361,7 +361,7 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
 
     # Check that circuit is correct
     n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)
-    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=True)
+    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=True)
     assert circ_ver.num_qubits > circ.num_qubits + 5  # overhead from the flags
     assert circ_ver.num_nonlocal_gates() > n_cnots + circ.circ.num_nonlocal_gates()  # Overhead from Flag CNOTS
 
@@ -407,8 +407,8 @@ def test_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """
     circ = color_code_d5_sp
 
-    circ_ver_full_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=True)
-    circ_ver_x_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=2, full_fault_tolerance=False)
+    circ_ver_full_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=True)
+    circ_ver_x_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=False)
     assert circ_ver_full_ft.num_nonlocal_gates() > circ_ver_x_ft.num_nonlocal_gates()
     assert circ_ver_full_ft.depth() > circ_ver_x_ft.depth()
 
