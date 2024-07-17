@@ -11,8 +11,8 @@ from mqt.qecc import CSSCode
 from mqt.qecc.ft_stateprep import (
     LutDecoder,
     NoisyNDFTStatePrepSimulator,
+    gate_optimal_verification_circuit,
     heuristic_prep_circuit,
-    heuristic_verification_circuit,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -41,14 +41,14 @@ def non_ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
 def ft_steane_zero(steane_code: CSSCode) -> QuantumCircuit:
     """Return a fault-tolerant Steane code state preparation circuit."""
     circ = heuristic_prep_circuit(steane_code)
-    return heuristic_verification_circuit(circ)
+    return gate_optimal_verification_circuit(circ, max_timeout=2)
 
 
 @pytest.fixture
 def ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
     """Return a fault-tolerant Steane code state preparation circuit."""
     circ = heuristic_prep_circuit(steane_code, zero_state=False)
-    return heuristic_verification_circuit(circ)
+    return gate_optimal_verification_circuit(circ, max_timeout=2)
 
 
 def test_lut(steane_code: CSSCode) -> None:
