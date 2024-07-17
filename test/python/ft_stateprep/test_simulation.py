@@ -103,7 +103,7 @@ def test_non_ft_sim_zero(steane_code: CSSCode, non_ft_steane_zero: QuantumCircui
     p = 1e-3
     lower = 1e-4
     simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_zero, steane_code, p=p)
-    p_l, _, _, _ = simulator.logical_error_rate()
+    p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol > lower
 
@@ -114,7 +114,7 @@ def test_ft_sim_zero(steane_code: CSSCode, ft_steane_zero: QuantumCircuit) -> No
     p = 1e-3
     lower = 1e-4
     simulator = NoisyNDFTStatePrepSimulator(ft_steane_zero, steane_code, p=p)
-    p_l, _, _, _ = simulator.logical_error_rate()
+    p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol < lower
 
@@ -125,7 +125,7 @@ def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircui
     p = 1e-3
     lower = 1e-4
     simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_plus, steane_code, p=p, zero_state=False)
-    p_l, _, _, _ = simulator.logical_error_rate()
+    p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol > lower
 
@@ -136,6 +136,6 @@ def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit) -> No
     p = 1e-3
     lower = 1e-4
     simulator = NoisyNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, zero_state=False)
-    p_l, _, _, _ = simulator.logical_error_rate()
+    p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol < lower
