@@ -7,6 +7,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <gf2dense.hpp>
 #include <iostream>
 #include <ostream>
 #include <random>
