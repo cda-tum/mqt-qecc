@@ -3,12 +3,6 @@
 include(FetchContent)
 set(FETCH_PACKAGES "")
 
-# search for Z3
-find_package(Z3 4.8.15)
-if(NOT Z3_FOUND)
-  message(WARNING "Did not find Z3.")
-endif()
-
 if(BUILD_MQT_QECC_BINDINGS)
   if(NOT SKBUILD)
     # Manually detect the installed pybind11 package.
