@@ -249,7 +249,7 @@ class NoisyNDFTStatePrepSimulator:
                 break
             i += 1
 
-        return p_l, r_a, num_logical_errors, i * batch
+        return p_l / self.code.k, r_a, num_logical_errors, i * batch
 
     def _simulate_batch(self, shots: int = 1024) -> tuple[int, int]:
         sampler = self.stim_circ.compile_sampler()
