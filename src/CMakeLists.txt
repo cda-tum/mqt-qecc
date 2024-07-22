@@ -18,9 +18,11 @@ add_library(
 # set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC ${MQT_QECC_INCLUDE_BUILD_DIR})
 
-# add MQT::qfr library
-target_link_libraries(${PROJECT_NAME} PUBLIC MQT::Core nlohmann_json::nlohmann_json)
-target_link_libraries(${PROJECT_NAME} PRIVATE MQT::ProjectWarnings MQT::ProjectOptions)
+# add options and warnings to the library
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE MQT::ProjectWarnings MQT::ProjectOptions
+  PUBLIC nlohmann_json::nlohmann_json)
 
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})
