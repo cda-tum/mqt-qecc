@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
-#include <flint/nmod_matxx.h>
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -19,109 +18,6 @@ using gf2Vec = std::vector<bool>;
 
 class Utils {
 public:
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-    /**
-     * Uses flint's integers mod n matrix package nnmod_mat to solve the system given by Mx=b
-     * Returns x if there is a solution, or an empty vector if there is no solution
-     * By the behaviour of flint's solve function, if there are multiple valid solutions one is returned
-     * @param inmat
-     * @param vec
-     * @return
-     */
-    static gf2Vec solveSystem(const gf2Mat& inmat, const gf2Vec& vec) {
-        assertMatrixPresent(inmat);
-        assertVectorPresent(vec);
-        if (inmat.size() > std::numeric_limits<long int>::max() || inmat.front().size() > std::numeric_limits<long int>::max()) { // NOLINT(google-runtime-int)
-            throw QeccException("size of matrix too large for flint");
-        }
-        if (inmat.size() != vec.size()) { // NOLINT(readability-else-after-return)
-            throw QeccException("Cannot solve system, dimensions do not match");
-        }
-
-        gf2Vec          result{};
-        slong           rows = static_cast<std::int64_t>(inmat.size());
-        slong           cols = static_cast<std::int64_t>(inmat.front().size());
-        nmod_mat_t      mat;
-        nmod_mat_t      x;
-        nmod_mat_t      b;
-        mp_limb_t const mod = 2;
-        // initializes mat to rows x cols matrix with coefficients mod 2
-        nmod_mat_init(mat, rows, cols, mod); // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-        nmod_mat_init(x, cols, 1, mod);
-        nmod_mat_init(b, rows, 1, mod);
-
-        for (slong i = 0; i < nmod_mat_nrows(mat); i++) {
-            for (slong j = 0; j < nmod_mat_ncols(mat); j++) {
-                nmod_mat_set_entry(mat, i, j, inmat.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j)) ? 1U : 0U);
-            }
-        }
-        slong bColIdx = nmod_mat_ncols(b) - 1;
-        for (slong i = 0; i < nmod_mat_nrows(b); i++) {
-            nmod_mat_set_entry(b, i, bColIdx, vec.at(static_cast<std::uint64_t>(i)) ? 1U : 0U);
-        }
-        int const sol = nmod_mat_can_solve(x, mat, b);
-
-        if (sol == 1) {
-            result       = gf2Vec(static_cast<std::uint64_t>(nmod_mat_nrows(x)));
-            auto xColIdx = nmod_mat_ncols(x) - 1;
-            for (auto i = 0; i < nmod_mat_nrows(x); i++) {
-                result.at(static_cast<std::size_t>(i)) = nmod_mat_get_entry(x, i, xColIdx); // NOLINT(readability-implicit-bool-conversion)
-            }
-        } else {
-            // no solution
-        }
-        nmod_mat_clear(mat);
-        nmod_mat_clear(x);
-        nmod_mat_clear(b);
-        return result;
-    }
-    // NOLINTEND(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-    static flint::nmod_matxx gauss(const gf2Mat& matrix) {
-        assertMatrixPresent(matrix);
-        auto res = getFlintMatrix(matrix);
-        res.set_rref(); // reduced row echelon form
-        return res;
-    }
-
-    static flint::nmod_matxx getFlintMatrix(const gf2Mat& matrix) {
-        assertMatrixPresent(matrix);
-        const slong     rows    = static_cast<slong>(matrix.size());
-        const slong     cols    = static_cast<slong>(matrix.front().size());
-        const mp_limb_t modulus = 2;
-        const auto&     ctxx    = flint::nmodxx_ctx(modulus);
-        auto            result  = flint::nmod_matxx(matrix.size(), matrix.front().size(), modulus);
-        for (slong i = 0; i < rows; i++) {
-            for (slong j = 0; j < cols; j++) {
-                if (matrix.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j))) {
-                    const mp_limb_t one = 1U;
-                    result.at(i, j)     = flint::nmodxx::red(one, ctxx);
-                } else {
-                    const mp_limb_t zero = 0;
-                    result.at(i, j)      = flint::nmodxx::red(zero, ctxx);
-                }
-            }
-        }
-        return result;
-    }
-
-    static gf2Mat getMatrixFromFlint(const flint::nmod_matxx& matrix) {
-        const auto& ctxx = flint::nmodxx_ctx(2);
-        gf2Mat      result(static_cast<std::uint64_t>(matrix.rows()));
-        const auto& a = flint::nmodxx::red(1, ctxx);
-
-        for (slong i = 0; i < matrix.rows(); i++) {
-            result.at(static_cast<std::uint64_t>(i)) = gf2Vec(static_cast<std::uint64_t>(matrix.cols()));
-            for (slong j = 0; j < matrix.cols(); j++) {
-                if (matrix.at(i, j) == a) {
-                    result.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j)) = true;
-                } else {
-                    result.at(static_cast<std::uint64_t>(i)).at(static_cast<std::uint64_t>(j)) = false;
-                }
-            }
-        }
-        return result;
-    }
 
     /**
      * Checks if the given vector is in the rowspace of matrix M
@@ -145,8 +41,9 @@ public:
         for (std::size_t i = 0; i < matrix.size(); i++) {
             matrix.at(i).emplace_back(vec.at(i));
         }
-        auto reduced = gauss(matrix);
-        // flint::print_pretty(reduced);
+        auto pluDecomp = gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size(), matrix);
+        auto reduced = pluDecomp.rref();
+
         //  check consistency, inconsistent <=> vec not in rowspace
         for (slong i = 0; i < reduced.rows(); i++) {
             if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
