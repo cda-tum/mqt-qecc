@@ -3,15 +3,18 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
+import numpy as np
 import z3
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 
 if TYPE_CHECKING:
-    import numpy as np
+    import numpy.typing as npt
+
+    from ..codes import CSSCode
 
 
 class OptimalSyndromeExtractionEncoder:
-    """Encoder instance for optimal synthesis of decoding circuits for an ldpc code.
+    """Encoder instance for optimal synthesis of decoding circuits for a CSS code.
 
     Attributes:
         solver (z3.Solver): The z3 solver instance.
@@ -28,15 +31,30 @@ class OptimalSyndromeExtractionEncoder:
         overlaps (dict): Dictionary of the form overlaps[(i, j)] = [q1, q2, ...] where q1, q2, ... are the qubits that are involved in both the i-th x-check and the j-th z-check.
     """
 
-    def __init__(self, x_checks: np.array, z_checks: np.array, T: int) -> None:
+    def __init__(
+        self,
+        code: CSSCode | tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]],
+        T: int,
+        dependency_graph: npt.NDArray[np.int8] = None,
+    ) -> None:
         """Construct encoder instance for optimal synthesis of decoding circuits for an ldpc code.
 
         Args:
-            x_checks (np.array): The x-check matrix of the code.
-            z_checks (np.array): The z-check matrix of the code.
+            code (CSSCode | tuple): The CSS code for which the syndrome extraction circuit is to be synthesized. If a tuple is given, it is assumed to be of the form (x_checks, z_checks) where x_checks and z_checks are the x-check and z-check matrices of the code, respectively.
             T (int): The maximal (CNOT) depth of the decoder circuit.
+            dependency_graph (np.array): Graph where nodes are the qubits and an edge between two qubits indicates that they can't be measured at the same time.
         """
         self.solver = z3.Solver()
+
+        if isinstance(code, tuple):
+            x_checks, z_checks = code
+        else:
+            x_checks = code.Hx
+            z_checks = code.Hz
+
+        self.dependency_graph = dependency_graph
+
+        self.n_qubits = x_checks.shape[1]
         self.qubit_variables = [[[] for t in range(T)] for _ in range(x_checks.shape[1])]
         self.n_xchecks = x_checks.shape[0]
         self.n_zchecks = z_checks.shape[0]
@@ -88,8 +106,8 @@ class OptimalSyndromeExtractionEncoder:
                 self.overlaps[(i, j)] = qubits
 
     def _cnot_exists_constraint(self, check: list, cnot: int):
-        """Create a constraint that the CNOT is performed at least once in the circuit."""
-        return z3.Or([check[cnot][t] for t in range(self.T)])
+        """Create a constraint that the CNOT is performed exactly once in the circuit."""
+        return z3.PbEq([(check[cnot][t], 1) for t in range(self.T)], 1)
         # return z3.PbEq([(x, 1) for x in [check[cnot][t] for t in range(self.T)]], 1)
 
     def _cnot_comes_before_cnot(self, check1: list[z3.Bool], check2: list[z3.Bool], cnot):
@@ -106,7 +124,7 @@ class OptimalSyndromeExtractionEncoder:
         formula = x_constraints[0]
         for constr in x_constraints[1:]:
             formula = z3.Xor(formula, constr)
-        self.solver.add(formula)
+        self.solver.add(z3.Not(formula))
 
         z_constraints = list(self._cnot_order_constraint_z[(j, i)].values())
         if len(z_constraints) == 0:
@@ -116,16 +134,23 @@ class OptimalSyndromeExtractionEncoder:
         formula = z_constraints[0]
         for constr in z_constraints[1:]:
             formula = z3.Xor(formula, constr)
-        self.solver.add(formula)
+        self.solver.add(z3.Not(formula))
 
     def _cnots_not_overlapping_constraint(self, qubit, t):
-        """Create a constraint that ensures no a qubit is not involved in two CNOTs at a time."""
+        """Create a constraint that ensures a qubit is not involved in two CNOTs at a time."""
         return z3.PbLe([(x, 1) for x in self.qubit_variables[qubit][t]], 1)
 
     def _assert_cnot_on_check_constraint(self, check) -> None:
         """Assert that the CNOTs of a check are performed at different times."""
         for t in range(self.T):
             self.solver.add(z3.PbLe([(x, 1) for x in [check[qubit][t] for qubit in check]], 1))
+
+    def _assert_dependency_constraints(self) -> None:
+        for i, j in np.argwhere(self.dependency_graph):
+            for t in range(self.T):
+                for var_i in self.qubit_variables[i][t]:
+                    for var_j in self.qubit_variables[j][t]:
+                        self.solver.add(z3.Not(z3.And(var_i, var_j)))
 
     def _encode_constraints(self) -> None:
         # create variables for cnot order constraints
@@ -160,6 +185,9 @@ class OptimalSyndromeExtractionEncoder:
             for t in range(self.T):
                 self.solver.add(self._cnots_not_overlapping_constraint(i, t))
 
+        if self.dependency_graph is not None:
+            self._assert_dependency_constraints()
+
     def solve(self):
         """Solve the problem."""
         self._encode_constraints()
@@ -171,29 +199,27 @@ class OptimalSyndromeExtractionEncoder:
         self._circuit = self._extract_circuit()
         return str(result)
 
-    # def get_schedule(self) -> list:
-    #     """Return the schedule.
+    def get_schedule(self) -> list[list[tuple[int, int, str]]]:
+        """Return the schedule.
 
-    #     """
+        Returns:
+            list[list[tuple[int, str]]]: The schedule given as a list of lists of tuples. Each list corresponds to a
+                timestep and each tuple corresponds to a CNOT gate. The first element of the tuple is the data qubit on which the CNOT is applied and the second element is the index of the check qubit. The third element is either 'X' or 'Z' depending on whether the CNOT is an X-check or a Z-check.
+        """
+        schedule = []
+        for t in range(self.T):
+            timestep = []
+            for qubit in range(self.x_checks.shape[1]):
+                for i, check in enumerate(self.x_checks):
+                    if check[qubit] == 1 and self.solver.model()[self.x_vars[i][qubit][t]]:
+                        timestep.append((qubit, i, "X"))
 
-    #     x_schedule = []
-    #     for t in range(self.T):
-    #         for qubit in range(self.x_checks.shape[1]):
-    #             for i, check in enumerate(self.x_checks):
-    #                 if check[qubit] == 1 and self.solver.model()[self.x_vars[i][qubit][t]]:
-    #                     circuit.cx(x_anc[i], q[qubit])
+                for i, check in enumerate(self.z_checks):
+                    if check[qubit] == 1 and self.solver.model()[self.z_vars[i][qubit][t]]:
+                        timestep.append((qubit, i, "Z"))
 
-    #             for i, check in enumerate(self.z_checks):
-    #                 if check[qubit] == 1 and self.solver.model()[self.z_vars[i][qubit][t]]:
-    #                     circuit.cx(q[qubit], z_anc[i])
-
-    #     # measurements
-    #     for anc, c in zip(x_anc, x_c):
-    #         circuit.h(anc)
-    #         circuit.measure(anc, c)
-
-    #     for anc, c in zip(z_anc, z_c):
-    #         circuit.measure(anc, c)
+            schedule.append(timestep)
+        return schedule
 
     def get_circuit(self):
         """Return the circuit."""
