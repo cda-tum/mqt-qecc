@@ -14,7 +14,7 @@ from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRe
 from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGOutNode
 
-from ..code import InvalidCSSCodeError
+from ..codes import InvalidCSSCodeError
 
 logger = logging.getLogger(__name__)
 

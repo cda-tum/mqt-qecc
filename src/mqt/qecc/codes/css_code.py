@@ -176,16 +176,13 @@ class CSSCode:
         - [[9, 1, 3]] Shore code (\"Shor\")
         - [[9, 1, 3]] rotated surface code (\"Surface, 3\"), also default when no distance is given
         - [[25, 1, 5]] rotated surface code (\"Surface, 5\")
-        - [[17, 1, 5]] 4,8,8 color code (\"CC_4_8_8\")
         - [[23, 1, 7]] golay code (\"Golay\")
-        - 6,6,6 color code for arbitrary distances (\"CC_6_6_6, d\")
-
 
         Args:
             code_name: The name of the code.
             distance: The distance of the code.
         """
-        prefix = (Path(__file__) / "../sample_codes/").resolve()
+        prefix = (Path(__file__) / "../").resolve()
         paths = {
             "steane": prefix / "steane/",
             "tetrahedral": prefix / "tetrahedral/",
@@ -193,7 +190,6 @@ class CSSCode:
             "shor": prefix / "shor/",
             "surface_3": prefix / "rotated_surface_d3/",
             "surface_5": prefix / "rotated_surface_d5/",
-            "cc_4_8_8": prefix / "cc_4_8_8_d5/",
             "golay": prefix / "golay/",
         }
 
@@ -202,7 +198,6 @@ class CSSCode:
             "tetrahedral": (7, 3),
             "hamming": (3, 3),
             "shor": (3, 3),
-            "cc_4_8_8": (5, 5),
             "golay": (7, 7),
             "surface_3": (3, 3),
             "surface_5": (5, 5),
