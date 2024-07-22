@@ -21,16 +21,16 @@ def construct_quasi_cyclic_code(n: int) -> CSSCode:
     if n == 72:
         x, z = _cyclic_code_check_matrix(6, 6, ([3], [1, 2]), ([1, 2], [3]))
         d = 6
-    if n == 90:
+    elif n == 90:
         x, z = _cyclic_code_check_matrix(15, 3, ([9], [1, 2]), ([2, 7], [0]))
         d = 10
-    if n == 108:
+    elif n == 108:
         x, z = _cyclic_code_check_matrix(9, 6, ([3], [1, 2]), ([1, 2], [3]))
         d = 10
-    if n == 144:
+    elif n == 144:
         x, z = _cyclic_code_check_matrix(12, 6, ([3], [1, 2]), ([1, 2], [3]))
         d = 12
-    if n == 288:
+    elif n == 288:
         x, z = _cyclic_code_check_matrix(12, 12, ([3], [2, 7]), ([1, 2], [3]))
         d = 18
     else:
@@ -64,11 +64,11 @@ def _shift_matrix(l: int) -> npt.NDArray[np.int8]:
 
 
 def _x_matrix(l: int, m: int) -> npt.NDArray[np.int8]:
-    return np.kron(_shift_matrix(l), np.eye(m), dtype=np.int8)
+    return np.kron(_shift_matrix(l), np.eye(m))
 
 
 def _y_matrix(l: int, m: int) -> npt.NDArray[np.int8]:
-    return np.kron(np.eye(l), _shift_matrix(m), dtype=np.int8)
+    return np.kron(np.eye(l), _shift_matrix(m))
 
 
 def _cyclic_matrix_sum(x_terms, y_terms, l, m) -> npt.NDArray[np.int8]:
@@ -76,9 +76,9 @@ def _cyclic_matrix_sum(x_terms, y_terms, l, m) -> npt.NDArray[np.int8]:
     y = _y_matrix(l, m)
     a = np.zeros(x.shape)
     for pow in x_terms:
-        a += np.linalg.matrix_power(x, pow, dtype=np.int8)
+        a += np.linalg.matrix_power(x, pow)
     for pow in y_terms:
-        a += np.linalg.matrix_power(y, pow, dtype=np.int8)
+        a += np.linalg.matrix_power(y, pow)
 
     return a
 
