@@ -22,7 +22,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${MQT_QECC_INCLUDE_BUILD_DIR})
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE MQT::ProjectWarnings MQT::ProjectOptions
-  PUBLIC nlohmann_json::nlohmann_json)
+  PUBLIC nlohmann_json::nlohmann_json ldpc)
 
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})
