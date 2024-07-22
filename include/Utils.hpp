@@ -18,7 +18,6 @@ using gf2Vec = std::vector<bool>;
 
 class Utils {
 public:
-
     /**
      * Checks if the given vector is in the rowspace of matrix M
      * @param inmat
@@ -42,7 +41,7 @@ public:
             matrix.at(i).emplace_back(vec.at(i));
         }
         auto pluDecomp = gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size(), matrix);
-        auto reduced = pluDecomp.rref();
+        auto reduced   = pluDecomp.rref();
 
         //  check consistency, inconsistent <=> vec not in rowspace
         for (slong i = 0; i < reduced.rows(); i++) {

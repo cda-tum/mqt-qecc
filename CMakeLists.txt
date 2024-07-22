@@ -55,4 +55,4 @@ if(NOT TARGET mqt-qecc-uninstall)
                  ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
   add_custom_target(mqt-qecc-uninstall COMMAND ${CMAKE_COMMAND} -P
                                                ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif ()
+endif()

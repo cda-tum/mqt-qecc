@@ -3,8 +3,10 @@
 //
 
 #include "UFDecoder.hpp"
+
 #include "Decoder.hpp"
 #include "gf2dense.hpp"
+
 #include <chrono>
 #include <queue>
 #include <random>
@@ -190,7 +192,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto pluDec = gf2dense::PluDecomposition(redHz.size(), redHz.at(0).size() ,redHz);
+    auto pluDec = gf2dense::PluDecomposition(redHz.size(), redHz.at(0).size(), redHz);
     pluDec.rref();
 
     auto estim = pluDec.solve(redSyndr); // solves the system redHz*x=redSyndr by x to see if a solution can be found
