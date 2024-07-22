@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-class SyndromeExtractionEncoder:
+class OptimalSyndromeExtractionEncoder:
     """Encoder instance for optimal synthesis of decoding circuits for an ldpc code.
 
     Attributes:
@@ -88,16 +88,21 @@ class SyndromeExtractionEncoder:
                 self.overlaps[(i, j)] = qubits
 
     def _cnot_exists_constraint(self, check: list, cnot: int):
+        """Create a constraint that the CNOT is performed at least once in the circuit."""
         return z3.Or([check[cnot][t] for t in range(self.T)])
         # return z3.PbEq([(x, 1) for x in [check[cnot][t] for t in range(self.T)]], 1)
 
-    def _cnot_comes_before_cnot(self, x_check: list[z3.Bool], z_check: list[z3.Bool], cnot):
-        return z3.Or([z3.And(x_check[cnot][k], z3.Or(z_check[cnot][k + 1 :])) for k in range(self.T)])
+    def _cnot_comes_before_cnot(self, check1: list[z3.Bool], check2: list[z3.Bool], cnot):
+        """Create a constraint that the CNOT of check1 comes before the CNOT of check2."""
+        return z3.Or([z3.And(check1[cnot][k], z3.Or(check2[cnot][k + 1 :])) for k in range(self.T)])
 
-    def _assert_check_order_constraint(self, i, j) -> None:
+    def _assert_check_order_constraint(self, i: int, j: int) -> None:
+        """Assert that CNOTs of x and z checks alternate in pairs."""
         x_constraints = list(self._cnot_order_constraint_x[(i, j)].values())
         if len(x_constraints) == 0:
             return
+
+        # If an odd number of x-checks appear before the z-checks the commutation relation is violated.
         formula = x_constraints[0]
         for constr in x_constraints[1:]:
             formula = z3.Xor(formula, constr)
@@ -106,15 +111,19 @@ class SyndromeExtractionEncoder:
         z_constraints = list(self._cnot_order_constraint_z[(j, i)].values())
         if len(z_constraints) == 0:
             return
+
+        # If an odd number of z-checks appear before the x-checks the commutation relation is violated.
         formula = z_constraints[0]
         for constr in z_constraints[1:]:
             formula = z3.Xor(formula, constr)
         self.solver.add(formula)
 
     def _cnots_not_overlapping_constraint(self, qubit, t):
+        """Create a constraint that ensures no a qubit is not involved in two CNOTs at a time."""
         return z3.PbLe([(x, 1) for x in self.qubit_variables[qubit][t]], 1)
 
     def _assert_cnot_on_check_constraint(self, check) -> None:
+        """Assert that the CNOTs of a check are performed at different times."""
         for t in range(self.T):
             self.solver.add(z3.PbLe([(x, 1) for x in [check[qubit][t] for qubit in check]], 1))
 
@@ -161,6 +170,30 @@ class SyndromeExtractionEncoder:
 
         self._circuit = self._extract_circuit()
         return str(result)
+
+    # def get_schedule(self) -> list:
+    #     """Return the schedule.
+
+    #     """
+
+    #     x_schedule = []
+    #     for t in range(self.T):
+    #         for qubit in range(self.x_checks.shape[1]):
+    #             for i, check in enumerate(self.x_checks):
+    #                 if check[qubit] == 1 and self.solver.model()[self.x_vars[i][qubit][t]]:
+    #                     circuit.cx(x_anc[i], q[qubit])
+
+    #             for i, check in enumerate(self.z_checks):
+    #                 if check[qubit] == 1 and self.solver.model()[self.z_vars[i][qubit][t]]:
+    #                     circuit.cx(q[qubit], z_anc[i])
+
+    #     # measurements
+    #     for anc, c in zip(x_anc, x_c):
+    #         circuit.h(anc)
+    #         circuit.measure(anc, c)
+
+    #     for anc, c in zip(z_anc, z_c):
+    #         circuit.measure(anc, c)
 
     def get_circuit(self):
         """Return the circuit."""
