@@ -65,6 +65,7 @@ jobs:
         with:
           patterns: |
             -**/extern/**
+            -**/build/**
           input: sarif-results/${{ matrix.language }}.sarif
           output: sarif-results/${{ matrix.language }}.sarif
 
