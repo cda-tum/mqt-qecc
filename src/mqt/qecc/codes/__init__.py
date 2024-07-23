@@ -1,3 +1,5 @@
+"""Module for constructing and manipulating CSS codes."""
+
 from __future__ import annotations
 
 from .color_code import ColorCode, LatticeType
