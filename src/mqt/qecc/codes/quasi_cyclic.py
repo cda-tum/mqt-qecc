@@ -39,53 +39,36 @@ def construct_quasi_cyclic_code(n: int) -> CSSCode:
     return CSSCode(d, x, z)
 
 
-def _make_check_array(n: int) -> npt.NDArray[np.int8]:
-    checks = []
-    for _ in range(n // 2 - 1):
-        check = np.random.choice([0, 1], size=(n,), p=[1 - 4 / n, 4 / n])
-        while np.sum(check) == 0:
-            check = np.random.choice([0, 1], size=(n,), p=[1 - 4 / n, 4 / n])
-        checks.append(check)
-    while np.any(np.sum(np.array(checks), axis=0) == 0):
-        checks = []
-        for _ in range(n // 2 - 1):
-            check = np.random.choice([0, 1], size=(n,), p=[1 - 4 / n, 4 / n])
-            while np.sum(check) == 0:
-                check = np.random.choice([0, 1], size=(n,), p=[1 - 4 / n, 4 / n])
-            checks.append(check)
-    return np.array(checks, dtype=np.int8)
-
-
-def _shift_matrix(l: int) -> npt.NDArray[np.int8]:
-    s = np.zeros((l, l), dtype=np.int8)
-    for i in range(l):
-        s[i, (i + 1) % l] = 1
+def _shift_matrix(l_: int) -> npt.NDArray[np.int8]:
+    s = np.zeros((l_, l_), dtype=np.int8)  # type: npt.NDArray[np.int8]
+    for i in range(l_):
+        s[i, (i + 1) % l_] = 1
     return s
 
 
-def _x_matrix(l: int, m: int) -> npt.NDArray[np.int8]:
-    return np.kron(_shift_matrix(l), np.eye(m))
+def _x_matrix(l_: int, m: int) -> npt.NDArray[np.int8]:
+    return np.kron(_shift_matrix(l_), np.eye(m)).astype(np.int8)
 
 
-def _y_matrix(l: int, m: int) -> npt.NDArray[np.int8]:
-    return np.kron(np.eye(l), _shift_matrix(m))
+def _y_matrix(l_: int, m: int) -> npt.NDArray[np.int8]:
+    return np.kron(np.eye(l_), _shift_matrix(m)).astype(np.int8)
 
 
-def _cyclic_matrix_sum(x_terms, y_terms, l, m) -> npt.NDArray[np.int8]:
-    x = _x_matrix(l, m)
-    y = _y_matrix(l, m)
+def _cyclic_matrix_sum(x_terms: list[int], y_terms: list[int], l_: int, m: int) -> npt.NDArray[np.int8]:
+    x = _x_matrix(l_, m)
+    y = _y_matrix(l_, m)
     a = np.zeros(x.shape)
-    for pow in x_terms:
-        a += np.linalg.matrix_power(x, pow)
-    for pow in y_terms:
-        a += np.linalg.matrix_power(y, pow)
+    for power in x_terms:
+        a += np.linalg.matrix_power(x, power)
+    for power in y_terms:
+        a += np.linalg.matrix_power(y, power)
 
-    return a
+    return a.astype(np.int8)
 
 
 def _cyclic_code_check_matrix(
-    m: int, l: int, a_terms: tuple[list[int], list[int]], b_terms: tuple[list[int], list[int]]
+    m: int, l_: int, a_terms: tuple[list[int], list[int]], b_terms: tuple[list[int], list[int]]
 ) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
-    a = _cyclic_matrix_sum(a_terms[0], a_terms[1], l, m) % 2
-    b = _cyclic_matrix_sum(b_terms[0], b_terms[1], l, m) % 2
+    a = _cyclic_matrix_sum(a_terms[0], a_terms[1], l_, m) % 2
+    b = _cyclic_matrix_sum(b_terms[0], b_terms[1], l_, m) % 2
     return np.hstack((a, b)), np.hstack((b.T, a.T))
