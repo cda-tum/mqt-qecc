@@ -76,7 +76,6 @@ def main() -> None:
             circ = heuristic_prep_circuit(code, zero_state=args.zero_state)
 
         assert circ is not None
-
         if args.exact_ver:
             qc = gate_optimal_verification_circuit(circ, max_timeout=600)
         else:
@@ -86,7 +85,8 @@ def main() -> None:
         qc = QuantumCircuit.from_qasm_file(prefix / code_name / circ_file)
 
     sim = NoisyNDFTStatePrepSimulator(qc, code=code, p=args.p_error, zero_state=args.zero_state)
-    sim.logical_error_rate(min_errors=args.n_errors)
+    res = sim.logical_error_rate(min_errors=args.n_errors)
+    print(res)  # noqa: T201
 
 
 if __name__ == "__main__":
