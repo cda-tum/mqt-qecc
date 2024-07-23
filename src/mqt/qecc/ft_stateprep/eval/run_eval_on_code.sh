@@ -15,4 +15,4 @@ run_and_write() {
 
 export -f run_and_write
 
-parallel --load 32 --link run_and_write $1 {$2:-"--zero_state"} ::: ${p[@]}
+parallel --load 32 --link run_and_write $1 ${2:-"--zero_state"} ::: ${p[@]}
