@@ -7,9 +7,7 @@ declare -a p=("0.00005" "0.00006" "0.00007" "0.00008" "0.00009" "0.0001" "0.0002
 echo "p p_l acceptance errors runs" > "${1}.csv"
 
 run_and_write() {
-    echo $2
-    echo $3
-    local res=$(python estimate_logical_error_rate.py $1 "-p" $2 $3)
+    local res=$(python estimate_logical_error_rate.py $1 $2 "-p" $3)
     local line="$3 ${res}"
     (flock -e 200 echo $line >> "${1}.csv") 200>lock
 }
@@ -17,4 +15,4 @@ run_and_write() {
 
 export -f run_and_write
 
-parallel --load 32 --link run_and_write $1 ::: ${p[@] $2}
+parallel --load 32 --link run_and_write $1 {$2:-"--zero_state"} ::: ${p[@]}
