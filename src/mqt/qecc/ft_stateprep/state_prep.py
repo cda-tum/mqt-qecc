@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from qiskit import AncillaQubit, ClBit, DagCircuit, DAGNode, Qubit
     from qiskit.quantum_info import PauliList
 
-    from ..code import CSSCode
+    from ..codes import CSSCode
 
 
 class StatePrepCircuit:

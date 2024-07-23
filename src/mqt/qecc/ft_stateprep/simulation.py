@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import QuantumCircuit
 
-    from ..code import CSSCode
+    from ..codes import CSSCode
 
 
 class NoisyNDFTStatePrepSimulator:
