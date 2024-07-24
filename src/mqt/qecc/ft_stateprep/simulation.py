@@ -23,7 +23,14 @@ if TYPE_CHECKING:  # pragma: no cover
 class NoisyNDFTStatePrepSimulator:
     """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
 
-    def __init__(self, state_prep_circ: QuantumCircuit, code: CSSCode, p: float, zero_state: bool = True) -> None:
+    def __init__(
+        self,
+        state_prep_circ: QuantumCircuit,
+        code: CSSCode,
+        p: float,
+        zero_state: bool = True,
+        parallel_gates: bool = True,
+    ) -> None:
         """Initialize the simulator.
 
         Args:
@@ -31,6 +38,7 @@ class NoisyNDFTStatePrepSimulator:
             code: The code to simulate.
             p: The error rate.
             zero_state: Whether thezero state is prepared or nor.
+            parallel_gates: Whether to allow for parallel execution of gates.
         """
         if code.Hx is None or code.Hz is None:
             msg = "The code must have both X and Z checks."
@@ -48,6 +56,7 @@ class NoisyNDFTStatePrepSimulator:
         self.x_measurements = []  # type: list[int]
         self.z_measurements = []  # type: list[int]
         self.data_measurements = []  # type: list[int]
+        self.parallel_gates = parallel_gates
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
         self.decoder = LutDecoder(code)
@@ -125,7 +134,10 @@ class NoisyNDFTStatePrepSimulator:
                     if initialized[qubit]:
                         stim_circuit.append_operation("H", [qubit])
                         stim_circuit.append_operation("DEPOLARIZE1", [qubit], [2 * self.p / 3])
-                        used_qubits.append(qubit)
+                        if not self.parallel_gates:
+                            idle_error([qubit])
+                        else:
+                            used_qubits.append(qubit)
 
                 elif gate[0].name == "cx":
                     ctrl = self.circ.find_bit(gate[1][0])[0]
@@ -144,7 +156,10 @@ class NoisyNDFTStatePrepSimulator:
 
                     stim_circuit.append_operation("CX", [ctrl, target])
                     stim_circuit.append_operation("DEPOLARIZE2", [ctrl, target], [self.p])
-                    used_qubits.extend([ctrl, target])
+                    if not self.parallel_gates:
+                        idle_error([ctrl, target])
+                    else:
+                        used_qubits.extend([ctrl, target])
 
                 elif gate[0].name == "measure":
                     anc = self.circ.find_bit(gate[1][0])[0]
@@ -155,7 +170,10 @@ class NoisyNDFTStatePrepSimulator:
                     else:
                         self.x_verification_measurements.append(self.n_measurements)
                     self.n_measurements += 1
-                    used_qubits.extend([anc])
+                    if not self.parallel_gates:
+                        idle_error([anc])
+                    else:
+                        used_qubits.append(anc)
                     initialized[anc] = False
                     measured[anc] += 1
                     if measured[anc] == 2:
