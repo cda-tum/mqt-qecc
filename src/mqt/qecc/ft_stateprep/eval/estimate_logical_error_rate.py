@@ -49,6 +49,7 @@ def main() -> None:
     if "surface" in code_name:
         d = args.distance
         code = CSSCode.from_code_name("surface", d)
+        code_name = f"rotated_surface_d{d}"
     elif "cc_4_8_8" in code_name:
         d = 5
         code = SquareOctagonColorCode(d)
