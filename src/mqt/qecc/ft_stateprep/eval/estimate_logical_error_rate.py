@@ -34,7 +34,7 @@ def main() -> None:
         "--plus_state", default=False, dest="zero_state", action="store_false", help="Synthesize logical |+> state."
     )
     parser.add_argument("-n", "--n_errors", type=int, default=500, help="Number of errors to sample")
-    parser.add_argument("--exact_circ", default=True, action="store_true", help="Use exact synthesis")
+    parser.add_argument("--exact_circ", default=False, action="store_true", help="Use exact synthesis")
     parser.add_argument("--heuristic_circ", dest="exact_circ", action="store_false", help="Use heuristic synthesis")
     parser.add_argument("--exact_ver", default=True, action="store_true", help="Use exact verification")
     parser.add_argument("--heuristic_ver", dest="exact_ver", action="store_false", help="Use heuristic verification")
