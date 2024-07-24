@@ -21,7 +21,6 @@ from mqt.qecc.ft_stateprep import (
 def main() -> None:
     """Run the logical error rate estimation for a given code and physical error rate."""
     available_codes = ["steane", "tetrahedral", "shor", "surface", "cc_4_8_8", "cc_6_6_6", "hamming", "carbon"]
-
     parser = argparse.ArgumentParser(description="Estimate logical error rate for CSS state preparation circuits")
     parser.add_argument(
         "code",
@@ -38,6 +37,7 @@ def main() -> None:
     parser.add_argument("--heuristic_circ", dest="exact_circ", action="store_false", help="Use heuristic synthesis")
     parser.add_argument("--exact_ver", default=True, action="store_true", help="Use exact verification")
     parser.add_argument("--heuristic_ver", dest="exact_ver", action="store_false", help="Use heuristic verification")
+    parser.add_argument("--naive_ver", default=False, action="store_true", help="Use naive verification")
     parser.add_argument("--no_ver", action="store_true", help="Use no verification")
     parser.add_argument(
         "-d", "--distance", type=int, default=3, help="Code Distance (only required for surface and color codes)"
@@ -58,11 +58,11 @@ def main() -> None:
     elif code_name in available_codes:
         code = CSSCode.from_code_name(code_name)
     else:
-        raise ValueError("Code not available. Available codes: " + ", ".join(available_codes))
+        raise ValueError("Code " + code_name + " not available. Available codes: " + ", ".join(available_codes))
 
     prefix = (Path(__file__) / "../circuits/").resolve()
     sp_circ_name = "opt" if args.exact_circ else "heuristic"
-    ver_circ_name = "opt" if args.exact_ver else "heuristic"
+    ver_circ_name = "opt" if args.exact_ver else "naive " if args.naive_ver else "heuristic"
     state_name = "zero" if args.zero_state else "plus"
     ft_name = "non_ft" if args.no_ver else "ft"
     circ_file = f"{state_name}_{ft_name}_{sp_circ_name}_{ver_circ_name}.qasm"
