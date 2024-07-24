@@ -49,10 +49,10 @@ def main() -> None:
         d = args.distance
         code = CSSCode.from_code_name("surface", d)
     elif "cc_4_8_8" in code_name:
-        d = args.distance
+        d = 5
         code = SquareOctagonColorCode(d)
     elif "cc_6_6_6" in code_name:
-        d = args.distance
+        d = 5
         code = HexagonalColorCode(d)
     elif code_name in available_codes:
         code = CSSCode.from_code_name(code_name)
