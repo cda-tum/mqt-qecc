@@ -42,6 +42,7 @@ def main() -> None:
     parser.add_argument(
         "-d", "--distance", type=int, default=3, help="Code Distance (only required for surface and color codes)"
     )
+    parser.add_argument("--no_parallel_gates", default=False, action="store_true")
 
     args = parser.parse_args()
     code_name = args.code
@@ -84,7 +85,9 @@ def main() -> None:
         # load circuit from file
         qc = QuantumCircuit.from_qasm_file(prefix / code_name / circ_file)
 
-    sim = NoisyNDFTStatePrepSimulator(qc, code=code, p=args.p_error, zero_state=args.zero_state)
+    sim = NoisyNDFTStatePrepSimulator(
+        qc, code=code, p=args.p_error, zero_state=args.zero_state, parallel_gates=not args.no_parallel_gates
+    )
     res = sim.logical_error_rate(min_errors=args.n_errors)
     print(",".join([str(x) for x in res]))  # noqa: T201
 
