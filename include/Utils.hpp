@@ -37,28 +37,22 @@ public:
         } else {
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
-
-        for (std::size_t i = 0; i < matrix.size(); i++) {
-            matrix.at(i).emplace_back(vec.at(i));
-        }
-        auto pluDecomp = gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size(), matrix);
-        auto reduced   = pluDecomp.rref();
-
-        //  check consistency, inconsistent <=> vec not in rowspace
-        for (slong i = 0; i < reduced.rows(); i++) {
-            if (reduced.at(i, reduced.cols() - 1)._limb() == 1) {
-                bool inconsistent = true;
-                for (slong k = 0; k < (reduced.cols() - 1); k++) {
-                    if (reduced.at(i, k)._limb() == 1) {
-                        inconsistent = false;
-                    }
-                }
-                if (inconsistent) {
-                    return false;
-                }
+        std::vector<std::vector<int>> matrixInt(matrix.size(), std::vector<int>(matrix.at(0).size()));
+        for (size_t i = 0; i < matrix.size(); i++) {
+            for(size_t j = 0; j < matrix.at(i).size(); j++) {
+                matrixInt.at(i).at(j) = matrix.at(i).at(j) ? 1 : 0;
             }
         }
-        return true;
+        std::vector<uint8_t> intVec(vec.size());
+        for (size_t i = 0; i < vec.size(); i++) {
+            intVec.at(i) = vec.at(i) ? 1 : 0;
+        }
+        auto pluDecomp = ldpc::gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size(), matrixInt);
+        pluDecomp.rref();
+        auto sol = pluDecomp.lu_solve(intVec);
+
+        return sol.empty();
+
     }
 
     /**

@@ -192,10 +192,21 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto pluDec = gf2dense::PluDecomposition(redHz.size(), redHz.at(0).size(), redHz);
+    //convert redHz to int type
+    std::vector<std::vector<int>> redHzInt(redHz.size(), std::vector<int>(redHz.at(0).size()));
+    for (std::size_t i = 0; i < redHz.size(); i++) {
+        for (std::size_t j = 0; j < redHz.at(i).size(); j++) {
+            redHzInt.at(i).at(j) = redHz.at(i).at(j) ? 1 : 0;
+        }
+    }
+    std::vector<uint8_t> redSyndInt(redSyndr.size());
+    for (std::size_t i = 0; i < redSyndr.size(); i++) {
+        redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
+    }
+    auto pluDec = ldpc::gf2dense::PluDecomposition(redHz.size(), redHz.at(0).size(), redHzInt);
     pluDec.rref();
 
-    auto estim = pluDec.solve(redSyndr); // solves the system redHz*x=redSyndr by x to see if a solution can be found
+    auto estim = pluDec.fast_lu_solve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
         if (estim.at(i)) {
             res.insert(i);

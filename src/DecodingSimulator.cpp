@@ -91,7 +91,6 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
     rawDataOutput << dataj.dump(2U);
     statisticsOutstr.close();
     rawDataOutput.close();
-    flint_cleanup();
 }
 
 void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputFilepath,
@@ -171,6 +170,5 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
         finalRawOut << j.dump(2U);
         finalRawOut.close();
     }
-    flint_cleanup();
     dataOutStream.close();
 }
