@@ -27,7 +27,7 @@ def main() -> None:
         type=str,
         help="Code for which to estimate logical error rate. Available codes: " + ", ".join(available_codes),
     )
-    parser.add_argument("-p", "--p_error", type=float, default="0.01", help="Physical error rate")
+    parser.add_argument("-p", "--p_error", type=float, help="Physical error rate")
     parser.add_argument("--zero_state", default=True, action="store_true", help="Synthesize logical |0> state.")
     parser.add_argument(
         "--plus_state", default=False, dest="zero_state", action="store_false", help="Synthesize logical |+> state."
@@ -63,7 +63,8 @@ def main() -> None:
 
     prefix = (Path(__file__) / "../circuits/").resolve()
     sp_circ_name = "opt" if args.exact_circ else "heuristic"
-    ver_circ_name = "opt" if args.exact_ver else "naive " if args.naive_ver else "heuristic"
+    ver_circ_name = ("opt" if args.exact_ver else "heuristic") if not args.naive_ver else "naive"
+
     state_name = "zero" if args.zero_state else "plus"
     ft_name = "non_ft" if args.no_ver else "ft"
     circ_file = f"{state_name}_{ft_name}_{sp_circ_name}_{ver_circ_name}.qasm"

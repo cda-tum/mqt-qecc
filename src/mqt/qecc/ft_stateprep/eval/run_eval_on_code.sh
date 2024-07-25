@@ -14,4 +14,4 @@ run_and_write() {
 
 export -f run_and_write
 
-parallel --load 32 --link run_and_write $@ ::: ${p[@]}
+parallel --load 16 --link run_and_write $@ ::: ${p[@]}
