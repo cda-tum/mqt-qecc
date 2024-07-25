@@ -15,6 +15,7 @@ from mqt.qecc.ft_stateprep import (
     gate_optimal_verification_circuit,
     heuristic_prep_circuit,
     heuristic_verification_circuit,
+    naive_verification_circuit,
 )
 
 
@@ -79,7 +80,9 @@ def main() -> None:
             circ = heuristic_prep_circuit(code, zero_state=args.zero_state)
 
         assert circ is not None
-        if args.exact_ver:
+        if args.naive_ver:
+            qc = naive_verification_circuit(circ)
+        elif args.exact_ver:
             qc = gate_optimal_verification_circuit(circ, max_timeout=600)
         else:
             qc = heuristic_verification_circuit(circ)
