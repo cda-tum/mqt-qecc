@@ -90,17 +90,21 @@ measure z_anc[1] -> z_c[1];
 measure z_anc[2] -> z_c[2];
 measure z_anc[3] -> z_c[3];
 measure z_anc[4] -> z_c[4];
+
 h x_anc[0];
 
 cx x_anc[0],q[1];
+
 cx x_anc[0],a8[0];
 
 cx x_anc[0],q[3];
+
 cx x_anc[0],a8[1];
 
 cx x_anc[0],q[6];
 
 cx x_anc[0],q[8];
+
 cx x_anc[0],a8[2];
 
 cx x_anc[0],q[11];
@@ -109,18 +113,24 @@ cx x_anc[0],q[13];
 
 cx x_anc[0],a8[3];
 
+cx x_anc[0],q[16];
+
 cx x_anc[0],a8[2];
 measure a8[2] -> c8[2];
 
-cx x_anc[0],q[16];
-cx x_anc[0],a8[3];
-measure a8[3] -> c8[3];
-cx x_anc[0],a8[0];
-measure a8[0] -> c8[0];
-cx x_anc[0],q[21];
+cx x_anc[0],q[18];
 
 cx x_anc[0],a8[0];
+measure a8[0] -> c8[0];
+
+cx x_anc[0],q[21];
+
+cx x_anc[0],a8[3];
+measure a8[3] -> c8[3];
+
+cx x_anc[0],a8[1];
 measure a8[1] -> c8[1];
+
 cx x_anc[0],q[23];
 
 h x_anc[0];
