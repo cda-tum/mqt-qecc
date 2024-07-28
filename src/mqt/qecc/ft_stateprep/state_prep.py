@@ -1238,7 +1238,7 @@ def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
     z_measurements = list(sp_circ.code.Hx)
     x_measurements = list(sp_circ.code.Hz)
     reps = (sp_circ.code.distance - 1) // 2
-    return _measure_ft_stabs(sp_circ, x_measurements * reps, z_measurements * reps)
+    return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps)
 
 
 def w_flag_pattern(w: int) -> list[int]:
@@ -1323,6 +1323,7 @@ def measure_flagged(
 
     if w < 3 and t == 2:
         _measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
 
     if w == 4 and t == 2:
         measure_flagged_4(qc, stab, ancilla, measurement_bit, z_measurement)
