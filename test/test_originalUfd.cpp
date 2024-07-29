@@ -64,7 +64,7 @@ TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     std::cout << "Estim: " << std::endl;
     Utils::printGF2vector(estim);
     std::cout << std::endl;
-    std::cout << "EstimIdx: " ;
+    std::cout << "EstimIdx: ";
     Utils::printGF2vector(estim2);
     std::cout << std::endl;
     std::cout << "Sol: ";

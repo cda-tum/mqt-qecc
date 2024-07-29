@@ -10,7 +10,6 @@
 
 class UtilsTest : public testing::TestWithParam<std::string> {};
 
-
 TEST(UtilsTest, TestSwapRows) {
     gf2Mat       matrix = {{1, 1, 0, 1, 0, 0, 1},
                            {1, 0, 1, 0, 1, 0, 0},
@@ -22,7 +21,6 @@ TEST(UtilsTest, TestSwapRows) {
     Utils::swapRows(matrix, 1, 2);
     EXPECT_TRUE(sol == matrix);
 }
-
 
 TEST(UtilsTest, TestTranspose) {
     const gf2Mat matrix  = {{1, 0, 0, 1, 0, 1, 1},
@@ -126,7 +124,6 @@ TEST(UtilsTest, ImportCode) {
 TEST(UtilsTest, ImportCodeFileNotExists) {
     EXPECT_THROW(Utils::importGf2MatrixFromFile("code_that_does_not_exist.txt"), QeccException);
 }
-
 
 TEST(UtilsTest, MatrixMultiply) {
     const gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},

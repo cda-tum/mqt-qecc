@@ -192,7 +192,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto redHz_csc = Utils::toCsc(redHz);
+    auto                 redHz_csc = Utils::toCsc(redHz);
     std::vector<uint8_t> redSyndInt(redSyndr.size());
     for (std::size_t i = 0; i < redSyndr.size(); i++) {
         redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
@@ -203,8 +203,8 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
     auto estim = pluDec.lu_solve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
         if (estim.at(i) != 0u) {
-            auto inst =  res.insert(static_cast<size_t>(i));
-            std::cout<< inst.second ;
+            auto inst = res.insert(static_cast<size_t>(i));
+            std::cout << inst.second;
         }
     }
     return res;
