@@ -156,7 +156,7 @@ std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered
 std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::unordered_set<std::size_t>&    nodeSet,
                                                                    const std::unordered_set<std::size_t>&    syndrome,
                                                                    const std::unique_ptr<ParityCheckMatrix>& pcm) const {
-    std::unordered_set<std::size_t> res{};
+    std::unordered_set<std::size_t> res;
 
     auto intNodes = computeInteriorBitNodes(nodeSet);
     if (intNodes.empty()) {
@@ -192,24 +192,19 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    //convert redHz to int type
-    std::vector<std::vector<int>> redHzInt(redHz.size(), std::vector<int>(redHz.at(0).size()));
-    for (std::size_t i = 0; i < redHz.size(); i++) {
-        for (std::size_t j = 0; j < redHz.at(i).size(); j++) {
-            redHzInt.at(i).at(j) = redHz.at(i).at(j) ? 1 : 0;
-        }
-    }
+    auto redHz_csc = Utils::toCsc(redHz);
     std::vector<uint8_t> redSyndInt(redSyndr.size());
     for (std::size_t i = 0; i < redSyndr.size(); i++) {
         redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
     }
-    auto pluDec = ldpc::gf2dense::PluDecomposition(redHz.size(), redHz.at(0).size(), redHzInt);
+    auto pluDec = ldpc::gf2dense::PluDecomposition(redHz.size(), redHz.at(0).size(), redHz_csc);
     pluDec.rref();
 
-    auto estim = pluDec.fast_lu_solve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
+    auto estim = pluDec.lu_solve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
-        if (estim.at(i)) {
-            res.insert(i);
+        if (estim.at(i) != 0u) {
+            auto inst =  res.insert(static_cast<size_t>(i));
+            std::cout<< inst.second ;
         }
     }
     return res;
