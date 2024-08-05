@@ -45,17 +45,6 @@ jobs:
           ./configure --prefix=/usr/local --with-gmp=/usr/local
           make -j 4 && sudo make install
           echo MPFR_ROOT="/usr/local" >> $GITHUB_ENV
-      - if: runner.os == 'macOS'
-        name: Install flint
-        run: |
-          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
-          cd flint2
-          export CC="ccache clang"
-          export CXX="ccache clang++"
-          export MACOSX_DEPLOYMENT_TARGET=11.0
-          ./configure --prefix=/usr/local --with-gmp=/usr/local --with-mpfr=/usr/local
-          make -j 4 && sudo make install
-          echo FLINT_ROOT="/usr/local" >> $GITHUB_ENV
       # set up uv for faster Python package management
       - if: runner.os == 'macOS'
         uses: yezz123/setup-uv@v4
@@ -78,9 +67,6 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-      # install flint
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
       # set up uv for faster Python package management
       - uses: yezz123/setup-uv@v4
       # build the source distribution

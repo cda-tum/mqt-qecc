@@ -12,8 +12,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
       # install a specific version of clang
       - name: Install clang-${{ env.clang-version }}
         run: |
