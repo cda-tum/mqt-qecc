@@ -38,7 +38,7 @@ public:
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
         std::vector<std::vector<int>> matrix_csc = Utils::toCsc(matrix);
-        std::vector<int>              idxs={};
+        std::vector<int>              idxs       = {};
         for (auto i = 0; i < vec.size(); i++) {
             if (vec.at(i)) {
                 idxs.push_back(i);
@@ -171,9 +171,9 @@ public:
      * @return
      */
     static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
-        std::random_device rd;
-        const std::mt19937_64    gen(rd());
-        gf2Vec             result={};
+        std::random_device    rd;
+        const std::mt19937_64 gen(rd());
+        gf2Vec                result = {};
         result.reserve(n);
 
         // Set up the weights, iid noise for each bit
@@ -206,7 +206,7 @@ public:
         }
 
         while (getline(inFile, line, '\n')) {
-            gf2Vec             tempVec={};
+            gf2Vec             tempVec = {};
             std::istringstream instream(line);
             while (instream >> word) {
                 tempVec.push_back(static_cast<bool>(word));
@@ -241,7 +241,7 @@ public:
         auto                          cols = mat.at(0).size();
         std::vector<std::vector<int>> result;
         for (auto i = 0; i < cols; i++) {
-            std::vector<int> col={};
+            std::vector<int> col = {};
             for (auto j = 0; j < rows; j++) {
                 if (mat.at(j).at(i)) {
                     col.push_back(j);
