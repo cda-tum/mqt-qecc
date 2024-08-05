@@ -172,7 +172,7 @@ public:
      */
     static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
         std::random_device    rd;
-        const std::mt19937_64 gen(rd());
+        std::mt19937_64 gen(rd());
         gf2Vec                result = {};
         result.reserve(n);
 
