@@ -1,7 +1,7 @@
 #pragma once
 
 #include "QeccException.hpp"
-#include "gf2dense.hpp"
+#include <gf2dense.hpp>
 
 #include <algorithm>
 #include <cassert>
