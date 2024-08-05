@@ -31,16 +31,16 @@ public:
         if (std::none_of(vec.begin(), vec.end(), [](const bool val) { return val; })) { // all zeros vector trivial
             return true;
         }
-        gf2Mat matrix;
+        gf2Mat matrix = {};
         if (vec.size() == inmat.at(0).size()) {
             matrix = getTranspose(inmat); // v is in rowspace of M <=> v is in col space of M^T
         } else {
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
         std::vector<std::vector<int>> matrix_csc = Utils::toCsc(matrix);
-        std::vector<int>              idxs;
+        std::vector<int>              idxs={};
         for (auto i = 0; i < vec.size(); i++) {
-            if (vec.at(i) == true) {
+            if (vec.at(i)) {
                 idxs.push_back(i);
             }
         }
@@ -172,8 +172,8 @@ public:
      */
     static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
         std::random_device rd;
-        std::mt19937_64    gen(rd());
-        gf2Vec             result;
+        const std::mt19937_64    gen(rd());
+        gf2Vec             result={};
         result.reserve(n);
 
         // Set up the weights, iid noise for each bit
@@ -206,7 +206,7 @@ public:
         }
 
         while (getline(inFile, line, '\n')) {
-            gf2Vec             tempVec;
+            gf2Vec             tempVec={};
             std::istringstream instream(line);
             while (instream >> word) {
                 tempVec.push_back(static_cast<bool>(word));
@@ -241,7 +241,7 @@ public:
         auto                          cols = mat.at(0).size();
         std::vector<std::vector<int>> result;
         for (auto i = 0; i < cols; i++) {
-            std::vector<int> col;
+            std::vector<int> col={};
             for (auto j = 0; j < rows; j++) {
                 if (mat.at(j).at(i)) {
                     col.push_back(j);
