@@ -2,11 +2,12 @@
 #include "QeccException.hpp"
 #include "TreeNode.hpp"
 #include "Utils.hpp"
-#include <string>
+
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>

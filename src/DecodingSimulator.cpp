@@ -5,6 +5,7 @@
 
 #include "DecodingRunInformation.hpp"
 #include "UFDecoder.hpp"
+
 #include <sstream>
 
 std::string generateOutFileName(const std::string& filepath) {
