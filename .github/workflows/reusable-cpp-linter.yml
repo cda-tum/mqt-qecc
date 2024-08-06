@@ -48,7 +48,7 @@ jobs:
           thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
           step-summary: true
           database: "build"
-          extra-args: -std=c++17
+          extra-args: -std=c++20
           files-changed-only: true
       - name: Fail if linter found errors
         if: steps.linter.outputs.checks-failed > 0
