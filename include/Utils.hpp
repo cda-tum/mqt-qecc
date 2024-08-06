@@ -4,12 +4,15 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <gf2dense.hpp>
 #include <iostream>
 #include <ostream>
 #include <random>
+#include <sstream>
+#include <string>
 #include <vector>
 
 using gf2Mat = std::vector<std::vector<bool>>;
@@ -29,25 +32,23 @@ public:
         if (std::none_of(vec.begin(), vec.end(), [](const bool val) { return val; })) { // all zeros vector trivial
             return true;
         }
-        gf2Mat matrix = {};
-        if (vec.size() == inmat.at(0).size()) {
-            matrix = getTranspose(inmat); // v is in rowspace of M <=> v is in col space of M^T
-        } else {
+        if (vec.size() != inmat.at(0).size()) {
             throw QeccException("Cannot check if in rowspace, dimensions of matrix and vector do not match");
         }
-        std::vector<std::vector<int>> matrixCsc = {};
-        matrixCsc                               = Utils::toCsc(matrix);
-        std::vector<int> idxs                   = {};
-        for (auto i = 0; i < vec.size(); i++) {
-            if (vec.at(i)) {
-                idxs.push_back(i);
-            }
-        }
-        auto pluDecomp = ldpc::gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size(), matrixCsc);
+        const auto matrix    = getTranspose(inmat); // v is in rowspace of M <=> v is in col space of M^T
+        auto       matrixCsc = Utils::toCsc(matrix);
+
+        auto pluDecomp = ldpc::gf2dense::PluDecomposition(static_cast<int>(matrix.size()), static_cast<int>(matrix.at(0).size()), matrixCsc);
         pluDecomp.rref();
 
-        matrixCsc.push_back(idxs);
-        auto pluExt = ldpc::gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size() + 1, matrixCsc);
+        std::vector<int> idxs{};
+        for (size_t i = 0; i < vec.size(); i++) {
+            if (vec.at(i)) {
+                idxs.emplace_back(static_cast<int>(i));
+            }
+        }
+        matrixCsc.emplace_back(idxs);
+        auto pluExt = ldpc::gf2dense::PluDecomposition(static_cast<int>(matrix.size()), static_cast<int>(matrix.at(0).size() + 1), matrixCsc);
         pluExt.rref();
 
         return pluExt.matrix_rank == pluDecomp.matrix_rank;
@@ -61,13 +62,11 @@ public:
     static gf2Mat
     getTranspose(const gf2Mat& matrix) {
         assertMatrixPresent(matrix);
-        gf2Mat transp(matrix.at(0).size());
-        for (auto& i : transp) {
-            i = gf2Vec(matrix.size());
-        }
+        gf2Mat transp(matrix.at(0).size(), gf2Vec(matrix.size()));
         for (std::size_t i = 0; i < matrix.size(); i++) {
-            for (std::size_t j = 0; j < matrix.at(i).size(); j++) {
-                transp.at(j).at(i) = matrix.at(i).at(j);
+            const auto& row = matrix.at(i);
+            for (std::size_t j = 0; j < row.size(); j++) {
+                transp.at(j).at(i) = row.at(j);
             }
         }
         return transp;
@@ -171,12 +170,12 @@ public:
      */
     static gf2Vec sampleErrorIidPauliNoise(const std::size_t n, const double physicalErrRate) {
         std::random_device rd;
-        std::mt19937_64    gen(rd()); // NOLINT(cppcoreguidelines-init-variables)
-        gf2Vec             result = {};
+        std::mt19937_64    gen(rd());
+        gf2Vec             result{};
         result.reserve(n);
 
         // Set up the weights, iid noise for each bit
-        std::bernoulli_distribution d(physicalErrRate); // NOLINT(cppcoreguidelines-init-variables)
+        std::bernoulli_distribution d(physicalErrRate);
         for (std::size_t i = 0; i < n; i++) {
             result.emplace_back(d(gen));
         }
@@ -196,19 +195,19 @@ public:
 
     static gf2Mat importGf2MatrixFromFile(const std::string& filepath) {
         std::string   line;
-        int           word; // NOLINT(cppcoreguidelines-init-variables)
+        int           word{};
         std::ifstream inFile(filepath);
-        gf2Mat        result = {};
+        gf2Mat        result{};
 
         if (!inFile) {
             throw QeccException("Cannot open file");
         }
 
         while (getline(inFile, line, '\n')) {
-            gf2Vec             tempVec = {};
+            gf2Vec             tempVec{};
             std::istringstream instream(line);
             while (instream >> word) {
-                tempVec.push_back(static_cast<bool>(word));
+                tempVec.emplace_back(static_cast<bool>(word));
             }
             result.emplace_back(tempVec);
         }
@@ -234,19 +233,19 @@ public:
     static std::vector<std::vector<int>> toCsc(const std::vector<std::vector<bool>>& mat) {
         // convert redHz to int type and to csc format: matrix[col][row] = 1
         if (mat.empty()) {
-            return std::vector<std::vector<int>>();
+            return {};
         }
         auto                          rows = mat.size();
         auto                          cols = mat.at(0).size();
         std::vector<std::vector<int>> result;
-        for (auto i = 0; i < cols; i++) {
+        for (size_t i = 0; i < cols; i++) {
             std::vector<int> col = {};
-            for (auto j = 0; j < rows; j++) {
+            for (size_t j = 0; j < rows; j++) {
                 if (mat.at(j).at(i)) {
-                    col.push_back(j);
+                    col.emplace_back(static_cast<int>(j));
                 }
             }
-            result.push_back(col);
+            result.emplace_back(col);
         }
         return result;
     }
