@@ -13,7 +13,8 @@ add_library(
   ${MQT_QECC_INCLUDE_BUILD_DIR}/Utils.hpp
   DecodingSimulator.cpp
   UFDecoder.cpp
-  UFHeuristic.cpp)
+  UFHeuristic.cpp
+  Utils.cpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC ${MQT_QECC_INCLUDE_BUILD_DIR})

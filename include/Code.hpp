@@ -3,6 +3,7 @@
 #include "TreeNode.hpp"
 #include "Utils.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
