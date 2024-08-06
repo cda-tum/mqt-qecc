@@ -9,7 +9,7 @@ from __future__ import annotations
 from ._version import version as __version__
 from .analog_information_decoding.simulators.analog_tannergraph_decoding import AnalogTannergraphDecoder, AtdSimulator
 from .analog_information_decoding.simulators.quasi_single_shot_v2 import QssSimulator
-from .code import CSSCode, InvalidCSSCodeError
+from .codes import CSSCode, InvalidCSSCodeError
 from .pyqecc import (
     Code,
     Decoder,
