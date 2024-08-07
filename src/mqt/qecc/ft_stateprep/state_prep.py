@@ -14,7 +14,7 @@ from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRe
 from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGOutNode
 
-from ..code import InvalidCSSCodeError
+from ..codes import InvalidCSSCodeError
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from qiskit import AncillaQubit, ClBit, DagCircuit, DAGNode, Qubit
     from qiskit.quantum_info import PauliList
 
-    from ..code import CSSCode
+    from ..codes import CSSCode
 
 
 class StatePrepCircuit:
@@ -203,7 +203,7 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
         m[:, used_qubits] = True
 
         costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
-        if np.all(costs_unused >= 0):  # no more reductions possible
+        if np.all(costs_unused >= 0) or len(used_qubits) == checks.shape[1]:  # no more reductions possible
             if used_qubits == []:  # local minimum => get out by making matrix triangular
                 logging.warning("Local minimum reached. Making matrix triangular.")
                 checks = mod2.reduced_row_echelon(checks)[0]

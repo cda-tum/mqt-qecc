@@ -184,8 +184,8 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 120
-extend-include = ["*.ipynb"]
 src = ["src"]
+namespace-packages = ["mqt"]
 preview = true
 unsafe-fixes = true
 
@@ -282,7 +282,8 @@ anc = "anc"
 
 [tool.repo-review]
 ignore = [
-  "PC160" # "Uses codespell" -> switched to https://github.com/crate-ci/typos
+  "PC160", # "Uses codespell" -> switched to https://github.com/crate-ci/typos
+  "PC180", # "Uses prettier" -> switched to different prettier-mirror that is not recognized by the check
 ]
 
 

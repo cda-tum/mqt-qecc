@@ -11,13 +11,13 @@ import numpy as np
 import stim
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from ..code import InvalidCSSCodeError
+from ..codes import InvalidCSSCodeError
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import QuantumCircuit
 
-    from ..code import CSSCode
+    from ..codes import CSSCode
 
 
 class NoisyNDFTStatePrepSimulator:
@@ -249,7 +249,7 @@ class NoisyNDFTStatePrepSimulator:
                 break
             i += 1
 
-        return p_l, r_a, num_logical_errors, i * batch
+        return p_l / self.code.k, r_a, num_logical_errors, i * batch
 
     def _simulate_batch(self, shots: int = 1024) -> tuple[int, int]:
         sampler = self.stim_circ.compile_sampler()
