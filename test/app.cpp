@@ -20,7 +20,7 @@ void runtime(const std::string& codename) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
+    const std::string rootPath = "";
     const std::string inPath   = rootPath + "in/toricCodes2/";
     //**** local:
     // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
@@ -55,11 +55,10 @@ void runtime(const std::string& codename) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string                          rootPath  = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
-    const std::string                          rootPath2 = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::string                          rootPath  = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string                          rootPath2 = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
     const std::size_t                          codeK     = 18;
     const std::size_t                          nrRuns    = 1000;
-    std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
 
     auto       code = HGPcode(rootPath, rootPath2, codeK);
     const auto n    = code.getN();
