@@ -55,10 +55,10 @@ void runtime(const std::string& codename) {
 }
 
 void decodingPerformance(const double per) {
-    const std::string                          rootPath  = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
-    const std::string                          rootPath2 = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
-    const std::size_t                          codeK     = 18;
-    const std::size_t                          nrRuns    = 1000;
+    const std::string rootPath  = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string rootPath2 = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::size_t codeK     = 18;
+    const std::size_t nrRuns    = 1000;
 
     auto       code = HGPcode(rootPath, rootPath2, codeK);
     const auto n    = code.getN();
