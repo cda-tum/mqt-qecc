@@ -52,7 +52,6 @@ void runtime(const std::string& codename) {
         samplesSum += runsSum;
     }
     std::cout << codename << ":" << samplesSum / nrSamples << std::endl;
-    flint_cleanup();
 }
 
 void decodingPerformance(const double per) {
@@ -91,7 +90,6 @@ void decodingPerformance(const double per) {
     const auto wordErrRate    = 1.0 - std::pow(1 - logicalErrRate, (1.0 / codeK)); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
     std::cout << "per:wer = " << per << ":" << wordErrRate << std::endl;
     std::cout.flush();
-    flint_cleanup();
 }
 
 int main(int argc, char* argv[]) {         // NOLINT(clang-diagnostic-unused-parameter, bugprone-exception-escape,misc-unused-parameters)
