@@ -45,6 +45,18 @@ else()
   endif()
 endif()
 
+set(LDPC_REV
+    "main"
+    CACHE STRING "LDPC V2 identifier (tag, branch or commit hash)")
+set(LDPC_REPO_OWNER
+    "quantumgizmos"
+    CACHE STRING "LDPC repository owner (change when using a fork)")
+FetchContent_Declare(
+  ldpc_v2
+  GIT_REPOSITORY https://github.com/${LDPC_REPO_OWNER}/ldpc_v2.git
+  GIT_TAG ${LDPC_REV})
+list(APPEND FETCH_PACKAGES ldpc_v2)
+
 if(BUILD_MQT_QECC_TESTS)
   set(gtest_force_shared_crt
       ON
@@ -81,10 +93,6 @@ if(BUILD_MQT_QECC_BINDINGS)
     endif()
   endif()
 endif()
-
-# Add path for custom modules
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-find_package(FLINT REQUIRED)
 
 # Make all declared dependencies available.
 FetchContent_MakeAvailable(${FETCH_PACKAGES})

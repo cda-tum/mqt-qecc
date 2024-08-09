@@ -10,39 +10,6 @@
 
 class UtilsTest : public testing::TestWithParam<std::string> {};
 
-TEST(UtilsTest, MatConversion) {
-    auto ctxx = flint::nmodxx_ctx(2);
-
-    gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
-                     {1, 0, 1, 0, 1, 0, 0},
-                     {0, 1, 1, 0, 0, 1, 0}};
-    auto   sol    = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
-    for (size_t i = 0; i < matrix.size(); i++) {
-        for (size_t j = 0; j < matrix.at(0).size(); j++) {
-            sol.at(i, j) = flint::nmodxx::red(matrix[i][j], ctxx);
-        }
-    }
-
-    auto res = Utils::getFlintMatrix(matrix);
-    EXPECT_TRUE(sol == res);
-}
-
-TEST(UtilsTest, MatConversionBack) {
-    auto ctxx = flint::nmodxx_ctx(2);
-
-    gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
-                     {1, 0, 1, 0, 1, 0, 0},
-                     {0, 1, 1, 0, 0, 1, 0}};
-    auto   sol    = flint::nmod_matxx(matrix.size(), matrix.at(0).size(), 2);
-    for (size_t i = 0; i < matrix.size(); i++) {
-        for (size_t j = 0; j < matrix.at(0).size(); j++) {
-            sol.at(i, j) = flint::nmodxx::red(matrix[i][j], ctxx);
-        }
-    }
-    auto res = Utils::getMatrixFromFlint(sol);
-    EXPECT_TRUE(res == matrix);
-}
-
 TEST(UtilsTest, TestSwapRows) {
     gf2Mat       matrix = {{1, 1, 0, 1, 0, 0, 1},
                            {1, 0, 1, 0, 1, 0, 0},
@@ -53,17 +20,6 @@ TEST(UtilsTest, TestSwapRows) {
 
     Utils::swapRows(matrix, 1, 2);
     EXPECT_TRUE(sol == matrix);
-}
-
-TEST(UtilsTest, TestReduce) {
-    const gf2Mat matrix = {{1, 1, 0, 1, 0, 0, 1},
-                           {1, 0, 1, 0, 1, 0, 0},
-                           {0, 1, 1, 0, 0, 1, 0}};
-    const gf2Mat sol    = {{1, 0, 1, 0, 1, 0, 0},
-                           {0, 1, 1, 0, 0, 1, 0},
-                           {0, 0, 0, 1, 1, 1, 1}};
-    auto         res    = Utils::gauss(matrix);
-    EXPECT_TRUE(Utils::getFlintMatrix(sol) == res);
 }
 
 TEST(UtilsTest, TestTranspose) {
@@ -156,31 +112,6 @@ TEST(UtilsTest, GaussGF2testInRSTrivial) {
     EXPECT_TRUE(isInRowSpace);
 }
 
-TEST(UtilsTest, LinEqSolvTest) {
-    const gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
-                           {0, 1, 0, 1, 1, 0, 1},
-                           {0, 0, 1, 0, 1, 1, 1}};
-
-    const gf2Vec vector   = {0, 1, 0};
-    auto         res      = Utils::solveSystem(matrix, vector);
-    const gf2Vec solution = {0, 1, 0, 0, 0, 0, 0};
-    std::cout << "res: ";
-    Utils::printGF2vector(res);
-    EXPECT_TRUE(res == solution);
-}
-
-TEST(UtilsTest, LinEqSolvTest2) {
-    const gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
-                           {0, 1, 0, 1, 1, 0, 1},
-                           {0, 0, 1, 0, 1, 1, 1}};
-
-    const gf2Vec vector   = {0, 1, 1};
-    auto         res      = Utils::solveSystem(matrix, vector);
-    const gf2Vec solution = {0, 1, 1, 0, 0, 0, 0};
-    std::cout << "sol";
-    Utils::printGF2vector(res);
-    EXPECT_TRUE(res == solution);
-}
 TEST(UtilsTest, ImportCode) {
     const gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
                            {0, 1, 0, 1, 1, 0, 1},
@@ -192,14 +123,6 @@ TEST(UtilsTest, ImportCode) {
 
 TEST(UtilsTest, ImportCodeFileNotExists) {
     EXPECT_THROW(Utils::importGf2MatrixFromFile("code_that_does_not_exist.txt"), QeccException);
-}
-
-TEST(UtilsTest, GetFlintMatrix) {
-    const gf2Mat matrix = {{1, 0, 0, 1, 0, 1, 1},
-                           {0, 1, 0, 1, 1, 0, 1},
-                           {0, 0, 1, 0, 1, 1, 1}};
-    auto         s      = Utils::getFlintMatrix(matrix);
-    print_pretty(s);
 }
 
 TEST(UtilsTest, MatrixMultiply) {

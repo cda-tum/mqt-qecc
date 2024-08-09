@@ -1,29 +1,29 @@
 # main project library
 add_library(
   ${PROJECT_NAME}
-  ${PROJECT_SOURCE_DIR}/include/Code.hpp
-  ${PROJECT_SOURCE_DIR}/include/Codes.hpp
-  ${PROJECT_SOURCE_DIR}/include/Decoder.hpp
-  ${PROJECT_SOURCE_DIR}/include/DecodingRunInformation.hpp
-  ${PROJECT_SOURCE_DIR}/include/DecodingSimulator.hpp
-  ${PROJECT_SOURCE_DIR}/include/QeccException.hpp
-  ${PROJECT_SOURCE_DIR}/include/TreeNode.hpp
-  ${PROJECT_SOURCE_DIR}/include/UFDecoder.hpp
-  ${PROJECT_SOURCE_DIR}/include/UFHeuristic.hpp
-  ${PROJECT_SOURCE_DIR}/include/Utils.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/Code.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/Codes.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/Decoder.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/DecodingRunInformation.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/DecodingSimulator.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/QeccException.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/TreeNode.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/UFDecoder.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/UFHeuristic.hpp
+  ${MQT_QECC_INCLUDE_BUILD_DIR}/Utils.hpp
   DecodingSimulator.cpp
   UFDecoder.cpp
-  UFHeuristic.cpp)
+  UFHeuristic.cpp
+  Utils.cpp)
 
 # set include directories
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include
-                                                  ${PROJECT_BINARY_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ${MQT_QECC_INCLUDE_BUILD_DIR})
 
 # add options and warnings to the library
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE MQT::ProjectWarnings MQT::ProjectOptions
-  PUBLIC nlohmann_json flint)
+  PUBLIC nlohmann_json::nlohmann_json ldpc)
 
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})
