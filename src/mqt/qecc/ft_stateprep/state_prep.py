@@ -916,10 +916,10 @@ def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]]
         if flags:
             measure_flagged(qc, stab, x_anc[i], x_c[i], z_measurement=False, t=t)
         else:
-            qc.h(x_anc)
+            qc.h(x_anc[i])
             qc.cx([x_anc[i]] * len(stab), stab)
-            qc.h(x_anc)
-            qc.measure(x_anc, x_c)
+            qc.h(x_anc[i])
+            qc.measure(x_anc[i], x_c[i])
 
 
 def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]], t: int, flags: bool = False) -> None:
