@@ -20,8 +20,7 @@ void runtime(const std::string& codename) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    const std::string rootPath = "";
-    const std::string inPath   = rootPath + "in/toricCodes2/";
+    const std::string inPath = "in/toricCodes2/";
     //**** local:
     // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
     // const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
