@@ -46,10 +46,10 @@ else()
 endif()
 
 set(LDPC_REV
-    "cmake-cleanup"
+    "main"
     CACHE STRING "LDPC V2 identifier (tag, branch or commit hash)")
 set(LDPC_REPO_OWNER
-    "burgholzer"
+    "quantumgizmos"
     CACHE STRING "LDPC repository owner (change when using a fork)")
 FetchContent_Declare(
   ldpc_v2
