@@ -28,6 +28,9 @@ target_link_libraries(
 # add MQT alias
 add_library(MQT::QECC ALIAS ${PROJECT_NAME})
 
+# add the ECC framework code
+add_subdirectory(ecc)
+
 if(BUILD_MQT_QECC_BINDINGS)
   add_subdirectory(python)
 endif()
