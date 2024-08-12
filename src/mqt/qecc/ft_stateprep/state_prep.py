@@ -1188,6 +1188,7 @@ def _remove_trivial_faults(
     t_error = (d_error - 1) // 2
     t = (code.distance - 1) // 2
     max_w = t_error // t
+    max_w = 1
     for i, fault in enumerate(faults):
         faults[i] = _coset_leader(fault, stabs)
     faults = faults[np.where(np.sum(faults, axis=1) > max_w * num_errors)[0]]
