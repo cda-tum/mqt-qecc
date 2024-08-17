@@ -14,6 +14,10 @@ from .state_prep import (
     heuristic_verification_stabilizers,
     naive_verification_circuit,
 )
+from .state_prep_det import (
+    gate_optimal_deterministic_verification,
+)
+from .simulation_det import NoisyDFTStatePrepSimulator
 
 __all__ = [
     "LutDecoder",
@@ -27,4 +31,6 @@ __all__ = [
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
     "naive_verification_circuit",
+    "gate_optimal_deterministic_verification",
+    "NoisyDFTStatePrepSimulator",
 ]
