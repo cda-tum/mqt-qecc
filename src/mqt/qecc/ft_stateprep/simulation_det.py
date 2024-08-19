@@ -201,7 +201,7 @@ class NoisyDFTStatePrepSimulator:
 
 # def decode_failure(syndrome: int, state: int, code: CSSCode, decoder: LutDecoder, zero_state: bool) -> bool:
         num_measurements = self.num_qubits
-        num_measurements += len(code.Hx) if self.zero_state else len(code.Hz)
+        num_measurements += len(code.Hz) if self.zero_state else len(code.Hx)
 
         self.protocol.check_functions["decode_failure"] = partial(decode_failure, code=code, decoder=self.decoder, zero_state=self.zero_state, 
                                                                   num_measurements=num_measurements)

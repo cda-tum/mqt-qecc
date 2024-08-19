@@ -1082,6 +1082,8 @@ def _symbolic_vector_add(
 
 def _odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
     """Return True if the overlap of symbolic vector with constant vector is odd."""
+    if np.array_equal(v_con, np.zeros(len(v_con), dtype=np.int8)):
+        return False
     return z3.PbEq([(v_sym[i], 1) for i, c in enumerate(v_con) if c == 1], 1)
 
 
