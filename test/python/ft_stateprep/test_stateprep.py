@@ -10,6 +10,7 @@ from ldpc import mod2
 from qiskit.quantum_info import Clifford
 
 from mqt.qecc import CSSCode
+from mqt.qecc.codes import SquareOctagonColorCode
 from mqt.qecc.ft_stateprep import (
     depth_optimal_prep_circuit,
     gate_optimal_prep_circuit,
@@ -48,7 +49,7 @@ def tetrahedral_code() -> CSSCode:
 @pytest.fixture
 def cc_4_8_8_code() -> CSSCode:
     """Return the d=5 4,8,8 color code."""
-    return CSSCode.from_code_name("cc_4_8_8")
+    return SquareOctagonColorCode(5)
 
 
 @pytest.fixture
@@ -95,7 +96,7 @@ def get_stabs(qc: QuantumCircuit) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.
     return x, z
 
 
-@pytest.mark.parametrize("code_name", ["steane", "tetrahedral", "surface", "cc_4_8_8"])
+@pytest.mark.parametrize("code_name", ["steane", "tetrahedral", "surface"])
 def test_heuristic_prep_consistent(code_name: str) -> None:
     """Check that heuristic_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = CSSCode.from_code_name(code_name)

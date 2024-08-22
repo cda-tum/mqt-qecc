@@ -902,7 +902,7 @@ def _heuristic_layer(
     return measurements
 
 
-def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]], flags: bool = False) -> None:
+def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]], t: int, flags: bool = False) -> None:
     if len(x_measurements) == 0:
         return
     num_x_anc = len(x_measurements)
@@ -914,15 +914,15 @@ def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]]
     for i, m in enumerate(x_measurements):
         stab = np.where(m != 0)[0]
         if flags:
-            measure_flagged(qc, stab, x_anc[i], x_c[i], z_measurement=False)
+            measure_flagged(qc, stab, x_anc[i], x_c[i], z_measurement=False, t=t)
         else:
-            qc.h(x_anc)
+            qc.h(x_anc[i])
             qc.cx([x_anc[i]] * len(stab), stab)
-            qc.h(x_anc)
-            qc.measure(x_anc, x_c)
+            qc.h(x_anc[i])
+            qc.measure(x_anc[i], x_c[i])
 
 
-def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]], flags: bool = False) -> None:
+def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]], t: int, flags: bool = False) -> None:
     if len(z_measurements) == 0:
         return
     num_z_anc = len(z_measurements)
@@ -934,7 +934,7 @@ def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]]
     for i, m in enumerate(z_measurements):
         stab = np.where(m != 0)[0]
         if flags:
-            measure_flagged(qc, stab, z_anc[i], z_c[i], z_measurement=True)
+            measure_flagged(qc, stab, z_anc[i], z_c[i], z_measurement=True, t=t)
         else:
             qc.cx(stab, [z_anc[i]] * len(stab))
     qc.measure(z_anc, z_c)
@@ -952,13 +952,13 @@ def _measure_ft_stabs(
     measured_circ.compose(sp_circ.circ, inplace=True)
 
     if sp_circ.zero_state:
-        _measure_ft_z(measured_circ, z_measurements)
+        _measure_ft_z(measured_circ, z_measurements, t=(sp_circ.code.x_distance - 1) // 2)
         if full_fault_tolerance:
-            _measure_ft_x(measured_circ, x_measurements, flags=True)
+            _measure_ft_x(measured_circ, x_measurements, flags=True, t=(sp_circ.code.x_distance - 1) // 2)
     else:
-        _measure_ft_x(measured_circ, x_measurements)
+        _measure_ft_x(measured_circ, x_measurements, t=(sp_circ.code.z_distance - 1) // 2)
         if full_fault_tolerance:
-            _measure_ft_z(measured_circ, z_measurements, flags=True)
+            _measure_ft_z(measured_circ, z_measurements, flags=True, t=(sp_circ.code.z_distance - 1) // 2)
 
     return measured_circ
 
@@ -1181,7 +1181,6 @@ def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> P
 def _remove_trivial_faults(
     faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], code: CSSCode, x_errors: bool, num_errors: int
 ) -> npt.NDArray[np.int8]:
-    # remove trivial faults
     faults = faults.copy()
     logging.info("Removing trivial faults.")
     d_error = code.x_distance if x_errors else code.z_distance
@@ -1238,7 +1237,7 @@ def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
     z_measurements = list(sp_circ.code.Hx)
     x_measurements = list(sp_circ.code.Hz)
     reps = (sp_circ.code.distance - 1) // 2
-    return _measure_ft_stabs(sp_circ, x_measurements * reps, z_measurements * reps)
+    return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps)
 
 
 def w_flag_pattern(w: int) -> list[int]:
@@ -1301,6 +1300,7 @@ def measure_flagged(
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
     measurement_bit: ClBit,
+    t: int,
     z_measurement: bool = True,
 ) -> None:
     """Measure a w-flagged stabilizer with the general scheme.
@@ -1312,64 +1312,136 @@ def measure_flagged(
         stab: The qubits to measure.
         ancilla: The ancilla qubit to use for the measurement.
         measurement_bit: The classical bit to store the measurement result of the ancilla.
+        t: The number of errors to protect from.
         z_measurement: Whether to measure an X (False) or Z (True) stabilizer.
     """
     w = len(stab)
-    if w < 3:
-        _measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
+    if t == 1:
+        _measure_stab_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
 
-    if w == 4:
+    if w < 3 and t == 2:
+        _measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+
+    if w == 4 and t == 2:
         measure_flagged_4(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 6:
+    if w == 6 and t == 2:
         measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 8:
+    if w == 8 and t == 2:
         measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    flag_reg = AncillaRegister(w - 1)
-    meas_reg = ClassicalRegister(w - 1)
+    if t == 2:
+        measure_stab_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+
+    msg = f"Flagged measurement for w={w} and t={t} not implemented."
+    raise NotImplementedError(msg)
+
+
+def _measure_stab_one_flagged(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+) -> None:
+    """Measure a 1-flagged stabilizer using an optimized scheme."""
+    flag_reg = AncillaRegister(1)
+    meas_reg = ClassicalRegister(1)
     qc.add_register(flag_reg)
     qc.add_register(meas_reg)
-
-    pattern = w_flag_pattern(w)
-
+    flag = flag_reg[0]
+    flag_meas = meas_reg[0]
     if not z_measurement:
         qc.h(ancilla)
 
-    for flag in flag_reg:
-        _flag_init(qc, flag, z_measurement)
-        _ancilla_cnot(qc, flag, ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+    _flag_init(qc, flag, z_measurement)
 
-    for i, q in enumerate(stab[:-3]):
-        flag = pattern[i]
+    _ancilla_cnot(qc, flag, ancilla, z_measurement)
+
+    for q in stab[1:-1]:
         _ancilla_cnot(qc, q, ancilla, z_measurement)
-        _ancilla_cnot(qc, flag_reg[flag], ancilla, z_measurement)
-        _flag_measure(qc, flag_reg[flag], meas_reg[flag], z_measurement)
-        _flag_reset(qc, flag_reg[flag], z_measurement)
-        _ancilla_cnot(qc, flag_reg[flag], ancilla, z_measurement)
 
-    _ancilla_cnot(qc, stab[-2], ancilla, z_measurement)
-
-    subpattern_length = (w - 4) // 2
-    reordered_pattern = [
-        pattern[-1],
-        *list(reversed(pattern[subpattern_length + 2 : -1])),
-        *list(reversed(pattern[subpattern_length : subpattern_length + 2])),
-        *list(reversed(pattern[:subpattern_length])),
-    ]
-
-    for flag in reordered_pattern:
-        _ancilla_cnot(qc, flag_reg[flag], ancilla, z_measurement)
-        _flag_measure(qc, flag_reg[flag], meas_reg[flag], z_measurement)
+    _ancilla_cnot(qc, flag, ancilla, z_measurement)
+    _flag_measure(qc, flag, flag_meas, z_measurement)
 
     _ancilla_cnot(qc, stab[-1], ancilla, z_measurement)
 
     if not z_measurement:
         qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_stab_two_flagged(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+) -> None:
+    """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13)."""
+    assert len(stab) > 4
+    n_flags = (len(stab) + 1) // 2 - 1
+    flag_reg = AncillaRegister(n_flags)
+    meas_reg = ClassicalRegister(n_flags)
+
+    qc.add_register(flag_reg)
+    qc.add_register(meas_reg)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag_reg[0], z_measurement)
+    _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+    _flag_init(qc, flag_reg[1], z_measurement)
+    _ancilla_cnot(qc, flag_reg[1], ancilla, z_measurement)
+
+    cnots = 2
+    flags = 2
+    for q in stab[2:-2]:
+        _ancilla_cnot(qc, q, ancilla, z_measurement)
+        cnots += 1
+        if cnots % 2 == 0 and cnots < len(stab) - 2:
+            _flag_init(qc, flag_reg[flags], z_measurement)
+            _ancilla_cnot(qc, flag_reg[flags], ancilla, z_measurement)
+            flags += 1
+        if cnots >= 7 and cnots % 2 == 1:
+            _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
+            _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+
+    _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
+    _flag_measure(qc, flag_reg[0], meas_reg[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[-2], ancilla, z_measurement)
+
+    cnots += 1
+    if cnots >= 7 and cnots % 2 == 1:
+        _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
+        _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+
+    _ancilla_cnot(qc, flag_reg[1], ancilla, z_measurement)
+    _flag_measure(qc, flag_reg[1], meas_reg[1], z_measurement)
+
+    _ancilla_cnot(qc, stab[-1], ancilla, z_measurement)
+
+    cnots += 1
+    if cnots >= 7 and cnots % 2 == 1:
+        _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
+        _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+    if not z_measurement:
+        qc.h(ancilla)
+
     qc.measure(ancilla, measurement_bit)
 
 

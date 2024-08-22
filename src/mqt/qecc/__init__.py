@@ -34,6 +34,7 @@ __all__ = [
     "DecodingRunInformation",
     "GrowthVariant",
     "InvalidCSSCodeError",
+    "InvalidCSSCodeError",
     # "SoftInfoDecoder",
     "QssSimulator",
     "UFDecoder",

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ..codes import CSSCode
+from .css_code import CSSCode
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
