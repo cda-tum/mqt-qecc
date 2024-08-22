@@ -1,4 +1,4 @@
-"""Construction of Quasi-Cyclic LDPC codes from https://arxiv.org/abs/2308.07915."""
+"""Construction of Bivariate Bicycle LDPC codes from https://arxiv.org/abs/2308.07915."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
 
 
-def construct_quasi_cyclic_code(n: int) -> CSSCode:
-    """Construct the check matrices for a quasi-cyclic LDPC code.
+def construct_bb_code(n: int) -> CSSCode:
+    """Construct the check matrices for a bivariate bicycle LDPC code.
 
     Args:
         n: The number of qubits. Currently supported values are 72, 90, 108, 144, and 288.
@@ -34,7 +34,7 @@ def construct_quasi_cyclic_code(n: int) -> CSSCode:
         x, z = _cyclic_code_check_matrix(12, 12, ([3], [2, 7]), ([1, 2], [3]))
         d = 18
     else:
-        msg = f"No quasi-cyclic code with n = {n}."
+        msg = f"No bb code with n = {n}."
         raise InvalidCSSCodeError(msg)
     return CSSCode(d, x, z)
 
