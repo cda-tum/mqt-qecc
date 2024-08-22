@@ -1181,14 +1181,12 @@ def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> P
 def _remove_trivial_faults(
     faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], code: CSSCode, x_errors: bool, num_errors: int
 ) -> npt.NDArray[np.int8]:
-    # remove trivial faults
     faults = faults.copy()
     logging.info("Removing trivial faults.")
     d_error = code.x_distance if x_errors else code.z_distance
     t_error = (d_error - 1) // 2
     t = (code.distance - 1) // 2
     max_w = t_error // t
-    max_w = 1
     for i, fault in enumerate(faults):
         faults[i] = _coset_leader(fault, stabs)
     faults = faults[np.where(np.sum(faults, axis=1) > max_w * num_errors)[0]]

@@ -123,7 +123,8 @@ class CSSCode:
 
     def check_if_x_stabilizer(self, pauli: npt.NDArray[np.int8]) -> bool:
         """Check if the Pauli is a stabilizer."""
-        return bool(mod2.rank(np.vstack([self.Hx, pauli])) == mod2.rank(self.Hx))
+        assert self.Hx is not None
+        return bool(mod2.rank(np.vstack((self.Hx, pauli))) == mod2.rank(self.Hx))
 
     def check_if_logical_z_error(self, residual: npt.NDArray[np.int8]) -> bool:
         """Check if the residual is a logical error."""
@@ -131,7 +132,8 @@ class CSSCode:
 
     def check_if_z_stabilizer(self, pauli: npt.NDArray[np.int8]) -> bool:
         """Check if the Pauli is a stabilizer."""
-        return bool(mod2.rank(np.vstack([self.Hz, pauli])) == mod2.rank(self.Hz))
+        assert self.Hz is not None
+        return bool(mod2.rank(np.vstack((self.Hz, pauli))) == mod2.rank(self.Hz))
 
     def stabilizer_eq_x_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
         """Check if two X errors are in the same coset."""
