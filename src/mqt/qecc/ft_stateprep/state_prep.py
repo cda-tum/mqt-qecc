@@ -1332,6 +1332,10 @@ def measure_flagged(
         measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
+    if w == 8 and t == 2:
+        measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+
     if t == 2:
         measure_stab_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
         return
@@ -1385,8 +1389,11 @@ def measure_stab_two_flagged(
     """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13)."""
     assert len(stab) > 4
     n_flags = (len(stab) + 1) // 2 - 1
-    flag_reg = AncillaRegister(2 + n_flags)
-    meas_reg = ClassicalRegister(2 + n_flags)
+    flag_reg = AncillaRegister(n_flags)
+    meas_reg = ClassicalRegister(n_flags)
+
+    qc.add_register(flag_reg)
+    qc.add_register(meas_reg)
 
     if not z_measurement:
         qc.h(ancilla)
@@ -1405,7 +1412,7 @@ def measure_stab_two_flagged(
     for q in stab[2:-2]:
         _ancilla_cnot(qc, q, ancilla, z_measurement)
         cnots += 1
-        if cnots % 2 == 0:
+        if cnots % 2 == 0 and cnots < len(stab) - 2:
             _flag_init(qc, flag_reg[flags], z_measurement)
             _ancilla_cnot(qc, flag_reg[flags], ancilla, z_measurement)
             flags += 1
