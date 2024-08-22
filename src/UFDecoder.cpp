@@ -7,6 +7,7 @@
 #include "Decoder.hpp"
 
 #include <chrono>
+#include <gf2dense.hpp>
 #include <queue>
 #include <random>
 #include <set>
@@ -27,8 +28,10 @@ void UFDecoder::decode(const gf2Vec& syndrome) {
         this->reset();
         doDecode(zSyndr, this->getCode()->gethX());
         this->result.decodingTime += xres.decodingTime;
-        std::move(xres.estimBoolVector.begin(), xres.estimBoolVector.end(), std::back_inserter(this->result.estimBoolVector));
-        std::move(xres.estimNodeIdxVector.begin(), xres.estimNodeIdxVector.end(), std::back_inserter(this->result.estimNodeIdxVector));
+        std::move(xres.estimBoolVector.begin(), xres.estimBoolVector.end(),
+                  std::back_inserter(this->result.estimBoolVector));
+        std::move(xres.estimNodeIdxVector.begin(), xres.estimNodeIdxVector.end(),
+                  std::back_inserter(this->result.estimNodeIdxVector));
     } else {
         this->doDecode(syndrome, getCode()->gethZ()); // X errs per default if single sided
     }
@@ -86,7 +89,9 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
     std::vector<std::size_t> res(tmp.begin(), tmp.end());
 
     const auto decodingTimeEnd = std::chrono::high_resolution_clock::now();
-    result.decodingTime        = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(decodingTimeEnd - decodingTimeBegin).count());
+    result.decodingTime        = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                           decodingTimeEnd - decodingTimeBegin)
+                                                                  .count());
     result.estimBoolVector     = std::vector<bool>(getCode()->getN());
     for (auto re : res) {
         result.estimBoolVector.at(re) = true;
@@ -100,7 +105,8 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
  * @param syndrome
  * @return
  */
-bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>& nodeSet, const std::unordered_set<std::size_t>& syndrome,
+bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>&        nodeSet,
+                                          const std::unordered_set<std::size_t>&        syndrome,
                                           std::vector<std::unordered_set<std::size_t>>& invalidComps,
                                           const std::unique_ptr<ParityCheckMatrix>&     pcm) const {
     auto ccomps = getConnectedComps(nodeSet);
@@ -155,7 +161,7 @@ std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered
 std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::unordered_set<std::size_t>&    nodeSet,
                                                                    const std::unordered_set<std::size_t>&    syndrome,
                                                                    const std::unique_ptr<ParityCheckMatrix>& pcm) const {
-    std::unordered_set<std::size_t> res{};
+    std::unordered_set<std::size_t> res;
 
     auto intNodes = computeInteriorBitNodes(nodeSet);
     if (intNodes.empty()) {
@@ -191,10 +197,21 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto estim = Utils::solveSystem(redHz, redSyndr); // solves the system redHz*x=redSyndr by x to see if a solution can be found
+    auto                 redHzCsc = Utils::toCsc(redHz);
+    std::vector<uint8_t> redSyndInt(redSyndr.size());
+    for (std::size_t i = 0; i < redSyndr.size(); i++) {
+        redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
+    }
+    auto pluDec = ldpc::gf2dense::PluDecomposition(static_cast<int>(redHz.size()), static_cast<int>(redHz.at(0).size()),
+                                                   redHzCsc);
+    pluDec.rref();
+
+    auto estim = pluDec.lu_solve(
+            redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
-        if (estim.at(i)) {
-            res.insert(i);
+        if (estim.at(i) != 0U) {
+            auto inst = res.insert(static_cast<size_t>(i));
+            std::cout << inst.second;
         }
     }
     return res;
@@ -212,6 +229,7 @@ void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
         }
     }
 }
+
 /**
  * Grows the node set by the neighbours of the single smallest cluster
  * @param nodeSet
@@ -280,12 +298,14 @@ void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& co
     const auto& nbrs = getCode()->gethZ()->getNbrs(*chosenComponent.begin());
     comps.insert(nbrs.begin(), nbrs.end());
 }
+
 /**
  * Given a set of nodes (the set of all nodes considered by the algorithm in the Tanner graph), compute the connected components in the Tanner graph
  * @param nodes
  * @return
  */
-std::vector<std::unordered_set<std::size_t>> UFDecoder::getConnectedComps(const std::unordered_set<std::size_t>& nodes) const {
+std::vector<std::unordered_set<std::size_t>>
+UFDecoder::getConnectedComps(const std::unordered_set<std::size_t>& nodes) const {
     std::unordered_set<std::size_t>              visited;
     std::vector<std::unordered_set<std::size_t>> res;
 

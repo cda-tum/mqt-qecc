@@ -26,18 +26,6 @@ jobs:
         uses: Chocobo1/setup-ccache-action@v1
         with:
           override_cache_key: c++-tests-${{ matrix.runs-on }}
-      - if: runner.os == 'macOS'
-        name: Install flint on macOS
-        run: |
-          git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git
-          cd flint2
-          export CC="ccache clang"
-          export CXX="ccache clang++"
-          ./configure --with-gmp=$(readlink -f $(brew --prefix gmp)) --with-mpfr=$(readlink -f $(brew --prefix mpfr))
-          make -j 4 && sudo make install
-      - if: runner.os == 'Linux'
-        name: Install flint on Linux
-        run: sudo apt-get install libflint-dev
       - name: Set up mold as linker
         uses: rui314/setup-mold@v1
       - name: Install Ninja
@@ -64,8 +52,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
       - name: Setup ccache
         uses: Chocobo1/setup-ccache-action@v1
         with:

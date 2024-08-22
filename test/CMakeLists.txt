@@ -13,3 +13,6 @@ file(
   COPY "${PROJECT_SOURCE_DIR}/examples/test/"
   DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/resources/codes/"
   PATTERN "*")
+
+package_add_test(mqt-qecc-framework-test MQT::QECCFramework test_ecc_functionality.cpp)
+target_link_libraries(mqt-qecc-framework-test PRIVATE MQT::CoreDD)

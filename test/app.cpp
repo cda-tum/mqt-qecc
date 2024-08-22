@@ -20,8 +20,7 @@ void runtime(const std::string& codename) {
      * ***************** Comment out accordingly *****************
      */
     //**** server:
-    const std::string rootPath = "/home/berent/ufpaper/simulations/montecarlo/final/";
-    const std::string inPath   = rootPath + "in/toricCodes2/";
+    const std::string inPath = "in/toricCodes2/";
     //**** local:
     // const std::string outPath = "/home/luca/Documents/uf-simulations/runtime/original/";
     // const std::string inPath  = "/home/luca/Documents/codeRepos/qecc/examples/toricCodes2/";
@@ -52,15 +51,13 @@ void runtime(const std::string& codename) {
         samplesSum += runsSum;
     }
     std::cout << codename << ":" << samplesSum / nrSamples << std::endl;
-    flint_cleanup();
 }
 
 void decodingPerformance(const double per) {
-    const std::string                          rootPath  = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
-    const std::string                          rootPath2 = "/home/luca/Documents/codeRepos/qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
-    const std::size_t                          codeK     = 18;
-    const std::size_t                          nrRuns    = 1000;
-    std::map<std::string, double, std::less<>> wordErrRatePerPhysicalErrRate;
+    const std::string rootPath  = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hx.txt";
+    const std::string rootPath2 = "qecc/examples/lp_(4,8)-[[1024,18,nan]]_hz.txt";
+    const std::size_t codeK     = 18;
+    const std::size_t nrRuns    = 1000;
 
     auto       code = HGPcode(rootPath, rootPath2, codeK);
     const auto n    = code.getN();
@@ -91,7 +88,6 @@ void decodingPerformance(const double per) {
     const auto wordErrRate    = 1.0 - std::pow(1 - logicalErrRate, (1.0 / codeK)); // rate of codewords for decoder does not give correct answer (fails or introduces logical operator)
     std::cout << "per:wer = " << per << ":" << wordErrRate << std::endl;
     std::cout.flush();
-    flint_cleanup();
 }
 
 int main(int argc, char* argv[]) {         // NOLINT(clang-diagnostic-unused-parameter, bugprone-exception-escape,misc-unused-parameters)

@@ -17,12 +17,10 @@
 #include "ecc/Q7Steane.hpp"
 #include "ecc/Q9Shor.hpp"
 #include "ecc/Q9Surface.hpp"
-#include "nlohmann/json.hpp"
-#include "pybind11/pybind11.h"
-#include "pybind11_json/pybind11_json.hpp"
 #include "python/qiskit/QuantumCircuit.hpp"
 
-#include <pybind11/stl.h>
+#include <pybind11/pybind11.h>
+#include <pybind11_json/pybind11_json.hpp>
 
 namespace py = pybind11;
 using namespace pybind11::literals;
