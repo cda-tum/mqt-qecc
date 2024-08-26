@@ -146,11 +146,13 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
-#    "error",  # temporary fix until https://github.com/quantumgizmos/ldpc/pull/42 is merged and released
+    "error",
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*Qiskit with Python 3.8.*:DeprecationWarning:',
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
+    'ignore:.*invalid escape sequence.*:DeprecationWarning:',
+    'ignore:.*invalid escape sequence.*:SyntaxWarning:',
 ]
 
 [tool.coverage]
