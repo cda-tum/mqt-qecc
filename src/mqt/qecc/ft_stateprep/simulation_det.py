@@ -59,9 +59,10 @@ def decode_failure(measurements: int, code: CSSCode, decoder: LutDecoder, zero_s
     else:
         estimate = decoder.decode_z(syndrome)
         observables = code.Lx
-    corrected = (state + estimate) % 2
+    corrected = state + estimate
 
-    if any((observables @ corrected) % 2 != 0):
+    # check if logical error
+    if np.any(corrected @ observables.T % 2 != 0):
         return True
     return False 
 
@@ -101,7 +102,7 @@ class NoisyDFTStatePrepSimulator:
         if zero_state:
             self.decoder.generate_x_lut()
         else:
-            self.decoder.generate_lut()
+            self.decoder.generate_z_lut()
 
         # create protocol
         self.protocol = qs.Protocol()
@@ -192,6 +193,7 @@ class NoisyDFTStatePrepSimulator:
                     decoding_circuit.append({"CNOT": {(ancilla_index, qubit)}})
                 decoding_circuit.append({"H": {ancilla_index}})
                 ancilla_index += 1
+            decoding_circuit.append({"H": set(range(self.num_qubits))})
         decoding_circuit.append({"measure": set(range(start_index, ancilla_index))})
         decoding_circuit.append({"measure": set(range(self.num_qubits))})
 
@@ -224,8 +226,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        p_l_low, _ , p_l_up, _  = sampler.stats()
-        return p_l_low, p_l_up
+        return sampler.stats()
 
     def mc_logical_error_rates(
             self,
@@ -241,8 +242,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        p_l, _ = sampler.stats()
-        return p_l, sampler.counts
+        return sampler.stats()
 
 
 def qiskit_to_qsample(qiskit_circuit : QuantumCircuit) -> qs.Circuit:
