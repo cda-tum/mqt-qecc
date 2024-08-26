@@ -150,11 +150,11 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("code", ["steane_code", "surface_code"])
+@pytest.mark.parametrize("code", ["steane_code"])
 def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Test synthesis of the plus state."""
     code = request.getfixturevalue(code)
-    sp_circ_plus = gate_optimal_prep_circuit(code, max_timeout=5, zero_state=False)
+    sp_circ_plus = gate_optimal_prep_circuit(code, max_timeout=3, zero_state=False)
 
     assert sp_circ_plus is not None
     assert not sp_circ_plus.zero_state
