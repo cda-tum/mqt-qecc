@@ -167,7 +167,7 @@ def main() -> None:
 
     circ = load(open_qasm_file)
 
-    if not any(gate[0].name == "measure" for gate in circ.data):
+    if not any(gate.operation.name == "measure" for gate in circ.data):
         print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")  # noqa: T201
         circ.measure_all()
 

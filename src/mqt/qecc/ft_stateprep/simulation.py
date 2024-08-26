@@ -123,8 +123,8 @@ class NoisyNDFTStatePrepSimulator:
 
             used_qubits = []
             for gate in layer_circ.data:
-                if gate[0].name == "h":
-                    qubit = self.circ.find_bit(gate[1][0])[0]
+                if gate.operation.name == "h":
+                    qubit = self.circ.find_bit(gate.qubits[0])[0]
                     ctrls.append(qubit)
                     if initialized[qubit]:
                         stim_circuit.append_operation("H", [qubit])
@@ -134,9 +134,9 @@ class NoisyNDFTStatePrepSimulator:
                         else:
                             used_qubits.append(qubit)
 
-                elif gate[0].name == "cx":
-                    ctrl = self.circ.find_bit(gate[1][0])[0]
-                    target = self.circ.find_bit(gate[1][1])[0]
+                elif gate.operation.name == "cx":
+                    ctrl = self.circ.find_bit(gate.qubits[0])[0]
+                    target = self.circ.find_bit(gate.qubits[1])[0]
                     targets.add(target)
                     if not initialized[ctrl]:
                         if ctrl in ctrls:
@@ -156,8 +156,8 @@ class NoisyNDFTStatePrepSimulator:
                     else:
                         used_qubits.extend([ctrl, target])
 
-                elif gate[0].name == "measure":
-                    anc = self.circ.find_bit(gate[1][0])[0]
+                elif gate.operation.name == "measure":
+                    anc = self.circ.find_bit(gate.qubits[0])[0]
                     stim_circuit.append_operation("X_ERROR", [anc], [2 * self.p / 3])
                     stim_circuit.append_operation("MR", [anc])
                     if anc in targets:
