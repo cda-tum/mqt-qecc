@@ -25,8 +25,6 @@ def optimal_deterministic_verification(
         max_timeout: int = 3600,
         max_ancillas: int | None = None,
         zero_state: bool = True) -> DeterministicVerification:
-        # return {1: ([np.array([0,0,1,0,1,1,0])], dict({1 : np.array([0,0,0,0,0,1,0]), 0 : np.array([0,0,0,0,0,0,0])}))}
-        # return {1: ([np.array([1,1,0,1,0,0,1])], dict({1 : np.array([0,0,0,0,0,0,1]), 0 : np.array([0,0,0,0,0,0,0])}))}
         """
         Returns an gate and ancilla optimal deterministic verification circuit for a given state preparation circuit and 
         non-deterministic verification stabilizers.
@@ -53,8 +51,7 @@ def optimal_deterministic_verification(
             # add the no-error case for the error beeing on one of the verification ancillae
             if np.sum(verify_outcome) == 1:
                 errors_filtered = np.vstack((errors_filtered, np.zeros(num_qubits, dtype=np.int8)))
-            # det_verify[verify_outcome_int] = optimal_deterministic_verification_single_outcome(sp_circ, errors_filtered, min_timeout, max_timeout, max_ancillas, zero_state)
-            det_verify[verify_outcome_int] = deterministic_verification(sp_circ, errors_filtered, 1, 3, x_errors=zero_state)
+            det_verify[verify_outcome_int] = optimal_deterministic_verification_single_outcome(sp_circ, errors_filtered, min_timeout, max_timeout, max_ancillas, zero_state)
         return det_verify
 
 def optimal_deterministic_verification_single_outcome(
@@ -83,13 +80,9 @@ def optimal_deterministic_verification_single_outcome(
     optimal_det_verify, num_anc = res
     logger.info(f"Found deterministic verification with {num_anc} ancillae.")
 
-    # try to reduce the number of ancillae
-    def min_anc_func(num_anc: int):
-        return deterministic_verification(sp_circ, fault_set, num_anc-1, num_anc*num_qubits, x_errors=zero_state)
-        
     while True and num_anc > 1:
         logger.info(f"Trying to reduce the number of ancillae to {num_anc-1}.")
-        det_verify = _run_with_timeout(min_anc_func, num_anc-1, timeout=max_timeout)
+        det_verify = _run_with_timeout(_func, num_anc-1, timeout=max_timeout)
         if det_verify is None or (isinstance(det_verify, str) and det_verify == "timeout"):
             break
         optimal_det_verify = det_verify
@@ -100,8 +93,11 @@ def optimal_deterministic_verification_single_outcome(
     def min_cnot_func(num_cnots: int):
         return deterministic_verification(sp_circ, fault_set, num_anc, num_cnots, x_errors=zero_state)
 
-    num_cnots = num_anc*num_qubits
-    while True and num_cnots > 1:
+    num_cnots = 2
+    while num_cnots > 1:
+        # set the max number of CNOTs to the number returned by the previous step
+        num_cnots = np.sum([np.sum(m) for m in optimal_det_verify[0]])
+
         logger.info(f"Trying to reduce the number of CNOTs to {num_cnots-1}.")
         det_verify = _run_with_timeout(min_cnot_func, num_cnots-1, timeout=max_timeout)
         if det_verify is None or (isinstance(det_verify, str) and det_verify == "timeout"):
