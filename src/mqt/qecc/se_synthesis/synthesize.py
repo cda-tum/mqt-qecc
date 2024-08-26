@@ -103,7 +103,7 @@ class OptimalSyndromeExtractionEncoder:
                 for k in range(len(x_check)):
                     if x_check[k] == 1 and z_check[k] == 1:
                         qubits.append(k)
-                self.overlaps[(i, j)] = qubits
+                self.overlaps[i, j] = qubits
 
     def _cnot_exists_constraint(self, check: list, cnot: int):
         """Create a constraint that the CNOT is performed exactly once in the circuit."""
@@ -116,7 +116,7 @@ class OptimalSyndromeExtractionEncoder:
 
     def _assert_check_order_constraint(self, i: int, j: int) -> None:
         """Assert that CNOTs of x and z checks alternate in pairs."""
-        x_constraints = list(self._cnot_order_constraint_x[(i, j)].values())
+        x_constraints = list(self._cnot_order_constraint_x[i, j].values())
         if len(x_constraints) == 0:
             return
 
@@ -126,7 +126,7 @@ class OptimalSyndromeExtractionEncoder:
             formula = z3.Xor(formula, constr)
         self.solver.add(z3.Not(formula))
 
-        z_constraints = list(self._cnot_order_constraint_z[(j, i)].values())
+        z_constraints = list(self._cnot_order_constraint_z[j, i].values())
         if len(z_constraints) == 0:
             return
 
@@ -155,15 +155,15 @@ class OptimalSyndromeExtractionEncoder:
     def _encode_constraints(self) -> None:
         # create variables for cnot order constraints
         for i, j in self.overlaps:
-            for cnot in self.overlaps[(i, j)]:
-                self._cnot_order_constraint_x[(i, j)][cnot] = z3.Bool(f"xltz_{i}_{j}_{cnot}")
-                self._cnot_order_constraint_z[(j, i)][cnot] = z3.Bool(f"zltx_{j}_{i}_{cnot}")
+            for cnot in self.overlaps[i, j]:
+                self._cnot_order_constraint_x[i, j][cnot] = z3.Bool(f"xltz_{i}_{j}_{cnot}")
+                self._cnot_order_constraint_z[j, i][cnot] = z3.Bool(f"zltx_{j}_{i}_{cnot}")
                 self.solver.add(
-                    self._cnot_order_constraint_x[(i, j)][cnot]
+                    self._cnot_order_constraint_x[i, j][cnot]
                     == self._cnot_comes_before_cnot(self.x_vars[i], self.z_vars[j], cnot)
                 )
                 self.solver.add(
-                    self._cnot_order_constraint_z[(j, i)][cnot]
+                    self._cnot_order_constraint_z[j, i][cnot]
                     == self._cnot_comes_before_cnot(self.z_vars[j], self.x_vars[i], cnot)
                 )
 
