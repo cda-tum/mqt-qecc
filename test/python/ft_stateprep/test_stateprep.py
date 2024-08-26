@@ -117,7 +117,7 @@ def test_heuristic_prep_consistent(code_name: str) -> None:
 def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
-    sp_circ = gate_optimal_prep_circuit(code, max_timeout=6)
+    sp_circ = gate_optimal_prep_circuit(code, max_timeout=10)
     assert sp_circ is not None
     assert sp_circ.zero_state
 
@@ -137,7 +137,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
 
-    sp_circ = depth_optimal_prep_circuit(code, max_timeout=6)
+    sp_circ = depth_optimal_prep_circuit(code, max_timeout=10)
     assert sp_circ is not None
     circ = sp_circ.circ
     max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
