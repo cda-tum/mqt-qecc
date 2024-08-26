@@ -159,7 +159,6 @@ class NoisyDFTStatePrepSimulator:
             if outcome == 0:
                 continue
             self.protocol.add_node(name=f"DV{outcome}", circuit=_create_det_verification_circuit(verification_stabilizers, ancilla_index))
-            ancilla_index += len(verification_stabilizers)
             self.protocol.add_edge("NDV", f"DV{outcome}", check=f"NDV[-1] == {outcome}")
             self.protocol.check_functions[f"return_correction{outcome}" ] = partial(return_correction, corrections=corrections, zero_state=self.zero_state)
             # self.protocol.check_functions["return_correction" ] = return_correction
