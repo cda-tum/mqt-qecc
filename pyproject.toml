@@ -185,6 +185,10 @@ module = ["qiskit.*", "qecsim.*","qiskit_aer.*", "matplotlib.*", "scipy.*", "ldp
 ignore_missing_imports = true
 
 
+[tool.check-wheel-contents]
+ignore = ["W002"]  # Triggers on __init__.py's and duplicate data files
+
+
 [tool.ruff]
 line-length = 120
 namespace-packages = ["mqt"]
