@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode, InvalidCSSCodeError
+from mqt.qecc.codes import construct_bb_code
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -136,3 +137,13 @@ def test_steane(steane_code: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) 
     hx_reordered = hx[::-1, :]
     code_reordered = CSSCode(distance=3, Hx=hx_reordered, Hz=hz)
     assert code == code_reordered
+
+
+@pytest.mark.parametrize("n", [72, 90, 108, 144, 288])
+def test_bb_codes(n: int) -> None:
+    """Test that BB codes are constructed as valid CSS codes."""
+    code = construct_bb_code(n)
+    assert code.n == n
+    assert code.Hx is not None
+    assert code.Hz is not None
+    assert np.all(code.Hx @ code.Hx.T % 2) == 0

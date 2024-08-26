@@ -6,6 +6,8 @@
 #include "DecodingRunInformation.hpp"
 #include "UFDecoder.hpp"
 
+#include <sstream>
+
 std::string generateOutFileName(const std::string& filepath) {
     auto               t  = std::time(nullptr);
     auto               tm = *std::localtime(&t); // localtime might not be threadsafe. Currently irrelevant
@@ -91,7 +93,6 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
     rawDataOutput << dataj.dump(2U);
     statisticsOutstr.close();
     rawDataOutput.close();
-    flint_cleanup();
 }
 
 void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputFilepath,
@@ -171,6 +172,5 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
         finalRawOut << j.dump(2U);
         finalRawOut.close();
     }
-    flint_cleanup();
     dataOutStream.close();
 }

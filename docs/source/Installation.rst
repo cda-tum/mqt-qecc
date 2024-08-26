@@ -12,11 +12,6 @@ We encourage installing QECC via pip (preferably in a `virtual environment <http
 
 In most practical cases (under 64-bit Linux, MacOS incl. Apple Silicon), this requires no compilation and merely downloads and installs a platform-specific pre-built wheel.
 
-.. warning::
-        Currently the FLINT2 dependency is not automatically installed. Thus, windows users need to install FLINT2 by hand.
-        Either by building `from source <http://www.flintlib.org/doc/building.html>`_ or downloading the corresponding `.zip file <http://www.flintlib.org/downloads.html>`_.
-        We are working towards fixing this issue.
-
 .. note::
     In order to set up a virtual environment, you can use the following commands:
 

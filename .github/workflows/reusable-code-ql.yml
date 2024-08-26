@@ -31,9 +31,6 @@ jobs:
           prepend_symlinks_to_path: false
           override_cache_key: codeql-cpp
 
-      - name: Install flint
-        run: sudo apt-get install libflint-dev
-
       - name: Set up mold as linker
         uses: rui314/setup-mold@v1
 

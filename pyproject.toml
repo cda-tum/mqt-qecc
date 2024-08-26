@@ -184,8 +184,8 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 120
-extend-include = ["*.ipynb"]
 src = ["src"]
+namespace-packages = ["mqt"]
 preview = true
 unsafe-fixes = true
 
@@ -282,7 +282,8 @@ anc = "anc"
 
 [tool.repo-review]
 ignore = [
-  "PC160" # "Uses codespell" -> switched to https://github.com/crate-ci/typos
+  "PC160", # "Uses codespell" -> switched to https://github.com/crate-ci/typos
+  "PC180", # "Uses prettier" -> switched to different prettier-mirror that is not recognized by the check
 ]
 
 
@@ -295,11 +296,6 @@ test-skip = "*-macosx_arm64-*"
 build-frontend = "build[uv]"
 
 [tool.cibuildwheel.linux]
-before-all = [
-    "yum -y install mpfr-devel",
-    "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
-    "cd flint2 && ./configure && make -j 4 && make install"
-]
 environment = { DEPLOY = "ON" }
 
 [tool.cibuildwheel.macos]
