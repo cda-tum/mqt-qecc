@@ -164,7 +164,7 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
             for logical in range(len(code.L)):
                 if (code.L[logical] @ residual % 2).any():
                     logical_errors[logical] += 1
-                    wt = np.sum(residual)  # compute the min weight of a logical error
+                    wt: int = np.sum(residual)  # compute the min weight of a logical error
                     if min_wt_logicals[logical] == -1 or wt < min_wt_logicals[logical]:
                         min_wt_logicals[logical] = int(wt)
                     break

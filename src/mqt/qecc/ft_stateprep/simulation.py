@@ -51,11 +51,11 @@ class NoisyNDFTStatePrepSimulator:
         self.zero_state = zero_state
         # Store which measurements are X, Z or data measurements.
         # The indices refer to the indices of the measurements in the stim circuit.
-        self.x_verification_measurements = []  # type: list[int]
-        self.z_verification_measurements = []  # type: list[int]
-        self.x_measurements = []  # type: list[int]
-        self.z_measurements = []  # type: list[int]
-        self.data_measurements = []  # type: list[int]
+        self.x_verification_measurements: list[int] = []
+        self.z_verification_measurements: list[int] = []
+        self.x_measurements: list[int] = []
+        self.z_measurements: list[int] = []
+        self.data_measurements: list[int] = []
         self.parallel_gates = parallel_gates
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
@@ -98,10 +98,6 @@ class NoisyNDFTStatePrepSimulator:
         - Two-qubit gates are followed by a two-qubit Pauli error with probability p/15.
         - Measurements flip with a probability of 2/3 p.
         - Qubit are initialized in the -1 Eigenstate with probability 2/3 p.
-
-        Args:
-            circ: The QuantumCircuit to convert.
-            p: The error rate.
         """
         initialized = [False for _ in self.circ.qubits]
         stim_circuit = stim.Circuit()
@@ -115,10 +111,9 @@ class NoisyNDFTStatePrepSimulator:
 
         dag = circuit_to_dag(self.circ)
         layers = dag.layers()
-        used_qubits = []  # type: list[int]
-
+        used_qubits: list[int] = []
         targets = set()
-        measured = defaultdict(int)  # type: defaultdict[int, int]
+        measured: defaultdict[int, int] = defaultdict(int)
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -181,7 +176,7 @@ class NoisyNDFTStatePrepSimulator:
 
         return stim_circuit
 
-    def measure_stabilizers(self) -> stim.Circuit:
+    def measure_stabilizers(self) -> None:
         """Measure the stabilizers of the code.
 
         An ancilla is used for each measurement.
@@ -295,7 +290,7 @@ class NoisyNDFTStatePrepSimulator:
         corrected = state + estimates
 
         num_discarded = detection_events.shape[0] - filtered_events.shape[0]
-        num_logical_errors = np.sum(
+        num_logical_errors: int = np.sum(
             np.any(corrected @ observables.T % 2 != 0, axis=1)
         )  # number of non-commuting corrected states
         return num_logical_errors, num_discarded
@@ -348,8 +343,8 @@ class LutDecoder:
             init_luts: Whether to initialize the lookup tables at object creation.
         """
         self.code = code
-        self.x_lut = {}  # type: dict[bytes, npt.NDArray[np.int8]]
-        self.z_lut = {}  # type: dict[bytes, npt.NDArray[np.int8]]
+        self.x_lut: dict[bytes, npt.NDArray[np.int8]] = {}
+        self.z_lut: dict[bytes, npt.NDArray[np.int8]] = {}
         if init_luts:
             self.generate_x_lut()
             self.generate_z_lut()
@@ -403,9 +398,9 @@ class LutDecoder:
         n_qubits = checks.shape[1]
 
         syndromes = defaultdict(list)
-        lut = {}  # type: dict[bytes, npt.NDArray[np.int8]]
+        lut: dict[bytes, npt.NDArray[np.int8]] = {}
         for i in range(2**n_qubits):
-            state = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)  # type: npt.NDArray[np.int_]
+            state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
             syndrome = checks @ state % 2
             syndromes[syndrome.astype(np.int8).tobytes()].append(state)
 

@@ -90,7 +90,7 @@ def color_code_d5_sp(cc_4_8_8_code: CSSCode) -> StatePrepCircuit:
 
 def eq_span(a: npt.NDArray[np.int_], b: npt.NDArray[np.int_]) -> bool:
     """Check if two matrices have the same row space."""
-    return a.shape == b.shape and mod2.rank(np.vstack((a, b))) == mod2.rank(a) == mod2.rank(b)
+    return (a.shape == b.shape) and (int(mod2.rank(np.vstack((a, b)))) == int(mod2.rank(a)) == int(mod2.rank(b)))
 
 
 def in_span(m: npt.NDArray[np.int_], v: npt.NDArray[np.int_]) -> bool:
@@ -117,14 +117,14 @@ def test_heuristic_prep_consistent(code: CSSCode, request) -> None:  # type: ign
 
     sp_circ = heuristic_prep_circuit(code)
     circ = sp_circ.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[operator]
 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ)
-    assert eq_span(code.Hx, x)  # type: ignore[arg-type]
-    assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
+    assert eq_span(code.Hx, x)
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
@@ -136,14 +136,14 @@ def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: 
     assert sp_circ.zero_state
 
     circ = sp_circ.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[operator]
 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ)
-    assert eq_span(code.Hx, x)  # type: ignore[arg-type]
-    assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
+    assert eq_span(code.Hx, x)
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
@@ -154,14 +154,14 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     sp_circ = depth_optimal_prep_circuit(code, max_timeout=3)
     assert sp_circ is not None
     circ = sp_circ.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[operator]
 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ)
-    assert eq_span(code.Hx, x)  # type: ignore[arg-type]
-    assert eq_span(np.vstack((code.Hz, code.Lz)), z)  # type: ignore[arg-type]
+    assert eq_span(code.Hx, x)
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
@@ -174,14 +174,14 @@ def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignor
     assert not sp_circ_plus.zero_state
 
     circ_plus = sp_circ_plus.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[operator]
 
     assert circ_plus.num_qubits == code.n
     assert circ_plus.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ_plus)
-    assert eq_span(code.Hz, z)  # type: ignore[arg-type]
-    assert eq_span(np.vstack((code.Hx, code.Lx)), x)  # type: ignore[arg-type]
+    assert eq_span(code.Hz, z)
+    assert eq_span(np.vstack((code.Hx, code.Lx)), x)
 
     sp_circ_zero = gate_optimal_prep_circuit(code, max_timeout=5, zero_state=True)
 
@@ -210,14 +210,14 @@ def test_plus_state_heuristic(code: CSSCode, request) -> None:  # type: ignore[n
     assert not sp_circ_plus.zero_state
 
     circ_plus = sp_circ_plus.circ
-    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[arg-type]
+    max_cnots = np.sum(code.Hx) + np.sum(code.Hz)  # type: ignore[operator]
 
     assert circ_plus.num_qubits == code.n
     assert circ_plus.num_nonlocal_gates() <= max_cnots
 
     x, z = get_stabs(circ_plus)
-    assert eq_span(code.Hz, z)  # type: ignore[arg-type]
-    assert eq_span(np.vstack((code.Hx, code.Lx)), x)  # type: ignore[arg-type]
+    assert eq_span(code.Hz, z)
+    assert eq_span(np.vstack((code.Hx, code.Lx)), x)
 
     sp_circ_zero = heuristic_prep_circuit(code, zero_state=True)
     circ_zero = sp_circ_zero.circ
@@ -378,7 +378,7 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     assert len(non_detected) == 0
 
     # Check that circuit is correct
-    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)
+    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)  # type: ignore[operator]
     circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=True)
     assert circ_ver.num_qubits > circ.num_qubits + 5  # overhead from the flags
     assert circ_ver.num_nonlocal_gates() > n_cnots + circ.circ.num_nonlocal_gates()  # Overhead from Flag CNOTS
@@ -412,7 +412,7 @@ def test_not_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
 
     # Check that circuit is correct
     circ_ver = heuristic_verification_circuit(circ, full_fault_tolerance=False)
-    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)
+    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)  # type: ignore[operator]
     assert circ_ver.num_qubits == circ.num_qubits + len(ver_stabs_1) + len(ver_stabs_2)
     assert circ_ver.num_nonlocal_gates() == n_cnots + circ.circ.num_nonlocal_gates()
 
