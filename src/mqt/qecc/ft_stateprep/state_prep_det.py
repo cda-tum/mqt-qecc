@@ -201,9 +201,9 @@ def _extract_measurement_and_correction(model : z3.Model,
     return actual_measurements, actual_corrections
 
 def _int_to_bool_array(num: int, num_anc: int) -> npt.NDArray[np.bool_]:
-    """ Convert an integer to a boolean array of length num_anc"""
-    return np.array([bool(num & (1 << i)) for i in range(num_anc)])
+    """ Convert an integer to a boolean array of length num_anc corresponding to the binary representation of the integer."""
+    return np.array([bool(num & (1 << i)) for i in range(num_anc)])[::-1]
 
 def _int_to_int8_array(num: int, n_qubits: int) -> npt.NDArray[np.int8]:
     """ Convert an integer to an int8 array of length n_qubits"""
-    return np.array([int(bool(num & (1 << i))) for i in range(n_qubits)], dtype=np.int8)
+    return np.array([int(bool(num & (1 << i))) for i in range(n_qubits)], dtype=np.int8)[::-1]
