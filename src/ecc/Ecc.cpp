@@ -1,6 +1,6 @@
 #include "ecc/Ecc.hpp"
 
-#include "QuantumComputation.hpp"
+#include "ir/QuantumComputation.hpp"
 
 #include <cstddef>
 #include <memory>

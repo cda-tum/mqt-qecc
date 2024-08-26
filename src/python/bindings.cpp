@@ -6,7 +6,6 @@
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
-#include "QuantumComputation.hpp"
 #include "UFDecoder.hpp"
 #include "UFHeuristic.hpp"
 #include "ecc/Ecc.hpp"
@@ -17,6 +16,7 @@
 #include "ecc/Q7Steane.hpp"
 #include "ecc/Q9Shor.hpp"
 #include "ecc/Q9Surface.hpp"
+#include "ir/QuantumComputation.hpp"
 #include "python/qiskit/QuantumCircuit.hpp"
 
 #include <pybind11/pybind11.h>

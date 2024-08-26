@@ -1,17 +1,15 @@
 #pragma once
 
 #include "Definitions.hpp"
-#include "QuantumComputation.hpp"
-#include "operations/OpType.hpp"
+#include "ir/QuantumComputation.hpp"
+#include "ir/operations/OpType.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <memory>
 #include <numeric>
 #include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace ecc {
