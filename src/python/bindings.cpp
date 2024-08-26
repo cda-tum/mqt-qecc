@@ -86,7 +86,7 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
     return py::dict("circ"_a = oss.str());
 }
 
-PYBIND11_MODULE(pyqecc, m) {
+PYBIND11_MODULE(pyqecc, m, py::mod_gil_not_used()) {
     // In this function the exposed python functions are defined.
     // Additionally, the required parameters are described.
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";

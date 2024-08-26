@@ -287,8 +287,9 @@ build = "cp3*"
 skip = "*-musllinux*"
 archs = "auto64"
 test-command = "python -c \"from mqt import qecc\""
-test-skip = "*-macosx_arm64-*"
+test-skip = ["cp38-macosx_arm64", "cp313*"] # skip testing on Python 3.13 until our dependencies are ready
 build-frontend = "build[uv]"
+free-threaded-support = true
 
 [tool.cibuildwheel.linux]
 environment = { DEPLOY = "ON" }
