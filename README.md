@@ -163,6 +163,7 @@ The contributors to this tool are:
 - Thomas Grurl
 - Peter-Jan H.S. Derks
 - Timo Hillmann
+- Tom Peham
 
 ## Acknowledgements
 

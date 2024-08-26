@@ -10,7 +10,8 @@ authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" },
     { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" },
-    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"}
+    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"},
+    { name = "Tom Peham", email = "tom.peham@tum.de" },
 ]
 keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
@@ -32,6 +33,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 5 - Production/Stable",
     "Typing :: Typed",
 ]
