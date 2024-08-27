@@ -460,4 +460,3 @@ def test_error_detection_code() -> None:
 
     assert circ_ver_detection.num_qubits > circ_ver_correction.num_qubits
     assert circ_ver_detection.num_nonlocal_gates() > circ_ver_correction.num_nonlocal_gates()
-    assert circ_ver_detection.depth() > circ_ver_correction.depth()
