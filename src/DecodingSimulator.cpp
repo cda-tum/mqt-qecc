@@ -138,7 +138,7 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
 
     DecodingRunInformation info;
     for (const auto& file : std::filesystem::directory_iterator(codesPath)) {
-        codePaths.emplace_back(file.path());
+        codePaths.emplace_back(file.path().string());
     }
     try {
         for (const auto& currPath : codePaths) {
