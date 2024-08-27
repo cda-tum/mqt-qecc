@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict, deque
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import multiprocess
 import numpy as np
 import z3
 from ldpc import mod2
@@ -15,6 +14,7 @@ from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGOutNode
 
 from ..codes import InvalidCSSCodeError
+from .synthesis_utils import heuristic_gaussian_elimination, run_with_timeout
 
 logger = logging.getLogger(__name__)
 
@@ -206,55 +206,10 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
     if code.Hx is None or code.Hz is None:
         msg = "The code must have both X and Z stabilizers defined."
         raise InvalidCSSCodeError(msg)
-    checks = code.Hx.copy() if zero_state else code.Hz.copy()
-    rank = mod2.rank(checks)
 
-    def is_reduced() -> bool:
-        return bool(len(np.where(np.all(checks == 0, axis=0))[0]) == checks.shape[1] - rank)
-
-    costs = np.array([
-        [np.sum((checks[:, i] + checks[:, j]) % 2) for j in range(checks.shape[1])] for i in range(checks.shape[1])
-    ])
-    costs -= np.sum(checks, axis=0)
-    np.fill_diagonal(costs, 1)
-
-    used_qubits: list[np.int_] = []
-    cnots: list[tuple[int, int]] = []
-    while not is_reduced():
-        m = np.zeros((checks.shape[1], checks.shape[1]), dtype=bool)
-        m[used_qubits, :] = True
-        m[:, used_qubits] = True
-
-        costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
-        if np.all(costs_unused >= 0) or len(used_qubits) == checks.shape[1]:  # no more reductions possible
-            if not used_qubits:  # local minimum => get out by making matrix triangular
-                logging.warning("Local minimum reached. Making matrix triangular.")
-                checks = mod2.reduced_row_echelon(checks)[0]
-                costs = np.array([
-                    [np.sum((checks[:, i] + checks[:, j]) % 2) for j in range(checks.shape[1])]
-                    for i in range(checks.shape[1])
-                ])
-                costs -= np.sum(checks, axis=0)
-                np.fill_diagonal(costs, 1)
-            else:  # try to move onto the next layer
-                used_qubits = []
-            continue
-
-        i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
-        cnots.append((int(i), int(j)))
-
-        if optimize_depth:
-            used_qubits.append(i)
-            used_qubits.append(j)
-
-        # update checks
-        checks[:, j] = (checks[:, i] + checks[:, j]) % 2
-        # update costs
-        new_weights = np.sum((checks[:, j][:, np.newaxis] + checks) % 2, axis=0)
-        costs[j, :] = new_weights - np.sum(checks, axis=0)
-        costs[:, j] = new_weights - np.sum(checks[:, j])
-        np.fill_diagonal(costs, 1)
-
+    checks = code.Hx if zero_state else code.Hz
+    assert checks is not None
+    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
     circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
 
@@ -426,7 +381,7 @@ def _optimal_circuit(
     logging.info("Trying to minimize param")
     while True:
         logging.info(f"Trying param {curr_param - 1}")
-        opt_res = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
+        opt_res = run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
         circ = opt_res
@@ -507,27 +462,6 @@ def _build_circuit_from_list_and_checks(
     return circ
 
 
-def _run_with_timeout(func: Callable[[Any], Any], *args: Any, timeout: int = 10) -> Any | str | None:  # noqa: ANN401
-    """Run a function with a timeout.
-
-    If the function does not complete within the timeout, return None.
-
-    Args:
-        func: The function to run.
-        args: The arguments to pass to the function.
-        timeout: The maximum time to allow the function to run for in seconds.
-    """
-    manager = multiprocess.Manager()
-    return_list = manager.list()
-    p = multiprocess.Process(target=lambda: return_list.append(func(*args)))
-    p.start()
-    p.join(timeout)
-    if p.is_alive():
-        p.terminate()
-        return "timeout"
-    return return_list[0]
-
-
 def iterative_search_with_timeout(
     fun: Callable[[int], QuantumCircuit],
     min_param: int,
@@ -553,7 +487,7 @@ def iterative_search_with_timeout(
     while curr_timeout <= max_timeout:
         while curr_param <= max_param:
             logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
-            res = _run_with_timeout(fun, curr_param, timeout=curr_timeout)
+            res = run_with_timeout(fun, curr_param, timeout=curr_timeout)
             if res is not None and (not isinstance(res, str) or res != "timeout"):
                 return res, curr_param
             if curr_param == max_param:
@@ -658,7 +592,7 @@ def gate_optimal_verification_stabilizers(
         while num_cnots - 1 > 0:
             logging.info(f"Trying {num_cnots - 1} CNOTs")
 
-            cnot_opt = _run_with_timeout(
+            cnot_opt = run_with_timeout(
                 search_cnots,
                 num_cnots - 1,
                 timeout=max_timeout,
@@ -677,7 +611,7 @@ def gate_optimal_verification_stabilizers(
             def search_anc(num_anc: int) -> list[npt.NDArray[np.int8]] | None:
                 return verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors)  # noqa: B023
 
-            anc_opt = _run_with_timeout(
+            anc_opt = run_with_timeout(
                 search_anc,
                 num_anc - 1,
                 timeout=max_timeout,
