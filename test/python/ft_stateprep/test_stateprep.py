@@ -10,8 +10,7 @@ from ldpc import mod2
 from qiskit.quantum_info import Clifford
 
 from mqt.qecc import CSSCode
-from mqt.qecc.codes import SquareOctagonColorCode
-from mqt.qecc.ft_stateprep import (
+from mqt.qecc.circuit_synthesis import (
     depth_optimal_prep_circuit,
     gate_optimal_prep_circuit,
     gate_optimal_verification_circuit,
@@ -20,12 +19,13 @@ from mqt.qecc.ft_stateprep import (
     heuristic_verification_circuit,
     heuristic_verification_stabilizers,
 )
+from mqt.qecc.codes import SquareOctagonColorCode
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import QuantumCircuit
 
-    from mqt.qecc.ft_stateprep import StatePrepCircuit
+    from mqt.qecc.circuit_synthesis import StatePrepCircuit
 
 
 @pytest.fixture

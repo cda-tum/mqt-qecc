@@ -8,8 +8,7 @@ from pathlib import Path
 from qiskit import QuantumCircuit
 
 from mqt.qecc import CSSCode
-from mqt.qecc.codes import HexagonalColorCode, SquareOctagonColorCode
-from mqt.qecc.ft_stateprep import (
+from mqt.qecc.circuit_synthesis import (
     NoisyNDFTStatePrepSimulator,
     gate_optimal_prep_circuit,
     gate_optimal_verification_circuit,
@@ -17,6 +16,7 @@ from mqt.qecc.ft_stateprep import (
     heuristic_verification_circuit,
     naive_verification_circuit,
 )
+from mqt.qecc.codes import HexagonalColorCode, SquareOctagonColorCode
 
 
 def main() -> None:
