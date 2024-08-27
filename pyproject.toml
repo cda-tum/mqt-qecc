@@ -28,7 +28,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -37,7 +36,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Typing :: Typed",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "z3-solver>=4.12,<4.14",
     "qecsim",
@@ -149,7 +148,6 @@ filterwarnings = [
     "error",
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
-    'ignore:.*Qiskit with Python 3.8.*:DeprecationWarning:',
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
     'ignore:.*invalid escape sequence.*:DeprecationWarning:',
     'ignore:.*invalid escape sequence.*:SyntaxWarning:',
@@ -167,7 +165,7 @@ report.exclude_also = [
 [tool.mypy]
 files = ["src/mqt", "test/python"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
-python_version = "3.8"
+python_version = "3.9"
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
