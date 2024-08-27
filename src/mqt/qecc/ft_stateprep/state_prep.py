@@ -308,20 +308,17 @@ def _generate_circ_with_bounded_gates(
     checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True
 ) -> QuantumCircuit:
     """Find the gate optimal circuit for a given check matrix and maximum depth."""
+    n = checks.shape[1]
     columns = np.array([
-        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(checks.shape[1])] for i in range(checks.shape[0])]
-        for d in range(max_cnots + 1)
+        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(n)] for i in range(checks.shape[0])] for d in range(max_cnots + 1)
     ])
-    n_bits = int(np.ceil(np.log2(checks.shape[1])))
+    n_bits = int(np.ceil(np.log2(n)))
     targets = [z3.BitVec(f"target_{d}", n_bits) for d in range(max_cnots)]
     controls = [z3.BitVec(f"control_{d}", n_bits) for d in range(max_cnots)]
     s = z3.Solver()
 
     additions = np.array([
-        [
-            [z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(checks.shape[1])]
-            for col_1 in range(checks.shape[1])
-        ]
+        [[z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(n)] for col_1 in range(n)]
         for d in range(max_cnots)
     ])
 
@@ -334,23 +331,24 @@ def _generate_circ_with_bounded_gates(
         s.add(controls[d - 1] != targets[d - 1])
 
         # control and target must be valid qubits
-        if checks.shape[1] and (checks.shape[1] - 1) != 0:
-            s.add(z3.ULT(controls[d - 1], checks.shape[1]))
-            s.add(z3.ULT(targets[d - 1], checks.shape[1]))
+
+        if n and (n - 1) != 0 and not ((n & (n - 1) == 0) and n != 0):  # check if n is a power of 2 or 1 or 0
+            s.add(z3.ULT(controls[d - 1], n))
+            s.add(z3.ULT(targets[d - 1], n))
 
     # if column is not involved in any addition at certain depth, it is the same as the previous column
     for d in range(1, max_cnots + 1):
-        for col in range(checks.shape[1]):
+        for col in range(n):
             s.add(z3.Implies(targets[d - 1] != col, _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
 
-    # assert that final check matrix has checks.shape[1]-checks.shape[0] zero columns
+    # assert that final check matrix has n-checks.shape[0] zero columns
     s.add(_final_matrix_constraint(columns))
 
     if s.check() == z3.sat:
         m = s.model()
         cnots = [(m[controls[d]].as_long(), m[targets[d]].as_long()) for d in range(max_cnots)]
         checks = np.array([
-            [bool(m[columns[max_cnots][i][j]]) for j in range(checks.shape[1])] for i in range(checks.shape[0])
+            [bool(m[columns[max_cnots][i][j]]) for j in range(n)] for i in range(checks.shape[0])
         ]).astype(int)
         return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
 
