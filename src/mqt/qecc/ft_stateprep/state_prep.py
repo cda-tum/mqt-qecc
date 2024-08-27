@@ -32,13 +32,16 @@ if TYPE_CHECKING:  # pragma: no cover
 class StatePrepCircuit:
     """Represents a state preparation circuit for a CSS code."""
 
-    def __init__(self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True) -> None:
+    def __init__(
+        self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True, error_detection_code: bool = False
+    ) -> None:
         """Initialize a state preparation circuit.
 
         Args:
             circ: The state preparation circuit.
             code: The CSS code to prepare the state for.
             zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+            error_detection_code: If True, prepare the state for error detection. This ensures that when computing the fault set of the circuit, up to d//2 errors errors can occur in the circuit.
         """
         self.circ = circ
         self.code = code
@@ -52,14 +55,17 @@ class StatePrepCircuit:
         self.z_checks = code.Hz.copy() if not zero_state else np.vstack((code.Lz.copy(), code.Hz.copy()))
 
         self.num_qubits = circ.num_qubits
-        self.max_errors = (code.distance - 1) // 2
-        self.x_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
-        self.z_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
-        self.x_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
-        self.z_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
+
+        self.error_detection = error_detection_code
+        self._set_max_errors()
 
         self.max_x_measurements = len(self.x_checks)
         self.max_z_measurements = len(self.z_checks)
+
+    def set_error_detection(self, error_detection: bool) -> None:
+        """Set whether the state preparation circuit is for error detection."""
+        self.error_detection = error_detection
+        self._set_max_errors()
 
     def compute_fault_sets(self, reduce: bool = True) -> None:
         """Compute the fault sets for the state preparation circuit."""
@@ -169,6 +175,18 @@ class StatePrepCircuit:
             assert fs is not None
             fault_sets[num_errors] = _remove_trivial_faults(fs, stabs, self.code, x_errors, num_errors)
         return fault_sets
+
+    def _set_max_errors(self) -> None:
+        if self.code.distance == 2:
+            error_detection_code = True
+
+        self.max_errors = (self.code.distance - 1) // 2 if not error_detection_code else self.code.distance // 2
+        self.max_x_errors = (self.code.x_distance - 1) // 2 if not error_detection_code else self.code.x_distance // 2
+        self.max_z_errors = (self.code.z_distance - 1) // 2 if not error_detection_code else self.code.z_distance // 2
+        self.x_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
+        self.z_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
+        self.x_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
+        self.z_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
 
 
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True) -> StatePrepCircuit:
@@ -567,7 +585,7 @@ def gate_optimal_verification_stabilizers(
     Returns:
         A list of stabilizers to verify the state preparation circuit.
     """
-    max_errors = (sp_circ.code.distance - 1) // 2
+    max_errors = sp_circ.max_errors
     layers = [[] for _ in range(max_errors)]  # type: list[list[npt.NDArray[np.int8]]]
     if max_ancillas is None:
         max_ancillas = sp_circ.max_z_measurements if x_errors else sp_circ.max_x_measurements
@@ -769,7 +787,7 @@ def heuristic_verification_stabilizers(
         additional_faults: Faults to verify in addition to the faults propagating in the state preparation circuit.
     """
     logging.info("Finding verification stabilizers using heuristic method")
-    max_errors = (sp_circ.code.distance - 1) // 2
+    max_errors = sp_circ.max_errors
     layers = [[] for _ in range(max_errors)]  # type: list[list[npt.NDArray[np.int8]]]
     sp_circ.compute_fault_sets()
     fault_sets = (
@@ -950,13 +968,13 @@ def _measure_ft_stabs(
     measured_circ.compose(sp_circ.circ, inplace=True)
 
     if sp_circ.zero_state:
-        _measure_ft_z(measured_circ, z_measurements, t=(sp_circ.code.x_distance - 1) // 2)
+        _measure_ft_z(measured_circ, z_measurements, t=sp_circ.max_x_errors)
         if full_fault_tolerance:
-            _measure_ft_x(measured_circ, x_measurements, flags=True, t=(sp_circ.code.x_distance - 1) // 2)
+            _measure_ft_x(measured_circ, x_measurements, flags=True, t=sp_circ.max_x_errors)
     else:
-        _measure_ft_x(measured_circ, x_measurements, t=(sp_circ.code.z_distance - 1) // 2)
+        _measure_ft_x(measured_circ, x_measurements, t=sp_circ.max_z_errors)
         if full_fault_tolerance:
-            _measure_ft_z(measured_circ, z_measurements, flags=True, t=(sp_circ.code.z_distance - 1) // 2)
+            _measure_ft_z(measured_circ, z_measurements, flags=True, t=sp_circ.max_z_errors)
 
     return measured_circ
 
@@ -1182,8 +1200,8 @@ def _remove_trivial_faults(
     faults = faults.copy()
     logging.info("Removing trivial faults.")
     d_error = code.x_distance if x_errors else code.z_distance
-    t_error = (d_error - 1) // 2
-    t = (code.distance - 1) // 2
+    t_error = max((d_error - 1) // 2, 1)
+    t = max((code.distance - 1) // 2, 1)
     max_w = t_error // t
     for i, fault in enumerate(faults):
         faults[i] = _coset_leader(fault, stabs)
@@ -1234,7 +1252,7 @@ def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
 
     z_measurements = list(sp_circ.code.Hx)
     x_measurements = list(sp_circ.code.Hz)
-    reps = (sp_circ.code.distance - 1) // 2
+    reps = sp_circ.max_errors
     return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps)
 
 
