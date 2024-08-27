@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from .ft_stateprep import (
-    LutDecoder,
-    NoisyNDFTStatePrepSimulator,
+from .simulation import LutDecoder, NoisyNDFTStatePrepSimulator
+from .state_prep import (
     StatePrepCircuit,
     depth_optimal_prep_circuit,
     gate_optimal_prep_circuit,

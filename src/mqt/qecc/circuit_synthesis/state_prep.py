@@ -14,7 +14,7 @@ from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRe
 from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGOutNode
 
-from ...codes import InvalidCSSCodeError
+from ..codes import InvalidCSSCodeError
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from qiskit import AncillaQubit, ClBit, DagCircuit, DAGNode, Qubit
     from qiskit.quantum_info import PauliList
 
-    from ...codes import CSSCode
+    from ..codes import CSSCode
 
 
 class StatePrepCircuit:
