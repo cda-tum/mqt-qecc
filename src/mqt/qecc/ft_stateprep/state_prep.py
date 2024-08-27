@@ -56,7 +56,7 @@ class StatePrepCircuit:
 
         self.num_qubits = circ.num_qubits
 
-        self.error_detection = error_detection_code
+        self.error_detection_code = error_detection_code
         self._set_max_errors()
 
         self.max_x_measurements = len(self.x_checks)
@@ -64,7 +64,7 @@ class StatePrepCircuit:
 
     def set_error_detection(self, error_detection: bool) -> None:
         """Set whether the state preparation circuit is for error detection."""
-        self.error_detection = error_detection
+        self.error_detection_code = error_detection
         self._set_max_errors()
 
     def compute_fault_sets(self, reduce: bool = True) -> None:
@@ -178,11 +178,16 @@ class StatePrepCircuit:
 
     def _set_max_errors(self) -> None:
         if self.code.distance == 2:
-            error_detection_code = True
+            logging.warning("Code distance is 2, assuming error detection code.")
+            self.error_detection_code = True
 
-        self.max_errors = (self.code.distance - 1) // 2 if not error_detection_code else self.code.distance // 2
-        self.max_x_errors = (self.code.x_distance - 1) // 2 if not error_detection_code else self.code.x_distance // 2
-        self.max_z_errors = (self.code.z_distance - 1) // 2 if not error_detection_code else self.code.z_distance // 2
+        self.max_errors = (self.code.distance - 1) // 2 if not self.error_detection_code else self.code.distance // 2
+        self.max_x_errors = (
+            (self.code.x_distance - 1) // 2 if not self.error_detection_code else self.code.x_distance // 2
+        )
+        self.max_z_errors = (
+            (self.code.z_distance - 1) // 2 if not self.error_detection_code else self.code.z_distance // 2
+        )
         self.x_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
         self.z_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
         self.x_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
