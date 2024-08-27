@@ -1,8 +1,6 @@
 OPENQASM 2.0;
 include "qelib1.inc";
 qreg q[9];
-qreg z_anc[1];
-creg z_c[1];
 h q[0];
 h q[2];
 h q[5];
@@ -19,4 +17,3 @@ cx q[0],z_anc[0];
 cx q[2],z_anc[0];
 cx q[4],z_anc[0];
 cx q[5],z_anc[0];
-measure z_anc[0] -> z_c[0];
