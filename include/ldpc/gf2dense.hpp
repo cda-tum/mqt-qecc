@@ -10,109 +10,109 @@
 #include <vector>
 
 namespace ldpc::gf2dense {
-using CscMatrix = std::vector<std::vector<std::size_t>>;
-using CsrMatrix = std::vector<std::vector<std::size_t>>;
+    using CscMatrix = std::vector<std::vector<std::size_t>>;
+    using CsrMatrix = std::vector<std::vector<std::size_t>>;
 
 /**
  * A class to represent the PLU decomposition.
  * That is for a matrix A, we have perm*A = lower*upper, where perm is a permutation matrix.
  */
-class PluDecomposition {
-private:
+    class PluDecomposition {
+    private:
         CscMatrix cscMat; // csc_mat[column][row]
-    std::vector<uint8_t> yImageCheckVector;
+        std::vector<uint8_t> yImageCheckVector;
 
-public:
-    CsrMatrix                             lower;
-    CsrMatrix                             upper;
-    CscMatrix                             perm;
-    std::size_t                           matrixRank{};
-    std::size_t                           rowCount{};
-    std::size_t                           colCount{};
-    std::vector<std::size_t>              rows;
-    std::vector<std::size_t>              swapRows;
-    std::vector<std::vector<std::size_t>> eliminationRows;
-    std::vector<std::size_t>              pivotCols;
-    std::vector<std::size_t>              notPivotCols;
+    public:
+        CsrMatrix lower;
+        CsrMatrix upper;
+        CscMatrix perm;
+        std::size_t matrixRank{};
+        std::size_t rowCount{};
+        std::size_t colCount{};
+        std::vector<std::size_t> rows;
+        std::vector<std::size_t> swapRows;
+        std::vector<std::vector<std::size_t>> eliminationRows;
+        std::vector<std::size_t> pivotCols;
+        std::vector<std::size_t> notPivotCols;
         bool luConstructed = false;
 
         PluDecomposition(std::size_t rowCount, std::size_t colCount, std::vector<std::vector<std::size_t>> &cscMat)
                 : cscMat(cscMat),
-          rowCount(rowCount),
+                  rowCount(rowCount),
                   colCount(colCount) {
-    }
-
-    PluDecomposition() = default;
-
-    ~PluDecomposition() =
-            default;
-
-    /**
-     * Reset all internal information.
-     */
-    void reset() {
-        this->matrixRank = 0;
-        this->rows.clear();
-        this->swapRows.clear();
-        this->pivotCols.clear();
-        this->notPivotCols.clear();
-        this->yImageCheckVector.clear();
-
-        for (auto& col : this->lower) {
-            col.clear();
         }
-        this->lower.clear();
 
-        for (auto& col : this->eliminationRows) {
-            col.clear();
-        }
-        this->eliminationRows.clear();
+        PluDecomposition() = default;
 
-        for (auto& col : this->upper) {
-            col.clear();
-        }
-        this->upper.clear();
+        ~PluDecomposition() =
+        default;
 
-        for (auto& col : this->perm) {
-            col.clear();
-        }
-        this->perm.clear();
+        /**
+         * Reset all internal information.
+         */
+        void reset() {
+            this->matrixRank = 0;
+            this->rows.clear();
+            this->swapRows.clear();
+            this->pivotCols.clear();
+            this->notPivotCols.clear();
+            this->yImageCheckVector.clear();
+
+            for (auto &col: this->lower) {
+                col.clear();
+            }
+            this->lower.clear();
+
+            for (auto &col: this->eliminationRows) {
+                col.clear();
+            }
+            this->eliminationRows.clear();
+
+            for (auto &col: this->upper) {
+                col.clear();
+            }
+            this->upper.clear();
+
+            for (auto &col: this->perm) {
+                col.clear();
+            }
+            this->perm.clear();
 
             this->luConstructed = false;
-    }
-
-    /**
-     * Compute the reduced row-echelon form
-     * The algorithm operates column, wise. The original matrix, csc_mat is not modified.
-     * Instead, rr_col is used to represent the column currently eliminated and row operations, e.g., swaps
-     * and addition is done column per column.
-     * First, all previous row operations are applied to the current column.
-     * Then pivoting is done for the current column and corresponding swaps are applied.
-         * @param constructU
-     */
-        void rref(const bool constructL = true, const bool constructU = true) {
-        this->reset();
-        for (std::size_t i = 0; i < this->rowCount; i++) {
-            this->rows.push_back(i);
         }
+
+        /**
+         * Compute the reduced row-echelon form
+         * The algorithm operates column, wise. The original matrix, csc_mat is not modified.
+         * Instead, rr_col is used to represent the column currently eliminated and row operations, e.g., swaps
+         * and addition is done column per column.
+         * First, all previous row operations are applied to the current column.
+         * Then pivoting is done for the current column and corresponding swaps are applied.
+             * @param constructU
+         */
+        void rref(const bool constructL = true, const bool constructU = true) {
+            this->reset();
+            for (std::size_t i = 0; i < this->rowCount; i++) {
+                this->rows.push_back(i);
+            }
 
             auto maxRank = std::min(this->rowCount, this->colCount);
 
             if (constructL) {
-            this->lower.resize(this->rowCount, std::vector<std::size_t>{});
-        }
+                this->lower.resize(this->rowCount, std::vector<std::size_t>{});
+            }
 
             for (std::size_t colIdx = 0; colIdx < this->colCount; colIdx++) {
                 this->eliminateColumn(colIdx, constructL, constructU);
                 if (this->matrixRank == maxRank) {
-                break;
+                    break;
+                }
             }
-        }
 
             if (constructL && constructU) {
                 this->luConstructed = true;
+            }
         }
-    }
 
 
         std::vector<std::size_t> luSolve(std::vector<std::size_t> &y) {
@@ -159,66 +159,64 @@ public:
 
             for (auto rowIndex: this->cscMat[colIdx]) {
                 rrCol[rowIndex] = 1;
-        }
-        // apply previous operations to current column
-        for (std::size_t i = 0; i < this->matrixRank; i++) {
+            }
+            // apply previous operations to current column
+            for (std::size_t i = 0; i < this->matrixRank; i++) {
                 std::swap(rrCol[i], rrCol[this->swapRows[i]]);
                 if (rrCol[i] == 1) {
-                // if row elem is one, do elimination for current column below the pivot
-                // elimination operations to apply are stored in the `elimination_rows` attribute,
+                    // if row elem is one, do elimination for current column below the pivot
+                    // elimination operations to apply are stored in the `elimination_rows` attribute,
                     for (std::size_t const rowIdx: this->eliminationRows[i]) {
                         rrCol[rowIdx] ^= 1;
+                    }
                 }
             }
-        }
             bool pivotFound = false;
-        for (auto i = this->matrixRank; i < this->rowCount; i++) {
+            for (auto i = this->matrixRank; i < this->rowCount; i++) {
                 if (rrCol[i] == 1) {
                     pivotFound = true;
-                this->swapRows.push_back(i);
+                    this->swapRows.push_back(i);
                     this->pivotCols.push_back(colIdx);
-                break;
+                    break;
+                }
             }
-        }
-        // if no pivot was found, we go to next column
+            // if no pivot was found, we go to next column
             if (!pivotFound) {
                 this->notPivotCols.push_back(colIdx);
-            return false;
-        }
+                return false;
+            }
 
             std::swap(rrCol[this->matrixRank], rrCol[this->swapRows[this->matrixRank]]);
-        std::swap(this->rows[this->matrixRank], this->rows[this->swapRows[this->matrixRank]]);
-        this->eliminationRows.emplace_back();
+            std::swap(this->rows[this->matrixRank], this->rows[this->swapRows[this->matrixRank]]);
+            this->eliminationRows.emplace_back();
 
             if (constructL) {
-            std::swap(this->lower[this->matrixRank], this->lower[this->swapRows[this->matrixRank]]);
-            this->lower[this->matrixRank].push_back(this->matrixRank);
-        }
+                std::swap(this->lower[this->matrixRank], this->lower[this->swapRows[this->matrixRank]]);
+                this->lower[this->matrixRank].push_back(this->matrixRank);
+            }
 
-        for (auto i = this->matrixRank + 1; i < this->rowCount; i++) {
+            for (auto i = this->matrixRank + 1; i < this->rowCount; i++) {
                 if (rrCol[i] == 1) {
-                this->eliminationRows[this->matrixRank].push_back(i);
+                    this->eliminationRows[this->matrixRank].push_back(i);
                     if (constructL) {
-                    this->lower[i].push_back(this->matrixRank);
+                        this->lower[i].push_back(this->matrixRank);
+                    }
                 }
             }
-        }
 
             if (constructU) {
-            this->upper.emplace_back();
-            for (std::size_t i = 0; i <= this->matrixRank; i++) {
+                this->upper.emplace_back();
+                for (std::size_t i = 0; i <= this->matrixRank; i++) {
                     if (rrCol[i] == 1) {
                         this->upper[i].push_back(colIdx);
+                    }
                 }
             }
-        }
 
-        this->matrixRank++;
-        return true;
-    }
+            this->matrixRank++;
+            return true;
         }
-};
-// namespace ldpc::gf2dense
+    };
 } // namespace ldpc::gf2dense
 
 #endif
