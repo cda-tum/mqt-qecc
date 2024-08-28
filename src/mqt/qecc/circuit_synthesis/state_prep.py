@@ -14,7 +14,12 @@ from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGOutNode
 
 from ..codes import InvalidCSSCodeError
-from .synthesis_utils import heuristic_gaussian_elimination, run_with_timeout
+from .synthesis_utils import (
+    build_css_circuit_from_list_and_checks,
+    heuristic_gaussian_elimination,
+    iterative_search_with_timeout,
+    run_with_timeout,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +215,14 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
     checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
-    circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state)
+    cnots = cnots[::-1]
+    if zero_state:
+        hadamards = np.where(np.sum(checks, axis=0) != 0)[0]
+    else:
+        hadamards = np.where(np.sum(checks, axis=0) == 0)[0]
+        cnots = [(j, i) for i, j in cnots]
+
+    circ = build_css_circuit_from_list_and_checks(checks.shape[1], cnots, list(hadamards))
     return StatePrepCircuit(circ, code, zero_state)
 
 
@@ -276,8 +288,14 @@ def _generate_circ_with_bounded_depth(
         checks = np.array([
             [bool(m[columns[max_depth, i, j]]) for j in range(checks.shape[1])] for i in range(checks.shape[0])
         ])
+        cnots.reverse()
+        if zero_state:
+            hadamards = np.where(np.sum(checks, axis=0) != 0)[0]
+        else:
+            hadamards = np.where(np.sum(checks, axis=0) == 0)[0]
+            cnots = [(j, i) for i, j in cnots]
 
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
+        return build_css_circuit_from_list_and_checks(checks.shape[1], cnots, list(hadamards))
 
     return None
 
@@ -328,7 +346,14 @@ def _generate_circ_with_bounded_gates(
         checks = np.array([
             [bool(m[columns[max_cnots][i][j]]) for j in range(n)] for i in range(checks.shape[0])
         ]).astype(int)
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
+        cnots.reverse()
+        if zero_state:
+            hadamards = np.where(np.sum(checks, axis=0) != 0)[0]
+        else:
+            hadamards = np.where(np.sum(checks, axis=0) == 0)[0]
+            cnots = [(j, i) for i, j in cnots]
+
+        return build_css_circuit_from_list_and_checks(checks.shape[1], cnots, list(hadamards))
 
     return None
 
@@ -435,70 +460,6 @@ def gate_optimal_prep_circuit(
     return _optimal_circuit(
         code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout
     )
-
-
-def _build_circuit_from_list_and_checks(
-    cnots: list[tuple[int, int]], checks: npt.NDArray[np.int8], zero_state: bool = True
-) -> QuantumCircuit:
-    # Build circuit
-    n = checks.shape[1]
-    circ = QuantumCircuit(n)
-
-    controls = [i for i in range(n) if np.sum(checks[:, i]) >= 1]
-    if zero_state:
-        for control in controls:
-            circ.h(control)
-    else:
-        for i in range(n):
-            if i not in controls:
-                circ.h(i)
-
-    for i, j in reversed(cnots):
-        if zero_state:
-            ctrl, tar = i, j
-        else:
-            ctrl, tar = j, i
-        circ.cx(ctrl, tar)
-    return circ
-
-
-def iterative_search_with_timeout(
-    fun: Callable[[int], QuantumCircuit],
-    min_param: int,
-    max_param: int,
-    min_timeout: int,
-    max_timeout: int,
-    param_factor: float = 2,
-    timeout_factor: float = 2,
-) -> None | tuple[None | QuantumCircuit, int]:
-    """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
-
-    Args:
-        fun: function to run with increasing parameters and timeouts
-        min_param: minimum parameter to start with
-        max_param: maximum parameter to reach
-        min_timeout: minimum timeout to start with
-        max_timeout: maximum timeout to reach
-        param_factor: factor to increase the parameter by at each iteration
-        timeout_factor: factor to increase the timeout by at each iteration
-    """
-    curr_timeout = min_timeout
-    curr_param = min_param
-    while curr_timeout <= max_timeout:
-        while curr_param <= max_param:
-            logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
-            res = run_with_timeout(fun, curr_param, timeout=curr_timeout)
-            if res is not None and (not isinstance(res, str) or res != "timeout"):
-                return res, curr_param
-            if curr_param == max_param:
-                break
-
-            curr_param = int(curr_param * param_factor)
-            curr_param = min(curr_param, max_param)
-
-        curr_timeout = int(curr_timeout * timeout_factor)
-        curr_param = min_param
-    return None, max_param
 
 
 def gate_optimal_verification_stabilizers(

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 import multiprocess
 import numpy as np
 from ldpc import mod2
+from qiskit import QuantumCircuit
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -37,6 +38,45 @@ def run_with_timeout(func: Callable[[Any], Any], *args: Any, timeout: int = 10) 
         p.terminate()
         return "timeout"
     return return_list[0]
+
+
+def iterative_search_with_timeout(
+    fun: Callable[[int], QuantumCircuit],
+    min_param: int,
+    max_param: int,
+    min_timeout: int,
+    max_timeout: int,
+    param_factor: float = 2,
+    timeout_factor: float = 2,
+) -> None | tuple[None | QuantumCircuit, int]:
+    """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
+
+    Args:
+        fun: function to run with increasing parameters and timeouts
+        min_param: minimum parameter to start with
+        max_param: maximum parameter to reach
+        min_timeout: minimum timeout to start with
+        max_timeout: maximum timeout to reach
+        param_factor: factor to increase the parameter by at each iteration
+        timeout_factor: factor to increase the timeout by at each iteration
+    """
+    curr_timeout = min_timeout
+    curr_param = min_param
+    while curr_timeout <= max_timeout:
+        while curr_param <= max_param:
+            logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
+            res = run_with_timeout(fun, curr_param, timeout=curr_timeout)
+            if res is not None and (not isinstance(res, str) or res != "timeout"):
+                return res, curr_param
+            if curr_param == max_param:
+                break
+
+            curr_param = int(curr_param * param_factor)
+            curr_param = min(curr_param, max_param)
+
+        curr_timeout = int(curr_timeout * timeout_factor)
+        curr_param = min_param
+    return None, max_param
 
 
 def heuristic_gaussian_elimination(
@@ -104,3 +144,23 @@ def heuristic_gaussian_elimination(
         np.fill_diagonal(costs, 1)
 
     return matrix, eliminations
+
+
+def build_css_circuit_from_list_and_checks(
+    n: int, cnots: list[tuple[int, int]], hadamards: list[int]
+) -> QuantumCircuit:
+    """Build a quantum circuit consisting of Hadamards followed by a layer of CNOTs from a list of CNOTs and a list of checks.
+
+    Args:
+        n: Number of qubits in the circuit.
+        cnots: List of CNOTs to apply. Each CNOT is a tuple of the form (control, target).
+        hadamards: List of qubits to apply Hadamards to.
+
+    Returns:
+        The quantum circuit.
+    """
+    circ = QuantumCircuit(n)
+    circ.h(hadamards)
+    for i, j in cnots:
+        circ.cx(i, j)
+    return circ
