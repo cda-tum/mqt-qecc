@@ -14,7 +14,7 @@ concurrency:
 jobs:
   change-detection:
     name: 🔍 Change
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.1.5
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.3
 
   cpp-tests:
     name: 🇨‌ Test
