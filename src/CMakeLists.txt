@@ -12,10 +12,6 @@ add_library(
   ${MQT_QECC_INCLUDE_BUILD_DIR}/UFHeuristic.hpp
   ${MQT_QECC_INCLUDE_BUILD_DIR}/Utils.hpp
   ${MQT_QECC_INCLUDE_BUILD_DIR}/ldpc/gf2dense.hpp
-  ${MQT_QECC_INCLUDE_BUILD_DIR}/ldpc/gf2sparse_linalg.hpp
-  ${MQT_QECC_INCLUDE_BUILD_DIR}/ldpc/rng.hpp
-  ${MQT_QECC_INCLUDE_BUILD_DIR}/ldpc/sparse_matrix_util.hpp
-  ${MQT_QECC_INCLUDE_BUILD_DIR}/ldpc/util.hpp
   DecodingSimulator.cpp
   UFDecoder.cpp
   UFHeuristic.cpp
