@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.8.1", "setuptools-scm>=7", "pybind11>=2.12"]
+requires = ["scikit-build-core>=0.10.1", "setuptools-scm>=7", "pybind11>=2.13"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -10,7 +10,8 @@ authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" },
     { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" },
-    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"}
+    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"},
+    { name = "Tom Peham", email = "tom.peham@tum.de" },
 ]
 keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
@@ -27,15 +28,15 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 5 - Production/Stable",
     "Typing :: Typed",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "z3-solver>=4.12,<4.14",
     "qecsim",
@@ -43,13 +44,14 @@ dependencies = [
     "numpy>=1.26,<2; python_version > '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
     "numpy>=1.24,<2; python_version <= '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
     "qiskit[qasm3-import]>=1.0.0",
-    "qiskit-aer>=0.14.0",
+    "qiskit-aer>=0.15.0",
     "stim >= 1.13.0",
     "multiprocess >= 0.70.16",
     "bposd>=1.6",
     "numba>=0.59; python_version > '3.11'",
     "numpy>=0.57; python_version <= '3.11'",
-    "pymatching>=2",
+    "pymatching>=2.2; python_version > '3.11'",
+    "pymatching>=2; python_version <= '3.11'",
 ]
 dynamic = ["version"]
 
@@ -87,23 +89,22 @@ Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 
 [tool.scikit-build]
 # Protect the configuration against future changes in scikit-build-core
-minimum-version = "0.8.1"
+minimum-version = "build-system.requires"
 
 # Set the wheel install directory
 wheel.install-dir = "mqt/qecc"
 
-# Set required CMake and Ninja versions
-cmake.version = ">=3.19"
+# Set required Ninja version
 ninja.version = ">=1.10"
 
 # Setuptools-style build caching in a local directory
-build-dir = "build/{wheel_tag}"
+build-dir = "build/{build_type}"
 
 # Explicitly set the package directory
 wheel.packages = ["src/mqt"]
 
 # Only build the Python bindings target
-cmake.targets = ["pyqecc"]
+build.targets = ["pyqecc"]
 
 # Only install the Python package component
 install.components = ["mqt-qecc_Python"]
@@ -145,11 +146,12 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
-#    "error",  # temporary fix until https://github.com/quantumgizmos/ldpc/pull/42 is merged and released
+    "error",
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
-    'ignore:.*Qiskit with Python 3.8.*:DeprecationWarning:',
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
+    'ignore:.*invalid escape sequence.*:DeprecationWarning:',
+    'ignore:.*invalid escape sequence.*:SyntaxWarning:',
 ]
 
 [tool.coverage]
@@ -164,7 +166,7 @@ report.exclude_also = [
 [tool.mypy]
 files = ["src/mqt", "test/python"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
-python_version = "3.8"
+python_version = "3.9"
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
@@ -182,9 +184,12 @@ module = ["qiskit.*", "qecsim.*","qiskit_aer.*", "matplotlib.*", "scipy.*", "ldp
 ignore_missing_imports = true
 
 
+[tool.check-wheel-contents]
+ignore = ["W002"]  # Triggers on __init__.py's and duplicate data files
+
+
 [tool.ruff]
 line-length = 120
-src = ["src"]
 namespace-packages = ["mqt"]
 preview = true
 unsafe-fixes = true
@@ -280,20 +285,14 @@ aer = "aer"
 anc = "anc"
 
 
-[tool.repo-review]
-ignore = [
-  "PC160", # "Uses codespell" -> switched to https://github.com/crate-ci/typos
-  "PC180", # "Uses prettier" -> switched to different prettier-mirror that is not recognized by the check
-]
-
-
 [tool.cibuildwheel]
 build = "cp3*"
 skip = "*-musllinux*"
 archs = "auto64"
 test-command = "python -c \"from mqt import qecc\""
-test-skip = "*-macosx_arm64-*"
+test-skip = ["cp38-macosx_arm64", "cp313*"] # skip testing on Python 3.13 until our dependencies are ready
 build-frontend = "build[uv]"
+free-threaded-support = true
 
 [tool.cibuildwheel.linux]
 environment = { DEPLOY = "ON" }
@@ -302,9 +301,9 @@ environment = { DEPLOY = "ON" }
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
-before-build = "uv pip install delvewheel>=1.4.0"
+before-build = "uv pip install delvewheel>=1.7.3"
 repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
-environment = { CMAKE_ARGS = "-T ClangCL" }
+environment = { CMAKE_ARGS = "-T ClangCL", SKBUILD_CMAKE_ARGS="--fresh" }
 
 [[tool.cibuildwheel.overrides]]
 select = "cp312-*"
