@@ -59,7 +59,7 @@ class NoisyNDFTStatePrepSimulator:
         self.parallel_gates = parallel_gates
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
-        self.decoder = LutDecoder(code, False)
+        self.decoder = LutDecoder(code)
         self.set_p(p)
 
     def set_p(self, p: float) -> None:
