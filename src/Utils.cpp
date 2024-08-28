@@ -197,8 +197,8 @@ std::vector<std::vector<std::size_t>> Utils::toCsc(const std::vector<std::vector
     if (mat.empty()) {
         return {};
     }
-    auto                          rows = mat.size();
-    auto                          cols = mat.at(0).size();
+    auto                                  rows = mat.size();
+    auto                                  cols = mat.at(0).size();
     std::vector<std::vector<std::size_t>> result;
     for (size_t i = 0; i < cols; i++) {
         std::vector<std::size_t> col = {};

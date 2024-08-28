@@ -26,9 +26,9 @@ private:
     std::vector<uint8_t> y_image_check_vector;
 
 public:
-    CsrMatrix                     L;
-    CsrMatrix                     U;
-    CscMatrix                     P;
+    CsrMatrix                             L;
+    CsrMatrix                             U;
+    CscMatrix                             P;
     std::size_t                           matrix_rank{};
     std::size_t                           row_count{};
     std::size_t                           col_count{};
@@ -37,7 +37,7 @@ public:
     std::vector<std::vector<std::size_t>> elimination_rows;
     std::vector<std::size_t>              pivot_cols;
     std::vector<std::size_t>              not_pivot_cols;
-    bool                          LU_constructed = false;
+    bool                                  LU_constructed = false;
 
     PluDecomposition(std::size_t row_count, std::size_t col_count, std::vector<std::vector<std::size_t>>& csc_mat)
         : csc_mat(csc_mat),
@@ -54,7 +54,7 @@ public:
      * Reset all internal information.
      */
     void reset() {
-        this->matrix_rank     = 0;
+        this->matrix_rank = 0;
         this->rows.clear();
         this->swap_rows.clear();
         this->pivot_cols.clear();
@@ -122,7 +122,7 @@ public:
     }
 
     bool eliminate_column(std::size_t col_idx, const bool construct_L = true, const bool construct_U = true) {
-        auto rr_col           = std::vector<uint8_t>(this->row_count, 0);
+        auto rr_col = std::vector<uint8_t>(this->row_count, 0);
 
         for (auto row_index : this->csc_mat[col_idx]) {
             rr_col[row_index] = 1;
