@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <gf2dense.hpp>
+#include "ldpc/gf2dense.hpp"
 #include <iostream>
 #include <map>
 #include <random>

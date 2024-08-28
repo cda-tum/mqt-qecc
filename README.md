@@ -163,6 +163,10 @@ The contributors to this tool are:
 - Thomas Grurl
 - Peter-Jan H.S. Derks
 - Timo Hillmann
+- Tom Peham
+- Ludwig Schmid
+
+Several parts of the code are based on and adapted from: [LDPCv2](https://github.com/quantumgizmos/ldpc_v2).
 
 ## Acknowledgements
 

@@ -7,7 +7,7 @@
 #include "Decoder.hpp"
 
 #include <chrono>
-#include <gf2dense.hpp>
+#include "ldpc/gf2dense.hpp"
 #include <queue>
 #include <random>
 #include <set>
