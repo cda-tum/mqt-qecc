@@ -135,7 +135,7 @@ namespace ldpc::gf2dense {
             auto x = std::vector<std::size_t>(this->colCount, 0);
             auto b = std::vector<std::size_t>(this->matrixRank, 0);
             // First we solve Lb = y, where b = Ux
-            // Solve Lb=y with forwared substitution
+            // Solve Lb=y with forwarded substitution
             for (std::size_t rowIndex = 0; rowIndex < this->matrixRank; rowIndex++) {
                 std::size_t rowSum = 0;
                 for (auto colIndex: this->lower[rowIndex]) {
