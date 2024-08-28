@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import multiprocess
 import numpy as np
+import z3
 from ldpc import mod2
 from qiskit import QuantumCircuit
 
@@ -146,6 +147,146 @@ def heuristic_gaussian_elimination(
     return matrix, eliminations
 
 
+def gaussian_elimination_min_column_ops(
+    matrix: npt.NDArray[np.int8], max_eliminations: int
+) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]] | None:
+    """Perform Gaussian elimination on the column space of a matrix using at most `max_eliminations` eliminations.
+
+    The algorithm encodes the elimination into an SMT problem and uses Z3 to find the optimal solution.
+
+    Args:
+        matrix: The matrix to perform Gaussian elimination on.
+        max_eliminations: The maximum number of eliminations to perform.
+
+    returns:
+        The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
+    """
+    n = matrix.shape[1]
+    columns = np.array([
+        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(n)] for i in range(matrix.shape[0])]
+        for d in range(max_eliminations + 1)
+    ])
+
+    n_bits = int(np.ceil(np.log2(n)))
+    targets = [z3.BitVec(f"target_{d}", n_bits) for d in range(max_eliminations)]
+    controls = [z3.BitVec(f"control_{d}", n_bits) for d in range(max_eliminations)]
+    s = z3.Solver()
+
+    additions = np.array([
+        [[z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(n)] for col_1 in range(n)]
+        for d in range(max_eliminations)
+    ])
+
+    # create initial matrix
+    columns[0, :, :] = matrix.astype(bool)
+    s.add(_column_addition_constraint(columns, additions))
+
+    for d in range(1, max_eliminations + 1):
+        # two columns cannot be in two elimination steps at the same time
+        s.add(controls[d - 1] != targets[d - 1])
+
+        # control and target must be valid qubits
+
+        if n and (n - 1) != 0 and not ((n & (n - 1) == 0) and n != 0):  # check if n is a power of 2 or 1 or 0
+            s.add(z3.ULT(controls[d - 1], n))
+            s.add(z3.ULT(targets[d - 1], n))
+
+    # if column is not involved in any addition at certain depth, it is the same as the previous column
+    for d in range(1, max_eliminations + 1):
+        for col in range(n):
+            s.add(z3.Implies(targets[d - 1] != col, symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
+
+    # assert that final check matrix has n-checks.shape[0] zero columns
+    s.add(_final_matrix_constraint(columns))
+
+    if s.check() == z3.sat:
+        m = s.model()
+        eliminations = [(m[controls[d]].as_long(), m[targets[d]].as_long()) for d in range(max_eliminations)]
+        reduced = np.array([
+            [bool(m[columns[max_eliminations][i][j]]) for j in range(n)] for i in range(matrix.shape[0])
+        ]).astype(np.int8)  # type: npt.NDArray[np.int8]
+        return reduced, eliminations
+
+    return None
+
+
+def gaussian_elimination_min_parallel_eliminations(
+    matrix: npt.NDArray[np.int8], max_parallel_steps: int
+) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]] | None:
+    """Perform Gaussian elimination on the column space of a matrix using at most `max_parallel_steps` parallel column elimination steps.
+
+    The algorithm encodes the elimination into a SAT problem and uses Z3 to find the optimal solution.
+
+    Args:
+        matrix: The matrix to perform Gaussian elimination on.
+        max_parallel_steps: The maximum number of parallel elimination steps to perform.
+
+    returns:
+        The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
+    """
+    assert max_parallel_steps > 0, "max_parallel_steps should be greater than 0"
+    columns = np.array([
+        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(matrix.shape[1])] for i in range(matrix.shape[0])]
+        for d in range(max_parallel_steps + 1)
+    ])
+
+    additions = np.array([
+        [[z3.Bool(f"add_{d}_{i}_{j}") for j in range(matrix.shape[1])] for i in range(matrix.shape[1])]
+        for d in range(max_parallel_steps)
+    ])
+    n_cols = matrix.shape[1]
+    s = z3.Solver()
+
+    # create initial matrix
+    columns[0, :, :] = matrix.astype(bool)
+
+    s.add(_column_addition_constraint(columns, additions))
+
+    # qubit can be involved in at most one addition at each depth
+    for d in range(max_parallel_steps):
+        for col in range(n_cols):
+            s.add(
+                z3.PbLe(
+                    [(additions[d, col_1, col], 1) for col_1 in range(n_cols) if col != col_1]
+                    + [(additions[d, col, col_2], 1) for col_2 in range(n_cols) if col != col_2],
+                    1,
+                )
+            )
+
+    # if column is not involved in any addition at certain depth, it is the same as the previous column
+    for d in range(1, max_parallel_steps + 1):
+        for col in range(n_cols):
+            s.add(
+                z3.Implies(
+                    z3.Not(
+                        z3.Or(
+                            list(np.delete(additions[d - 1, :, col], [col]))
+                            + list(np.delete(additions[d - 1, col, :], [col]))
+                        )
+                    ),
+                    symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col]),
+                )
+            )
+
+    s.add(_final_matrix_constraint(columns))
+
+    if s.check() == z3.sat:
+        m = s.model()
+        eliminations = [
+            (i, j)
+            for d in range(max_parallel_steps)
+            for j in range(matrix.shape[1])
+            for i in range(matrix.shape[1])
+            if m[additions[d, i, j]]
+        ]
+        reduced = np.array([
+            [bool(m[columns[max_parallel_steps, i, j]]) for j in range(matrix.shape[1])] for i in range(matrix.shape[0])
+        ]).astype(np.int8)  # type: npt.NDArray[np.int8]
+        return reduced, eliminations
+
+    return None
+
+
 def build_css_circuit_from_list_and_checks(
     n: int, cnots: list[tuple[int, int]], hadamards: list[int]
 ) -> QuantumCircuit:
@@ -164,3 +305,112 @@ def build_css_circuit_from_list_and_checks(
     for i, j in cnots:
         circ.cx(i, j)
     return circ
+
+
+def _column_addition_constraint(
+    columns: npt.NDArray[z3.BoolRef | bool],  # type: ignore[type-var]
+    col_add_vars: npt.NDArray[z3.BoolRef],
+) -> z3.BoolRef:
+    assert len(columns.shape) == 3
+    max_parallel_steps = col_add_vars.shape[0]  # type: ignore[unreachable]
+    n_cols = col_add_vars.shape[2]
+
+    constraints = []
+    for d in range(1, max_parallel_steps + 1):
+        for col_1 in range(n_cols):
+            for col_2 in range(col_1 + 1, n_cols):
+                col_sum = symbolic_vector_add(columns[d - 1, :, col_1], columns[d - 1, :, col_2])
+
+                # encode col_2 += col_1
+                add_col1_to_col2 = z3.Implies(
+                    col_add_vars[d - 1, col_1, col_2],
+                    z3.And(
+                        symbolic_vector_eq(columns[d, :, col_2], col_sum),
+                        symbolic_vector_eq(columns[d, :, col_1], columns[d - 1, :, col_1]),
+                    ),
+                )
+
+                # encode col_1 += col_2
+                add_col2_to_col1 = z3.Implies(
+                    col_add_vars[d - 1, col_2, col_1],
+                    z3.And(
+                        symbolic_vector_eq(columns[d, :, col_1], col_sum),
+                        symbolic_vector_eq(columns[d, :, col_2], columns[d - 1, :, col_2]),
+                    ),
+                )
+
+                constraints.extend([add_col1_to_col2, add_col2_to_col1])
+
+    return z3.And(constraints)
+
+
+def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+    assert len(columns.shape) == 3
+    return z3.PbEq(  # type: ignore[unreachable]
+        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
+        columns.shape[2] - columns.shape[1],
+    )
+
+
+def symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+    """Return assertion that two symbolic vectors should be equal."""
+    constraints = [False for _ in v1]
+    for i in range(len(v1)):
+        # If one of the elements is a bool, we can simplify the expression
+        v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
+        v2_i_is_bool = isinstance(v2[i], (bool, np.bool_))
+        if v1_i_is_bool:
+            v1[i] = bool(v1[i])
+            if v1[i]:
+                constraints[i] = v2[i]
+            else:
+                constraints[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
+
+        elif v2_i_is_bool:
+            v2[i] = bool(v2[i])
+            if v2[i]:
+                constraints[i] = v1[i]
+            else:
+                constraints[i] = z3.Not(v1[i])
+        else:
+            constraints[i] = v1[i] == v2[i]
+    return z3.And(constraints)
+
+
+def odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
+    """Return True if the overlap of symbolic vector with constant vector is odd."""
+    return z3.PbEq([(v_sym[i], 1) for i, c in enumerate(v_con) if c == 1], 1)
+
+
+def symbolic_scalar_mult(v: npt.NDArray[np.int8], a: z3.BoolRef | bool) -> npt.NDArray[z3.BoolRef]:
+    """Multiply a concrete vector by a symbolic scalar."""
+    return np.array([a if s == 1 else False for s in v])
+
+
+def symbolic_vector_add(
+    v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]
+) -> npt.NDArray[z3.BoolRef | bool]:
+    """Add two symbolic vectors."""
+    v_new = [False for _ in range(len(v1))]
+    for i in range(len(v1)):
+        # If one of the elements is a bool, we can simplify the expression
+        v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
+        v2_i_is_bool = isinstance(v2[i], (bool, np.bool_))
+        if v1_i_is_bool:
+            v1[i] = bool(v1[i])
+            if v1[i]:
+                v_new[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
+            else:
+                v_new[i] = v2[i]
+
+        elif v2_i_is_bool:
+            v2[i] = bool(v2[i])
+            if v2[i]:
+                v_new[i] = z3.Not(v1[i])
+            else:
+                v_new[i] = v1[i]
+
+        else:
+            v_new[i] = z3.Xor(v1[i], v2[i])
+
+    return np.array(v_new)
