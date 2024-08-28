@@ -2,227 +2,220 @@
 #define GF2DENSE_H
 
 #include <algorithm>
-#include <chrono>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
-#include <random>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 namespace ldpc::gf2dense {
-using CscMatrix = std::vector<std::vector<std::size_t>>;
-using CsrMatrix = std::vector<std::vector<std::size_t>>;
+    using CscMatrix = std::vector<std::vector<std::size_t>>;
+    using CsrMatrix = std::vector<std::vector<std::size_t>>;
 
 /**
  * A class to represent the PLU decomposition.
- * That is for a matrix A, we have P*A = L*U, where P is a permutation matrix.
+ * That is for a matrix A, we have perm*A = lower*upper, where perm is a permutation matrix.
  */
-class PluDecomposition {
-private:
-    CscMatrix            csc_mat; // csc_mat[column][row]
-    std::vector<uint8_t> y_image_check_vector;
+    class PluDecomposition {
+    private:
+        CscMatrix csc_mat; // csc_mat[column][row]
+        std::vector<uint8_t> yImageCheckVector;
 
-public:
-    CsrMatrix                     L;
-    CsrMatrix                     U;
-    CscMatrix                     P;
-    std::size_t                           matrix_rank{};
-    std::size_t                           row_count{};
-    std::size_t                           col_count{};
-    std::vector<std::size_t>              rows;
-    std::vector<std::size_t>              swap_rows;
-    std::vector<std::vector<std::size_t>> elimination_rows;
-    std::vector<std::size_t>              pivot_cols;
-    std::vector<std::size_t>              not_pivot_cols;
-    bool                          LU_constructed = false;
+    public:
+        CsrMatrix lower;
+        CsrMatrix upper;
+        CscMatrix perm;
+        std::size_t matrixRank{};
+        std::size_t rowCount{};
+        std::size_t colCount{};
+        std::vector<std::size_t> rows;
+        std::vector<std::size_t> swapRows;
+        std::vector<std::vector<std::size_t>> eliminationRows;
+        std::vector<std::size_t> pivotCols;
+        std::vector<std::size_t> notPivotCols;
+        bool LU_constructed = false;
 
-    PluDecomposition(std::size_t row_count, std::size_t col_count, std::vector<std::vector<std::size_t>>& csc_mat)
-        : csc_mat(csc_mat),
-          row_count(row_count),
-          col_count(col_count) {
-    }
-
-    PluDecomposition() = default;
-
-    ~PluDecomposition() =
-            default;
-
-    /**
-     * Reset all internal information.
-     */
-    void reset() {
-        this->matrix_rank     = 0;
-        this->rows.clear();
-        this->swap_rows.clear();
-        this->pivot_cols.clear();
-        this->not_pivot_cols.clear();
-        this->y_image_check_vector.clear();
-
-        for (auto& col : this->L) {
-            col.clear();
-        }
-        this->L.clear();
-
-        for (auto& col : this->elimination_rows) {
-            col.clear();
-        }
-        this->elimination_rows.clear();
-
-        for (auto& col : this->U) {
-            col.clear();
-        }
-        this->U.clear();
-
-        for (auto& col : this->P) {
-            col.clear();
-        }
-        this->P.clear();
-
-        this->LU_constructed = false;
-    }
-
-    /**
-     * Compute the reduced row-echelon form
-     * The algorithm operates column, wise. The original matrix, csc_mat is not modified.
-     * Instead, rr_col is used to represent the column currently eliminated and row operations, e.g., swaps
-     * and addition is done column per column.
-     * First, all previous row operations are applied to the current column.
-     * Then pivoting is done for the current column and corresponding swaps are applied.
-     * @param construct_U
-     */
-    void rref(const bool construct_L = true, const bool construct_U = true) {
-        this->reset();
-        for (std::size_t i = 0; i < this->row_count; i++) {
-            this->rows.push_back(i);
+        PluDecomposition(std::size_t rowCount, std::size_t col_count, std::vector<std::vector<std::size_t>> &cscMat)
+                : csc_mat(cscMat),
+                  rowCount(rowCount),
+                  colCount(col_count) {
         }
 
-        auto max_rank = std::min(this->row_count, this->col_count);
+        PluDecomposition() = default;
 
-        if (construct_L) {
-            this->L.resize(this->row_count, std::vector<std::size_t>{});
-        }
+        ~PluDecomposition() =
+        default;
 
-        // if (construct_U){
-        //     this->U.resize(this->row_count, std::vector<int>{});
-        // }
+        /**
+         * Reset all internal information.
+         */
+        void reset() {
+            this->matrixRank = 0;
+            this->rows.clear();
+            this->swapRows.clear();
+            this->pivotCols.clear();
+            this->notPivotCols.clear();
+            this->yImageCheckVector.clear();
 
-        for (std::size_t col_idx = 0; col_idx < this->col_count; col_idx++) {
-            this->eliminate_column(col_idx, construct_L, construct_U);
-            if (this->matrix_rank == max_rank) {
-                break;
+            for (auto &col: this->lower) {
+                col.clear();
             }
+            this->lower.clear();
+
+            for (auto &col: this->eliminationRows) {
+                col.clear();
+            }
+            this->eliminationRows.clear();
+
+            for (auto &col: this->upper) {
+                col.clear();
+            }
+            this->upper.clear();
+
+            for (auto &col: this->perm) {
+                col.clear();
+            }
+            this->perm.clear();
+
+            this->LU_constructed = false;
         }
 
-        if (construct_L && construct_U) {
-            this->LU_constructed = true;
-        }
-    }
+        /**
+         * Compute the reduced row-echelon form
+         * The algorithm operates column, wise. The original matrix, csc_mat is not modified.
+         * Instead, rr_col is used to represent the column currently eliminated and row operations, e.g., swaps
+         * and addition is done column per column.
+         * First, all previous row operations are applied to the current column.
+         * Then pivoting is done for the current column and corresponding swaps are applied.
+         * @param construct_U
+         */
+        void rref(const bool construct_L = true, const bool construct_U = true) {
+            this->reset();
+            for (std::size_t i = 0; i < this->rowCount; i++) {
+                this->rows.push_back(i);
+            }
 
-    bool eliminate_column(std::size_t col_idx, const bool construct_L = true, const bool construct_U = true) {
-        auto rr_col           = std::vector<uint8_t>(this->row_count, 0);
+            auto max_rank = std::min(this->rowCount, this->colCount);
 
-        for (auto row_index : this->csc_mat[col_idx]) {
-            rr_col[row_index] = 1;
-        }
-        // apply previous operations to current column
-        for (std::size_t i = 0; i < this->matrix_rank; i++) {
-            std::swap(rr_col[i], rr_col[this->swap_rows[i]]);
-            if (rr_col[i] == 1) {
-                // if row elem is one, do elimination for current column below the pivot
-                // elimination operations to apply are stored in the `elimination_rows` attribute,
-                for (std::size_t const row_idx : this->elimination_rows[i]) {
-                    rr_col[row_idx] ^= 1;
+            if (construct_L) {
+                this->lower.resize(this->rowCount, std::vector<std::size_t>{});
+            }
+
+            for (std::size_t col_idx = 0; col_idx < this->colCount; col_idx++) {
+                this->eliminate_column(col_idx, construct_L, construct_U);
+                if (this->matrixRank == max_rank) {
+                    break;
                 }
             }
-        }
-        bool PIVOT_FOUND = false;
-        for (auto i = this->matrix_rank; i < this->row_count; i++) {
-            if (rr_col[i] == 1) {
-                PIVOT_FOUND = true;
-                this->swap_rows.push_back(i);
-                this->pivot_cols.push_back(col_idx);
-                break;
-            }
-        }
-        // if no pivot was found, we go to next column
-        if (!PIVOT_FOUND) {
-            this->not_pivot_cols.push_back(col_idx);
-            return false;
-        }
 
-        std::swap(rr_col[this->matrix_rank], rr_col[this->swap_rows[this->matrix_rank]]);
-        std::swap(this->rows[this->matrix_rank], this->rows[this->swap_rows[this->matrix_rank]]);
-        this->elimination_rows.emplace_back();
-
-        if (construct_L) {
-            std::swap(this->L[this->matrix_rank], this->L[this->swap_rows[this->matrix_rank]]);
-            this->L[this->matrix_rank].push_back(this->matrix_rank);
-        }
-
-        for (auto i = this->matrix_rank + 1; i < this->row_count; i++) {
-            if (rr_col[i] == 1) {
-                this->elimination_rows[this->matrix_rank].push_back(i);
-                if (construct_L) {
-                    this->L[i].push_back(this->matrix_rank);
-                }
+            if (construct_L && construct_U) {
+                this->LU_constructed = true;
             }
         }
 
-        if (construct_U) {
-            this->U.emplace_back();
-            for (std::size_t i = 0; i <= this->matrix_rank; i++) {
+        bool eliminate_column(std::size_t col_idx, const bool construct_L = true, const bool construct_U = true) {
+            auto rr_col = std::vector<uint8_t>(this->rowCount, 0);
+
+            for (auto row_index: this->csc_mat[col_idx]) {
+                rr_col[row_index] = 1;
+            }
+            // apply previous operations to current column
+            for (std::size_t i = 0; i < this->matrixRank; i++) {
+                std::swap(rr_col[i], rr_col[this->swapRows[i]]);
                 if (rr_col[i] == 1) {
-                    this->U[i].push_back(col_idx);
+                    // if row elem is one, do elimination for current column below the pivot
+                    // elimination operations to apply are stored in the `elimination_rows` attribute,
+                    for (std::size_t const row_idx: this->eliminationRows[i]) {
+                        rr_col[row_idx] ^= 1;
+                    }
                 }
             }
-        }
-
-        this->matrix_rank++;
-        return true;
-    }
-
-    std::vector<uint8_t> lu_solve(std::vector<uint8_t>& y) {
-        /*
-        Equation: Ax = y
-
-        We use LU decomposition to arrange the above into the form:
-        LU(Qx) = PAQ^T(Qx)=Py
-
-        We can then solve for x using forward-backward substitution:
-        1. Forward substitution: Solve Lb = Py for b
-        2. Backward substitution: Solve UQx = b for x
-        */
-        if (y.size() != this->row_count) {
-            throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
-        }
-        if (!this->LU_constructed) {
-            throw std::invalid_argument("LU decomposition has not been constructed. Please call rref() first.");
-        }
-        auto x = std::vector<uint8_t>(this->col_count, 0);
-        auto b = std::vector<uint8_t>(this->matrix_rank, 0);
-        // First we solve Lb = y, where b = Ux
-        // Solve Lb=y with forwared substitution
-        for (std::size_t row_index = 0; row_index < this->matrix_rank; row_index++) {
-            std::size_t row_sum = 0;
-            for (auto col_index : this->L[row_index]) {
-                row_sum ^= b[col_index];
+            bool PIVOT_FOUND = false;
+            for (auto i = this->matrixRank; i < this->rowCount; i++) {
+                if (rr_col[i] == 1) {
+                    PIVOT_FOUND = true;
+                    this->swapRows.push_back(i);
+                    this->pivotCols.push_back(col_idx);
+                    break;
+                }
             }
-            b[row_index] = row_sum ^ y[this->rows[row_index]];
-        }
-        // Solve Ux = b with backwards substitution
-        for (int row_index = this->matrix_rank - 1; row_index >= 0; row_index--) {
-            int row_sum = 0;
-            for (auto col_index : this->U[row_index]) {
-                row_sum ^= x[col_index];
+            // if no pivot was found, we go to next column
+            if (!PIVOT_FOUND) {
+                this->notPivotCols.push_back(col_idx);
+                return false;
             }
-            x[this->pivot_cols[row_index]] = row_sum ^ b[row_index];
+
+            std::swap(rr_col[this->matrixRank], rr_col[this->swapRows[this->matrixRank]]);
+            std::swap(this->rows[this->matrixRank], this->rows[this->swapRows[this->matrixRank]]);
+            this->eliminationRows.emplace_back();
+
+            if (construct_L) {
+                std::swap(this->lower[this->matrixRank], this->lower[this->swapRows[this->matrixRank]]);
+                this->lower[this->matrixRank].push_back(this->matrixRank);
+            }
+
+            for (auto i = this->matrixRank + 1; i < this->rowCount; i++) {
+                if (rr_col[i] == 1) {
+                    this->eliminationRows[this->matrixRank].push_back(i);
+                    if (construct_L) {
+                        this->lower[i].push_back(this->matrixRank);
+                    }
+                }
+            }
+
+            if (construct_U) {
+                this->upper.emplace_back();
+                for (std::size_t i = 0; i <= this->matrixRank; i++) {
+                    if (rr_col[i] == 1) {
+                        this->upper[i].push_back(col_idx);
+                    }
+                }
+            }
+
+            this->matrixRank++;
+            return true;
         }
-        return x;
-    }
-};
+
+        std::vector<std::size_t> lu_solve(std::vector<std::size_t> &y) {
+            /*
+            Equation: Ax = y
+
+            We use LU decomposition to arrange the above into the form:
+            LU(Qx) = PAQ^T(Qx)=Py
+
+            We can then solve for x using forward-backward substitution:
+            1. Forward substitution: Solve Lb = Py for b
+            2. Backward substitution: Solve UQx = b for x
+            */
+            if (y.size() != this->rowCount) {
+                throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
+            }
+            if (!this->LU_constructed) {
+                throw std::invalid_argument("LU decomposition has not been constructed. Please call rref() first.");
+            }
+            auto x = std::vector<std::size_t>(this->colCount, 0);
+            auto b = std::vector<std::size_t>(this->matrixRank, 0);
+            // First we solve Lb = y, where b = Ux
+            // Solve Lb=y with forwared substitution
+            for (std::size_t row_index = 0; row_index < this->matrixRank; row_index++) {
+                std::size_t row_sum = 0;
+                for (auto col_index: this->lower[row_index]) {
+                    row_sum ^= b[col_index];
+                }
+                b[row_index] = row_sum ^ y[this->rows[row_index]];
+            }
+            // Solve Ux = b with backwards substitution
+            for (int row_index = static_cast<int>(this->matrixRank) - 1; row_index >= 0; row_index--) {
+                std::size_t row_sum = 0;
+                for (std::size_t const col_index: this->upper[static_cast<uint64_t>(row_index)]) {
+                    row_sum ^= x[col_index];
+                }
+                x[this->pivotCols[static_cast<uint64_t>(row_index)]] = row_sum ^ b[static_cast<uint64_t>(row_index)];
+            }
+            return x;
+        }
+    };
 // namespace ldpc::gf2dense
 } // namespace ldpc::gf2dense
 

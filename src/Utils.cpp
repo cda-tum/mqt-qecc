@@ -36,10 +36,11 @@ bool Utils::isVectorInRowspace(const gf2Mat& inmat, const gf2Vec& vec) {
         }
     }
     matrixCsc.emplace_back(idxs);
-    auto pluExt = ldpc::gf2dense::PluDecomposition(static_cast<int>(matrix.size()), static_cast<int>(matrix.at(0).size() + 1), matrixCsc);
+    auto pluExt = ldpc::gf2dense::PluDecomposition(static_cast<size_t>(static_cast<int>(matrix.size())),
+                                                   static_cast<size_t>(static_cast<int>(matrix.at(0).size() + 1)), matrixCsc);
     pluExt.rref();
 
-    return pluExt.matrix_rank == pluDecomp.matrix_rank;
+    return pluExt.matrixRank == pluDecomp.matrixRank;
 }
 
 gf2Mat Utils::getTranspose(const gf2Mat& matrix) {
