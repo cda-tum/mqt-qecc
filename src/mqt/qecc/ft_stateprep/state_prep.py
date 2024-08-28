@@ -1174,7 +1174,7 @@ def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.Bool
 
 def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> PauliList:
     """Propagates a Pauli error through a circuit beginning from control of node."""
-    control = node.qargs[0]._index  # noqa: SLF001
+    control = node.qargs[0]._index if x_errors else node.qargs[1]._index  # noqa: SLF001
     error: npt.NDArray[np.int8] = np.array([0] * dag.num_qubits(), dtype=np.int8)
     error[control] = 1
     # propagate error through circuit via bfs
