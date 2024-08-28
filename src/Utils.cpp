@@ -1,11 +1,12 @@
 #include "Utils.hpp"
 
+#include "ldpc/gf2dense.hpp"
+
 #include <algorithm>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include "ldpc/gf2dense.hpp"
 #include <iostream>
 #include <map>
 #include <random>

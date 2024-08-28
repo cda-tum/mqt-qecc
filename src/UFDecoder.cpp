@@ -5,9 +5,9 @@
 #include "UFDecoder.hpp"
 
 #include "Decoder.hpp"
+#include "ldpc/gf2dense.hpp"
 
 #include <chrono>
-#include "ldpc/gf2dense.hpp"
 #include <queue>
 #include <random>
 #include <set>
