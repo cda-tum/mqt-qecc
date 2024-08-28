@@ -1,6 +1,3 @@
-Selection deleted
-print(qasm2.dumps(qc_ver))
-
 OPENQASM 2.0;
 include "qelib1.inc";
 qreg q[19];
