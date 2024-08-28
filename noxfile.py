@@ -18,7 +18,7 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 nox.options.sessions = ["lint", "tests"]
 
-PYTHON_ALL_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
 # The following lists all the build requirements for building the package.
 # Note that this includes transitive build dependencies of package dependencies,
@@ -26,9 +26,9 @@ PYTHON_ALL_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 # and get better caching performance. This only concerns dependencies that are
 # not available via wheels on PyPI (i.e., only as source distributions).
 BUILD_REQUIREMENTS = [
-    "scikit-build-core[pyproject]>=0.8.1",
+    "scikit-build-core[pyproject]>=0.10.1",
     "setuptools_scm>=7",
-    "pybind11>=2.12",
+    "pybind11>=2.13",
     "wheel>=0.40",  # transitive dependency of pytest on Windows
     "Cython>=3; python_version > '3.11'",  # required to build ldpc on Python 3.12+
     "numpy>=1.26,<2; python_version > '3.11'",  # required to build ldpc on Python 3.12+
@@ -73,7 +73,7 @@ def _run_tests(
 
     session.install(*BUILD_REQUIREMENTS, *install_args, env=env)
     install_arg = f"-ve.[{','.join(_extras)}]"
-    session.install("--no-build-isolation", install_arg, *install_args, env=env)
+    session.install("--no-build-isolation", "--reinstall-package", "mqt.qecc", install_arg, *install_args, env=env)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
@@ -104,7 +104,7 @@ def docs(session: nox.Session) -> None:
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
     session.install(*BUILD_REQUIREMENTS, *extra_installs)
-    session.install("--no-build-isolation", "-ve.[docs]")
+    session.install("--no-build-isolation", "-ve.[docs]", "--reinstall-package", "mqt.qecc")
     session.chdir("docs")
 
     if args.builder == "linkcheck":

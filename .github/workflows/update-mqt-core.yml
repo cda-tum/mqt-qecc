@@ -21,6 +21,6 @@ concurrency:
 jobs:
   update-mqt-core:
     name: ⬆️ Update MQT Core
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-mqt-core-update.yml@v1.1.5
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-mqt-core-update.yml@v1.3
     with:
-      update-to-head: ${{ fromJSON(github.event.inputs.update-to-head) || false }}
+      update-to-head: ${{ github.event.inputs.update-to-head || false }}
