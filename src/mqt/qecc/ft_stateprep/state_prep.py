@@ -1432,10 +1432,10 @@ def measure_stab_two_flagged(
         if cnots % 2 == 0 and cnots < len(stab) - 2:
             _flag_init(qc, flag_reg[flags], z_measurement)
             _ancilla_cnot(qc, flag_reg[flags], ancilla, z_measurement)
-            flags += 1
         if cnots >= 7 and cnots % 2 == 1:
             _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
             _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+        flags += 1
 
     _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
     _flag_measure(qc, flag_reg[0], meas_reg[0], z_measurement)
