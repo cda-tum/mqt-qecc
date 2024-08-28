@@ -11,6 +11,7 @@ from ..codes import InvalidCSSCodeError
 from .synthesis_utils import build_css_circuit_from_list_and_checks, heuristic_gaussian_elimination
 
 if TYPE_CHECKING:  # pragma: no cover
+    import numpy.typing as npt
     from qiskit import QuantumCircuit
 
     from ..codes import CSSCode
@@ -26,17 +27,12 @@ def heuristic_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> Qu
         optimize_depth: Whether to optimize the depth of the circuit.
 
     Returns:
-        The synthesized encoding circuit.
+        The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
     """
     logging.info("Starting encoding circuit synthesis.")
-    if code.Hx is None or code.Hz is None:
-        msg = "The code must have both X and Z stabilizers defined."
-        raise InvalidCSSCodeError(msg)
-
-    use_x_checks = code.Hx.shape[0] < code.Hz.shape[0]
-    n_checks = code.Hx.shape[0] if use_x_checks else code.Hz.shape[0]
-    checks = np.vstack((code.Hx, code.Lx)) if use_x_checks else np.vstack((code.Hz, code.Lz))
-    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
+    checks, logicals, use_x_checks = _get_matrix_with_fewest_checks(code)
+    n_checks = checks.shape[0]
+    checks, cnots = heuristic_gaussian_elimination(np.vstack((checks, logicals)), parallel_elimination=optimize_depth)
     cnots = cnots[::-1]
 
     encoding_qubits = np.where(checks[n_checks:, :].sum(axis=0) != 0)[0]
@@ -49,3 +45,32 @@ def heuristic_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> Qu
     hadamards = np.setdiff1d(hadamards, encoding_qubits)
     circ = build_css_circuit_from_list_and_checks(checks.shape[1], cnots, list(hadamards))
     return circ, encoding_qubits
+
+
+def gate_optimal_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> QuantumCircuit:
+    """Synthesize an encoding circuit for the given CSS code using the minimal number of gates.
+
+    Args:
+        code: The CSS code to synthesize the encoding circuit for.
+        optimize_depth: Whether to optimize the depth of the circuit.
+
+    Returns:
+        The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
+    """
+    logging.info("Starting optimal encoding circuit synthesis.")
+    checks, logicals, _use_x_checks = _get_matrix_with_fewest_checks(code)
+    checks.shape[0]
+    checks, cnots = heuristic_gaussian_elimination(np.vstack((checks, logicals)), parallel_elimination=optimize_depth)
+    cnots = cnots[::-1]
+
+
+def _get_matrix_with_fewest_checks(code: CSSCode) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8], bool]:
+    """Return the stabilizer matrix with the fewest checks, the corresponding logicals and a bool indicating whether X- or Z-checks have been returned."""
+    if code.Hx is None or code.Hz is None:
+        msg = "The code must have both X and Z stabilizers defined."
+        raise InvalidCSSCodeError(msg)
+
+    use_x_checks = code.Hx.shape[0] < code.Hz.shape[0]
+    checks = code.Hx if use_x_checks else code.Hz
+    logicals = code.Lx if use_x_checks else code.Lz
+    return checks, logicals, use_x_checks

@@ -21,6 +21,7 @@ from .synthesis_utils import (
     heuristic_gaussian_elimination,
     iterative_search_with_timeout,
     odd_overlap,
+    optimal_elimination,
     run_with_timeout,
     symbolic_scalar_mult,
     symbolic_vector_add,
@@ -337,9 +338,11 @@ def depth_optimal_prep_circuit(
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
     """
-    return _optimal_circuit(
-        code, _generate_circ_with_bounded_depth, zero_state, min_depth, max_depth, min_timeout, max_timeout
-    )
+    checks = code.Hx if zero_state else code.Hz
+    assert checks is not None
+    optimal_elimination(checks, "parallel_ops")
+    checks, cnots = optimal_elimination(checks, "parallel_ops")
+    return _build_state_prep_circuit_from_back(checks, cnots, zero_state)
 
 
 def gate_optimal_prep_circuit(
@@ -360,9 +363,10 @@ def gate_optimal_prep_circuit(
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
     """
-    return _optimal_circuit(
-        code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout
-    )
+    checks = code.Hx if zero_state else code.Hz
+    assert checks is not None
+    checks, cnots = optimal_elimination(checks, "parallel_ops")
+    _build_state_prep_circuit_from_back(checks, cnots, zero_state)
 
 
 def gate_optimal_verification_stabilizers(

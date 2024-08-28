@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -414,3 +415,69 @@ def symbolic_vector_add(
             v_new[i] = z3.Xor(v1[i], v2[i])
 
     return np.array(v_new)
+
+
+def optimal_elimination(
+    matrix: npt.NDArray[np.int8],
+    optimization_metric: str = "column_ops",
+    zero_state: bool = True,
+    min_param: int = 1,
+    max_param: int = 10,
+    min_timeout: int = 1,
+    max_timeout: int = 3600,
+) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]] | None:
+    """Synthesize a state preparation circuit for a CSS code that minimizes the circuit w.r.t. some metric param according to prep_func.
+
+    Args:
+        matrix: The stabilizer matrix of the CSS code.
+        optimization_metric: The metric to optimize the circuit w.r.t. to. Can be either "column_ops" or "parallel_ops".
+        zero_state: Whether to start from the zero state.
+        min_param: The minimum value of the metric parameter.
+        max_param: The maximum value of the metric parameter.
+        min_timeout: The minimum time to run one search iteration for.
+        max_timeout: The maximum time to run one search iteration for.
+    """
+    if optimization_metric not in {"column_ops", "parallel_ops"}:
+        msg = "Invalid optimization metric"
+        raise ValueError(msg)
+
+    opt_fun = {
+        "column_ops": gaussian_elimination_min_column_ops,
+        "parallel_ops": gaussian_elimination_min_parallel_eliminations,
+    }[optimization_metric]
+
+    fun = functools.partial(
+        opt_fun,
+        matrix=matrix,
+        zero_state=zero_state,
+    )
+
+    res = iterative_search_with_timeout(
+        fun,
+        min_param,
+        max_param,
+        min_timeout,
+        max_timeout,
+    )
+
+    if res is None:
+        return None
+    reduced = res[0]
+    if reduced is None:
+        return None
+    eliminations, curr_param = res[1:]
+
+    logging.info(f"Solution found with param {curr_param}")
+    # Solving a SAT instance is much faster than proving unsat in this case
+    # so we iterate backwards until we find an unsat instance or hit a timeout
+    logging.info("Trying to minimize param")
+    while True:
+        logging.info(f"Trying param {curr_param - 1}")
+        opt_res = run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
+        if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
+            break
+        reduced, eliminations = opt_res
+        curr_param -= 1
+
+    logging.info(f"Optimal param: {curr_param}")
+    return reduced, eliminations
