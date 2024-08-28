@@ -202,14 +202,15 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
     for (std::size_t i = 0; i < redSyndr.size(); i++) {
         redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
     }
-    auto pluDec = ldpc::gf2dense::PluDecomposition(static_cast<int>(redHz.size()), static_cast<int>(redHz.at(0).size()),
+    auto pluDec = ldpc::gf2dense::PluDecomposition(static_cast<size_t>(static_cast<int>(redHz.size())),
+                                                   static_cast<size_t>(static_cast<int>(redHz.at(0).size())),
                                                    redHzCsc);
     pluDec.rref();
 
-    auto estim = pluDec.lu_solve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
+    auto estim = pluDec.luSolve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
         if (estim.at(i) != 0U) {
-            auto inst = res.insert(static_cast<size_t>(i));
+            auto inst = res.insert(static_cast<std::size_t>(i));
             std::cout << inst.second;
         }
     }

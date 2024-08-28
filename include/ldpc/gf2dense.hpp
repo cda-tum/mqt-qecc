@@ -19,7 +19,7 @@ namespace ldpc::gf2dense {
  */
     class PluDecomposition {
     private:
-        CscMatrix csc_mat; // csc_mat[column][row]
+        CscMatrix cscMat; // csc_mat[column][row]
         std::vector<uint8_t> yImageCheckVector;
 
     public:
@@ -34,12 +34,12 @@ namespace ldpc::gf2dense {
         std::vector<std::vector<std::size_t>> eliminationRows;
         std::vector<std::size_t> pivotCols;
         std::vector<std::size_t> notPivotCols;
-        bool LU_constructed = false;
+        bool luConstructed = false;
 
-        PluDecomposition(std::size_t rowCount, std::size_t col_count, std::vector<std::vector<std::size_t>> &cscMat)
-                : csc_mat(cscMat),
+        PluDecomposition(std::size_t rowCount, std::size_t colCount, std::vector<std::vector<std::size_t>> &cscMat)
+                : cscMat(cscMat),
                   rowCount(rowCount),
-                  colCount(col_count) {
+                  colCount(colCount) {
         }
 
         PluDecomposition() = default;
@@ -78,7 +78,7 @@ namespace ldpc::gf2dense {
             }
             this->perm.clear();
 
-            this->LU_constructed = false;
+            this->luConstructed = false;
         }
 
         /**
@@ -88,96 +88,34 @@ namespace ldpc::gf2dense {
          * and addition is done column per column.
          * First, all previous row operations are applied to the current column.
          * Then pivoting is done for the current column and corresponding swaps are applied.
-         * @param construct_U
+         * @param constructU
          */
-        void rref(const bool construct_L = true, const bool construct_U = true) {
+        void rref(const bool constructL = true, const bool constructU = true) {
             this->reset();
             for (std::size_t i = 0; i < this->rowCount; i++) {
                 this->rows.push_back(i);
             }
 
-            auto max_rank = std::min(this->rowCount, this->colCount);
+            auto maxRank = std::min(this->rowCount, this->colCount);
 
-            if (construct_L) {
+            if (constructL) {
                 this->lower.resize(this->rowCount, std::vector<std::size_t>{});
             }
 
-            for (std::size_t col_idx = 0; col_idx < this->colCount; col_idx++) {
-                this->eliminate_column(col_idx, construct_L, construct_U);
-                if (this->matrixRank == max_rank) {
+            for (std::size_t colIdx = 0; colIdx < this->colCount; colIdx++) {
+                this->eliminateColumn(colIdx, constructL, constructU);
+                if (this->matrixRank == maxRank) {
                     break;
                 }
             }
 
-            if (construct_L && construct_U) {
-                this->LU_constructed = true;
+            if (constructL && constructU) {
+                this->luConstructed = true;
             }
         }
 
-        bool eliminate_column(std::size_t col_idx, const bool construct_L = true, const bool construct_U = true) {
-            auto rr_col = std::vector<uint8_t>(this->rowCount, 0);
 
-            for (auto row_index: this->csc_mat[col_idx]) {
-                rr_col[row_index] = 1;
-            }
-            // apply previous operations to current column
-            for (std::size_t i = 0; i < this->matrixRank; i++) {
-                std::swap(rr_col[i], rr_col[this->swapRows[i]]);
-                if (rr_col[i] == 1) {
-                    // if row elem is one, do elimination for current column below the pivot
-                    // elimination operations to apply are stored in the `elimination_rows` attribute,
-                    for (std::size_t const row_idx: this->eliminationRows[i]) {
-                        rr_col[row_idx] ^= 1;
-                    }
-                }
-            }
-            bool PIVOT_FOUND = false;
-            for (auto i = this->matrixRank; i < this->rowCount; i++) {
-                if (rr_col[i] == 1) {
-                    PIVOT_FOUND = true;
-                    this->swapRows.push_back(i);
-                    this->pivotCols.push_back(col_idx);
-                    break;
-                }
-            }
-            // if no pivot was found, we go to next column
-            if (!PIVOT_FOUND) {
-                this->notPivotCols.push_back(col_idx);
-                return false;
-            }
-
-            std::swap(rr_col[this->matrixRank], rr_col[this->swapRows[this->matrixRank]]);
-            std::swap(this->rows[this->matrixRank], this->rows[this->swapRows[this->matrixRank]]);
-            this->eliminationRows.emplace_back();
-
-            if (construct_L) {
-                std::swap(this->lower[this->matrixRank], this->lower[this->swapRows[this->matrixRank]]);
-                this->lower[this->matrixRank].push_back(this->matrixRank);
-            }
-
-            for (auto i = this->matrixRank + 1; i < this->rowCount; i++) {
-                if (rr_col[i] == 1) {
-                    this->eliminationRows[this->matrixRank].push_back(i);
-                    if (construct_L) {
-                        this->lower[i].push_back(this->matrixRank);
-                    }
-                }
-            }
-
-            if (construct_U) {
-                this->upper.emplace_back();
-                for (std::size_t i = 0; i <= this->matrixRank; i++) {
-                    if (rr_col[i] == 1) {
-                        this->upper[i].push_back(col_idx);
-                    }
-                }
-            }
-
-            this->matrixRank++;
-            return true;
-        }
-
-        std::vector<std::size_t> lu_solve(std::vector<std::size_t> &y) {
+        std::vector<std::size_t> luSolve(std::vector<std::size_t> &y) {
             /*
             Equation: Ax = y
 
@@ -191,29 +129,92 @@ namespace ldpc::gf2dense {
             if (y.size() != this->rowCount) {
                 throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
             }
-            if (!this->LU_constructed) {
+            if (!this->luConstructed) {
                 throw std::invalid_argument("LU decomposition has not been constructed. Please call rref() first.");
             }
             auto x = std::vector<std::size_t>(this->colCount, 0);
             auto b = std::vector<std::size_t>(this->matrixRank, 0);
             // First we solve Lb = y, where b = Ux
             // Solve Lb=y with forwared substitution
-            for (std::size_t row_index = 0; row_index < this->matrixRank; row_index++) {
-                std::size_t row_sum = 0;
-                for (auto col_index: this->lower[row_index]) {
-                    row_sum ^= b[col_index];
+            for (std::size_t rowIndex = 0; rowIndex < this->matrixRank; rowIndex++) {
+                std::size_t rowSum = 0;
+                for (auto colIndex: this->lower[rowIndex]) {
+                    rowSum ^= b[colIndex];
                 }
-                b[row_index] = row_sum ^ y[this->rows[row_index]];
+                b[rowIndex] = rowSum ^ y[this->rows[rowIndex]];
             }
             // Solve Ux = b with backwards substitution
-            for (int row_index = static_cast<int>(this->matrixRank) - 1; row_index >= 0; row_index--) {
-                std::size_t row_sum = 0;
-                for (std::size_t const col_index: this->upper[static_cast<uint64_t>(row_index)]) {
-                    row_sum ^= x[col_index];
+            for (int rowIndex = static_cast<int>(this->matrixRank) - 1; rowIndex >= 0; rowIndex--) {
+                std::size_t rowSum = 0;
+                for (std::size_t const colIndex: this->upper[static_cast<uint64_t>(rowIndex)]) {
+                    rowSum ^= x[colIndex];
                 }
-                x[this->pivotCols[static_cast<uint64_t>(row_index)]] = row_sum ^ b[static_cast<uint64_t>(row_index)];
+                x[this->pivotCols[static_cast<uint64_t>(rowIndex)]] = rowSum ^ b[static_cast<uint64_t>(rowIndex)];
             }
             return x;
+        }
+
+        bool eliminateColumn(std::size_t colIdx, const bool constructL, const bool constructU) {
+            auto rrCol = std::vector<uint8_t>(this->rowCount, 0);
+
+            for (auto rowIndex: this->cscMat[colIdx]) {
+                rrCol[rowIndex] = 1;
+            }
+            // apply previous operations to current column
+            for (std::size_t i = 0; i < this->matrixRank; i++) {
+                std::swap(rrCol[i], rrCol[this->swapRows[i]]);
+                if (rrCol[i] == 1) {
+                    // if row elem is one, do elimination for current column below the pivot
+                    // elimination operations to apply are stored in the `elimination_rows` attribute,
+                    for (std::size_t const rowIdx: this->eliminationRows[i]) {
+                        rrCol[rowIdx] ^= 1;
+                    }
+                }
+            }
+            bool pivotFound = false;
+            for (auto i = this->matrixRank; i < this->rowCount; i++) {
+                if (rrCol[i] == 1) {
+                    pivotFound = true;
+                    this->swapRows.push_back(i);
+                    this->pivotCols.push_back(colIdx);
+                    break;
+                }
+            }
+            // if no pivot was found, we go to next column
+            if (!pivotFound) {
+                this->notPivotCols.push_back(colIdx);
+                return false;
+            }
+
+            std::swap(rrCol[this->matrixRank], rrCol[this->swapRows[this->matrixRank]]);
+            std::swap(this->rows[this->matrixRank], this->rows[this->swapRows[this->matrixRank]]);
+            this->eliminationRows.emplace_back();
+
+            if (constructL) {
+                std::swap(this->lower[this->matrixRank], this->lower[this->swapRows[this->matrixRank]]);
+                this->lower[this->matrixRank].push_back(this->matrixRank);
+            }
+
+            for (auto i = this->matrixRank + 1; i < this->rowCount; i++) {
+                if (rrCol[i] == 1) {
+                    this->eliminationRows[this->matrixRank].push_back(i);
+                    if (constructL) {
+                        this->lower[i].push_back(this->matrixRank);
+                    }
+                }
+            }
+
+            if (constructU) {
+                this->upper.emplace_back();
+                for (std::size_t i = 0; i <= this->matrixRank; i++) {
+                    if (rrCol[i] == 1) {
+                        this->upper[i].push_back(colIdx);
+                    }
+                }
+            }
+
+            this->matrixRank++;
+            return true;
         }
     };
 // namespace ldpc::gf2dense
