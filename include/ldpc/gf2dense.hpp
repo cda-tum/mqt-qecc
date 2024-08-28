@@ -1,33 +1,20 @@
 #ifndef GF2DENSE_H
 #define GF2DENSE_H
 
+#include <algorithm>
 #include <chrono>
 #include <climits>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <random>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace ldpc::gf2dense {
-
-template <class T>
-int vector_find(std::vector<T> vec, T value) {
-    int index = 0;
-    for (auto val : vec) {
-        if (val == value) {
-            return index;
-        }
-        index++;
-    }
-    return -1;
-}
-
-enum PluMethod {
-    SPARSE_ELIMINATION = 0,
-    DENSE_ELIMINATION  = 1
-};
-
-typedef std::vector<std::vector<int>> CscMatrix;
-using CsrMatrix = std::vector<std::vector<int>>;
+using CscMatrix = std::vector<std::vector<std::size_t>>;
+using CsrMatrix = std::vector<std::vector<std::size_t>>;
 
 /**
  * A class to represent the PLU decomposition.
@@ -42,21 +29,20 @@ public:
     CsrMatrix                     L;
     CsrMatrix                     U;
     CscMatrix                     P;
-    int                           matrix_rank{};
-    int                           cols_eliminated{};
-    int                           row_count{};
-    int                           col_count{};
-    std::vector<int>              rows;
-    std::vector<int>              swap_rows;
-    std::vector<std::vector<int>> elimination_rows;
-    std::vector<int>              pivot_cols;
-    std::vector<int>              not_pivot_cols;
+    std::size_t                           matrix_rank{};
+    std::size_t                           row_count{};
+    std::size_t                           col_count{};
+    std::vector<std::size_t>              rows;
+    std::vector<std::size_t>              swap_rows;
+    std::vector<std::vector<std::size_t>> elimination_rows;
+    std::vector<std::size_t>              pivot_cols;
+    std::vector<std::size_t>              not_pivot_cols;
     bool                          LU_constructed = false;
 
-    PluDecomposition(int row_count, int col_count, std::vector<std::vector<int>>& csc_mat)
-        : row_count(row_count),
-          col_count(col_count),
-          csc_mat(csc_mat) {
+    PluDecomposition(std::size_t row_count, std::size_t col_count, std::vector<std::vector<std::size_t>>& csc_mat)
+        : csc_mat(csc_mat),
+          row_count(row_count),
+          col_count(col_count) {
     }
 
     PluDecomposition() = default;
@@ -69,7 +55,6 @@ public:
      */
     void reset() {
         this->matrix_rank     = 0;
-        this->cols_eliminated = 0;
         this->rows.clear();
         this->swap_rows.clear();
         this->pivot_cols.clear();
@@ -110,21 +95,21 @@ public:
      */
     void rref(const bool construct_L = true, const bool construct_U = true) {
         this->reset();
-        for (auto i = 0; i < this->row_count; i++) {
+        for (std::size_t i = 0; i < this->row_count; i++) {
             this->rows.push_back(i);
         }
 
         auto max_rank = std::min(this->row_count, this->col_count);
 
         if (construct_L) {
-            this->L.resize(this->row_count, std::vector<int>{});
+            this->L.resize(this->row_count, std::vector<std::size_t>{});
         }
 
         // if (construct_U){
         //     this->U.resize(this->row_count, std::vector<int>{});
         // }
 
-        for (auto col_idx = 0; col_idx < this->col_count; col_idx++) {
+        for (std::size_t col_idx = 0; col_idx < this->col_count; col_idx++) {
             this->eliminate_column(col_idx, construct_L, construct_U);
             if (this->matrix_rank == max_rank) {
                 break;
@@ -136,20 +121,19 @@ public:
         }
     }
 
-    bool eliminate_column(int col_idx, const bool construct_L = true, const bool construct_U = true) {
+    bool eliminate_column(std::size_t col_idx, const bool construct_L = true, const bool construct_U = true) {
         auto rr_col           = std::vector<uint8_t>(this->row_count, 0);
-        this->cols_eliminated = col_idx + 1;
 
         for (auto row_index : this->csc_mat[col_idx]) {
             rr_col[row_index] = 1;
         }
         // apply previous operations to current column
-        for (auto i = 0; i < this->matrix_rank; i++) {
+        for (std::size_t i = 0; i < this->matrix_rank; i++) {
             std::swap(rr_col[i], rr_col[this->swap_rows[i]]);
             if (rr_col[i] == 1) {
                 // if row elem is one, do elimination for current column below the pivot
                 // elimination operations to apply are stored in the `elimination_rows` attribute,
-                for (auto row_idx : this->elimination_rows[i]) {
+                for (std::size_t const row_idx : this->elimination_rows[i]) {
                     rr_col[row_idx] ^= 1;
                 }
             }
@@ -189,7 +173,7 @@ public:
 
         if (construct_U) {
             this->U.emplace_back();
-            for (auto i = 0; i <= this->matrix_rank; i++) {
+            for (std::size_t i = 0; i <= this->matrix_rank; i++) {
                 if (rr_col[i] == 1) {
                     this->U[i].push_back(col_idx);
                 }
@@ -221,15 +205,15 @@ public:
         auto b = std::vector<uint8_t>(this->matrix_rank, 0);
         // First we solve Lb = y, where b = Ux
         // Solve Lb=y with forwared substitution
-        for (auto row_index = 0; row_index < this->matrix_rank; row_index++) {
-            int row_sum = 0;
+        for (std::size_t row_index = 0; row_index < this->matrix_rank; row_index++) {
+            std::size_t row_sum = 0;
             for (auto col_index : this->L[row_index]) {
                 row_sum ^= b[col_index];
             }
             b[row_index] = row_sum ^ y[this->rows[row_index]];
         }
         // Solve Ux = b with backwards substitution
-        for (auto row_index = this->matrix_rank - 1; row_index >= 0; row_index--) {
+        for (int row_index = this->matrix_rank - 1; row_index >= 0; row_index--) {
             int row_sum = 0;
             for (auto col_index : this->U[row_index]) {
                 row_sum ^= x[col_index];

@@ -76,5 +76,5 @@ public:
     [[maybe_unused]] static void
     readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths);
 
-    static std::vector<std::vector<int>> toCsc(const std::vector<std::vector<bool>>& mat);
+    static std::vector<std::vector<std::size_t>> toCsc(const std::vector<std::vector<bool>>& mat);
 };
