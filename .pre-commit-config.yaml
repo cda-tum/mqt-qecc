@@ -43,7 +43,7 @@ repos:
 
   # Handling unwanted unicode characters
   - repo: https://github.com/sirosen/texthooks
-    rev: 0.6.6
+    rev: 0.6.7
     hooks:
       - id: fix-ligatures
       - id: fix-smartquotes
@@ -58,13 +58,11 @@ repos:
 
   #  Python linting and formatting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.7
+    rev: v0.6.2
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
-        types_or: [python, pyi, jupyter]
       - id: ruff-format
-        types_or: [python, pyi, jupyter]
 
   # Also run Black on examples in the documentation
   - repo: https://github.com/adamchainz/blacken-docs
@@ -75,7 +73,7 @@ repos:
 
   # Check static types with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.1
+    rev: v1.11.2
     hooks:
       - id: mypy
         files: ^(src/mqt|test/python)
@@ -85,11 +83,10 @@ repos:
           - numpy
           - pytest
           - pytest-mock
-          - numba
 
   # Check for spelling
   - repo: https://github.com/crate-ci/typos
-    rev: v1.23.6
+    rev: v1.24.1
     hooks:
       - id: typos
 
@@ -127,14 +124,14 @@ repos:
 
   # Check best practices for scientific Python code
   - repo: https://github.com/scientific-python/cookie
-    rev: 2024.04.23
+    rev: 2024.08.19
     hooks:
       - id: sp-repo-review
         additional_dependencies: ["repo-review[cli]"]
 
   # Check JSON schemata
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.1
+    rev: 0.29.2
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -142,6 +139,6 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.08.08
+    rev: 2024.08.26
     hooks:
       - id: validate-pyproject

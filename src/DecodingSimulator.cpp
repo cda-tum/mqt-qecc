@@ -1,12 +1,25 @@
-//
-// Created by luca on 09/08/22.
-//
 #include "DecodingSimulator.hpp"
 
+#include "Code.hpp"
+#include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "UFDecoder.hpp"
+#include "UFHeuristic.hpp"
+#include "Utils.hpp"
 
+#include <cstddef>
+#include <ctime>
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 std::string generateOutFileName(const std::string& filepath) {
     auto               t  = std::time(nullptr);
@@ -34,12 +47,12 @@ void DecodingSimulator::simulateWER(const std::string& rawDataOutputFilepath,
     if (rawOut) {
         auto dataFileName = generateOutFileName(rawDataOutputFilepath);
         rawDataOutput.open(dataFileName);
-        std::cout << "Writing raw data to " << dataFileName << std::endl;
+        std::cout << "Writing raw data to " << dataFileName << '\n';
     }
     if (statsOut) {
         auto jsonFileName = generateOutFileName(statsOutputFilepath);
         statisticsOutstr.open(jsonFileName);
-        std::cout << "Writing stats output to " << jsonFileName << std::endl;
+        std::cout << "Writing stats output to " << jsonFileName << '\n';
         statisticsOutstr << "{ \"runs\" : [ ";
         statisticsOutstr << R"({ "run": { "physicalErrRate":)" << minPhysicalErrRate << ", \"data\": [ ";
     }
@@ -108,13 +121,13 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
     std::ofstream dataOutStream;
 
     if (rawOut) {
-        std::cout << "writing raw data to " << rawDataOutputFilepath << std::endl;
+        std::cout << "writing raw data to " << rawDataOutputFilepath << '\n';
         finalRawOut.open(generateOutFileName(rawDataOutputFilepath));
         finalRawOut.rdbuf()->pubsetbuf(nullptr, 0);
     }
 
     if (infoOut) {
-        std::cout << "writing statistics to " << decodingInfoOutfilePath << std::endl;
+        std::cout << "writing statistics to " << decodingInfoOutfilePath << '\n';
         dataOutStream.open(generateOutFileName(decodingInfoOutfilePath));
         dataOutStream.rdbuf()->pubsetbuf(nullptr, 0);
     }
@@ -125,7 +138,7 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
 
     DecodingRunInformation info;
     for (const auto& file : std::filesystem::directory_iterator(codesPath)) {
-        codePaths.emplace_back(file.path());
+        codePaths.emplace_back(file.path().string());
     }
     try {
         for (const auto& currPath : codePaths) {
@@ -165,7 +178,7 @@ void DecodingSimulator::simulateAverageRuntime(const std::string& rawDataOutputF
             avgSampleRuns = {};
         }
     } catch (std::exception& e) {
-        std::cerr << "Exception occurred " << e.what() << std::endl;
+        std::cerr << "Exception occurred " << e.what() << '\n';
     }
     if (rawOut) {
         const json j = avgSampleRunsPerCode;

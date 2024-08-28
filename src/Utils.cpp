@@ -187,7 +187,7 @@ void Utils::printTimePerSampleRun(const std::map<std::string, std::size_t, std::
 
 void Utils::readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths) {
     for (const auto& file : std::filesystem::directory_iterator(inPath)) {
-        codePaths.emplace_back(file.path());
+        codePaths.emplace_back(file.path().string());
     }
 }
 

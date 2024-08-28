@@ -96,7 +96,7 @@ class CSSCode:
             return logs
 
         if m2 is None:
-            return mod2.nullspace(m1).astype(np.int8)  # type: ignore[no-any-return]
+            return mod2.nullspace(m1).astype(np.int8)
 
         ker_m1 = mod2.nullspace(m1)  # compute the kernel basis of m1
         im_m2_transp = mod2.row_basis(m2)  # compute the image basis of m2
@@ -220,7 +220,7 @@ class CSSCode:
         if code_name == "surface":
             if distance is None:
                 distance = 3
-            code_name += "_%d" % distance
+            code_name += f"_{distance}"
 
         if code_name in paths:
             hx = np.load(paths[code_name] / "hx.npy")

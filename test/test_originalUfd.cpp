@@ -6,8 +6,12 @@
 
 #include "Codes.hpp"
 #include "UFDecoder.hpp"
+#include "Utils.hpp"
 
+#include <cstddef>
 #include <gtest/gtest.h>
+#include <iostream>
+#include <vector>
 
 class OriginalUFDtest : public testing::TestWithParam<std::vector<bool>> {};
 class UniquelyCorrectableErrTestOriginal : public OriginalUFDtest {};
@@ -41,8 +45,8 @@ TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     auto      code = SteaneXCode();
     UFDecoder decoder;
     decoder.setCode(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
+    std::cout << "code:\n"
+              << code << '\n';
     const std::vector<bool> err = GetParam();
 
     auto syndr = code.getXSyndrome(err);
@@ -53,23 +57,20 @@ TEST_P(UniquelyCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     const auto& estim          = decodingResult.estimBoolVector;
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
-    std::cout << std::endl;
     const gf2Vec sol = GetParam();
 
-    std::cout << "Estim: " << std::endl;
+    std::cout << "\nEstim:\n";
     Utils::printGF2vector(estim);
-    std::cout << std::endl;
-    std::cout << "EstimIdx: ";
+    std::cout << "\nEstimIdx: ";
     Utils::printGF2vector(estim2);
-    std::cout << std::endl;
-    std::cout << "Sol: ";
+    std::cout << "\nSol: ";
     Utils::printGF2vector(sol);
-    std::cout << std::endl;
+    std::cout << '\n';
     EXPECT_TRUE(sol == estim);
     EXPECT_TRUE(sol == estim2);
 }
@@ -81,8 +82,8 @@ TEST_P(InCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     auto      code = SteaneXCode();
     UFDecoder decoder;
     decoder.setCode(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
+    std::cout << "code:\n"
+              << code << '\n';
     std::vector<bool> err = GetParam();
 
     auto syndr = code.getXSyndrome(err);
@@ -91,7 +92,7 @@ TEST_P(InCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
     const auto& estim          = decodingResult.estimBoolVector;
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
@@ -103,11 +104,11 @@ TEST_P(InCorrectableErrTestOriginal, SteaneCodeDecodingTestEstim) {
 
     const gf2Vec sol = GetParam();
 
-    std::cout << "Estim: " << std::endl;
+    std::cout << "Estim: \n";
     Utils::printGF2vector(estim);
-    std::cout << "EstimIdx: " << std::endl;
+    std::cout << "EstimIdx: \n";
     Utils::printGF2vector(estim2);
-    std::cout << "Sol: " << std::endl;
+    std::cout << "Sol: \n";
     Utils::printGF2vector(sol);
     EXPECT_FALSE(sol == estim);
     EXPECT_FALSE(sol == estim2);
@@ -120,10 +121,10 @@ TEST_P(UpToStabCorrectableErrTestOriginal, SteaneCodeDecodingTest) {
     auto      code = SteaneCode();
     UFDecoder decoder;
     decoder.setCode(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
+    std::cout << "code:\n"
+              << code << '\n';
     std::vector<bool> err = GetParam();
-    std::cout << "err :" << std::endl;
+    std::cout << "err:\n";
     Utils::printGF2vector(err);
     auto syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
@@ -131,12 +132,12 @@ TEST_P(UpToStabCorrectableErrTestOriginal, SteaneCodeDecodingTest) {
     const auto& estim          = decodingResult.estimBoolVector;
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
-    std::cout << std::endl;
+    std::cout << '\n';
     std::vector<bool> residualErr(err.size());
     for (size_t i = 0; i < err.size(); i++) {
         residualErr.at(i) = (err[i] != estim[i]);

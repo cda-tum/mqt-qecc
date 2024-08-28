@@ -1,5 +1,4 @@
 #include "Definitions.hpp"
-#include "QuantumComputation.hpp"
 #include "dd/Package.hpp"
 #include "dd/Simulation.hpp"
 #include "ecc/Id.hpp"
@@ -9,8 +8,9 @@
 #include "ecc/Q7Steane.hpp"
 #include "ecc/Q9Shor.hpp"
 #include "ecc/Q9Surface.hpp"
-#include "operations/NonUnitaryOperation.hpp"
-#include "operations/OpType.hpp"
+#include "ir/QuantumComputation.hpp"
+#include "ir/operations/NonUnitaryOperation.hpp"
+#include "ir/operations/OpType.hpp"
 
 #include <algorithm>
 #include <cstddef>
