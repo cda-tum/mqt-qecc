@@ -340,9 +340,19 @@ def depth_optimal_prep_circuit(
     """
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
-    optimal_elimination(checks, "parallel_ops")
-    checks, cnots = optimal_elimination(checks, "parallel_ops")
-    return _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    res = optimal_elimination(
+        checks,
+        "parallel_ops",
+        min_param=min_depth,
+        max_param=max_depth,
+        min_timeout=min_timeout,
+        max_timeout=max_timeout,
+    )
+    if res is None:
+        return None
+    checks, cnots = res
+    circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    return StatePrepCircuit(circ, code, zero_state)
 
 
 def gate_optimal_prep_circuit(
@@ -365,8 +375,14 @@ def gate_optimal_prep_circuit(
     """
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
-    checks, cnots = optimal_elimination(checks, "parallel_ops")
-    _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    res = optimal_elimination(
+        checks, "column_ops", min_param=min_gates, max_param=max_gates, min_timeout=min_timeout, max_timeout=max_timeout
+    )
+    if res is None:
+        return None
+    checks, cnots = res
+    circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    return StatePrepCircuit(circ, code, zero_state)
 
 
 def gate_optimal_verification_stabilizers(

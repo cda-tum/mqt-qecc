@@ -420,7 +420,6 @@ def symbolic_vector_add(
 def optimal_elimination(
     matrix: npt.NDArray[np.int8],
     optimization_metric: str = "column_ops",
-    zero_state: bool = True,
     min_param: int = 1,
     max_param: int = 10,
     min_timeout: int = 1,
@@ -448,8 +447,7 @@ def optimal_elimination(
 
     fun = functools.partial(
         opt_fun,
-        matrix=matrix,
-        zero_state=zero_state,
+        matrix,
     )
 
     res = iterative_search_with_timeout(
@@ -465,7 +463,8 @@ def optimal_elimination(
     reduced = res[0]
     if reduced is None:
         return None
-    eliminations, curr_param = res[1:]
+    reduced, eliminations = reduced
+    curr_param = res[1]
 
     logging.info(f"Solution found with param {curr_param}")
     # Solving a SAT instance is much faster than proving unsat in this case
@@ -476,6 +475,7 @@ def optimal_elimination(
         opt_res = run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
+        assert not isinstance(opt_res, str)
         reduced, eliminations = opt_res
         curr_param -= 1
 
