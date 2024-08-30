@@ -1,0 +1,64 @@
+"""Test synthesis of encoding circuit synthesis."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from mqt.qecc import CSSCode
+from mqt.qecc.circuit_synthesis import heuristic_encoding_circuit
+
+from .utils import eq_span, get_stabs_css_with_indices, in_span
+
+
+@pytest.fixture
+def steane_code() -> CSSCode:
+    """Return the Steane code."""
+    return CSSCode.from_code_name("Steane")
+
+
+@pytest.fixture
+def css_4_2_2_code() -> CSSCode:
+    """Return the 4,2,2  code."""
+    return CSSCode(2, np.array([[1] * 4]), np.array([[1] * 4]))
+
+
+@pytest.fixture
+def css_6_2_2_code() -> CSSCode:
+    """Return the 4,2,2  code."""
+    return CSSCode(2, np.array([[1] * 6]), np.array([[1] * 6]))
+
+
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
+    """Check that heuristic_encoding_circuit returns a valid circuit with the correct stabilizers."""
+    code = request.getfixturevalue(code)
+
+    encoder, encoding_qubits = heuristic_encoding_circuit(code)
+    assert encoder.num_qubits == code.n
+
+    x_stabs, z_stabs, x_qubits, z_qubits = get_stabs_css_with_indices(encoder)
+
+    # Since no gate is applied to the encoding qubits at the beginning of the circuit, the propagation of Z-logicals through the circuit can be read off from the Z-stabilizers.
+    z_logical_indices = [z_qubits[i] for i in encoding_qubits]
+    z_logicals = z_stabs[z_logical_indices]
+    z_stabs = z_stabs[[i for i in range(len(z_stabs)) if i not in z_logical_indices]]
+
+    # To get propagation we need to apply a Hadamard to the encoding qubits and propagate again.
+    encoder_h = encoder.inverse()
+    encoder_h.h(encoding_qubits)
+    encoder_h = encoder_h.inverse()
+    x_stabs_tmp, z_stabs, x_qubits, _ = get_stabs_css_with_indices(encoder_h)
+    print(x_stabs_tmp, x_qubits)
+    x_logicals = x_stabs_tmp[[x_qubits[i] for i in encoding_qubits]]
+
+    # assert correct propagation of stabilizers
+    assert eq_span(code.Hx, x_stabs)
+    assert eq_span(code.Hz, z_stabs)
+
+    # assert correct propagation of logicals
+    for logical in z_logicals:
+        assert in_span(np.vstack((code.Hz, code.Lz)), logical)
+
+    for logical in x_logicals:
+        assert in_span(np.vstack((code.Hx, code.Lx)), logical)

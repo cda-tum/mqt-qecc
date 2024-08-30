@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-from ldpc import mod2
-from qiskit.quantum_info import Clifford
 
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis import (
@@ -21,10 +19,9 @@ from mqt.qecc.circuit_synthesis import (
 )
 from mqt.qecc.codes import SquareOctagonColorCode
 
-if TYPE_CHECKING:  # pragma: no cover
-    import numpy.typing as npt
-    from qiskit import QuantumCircuit
+from .utils import eq_span, get_stabs_css, in_span
 
+if TYPE_CHECKING:  # pragma: no cover
     from mqt.qecc.circuit_synthesis import StatePrepCircuit
 
 
@@ -88,26 +85,6 @@ def color_code_d5_sp(cc_4_8_8_code: CSSCode) -> StatePrepCircuit:
     return sp_circ
 
 
-def eq_span(a: npt.NDArray[np.int_], b: npt.NDArray[np.int_]) -> bool:
-    """Check if two matrices have the same row space."""
-    return (a.shape == b.shape) and (int(mod2.rank(np.vstack((a, b)))) == int(mod2.rank(a)) == int(mod2.rank(b)))
-
-
-def in_span(m: npt.NDArray[np.int_], v: npt.NDArray[np.int_]) -> bool:
-    """Check if a vector is in the row space of a matrix."""
-    return bool(mod2.rank(np.vstack((m, v))) == mod2.rank(m))
-
-
-def get_stabs(qc: QuantumCircuit) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
-    """Return the stabilizers of a quantum circuit."""
-    cliff = Clifford(qc)
-    x = cliff.stab_x.astype(int)
-    x = x[np.where(np.logical_not(np.all(x == 0, axis=1)))[0]]
-    z = cliff.stab_z.astype(int)
-    z = z[np.where(np.logical_not(np.all(z == 0, axis=1)))[0]]
-    return x, z
-
-
 @pytest.mark.parametrize(
     "code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code", "tetrahedral_code", "surface_code"]
 )
@@ -122,7 +99,7 @@ def test_heuristic_prep_consistent(code: CSSCode, request) -> None:  # type: ign
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
-    x, z = get_stabs(circ)
+    x, z = get_stabs_css(circ)
     assert eq_span(code.Hx, x)
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
@@ -141,7 +118,7 @@ def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: 
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
-    x, z = get_stabs(circ)
+    x, z = get_stabs_css(circ)
     assert eq_span(code.Hx, x)
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
@@ -159,7 +136,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     assert circ.num_qubits == code.n
     assert circ.num_nonlocal_gates() <= max_cnots
 
-    x, z = get_stabs(circ)
+    x, z = get_stabs_css(circ)
     assert eq_span(code.Hx, x)
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
@@ -179,7 +156,7 @@ def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignor
     assert circ_plus.num_qubits == code.n
     assert circ_plus.num_nonlocal_gates() <= max_cnots
 
-    x, z = get_stabs(circ_plus)
+    x, z = get_stabs_css(circ_plus)
     assert eq_span(code.Hz, z)
     assert eq_span(np.vstack((code.Hx, code.Lx)), x)
 
@@ -188,7 +165,7 @@ def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignor
     assert sp_circ_zero is not None
 
     circ_zero = sp_circ_zero.circ
-    x_zero, z_zero = get_stabs(circ_zero)
+    x_zero, z_zero = get_stabs_css(circ_zero)
 
     if code.is_self_dual():
         assert np.array_equal(x, z_zero)
@@ -215,13 +192,13 @@ def test_plus_state_heuristic(code: CSSCode, request) -> None:  # type: ignore[n
     assert circ_plus.num_qubits == code.n
     assert circ_plus.num_nonlocal_gates() <= max_cnots
 
-    x, z = get_stabs(circ_plus)
+    x, z = get_stabs_css(circ_plus)
     assert eq_span(code.Hz, z)
     assert eq_span(np.vstack((code.Hx, code.Lx)), x)
 
     sp_circ_zero = heuristic_prep_circuit(code, zero_state=True)
     circ_zero = sp_circ_zero.circ
-    x_zero, z_zero = get_stabs(circ_zero)
+    x_zero, z_zero = get_stabs_css(circ_zero)
 
     if code.is_self_dual():
         assert np.array_equal(x, z_zero)
