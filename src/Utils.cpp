@@ -1,11 +1,14 @@
 #include "Utils.hpp"
 
+#include "GF2.hpp"
+#include "QeccException.hpp"
+
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <gf2dense.hpp>
 #include <iostream>
 #include <map>
 #include <random>
@@ -25,20 +28,18 @@ bool Utils::isVectorInRowspace(const gf2Mat& inmat, const gf2Vec& vec) {
     const auto matrix    = getTranspose(inmat); // v is in rowspace of M <=> v is in col space of M^T
     auto       matrixCsc = Utils::toCsc(matrix);
 
-    auto pluDecomp = ldpc::gf2dense::PluDecomposition(static_cast<int>(matrix.size()), static_cast<int>(matrix.at(0).size()), matrixCsc);
-    pluDecomp.rref();
+    const auto pluDecomp = PluDecomposition(matrix.size(), matrix.at(0).size(), matrixCsc);
 
-    std::vector<int> idxs{};
+    std::vector<uint64_t> idxs{};
     for (size_t i = 0; i < vec.size(); i++) {
         if (vec.at(i)) {
-            idxs.emplace_back(static_cast<int>(i));
+            idxs.emplace_back(i);
         }
     }
     matrixCsc.emplace_back(idxs);
-    auto pluExt = ldpc::gf2dense::PluDecomposition(static_cast<int>(matrix.size()), static_cast<int>(matrix.at(0).size() + 1), matrixCsc);
-    pluExt.rref();
 
-    return pluExt.matrix_rank == pluDecomp.matrix_rank;
+    const auto pluExt = PluDecomposition(matrix.size(), matrix.at(0).size() + 1, matrixCsc);
+    return pluExt.getMatrixRank() == pluDecomp.getMatrixRank();
 }
 
 gf2Mat Utils::getTranspose(const gf2Mat& matrix) {
@@ -191,19 +192,22 @@ void Utils::readInFilePathsFromDirectory(const std::string& inPath, std::vector<
     }
 }
 
-std::vector<std::vector<int>> Utils::toCsc(const std::vector<std::vector<bool>>& mat) {
+CscMatrix Utils::toCsc(const gf2Mat& mat) {
     // convert redHz to int type and to csc format: matrix[col][row] = 1
     if (mat.empty()) {
         return {};
     }
-    auto                          rows = mat.size();
-    auto                          cols = mat.at(0).size();
-    std::vector<std::vector<int>> result;
+
+    const auto rows = mat.size();
+    const auto cols = mat.at(0).size();
+
+    CscMatrix result;
+    result.reserve(cols);
     for (size_t i = 0; i < cols; i++) {
-        std::vector<int> col = {};
+        std::vector<uint64_t> col = {};
         for (size_t j = 0; j < rows; j++) {
             if (mat.at(j).at(i)) {
-                col.emplace_back(static_cast<int>(j));
+                col.emplace_back(j);
             }
         }
         result.emplace_back(col);

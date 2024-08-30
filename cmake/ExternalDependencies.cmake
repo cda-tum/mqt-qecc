@@ -45,18 +45,6 @@ else()
   endif()
 endif()
 
-set(LDPC_REV
-    "main"
-    CACHE STRING "LDPC V2 identifier (tag, branch or commit hash)")
-set(LDPC_REPO_OWNER
-    "quantumgizmos"
-    CACHE STRING "LDPC repository owner (change when using a fork)")
-FetchContent_Declare(
-  ldpc_v2
-  GIT_REPOSITORY https://github.com/${LDPC_REPO_OWNER}/ldpc_v2.git
-  GIT_TAG ${LDPC_REV})
-list(APPEND FETCH_PACKAGES ldpc_v2)
-
 if(BUILD_MQT_QECC_TESTS)
   set(gtest_force_shared_crt
       ON

@@ -1,12 +1,9 @@
-//
-// Created by lucas on 17/05/2022.
-//
+#pragma once
 
-#ifndef QUNIONFIND_CODES_HPP
-#define QUNIONFIND_CODES_HPP
 #include "Code.hpp"
 
-#include <utility>
+#include <cstddef>
+#include <string>
 
 class SteaneXCode : public Code {
 public:
@@ -57,4 +54,3 @@ public:
         n = 32;
     }
 };
-#endif // QUNIONFIND_CODES_HPP

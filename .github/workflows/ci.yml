@@ -26,7 +26,7 @@ jobs:
     name: 🇨‌ Lint
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
-    uses: ./.github/workflows/reusable-cpp-linter.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-linter.yml@v1.3
 
   python-tests:
     name: 🐍 Test
@@ -38,7 +38,7 @@ jobs:
     name: 📝 CodeQL
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-code-ql)
-    uses: ./.github/workflows/reusable-code-ql.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-code-ql.yml@v1.3
 
   required-checks-pass: # This job does nothing and is only used for branch protection
     name: 🚦 Check

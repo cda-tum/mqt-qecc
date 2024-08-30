@@ -1,16 +1,22 @@
-//
-// Created by lucas on 21/04/2022.
-//
-
 #include "UFDecoder.hpp"
 
 #include "Decoder.hpp"
+#include "GF2.hpp"
+#include "Utils.hpp"
 
+#include <algorithm>
 #include <chrono>
-#include <gf2dense.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <memory>
 #include <queue>
 #include <random>
 #include <set>
+#include <stdexcept>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 /**
  * Original implementation of the generalized decoder for QLDPC codes using Gaussian elimination
@@ -197,21 +203,16 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto                 redHzCsc = Utils::toCsc(redHz);
-    std::vector<uint8_t> redSyndInt(redSyndr.size());
+    auto                  redHzCsc = Utils::toCsc(redHz);
+    std::vector<uint64_t> redSyndInt(redSyndr.size());
     for (std::size_t i = 0; i < redSyndr.size(); i++) {
         redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
     }
-    auto pluDec = ldpc::gf2dense::PluDecomposition(static_cast<int>(redHz.size()), static_cast<int>(redHz.at(0).size()),
-                                                   redHzCsc);
-    pluDec.rref();
-
-    auto estim = pluDec.lu_solve(
-            redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
+    auto pluDec = PluDecomposition(redHz.size(), redHz.at(0).size(), redHzCsc);
+    auto estim  = pluDec.luSolve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
     for (std::size_t i = 0; i < estim.size(); i++) {
         if (estim.at(i) != 0U) {
-            auto inst = res.insert(static_cast<size_t>(i));
-            std::cout << inst.second;
+            res.emplace(i);
         }
     }
     return res;
