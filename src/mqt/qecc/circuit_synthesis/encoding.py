@@ -58,7 +58,7 @@ def gate_optimal_encoding_circuit(code: CSSCode, optimize_depth: bool = True) ->
         The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
     """
     logging.info("Starting optimal encoding circuit synthesis.")
-    checks, logicals, _use_x_checks = _get_matrix_with_fewest_checks(code)
+    checks, logicals, _ = _get_matrix_with_fewest_checks(code)
     checks, cnots = heuristic_gaussian_elimination(np.vstack((checks, logicals)), parallel_elimination=optimize_depth)
     cnots = cnots[::-1]
 
