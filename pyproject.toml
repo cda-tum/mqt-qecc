@@ -12,6 +12,7 @@ authors = [
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" },
     { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"},
     { name = "Tom Peham", email = "tom.peham@tum.de" },
+    { name = "Ludwig Schmid", email = "ludwig.s.schmid@tum.de" },
 ]
 keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
