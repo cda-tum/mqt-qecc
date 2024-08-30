@@ -8,7 +8,6 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <iterator>
 #include <memory>
 #include <queue>
@@ -204,8 +203,8 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
             }
         }
     }
-    auto                     redHzCsc = Utils::toCsc(redHz);
-    std::vector<std::size_t> redSyndInt(redSyndr.size());
+    auto                  redHzCsc = Utils::toCsc(redHz);
+    std::vector<uint64_t> redSyndInt(redSyndr.size());
     for (std::size_t i = 0; i < redSyndr.size(); i++) {
         redSyndInt.at(i) = redSyndr.at(i) ? 1 : 0;
     }

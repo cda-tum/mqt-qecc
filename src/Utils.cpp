@@ -192,7 +192,7 @@ void Utils::readInFilePathsFromDirectory(const std::string& inPath, std::vector<
     }
 }
 
-std::vector<std::vector<uint64_t>> Utils::toCsc(const std::vector<std::vector<bool>>& mat) {
+CscMatrix Utils::toCsc(const gf2Mat& mat) {
     // convert redHz to int type and to csc format: matrix[col][row] = 1
     if (mat.empty()) {
         return {};
@@ -201,7 +201,7 @@ std::vector<std::vector<uint64_t>> Utils::toCsc(const std::vector<std::vector<bo
     const auto rows = mat.size();
     const auto cols = mat.at(0).size();
 
-    std::vector<std::vector<uint64_t>> result;
+    CscMatrix result;
     result.reserve(cols);
     for (size_t i = 0; i < cols; i++) {
         std::vector<uint64_t> col = {};
