@@ -3,7 +3,7 @@ file(GLOB MQT_QECC_HEADERS CONFIGURE_DEPENDS ${MQT_QECC_INCLUDE_BUILD_DIR}/*.hpp
 
 # main project library
 add_library(${PROJECT_NAME} ${MQT_QECC_HEADERS} DecodingSimulator.cpp UFDecoder.cpp UFHeuristic.cpp
-                            Utils.cpp)
+                            Utils.cpp GF2.cpp)
 
 # set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC ${MQT_QECC_INCLUDE_BUILD_DIR})
