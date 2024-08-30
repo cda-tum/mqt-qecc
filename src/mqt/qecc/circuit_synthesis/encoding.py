@@ -72,20 +72,20 @@ def heuristic_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> Qu
     return circ, encoding_qubits
 
 
-def gate_optimal_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> QuantumCircuit:
-    """Synthesize an encoding circuit for the given CSS code using the minimal number of gates.
+# def gate_optimal_encoding_circuit(code: CSSCode) -> QuantumCircuit:
+#     """Synthesize an encoding circuit for the given CSS code using the minimal number of gates.
 
-    Args:
-        code: The CSS code to synthesize the encoding circuit for.
-        optimize_depth: Whether to optimize the depth of the circuit.
+#     Args:
+#         code: The CSS code to synthesize the encoding circuit for.
+#         optimize_depth: Whether to optimize the depth of the circuit.
 
-    Returns:
-        The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
-    """
-    logging.info("Starting optimal encoding circuit synthesis.")
-    checks, logicals, _ = _get_matrix_with_fewest_checks(code)
-    checks, cnots = heuristic_gaussian_elimination(np.vstack((checks, logicals)), parallel_elimination=optimize_depth)
-    cnots = cnots[::-1]
+#     Returns:
+#         The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
+#     """
+#     logging.info("Starting optimal encoding circuit synthesis.")
+#     checks, logicals, _ = _get_matrix_with_fewest_checks(code)
+#     checks, cnots = heuristic_gaussian_elimination(np.vstack((checks, logicals)), parallel_elimination=optimize_depth)
+#     cnots = cnots[::-1]
 
 
 def _get_matrix_with_fewest_checks(code: CSSCode) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8], bool]:

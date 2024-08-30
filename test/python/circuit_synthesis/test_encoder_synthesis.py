@@ -26,7 +26,9 @@ def css_4_2_2_code() -> CSSCode:
 @pytest.fixture
 def css_6_2_2_code() -> CSSCode:
     """Return the 4,2,2  code."""
-    return CSSCode(2, np.array([[1] * 6]), np.array([[1] * 6]))
+    return CSSCode(
+        2, np.array([[1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 1, 1]]), np.array([[1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 1, 1]])
+    )
 
 
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
@@ -37,12 +39,12 @@ def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type:
     encoder, encoding_qubits = heuristic_encoding_circuit(code)
     assert encoder.num_qubits == code.n
 
-    x_stabs, z_stabs, x_qubits, z_qubits = get_stabs_css_with_indices(encoder)
+    x_stabs, z_stabs_tmp, x_qubits, z_qubits = get_stabs_css_with_indices(encoder)
 
     # Since no gate is applied to the encoding qubits at the beginning of the circuit, the propagation of Z-logicals through the circuit can be read off from the Z-stabilizers.
     z_logical_indices = [z_qubits[i] for i in encoding_qubits]
-    z_logicals = z_stabs[z_logical_indices]
-    z_stabs = z_stabs[[i for i in range(len(z_stabs)) if i not in z_logical_indices]]
+    z_logicals = z_stabs_tmp[z_logical_indices]
+    z_stabs = z_stabs_tmp[[i for i in range(len(z_stabs_tmp)) if i not in z_logical_indices]]
 
     # To get propagation we need to apply a Hadamard to the encoding qubits and propagate again.
     encoder_h = encoder.inverse()
