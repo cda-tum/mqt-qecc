@@ -1,7 +1,5 @@
 #pragma once
 
-#include "QeccException.hpp"
-
 #include <cassert>
 #include <cstddef>
 #include <functional>

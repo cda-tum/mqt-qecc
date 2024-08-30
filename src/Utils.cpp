@@ -1,6 +1,7 @@
 #include "Utils.hpp"
 
-#include "ldpc/gf2dense.hpp"
+#include "GF2.hpp"
+#include "QeccException.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -26,7 +27,7 @@ bool Utils::isVectorInRowspace(const gf2Mat& inmat, const gf2Vec& vec) {
     const auto matrix    = getTranspose(inmat); // v is in rowspace of M <=> v is in col space of M^T
     auto       matrixCsc = Utils::toCsc(matrix);
 
-    auto pluDecomp = ldpc::gf2dense::PluDecomposition(matrix.size(), matrix.at(0).size(), matrixCsc);
+    auto pluDecomp = PluDecomposition(matrix.size(), matrix.at(0).size(), matrixCsc);
     pluDecomp.rref();
 
     std::vector<std::size_t> idxs{};
@@ -36,8 +37,8 @@ bool Utils::isVectorInRowspace(const gf2Mat& inmat, const gf2Vec& vec) {
         }
     }
     matrixCsc.emplace_back(idxs);
-    auto pluExt = ldpc::gf2dense::PluDecomposition(static_cast<size_t>(static_cast<int>(matrix.size())),
-                                                   static_cast<size_t>(static_cast<int>(matrix.at(0).size() + 1)), matrixCsc);
+    auto pluExt = PluDecomposition(static_cast<size_t>(static_cast<int>(matrix.size())),
+                                   static_cast<size_t>(static_cast<int>(matrix.at(0).size() + 1)), matrixCsc);
     pluExt.rref();
 
     return pluExt.matrixRank == pluDecomp.matrixRank;

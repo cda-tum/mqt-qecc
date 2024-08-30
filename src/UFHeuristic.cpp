@@ -1,15 +1,14 @@
-//
-// Created by lucas on 21/04/2022.
-//
-
 #include "UFHeuristic.hpp"
 
 #include "Decoder.hpp"
 #include "TreeNode.hpp"
+#include "Utils.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <queue>
 #include <random>
+#include <unordered_set>
 /**
  * returns list of tree node (in UF data structure) representations for syndrome
  * @param code
