@@ -154,20 +154,6 @@ If you use our tool for your research, we will be thankful if you refer to it by
   Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
   in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
 
-## Credits
-
-The contributors to this tool are:
-
-- Lucas Berent
-- Lukas Burgholzer
-- Thomas Grurl
-- Peter-Jan H.S. Derks
-- Timo Hillmann
-- Tom Peham
-- Ludwig Schmid
-
-Several parts of the code are based on and adapted from: [LDPCv2](https://github.com/quantumgizmos/ldpc_v2).
-
 ## Acknowledgements
 
 The Munich Quantum Toolkit has been supported by the European
