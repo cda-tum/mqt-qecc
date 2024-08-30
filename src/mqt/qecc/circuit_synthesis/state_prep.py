@@ -244,7 +244,7 @@ def _generate_circ_with_bounded_depth(
     checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True
 ) -> QuantumCircuit | None:
     assert max_depth > 0, "max_depth should be greater than 0"
-    res = gaussian_elimination_min_parallel_eliminations(checks, max_depth)
+    res = gaussian_elimination_min_parallel_eliminations(checks, _final_matrix_constraint, max_depth)
     if res is None:
         return None
     checks, cnots = res
@@ -255,7 +255,7 @@ def _generate_circ_with_bounded_gates(
     checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True
 ) -> QuantumCircuit | None:
     assert max_depth > 0, "max_depth should be greater than 0"
-    res = gaussian_elimination_min_column_ops(checks, max_depth)
+    res = gaussian_elimination_min_column_ops(checks, _final_matrix_constraint, max_depth)
     if res is None:
         return None
     checks, cnots = res
@@ -342,6 +342,7 @@ def depth_optimal_prep_circuit(
     assert checks is not None
     res = optimal_elimination(
         checks,
+        _final_matrix_constraint,
         "parallel_ops",
         min_param=min_depth,
         max_param=max_depth,
@@ -376,7 +377,13 @@ def gate_optimal_prep_circuit(
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
     res = optimal_elimination(
-        checks, "column_ops", min_param=min_gates, max_param=max_gates, min_timeout=min_timeout, max_timeout=max_timeout
+        checks,
+        _final_matrix_constraint,
+        "column_ops",
+        min_param=min_gates,
+        max_param=max_gates,
+        min_timeout=min_timeout,
+        max_timeout=max_timeout,
     )
     if res is None:
         return None
@@ -1319,3 +1326,11 @@ def _hook_errors(stabs: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
                 errors.append(error.copy())
                 error[i] = 1
     return np.array(errors)
+
+
+def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+    assert len(columns.shape) == 3
+    return z3.PbEq(
+        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
+        columns.shape[2] - columns.shape[1],
+    )

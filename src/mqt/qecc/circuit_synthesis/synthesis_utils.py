@@ -100,6 +100,7 @@ def heuristic_gaussian_elimination(
     """
     if full_reduction_rows is None:
         full_reduction_rows = []
+
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
 
@@ -157,7 +158,9 @@ def heuristic_gaussian_elimination(
 
 
 def gaussian_elimination_min_column_ops(
-    matrix: npt.NDArray[np.int8], max_eliminations: int
+    matrix: npt.NDArray[np.int8],
+    termination_criteria: Callable[[Any], z3.BoolRef],
+    max_eliminations: int,
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]] | None:
     """Perform Gaussian elimination on the column space of a matrix using at most `max_eliminations` eliminations.
 
@@ -165,6 +168,7 @@ def gaussian_elimination_min_column_ops(
 
     Args:
         matrix: The matrix to perform Gaussian elimination on.
+        termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_eliminations: The maximum number of eliminations to perform.
 
     returns:
@@ -206,7 +210,7 @@ def gaussian_elimination_min_column_ops(
             s.add(z3.Implies(targets[d - 1] != col, symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
 
     # assert that final check matrix has n-checks.shape[0] zero columns
-    s.add(_final_matrix_constraint(columns))
+    s.add(termination_criteria(columns))
 
     if s.check() == z3.sat:
         m = s.model()
@@ -220,7 +224,7 @@ def gaussian_elimination_min_column_ops(
 
 
 def gaussian_elimination_min_parallel_eliminations(
-    matrix: npt.NDArray[np.int8], max_parallel_steps: int
+    matrix: npt.NDArray[np.int8], termination_criteria: Callable[[Any], z3.BoolRef], max_parallel_steps: int
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]] | None:
     """Perform Gaussian elimination on the column space of a matrix using at most `max_parallel_steps` parallel column elimination steps.
 
@@ -228,6 +232,7 @@ def gaussian_elimination_min_parallel_eliminations(
 
     Args:
         matrix: The matrix to perform Gaussian elimination on.
+        termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_parallel_steps: The maximum number of parallel elimination steps to perform.
 
     returns:
@@ -277,7 +282,7 @@ def gaussian_elimination_min_parallel_eliminations(
                 )
             )
 
-    s.add(_final_matrix_constraint(columns))
+    s.add(termination_criteria(columns))
 
     if s.check() == z3.sat:
         m = s.model()
@@ -353,14 +358,6 @@ def _column_addition_constraint(
     return z3.And(constraints)
 
 
-def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
-    assert len(columns.shape) == 3
-    return z3.PbEq(  # type: ignore[unreachable]
-        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
-        columns.shape[2] - columns.shape[1],
-    )
-
-
 def symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
     """Return assertion that two symbolic vectors should be equal."""
     constraints = [False for _ in v1]
@@ -427,6 +424,7 @@ def symbolic_vector_add(
 
 def optimal_elimination(
     matrix: npt.NDArray[np.int8],
+    termination_criteria: Callable[[Any], z3.BoolRef],
     optimization_metric: str = "column_ops",
     min_param: int = 1,
     max_param: int = 10,
@@ -437,6 +435,7 @@ def optimal_elimination(
 
     Args:
         matrix: The stabilizer matrix of the CSS code.
+        termination_criteria: The termination criteria for when the matrix is considered reduced.
         optimization_metric: The metric to optimize the circuit w.r.t. to. Can be either "column_ops" or "parallel_ops".
         zero_state: Whether to start from the zero state.
         min_param: The minimum value of the metric parameter.
@@ -456,6 +455,7 @@ def optimal_elimination(
     fun = functools.partial(
         opt_fun,
         matrix,
+        termination_criteria,
     )
 
     res = iterative_search_with_timeout(
