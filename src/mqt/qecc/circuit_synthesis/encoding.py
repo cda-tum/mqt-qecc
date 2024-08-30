@@ -59,7 +59,6 @@ def gate_optimal_encoding_circuit(code: CSSCode, optimize_depth: bool = True) ->
     """
     logging.info("Starting optimal encoding circuit synthesis.")
     checks, logicals, _use_x_checks = _get_matrix_with_fewest_checks(code)
-    checks.shape[0]
     checks, cnots = heuristic_gaussian_elimination(np.vstack((checks, logicals)), parallel_elimination=optimize_depth)
     cnots = cnots[::-1]
 
