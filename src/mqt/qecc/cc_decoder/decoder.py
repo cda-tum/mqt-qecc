@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import datetime
 import json
 import locale
 import subprocess  # noqa: S404
 from dataclasses import dataclass, field
 from pathlib import Path
+from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -90,9 +90,7 @@ class LightsOut:
         assert self.switch_vars is not None
         return sum(1 for var in self.switch_vars if model[var])
 
-    def solve(
-        self, lights: list[bool], solver_path: str = "z3"
-    ) -> tuple[list[int], datetime.timedelta, datetime.timedelta]:
+    def solve(self, lights: list[bool], solver_path: str = "z3") -> tuple[list[int], float, float]:
         """Solve the lights-out problem for a given pattern.
 
         Assumes that the z3 instance has already been pre-constructed.
@@ -101,16 +99,16 @@ class LightsOut:
         self.optimizer.push()
 
         # add the problem specific constraints
-        start = datetime.datetime.now()
+        start = timer()
         for light, val in enumerate(lights):
             self.complete_parity_constraint(light, self.lights_to_switches[light], val)
-        constr_time = datetime.datetime.now() - start
+        constr_time = timer() - start
         switches: list[int] = []
         if solver_path == "z3":
             # solve the problem
-            start = datetime.datetime.now()
+            start = timer()
             result = self.optimizer.check()
-            solve_time = datetime.datetime.now() - start
+            solve_time = timer() - start
             assert str(result) == "sat", "No solution found"
 
             # validate the model
@@ -126,9 +124,9 @@ class LightsOut:
             with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
                 "a+", encoding=locale.getpreferredencoding(False)
             ) as out:
-                start = datetime.datetime.now()
+                start = timer()
                 subprocess.run([solver_path, wcnf], stdout=out, check=False)  # noqa: S603
-                solve_time = datetime.datetime.now() - start
+                solve_time = timer() - start
 
         # pop the context from the optimizer
         self.optimizer.pop()
@@ -140,9 +138,9 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
     """Simulate the logical error rate for a given distance and error rate."""
     problem = LightsOut(code.faces_to_qubits, code.qubits_to_faces)
 
-    start = datetime.datetime.now()
+    start = timer()
     problem.preconstruct_z3_instance()
-    preconstr_time = datetime.datetime.now() - start
+    preconstr_time = timer() - start
     min_wt_logicals: npt.NDArray[np.int_] = np.full(len(code.L), -1).astype(int)
     logical_errors: npt.NDArray[np.int_] = np.zeros(len(code.L)).astype(int)
     avg_constr_time = 0.0
@@ -170,8 +168,8 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
                     break
 
         # compute rolling average of the times
-        avg_constr_time = (avg_constr_time * i + constr_time.microseconds) / (i + 1)
-        avg_solve_time = (avg_solve_time * i + solve_time.microseconds) / (i + 1)
+        avg_constr_time = (avg_constr_time * i + constr_time) / (i + 1)
+        avg_solve_time = (avg_solve_time * i + solve_time) / (i + 1)
 
     logical_error_rates: list[float] = [nr_errors / nr_sims for nr_errors in logical_errors]
     logical_error_rate_ebs: list[float] = [np.sqrt((1 - ler) * ler / nr_sims) for ler in logical_error_rates]
@@ -183,7 +181,7 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
         "p": error_rate,
         "logical_error_rates": logical_error_rates,
         "logical_error_rate_ebs": logical_error_rate_ebs,
-        "preconstr_time": preconstr_time.microseconds,
+        "preconstr_time": preconstr_time,
         "avg_constr_time": avg_constr_time,
         "avg_solve_time": avg_solve_time,
         "avg_total_time": avg_total_time,
