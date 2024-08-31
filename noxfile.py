@@ -26,7 +26,7 @@ PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13"]
 # and get better caching performance. This only concerns dependencies that are
 # not available via wheels on PyPI (i.e., only as source distributions).
 BUILD_REQUIREMENTS = [
-    "scikit-build-core[pyproject]>=0.10.1",
+    "scikit-build-core>=0.10.1",
     "setuptools_scm>=7",
     "pybind11>=2.13",
     "wheel>=0.40",  # transitive dependency of pytest on Windows
