@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from bposd import bposd_decoder
+from ldpc.osd import bposd_decoder
 
 from ..utils.data_utils import (
     BpParams,

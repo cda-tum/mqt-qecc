@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-from bposd import bposd_decoder
+from ldpc.osd import bposd_decoder
 
 from mqt.qecc.analog_information_decoding.simulators.memory_experiment_v2 import (
     build_multiround_pcm,
@@ -28,7 +28,7 @@ def pcm() -> NDArray[np.int32]:
 @pytest.fixture
 def repetitions() -> int:
     """Fixture for number of repetitions for multiround decoding."""
-    return 3
+    return 4
 
 
 @pytest.fixture
@@ -92,14 +92,14 @@ def test_decode_multiround_syndr_err(
     """Test decoding of multiround syndrome for three bit repetition code."""
     check_block_size = pcm.shape[1] * repetitions
 
-    analoy_syndr = np.array([[0.0, -1.0, 0.0], [0.0, 0.0, 0.0]])
+    analog_syndr = np.array([[0.0, -1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]])
     sigma = 0.3
     decoding_method = "bposd"
-    syndrome = np.array([[0, 1, 0], [0, 0, 0]])
+    syndrome = np.array([[0, 1, 0, 0], [0, 0, 0, 0]])
     res = decode_multiround(
         pcm=pcm,
         channel_probs=channel_probs,
-        analog_syndr=analoy_syndr,
+        analog_syndr=analog_syndr,
         decoder=decoder,
         syndrome=syndrome,
         repetitions=repetitions,
@@ -110,22 +110,26 @@ def test_decode_multiround_syndr_err(
     )
     assert np.array_equal(res[0], np.array([0, 0, 0]))  # estimate is all zeros
     assert np.array_equal(res[1], syndrome)
-    assert np.array_equal(res[2], analoy_syndr)
+    assert np.array_equal(res[2], analog_syndr)
 
 
 def test_decode_multiround_data_err(
-    pcm: NDArray[np.int32], channel_probs: NDArray[np.float64], repetitions: int, decoder: bposd_decoder
+    pcm: NDArray[np.int32],
+    channel_probs: NDArray[np.float64],
+    repetitions: int,
+    h3d: csr_matrix,
 ) -> None:
     """Test decoding of multiround syndrome for three bit repetition code."""
+    assert h3d is not None
     check_block_size = pcm.shape[1] * repetitions
-    analoy_syndr = np.array([[0.0, -1.0, -1.0], [0.0, 0.0, 0.0]])
+    analog_syndr = np.array([[-1.0, -1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 0.0]])
     sigma = 0.3
-    decoding_method = "bposd"
-    syndrome = np.array([[0, 1, 1], [0, 0, 0]])
+    decoding_method = "matching"
+    syndrome = np.array([[1, 1, 1, 1], [0, 0, 0, 0]])
     res = decode_multiround(
         pcm=pcm,
         channel_probs=channel_probs,
-        analog_syndr=analoy_syndr,
+        analog_syndr=analog_syndr,
         decoder=decoder,
         syndrome=syndrome,
         repetitions=repetitions,
@@ -133,7 +137,8 @@ def test_decode_multiround_data_err(
         check_block_size=check_block_size,
         sigma=sigma,
         decoding_method=decoding_method,
+        h3d=h3d,
     )
-    assert np.array_equal(res[0], np.array([1, 0, 0]))  # estimate is all zeros
+    assert np.array_equal(res[0], np.array([1, 0, 0]))  # data error on qubit 1
     assert np.array_equal(res[1], syndrome)
-    assert np.array_equal(res[2], analoy_syndr)
+    assert np.array_equal(res[2], analog_syndr)
