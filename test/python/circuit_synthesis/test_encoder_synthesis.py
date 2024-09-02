@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode
-from mqt.qecc.circuit_synthesis import heuristic_encoding_circuit
+from mqt.qecc.circuit_synthesis import gate_optimal_encoding_circuit, heuristic_encoding_circuit
 
 from .utils import eq_span, get_stabs_css_with_indices, in_span
+
+if TYPE_CHECKING:  # pragma: no cover
+    from qiskit import QuantumCircuit
 
 
 @pytest.fixture
@@ -31,12 +36,7 @@ def css_6_2_2_code() -> CSSCode:
     )
 
 
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
-def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
-    """Check that heuristic_encoding_circuit returns a valid circuit with the correct stabilizers."""
-    code = request.getfixturevalue(code)
-
-    encoder, encoding_qubits = heuristic_encoding_circuit(code)
+def _assert_correct_encoding_circuit(encoder: QuantumCircuit, encoding_qubits: list[int], code: CSSCode) -> None:
     assert encoder.num_qubits == code.n
 
     x_stabs, z_stabs_tmp, x_qubits, z_qubits = get_stabs_css_with_indices(encoder)
@@ -64,3 +64,25 @@ def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type:
 
     for logical in x_logicals:
         assert in_span(np.vstack((code.Hx, code.Lx)), logical)
+
+
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
+    """Check that heuristic_encoding_circuit returns a valid circuit with the correct stabilizers."""
+    code = request.getfixturevalue(code)
+
+    encoder, encoding_qubits = heuristic_encoding_circuit(code)
+    assert encoder.num_qubits == code.n
+
+    _assert_correct_encoding_circuit(encoder, encoding_qubits, code)
+
+
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+def test_gate_optimal_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
+    """Check that `gate_optimal_encoding_circuit` returns a valid circuit with the correct stabilizers."""
+    code = request.getfixturevalue(code)
+
+    encoder, encoding_qubits = gate_optimal_encoding_circuit(code, max_timeout=1, min_gates=3, max_gates=10)
+    assert encoder.num_qubits == code.n
+
+    _assert_correct_encoding_circuit(encoder, encoding_qubits, code)

@@ -97,12 +97,13 @@ def gate_optimal_encoding_circuit(
     checks, logicals, use_x_checks = _get_matrix_with_fewest_checks(code)
     assert checks is not None
     n_checks = checks.shape[0]
+    checks_and_logicals = np.vstack((checks, logicals))
     termination_criteria = functools.partial(
         _final_matrix_constraint_partially_full_reduction,
         full_reduction_rows=list(range(checks.shape[0], checks.shape[0] + logicals.shape[0])),
     )
     res = optimal_elimination(
-        checks,
+        checks_and_logicals,
         termination_criteria,
         "column_ops",
         min_param=min_gates,
@@ -145,24 +146,30 @@ def _final_matrix_constraint_partially_full_reduction(
     assert len(columns.shape) == 3
 
     # assert that the full_reduction_rows are completely reduced
-    fully_reduced = z3.PbEq(
-        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in full_reduction_rows],
+    exactly_one_per_row = z3.And([
+        z3.PbEq([(entry, 1) for entry in columns[-1, row]], 1) for row in full_reduction_rows
+    ])
+
+    at_least_n_row_columns = z3.PbEq(
+        [(z3.Or(list(columns[-1, full_reduction_rows, col])), 1) for col in range(columns.shape[2])],
         len(full_reduction_rows),
     )
+
+    fully_reduced = z3.And(exactly_one_per_row, at_least_n_row_columns)
 
     partial_reduction_rows = list(set(range(columns.shape[1])) - set(full_reduction_rows))
 
     # assert that the partial_reduction_rows are partially reduced, i.e. there are at least columns.shape[2] - columns.shape[1] - len(full_reduction_rows) non-zero columns
     partially_reduced = z3.PbEq(
-        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in partial_reduction_rows],
-        columns.shape[2] - columns.shape[1] - len(full_reduction_rows),
+        [(z3.Not(z3.Or(list(columns[-1, partial_reduction_rows, col]))), 1) for col in range(columns.shape[2])],
+        columns.shape[2] - (columns.shape[1] - len(full_reduction_rows)),
     )
 
     # assert that there is no overlap between the full_reduction_rows and the partial_reduction_rows
-    overlap_constraints = []
-    for col in range(len(columns[-1, :])):
-        has_entry_partial = z3.Or([columns[-1, row, col] for row in partial_reduction_rows])
-        has_entry_full = z3.Or([columns[-1, row, col] for row in full_reduction_rows])
+    overlap_constraints = [True]
+    for col in range(columns.shape[2]):
+        has_entry_partial = z3.Or(list(columns[-1, partial_reduction_rows, col]))
+        has_entry_full = z3.Or(list(columns[-1, full_reduction_rows, col]))
         overlap_constraints.append(z3.Not(z3.And(has_entry_partial, has_entry_full)))
 
     return z3.And(fully_reduced, partially_reduced, z3.And(overlap_constraints))

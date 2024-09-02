@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .encoding import heuristic_encoding_circuit
+from .encoding import gate_optimal_encoding_circuit, heuristic_encoding_circuit
 from .simulation import LutDecoder, NoisyNDFTStatePrepSimulator
 from .state_prep import (
     StatePrepCircuit,
@@ -21,6 +21,7 @@ __all__ = [
     "NoisyNDFTStatePrepSimulator",
     "StatePrepCircuit",
     "depth_optimal_prep_circuit",
+    "gate_optimal_encoding_circuit",
     "gate_optimal_prep_circuit",
     "gate_optimal_verification_circuit",
     "gate_optimal_verification_stabilizers",
