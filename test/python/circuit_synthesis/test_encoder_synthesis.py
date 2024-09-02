@@ -8,7 +8,11 @@ import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode
-from mqt.qecc.circuit_synthesis import gate_optimal_encoding_circuit, heuristic_encoding_circuit
+from mqt.qecc.circuit_synthesis import (
+    depth_optimal_encoding_circuit,
+    gate_optimal_encoding_circuit,
+    heuristic_encoding_circuit,
+)
 
 from .utils import eq_span, get_stabs_css_with_indices, in_span
 
@@ -83,6 +87,17 @@ def test_gate_optimal_encoding_consistent(code: CSSCode, request) -> None:  # ty
     code = request.getfixturevalue(code)
 
     encoder, encoding_qubits = gate_optimal_encoding_circuit(code, max_timeout=1, min_gates=3, max_gates=10)
+    assert encoder.num_qubits == code.n
+
+    _assert_correct_encoding_circuit(encoder, encoding_qubits, code)
+
+
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+def test_depth_optimal_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
+    """Check that `gate_optimal_encoding_circuit` returns a valid circuit with the correct stabilizers."""
+    code = request.getfixturevalue(code)
+
+    encoder, encoding_qubits = depth_optimal_encoding_circuit(code, max_timeout=1)
     assert encoder.num_qubits == code.n
 
     _assert_correct_encoding_circuit(encoder, encoding_qubits, code)

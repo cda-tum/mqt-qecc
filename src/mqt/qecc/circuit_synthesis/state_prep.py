@@ -15,7 +15,7 @@ from qiskit.dagcircuit import DAGOutNode
 
 from ..codes import InvalidCSSCodeError
 from .synthesis_utils import (
-    build_css_circuit_from_list_and_checks,
+    build_css_circuit_from_cnot_list,
     gaussian_elimination_min_column_ops,
     gaussian_elimination_min_parallel_eliminations,
     heuristic_gaussian_elimination,
@@ -216,7 +216,7 @@ def _build_state_prep_circuit_from_back(
         hadamards = np.where(np.sum(checks, axis=0) == 0)[0]
         cnots = [(j, i) for i, j in cnots]
 
-    return build_css_circuit_from_list_and_checks(checks.shape[1], cnots, list(hadamards))
+    return build_css_circuit_from_cnot_list(checks.shape[1], cnots, list(hadamards))
 
 
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True) -> StatePrepCircuit:

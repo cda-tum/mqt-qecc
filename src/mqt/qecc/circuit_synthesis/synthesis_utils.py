@@ -301,9 +301,7 @@ def gaussian_elimination_min_parallel_eliminations(
     return None
 
 
-def build_css_circuit_from_list_and_checks(
-    n: int, cnots: list[tuple[int, int]], hadamards: list[int]
-) -> QuantumCircuit:
+def build_css_circuit_from_cnot_list(n: int, cnots: list[tuple[int, int]], hadamards: list[int]) -> QuantumCircuit:
     """Build a quantum circuit consisting of Hadamards followed by a layer of CNOTs from a list of CNOTs and a list of checks.
 
     Args:
