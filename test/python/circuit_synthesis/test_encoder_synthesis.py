@@ -48,7 +48,6 @@ def _assert_correct_encoding_circuit(encoder: QuantumCircuit, encoding_qubits: l
     # Since no gate is applied to the encoding qubits at the beginning of the circuit, the propagation of Z-logicals through the circuit can be read off from the Z-stabilizers.
     z_logical_indices = [z_qubits[i] for i in encoding_qubits]
     z_logicals = z_stabs_tmp[z_logical_indices]
-    z_stabs = z_stabs_tmp[[i for i in range(len(z_stabs_tmp)) if i not in z_logical_indices]]
 
     # To get propagation we need to apply a Hadamard to the encoding qubits and propagate again.
     encoder_h = encoder.inverse()
