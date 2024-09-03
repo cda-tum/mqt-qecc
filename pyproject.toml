@@ -41,9 +41,9 @@ requires-python = ">=3.9"
 dependencies = [
     "z3-solver>=4.12,<4.14",
     "qecsim",
-    "ldpc>=0.1.51",
-    "numpy>=1.26,<2; python_version > '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
-    "numpy>=1.24,<2; python_version <= '3.11'", # some of our dependencies are not yet compatible with numpy 2.0
+    "ldpc>=0.1.53",
+    "numpy>=1.26; python_version > '3.11'",
+    "numpy>=1.24; python_version <= '3.11'",
     "qiskit[qasm3-import]>=1.0.0",
     "qiskit-aer>=0.15.0",
     "stim >= 1.13.0",
@@ -151,8 +151,6 @@ filterwarnings = [
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
-    'ignore:.*invalid escape sequence.*:DeprecationWarning:',
-    'ignore:.*invalid escape sequence.*:SyntaxWarning:',
 ]
 
 [tool.coverage]
@@ -305,11 +303,3 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 before-build = "uv pip install delvewheel>=1.7.3"
 repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
 environment = { CMAKE_ARGS = "-T ClangCL", SKBUILD_CMAKE_ARGS="--fresh" }
-
-[[tool.cibuildwheel.overrides]]
-select = "cp312-*"
-# the following should allow to actually build the ldpc package for the tests on Python 3.12
-before-test = [
-  "uv pip install 'numpy<2' Cython setuptools wheel",
-  "uv pip install ldpc --no-build-isolation"
-]
