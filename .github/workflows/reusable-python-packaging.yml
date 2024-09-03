@@ -22,29 +22,6 @@ jobs:
         with:
           prepend_symlinks_to_path: false
           override_cache_key: wheels-${{ matrix.runs-on }}
-      - if: runner.os == 'macOS'
-        name: Install gmp from source
-        run: |
-          curl -L https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJ
-          cd gmp-6.3.0
-          export CC="ccache clang"
-          export CXX="ccache clang++"
-          export MACOSX_DEPLOYMENT_TARGET=11.0
-          ./configure --enable-cxx --prefix=/usr/local
-          make -j 4 && sudo make install
-          echo GMP_ROOT="/usr/local" >> $GITHUB_ENV
-      - if: runner.os == 'macOS'
-        name: Install mpfr from source
-        run: |
-          curl -L https://www.mpfr.org/mpfr-current/mpfr-4.2.1.tar.xz | tar xJ
-          cd mpfr-4.2.1
-          export CC="ccache clang"
-          export CXX="ccache clang++"
-          export MACOSX_DEPLOYMENT_TARGET=11.0
-          # use the GMP install from above
-          ./configure --prefix=/usr/local --with-gmp=/usr/local
-          make -j 4 && sudo make install
-          echo MPFR_ROOT="/usr/local" >> $GITHUB_ENV
       # set up uv for faster Python package management
       - if: runner.os == 'macOS'
         uses: yezz123/setup-uv@v4
