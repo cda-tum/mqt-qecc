@@ -38,7 +38,6 @@ def heuristic_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> Qu
     checks, cnots = heuristic_gaussian_elimination(
         np.vstack((checks, logicals)),
         parallel_elimination=optimize_depth,
-        full_reduction_rows=list(range(checks.shape[0], checks.shape[0] + logicals.shape[0])),
     )
 
     # after reduction there still might be some overlap between initialized qubits and encoding qubits, we simply perform CNOTs to correct this

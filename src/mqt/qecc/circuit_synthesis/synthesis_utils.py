@@ -82,33 +82,26 @@ def iterative_search_with_timeout(
 
 
 def heuristic_gaussian_elimination(
-    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True, full_reduction_rows: list[int] | None = None
+    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
     """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
 
     The algorithm utilizes a greedy heuristic to select the columns to eliminate in order to minimize the number of eliminations required.
 
-    The matrix is reduced until there are exactly rnk(matrix) columns with non-zero entries. If `full_reduction_rows` is provided, the rows in `full_reduction_rows` are fully reduced.
+    The matrix is reduced until there are exactly rnk(matrix) columns with non-zero entries.
 
     Args:
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
-        full_reduction_rows: The rows to fully reduce
 
     returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
-    if full_reduction_rows is None:
-        full_reduction_rows = []
-
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
 
     def is_reduced() -> bool:
-        return bool(
-            len(np.where(np.all(matrix == 0, axis=0))[0]) == matrix.shape[1] - rank
-            and np.sum(matrix[full_reduction_rows]) == len(full_reduction_rows)
-        )
+        return bool(len(np.where(np.all(matrix == 0, axis=0))[0]) == matrix.shape[1] - rank)
 
     costs = np.array([
         [np.sum((matrix[:, i] + matrix[:, j]) % 2) for j in range(matrix.shape[1])] for i in range(matrix.shape[1])
