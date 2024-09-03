@@ -41,8 +41,8 @@ def css_4_2_2_code() -> CSSCode:
 
 
 @pytest.fixture
-def css_6_2_2_code() -> CSSCode:
-    """Return the 4,2,2  code."""
+def css_6_4_2_code() -> CSSCode:
+    """Return the 6,4,2  code."""
     return CSSCode(2, np.array([[1] * 6]), np.array([[1] * 6]))
 
 
@@ -109,7 +109,7 @@ def get_stabs(qc: QuantumCircuit) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.
 
 
 @pytest.mark.parametrize(
-    "code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code", "tetrahedral_code", "surface_code"]
+    "code", ["steane_code", "css_4_2_2_code", "css_6_4_2_code", "tetrahedral_code", "surface_code"]
 )
 def test_heuristic_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that heuristic_prep_circuit returns a valid circuit with the correct stabilizers."""
@@ -127,7 +127,7 @@ def test_heuristic_prep_consistent(code: CSSCode, request) -> None:  # type: ign
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_4_2_code"])
 def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
@@ -146,7 +146,7 @@ def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: 
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_4_2_code"])
 def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
@@ -164,7 +164,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_4_2_code"])
 def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Test synthesis of the plus state."""
     code = request.getfixturevalue(code)
@@ -199,7 +199,7 @@ def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignor
 
 
 @pytest.mark.parametrize(
-    "code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code", "surface_code", "tetrahedral_code"]
+    "code", ["steane_code", "css_4_2_2_code", "css_6_4_2_code", "surface_code", "tetrahedral_code"]
 )
 def test_plus_state_heuristic(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Test synthesis of the plus state."""
