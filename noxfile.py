@@ -30,8 +30,6 @@ BUILD_REQUIREMENTS = [
     "setuptools_scm>=7",
     "pybind11>=2.13",
     "wheel>=0.40",  # transitive dependency of pytest on Windows
-    "Cython>=3; python_version > '3.11'",  # required to build ldpc on Python 3.12+
-    "numpy>=1.26,<2; python_version > '3.11'",  # required to build ldpc on Python 3.12+
 ]
 
 if os.environ.get("CI", None):
