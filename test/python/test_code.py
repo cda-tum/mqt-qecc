@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from mqt.qecc import CSSCode, InvalidCSSCodeError
+from mqt.qecc import CSSCode, InvalidCSSCodeError, StabilizerCode
 from mqt.qecc.codes import construct_bb_code
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 @pytest.fixture
-def rep_code() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None]:
+def rep_code_checks() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None]:
     """Return the parity check matrices for the repetition code."""
     hx = np.array([[1, 1, 0], [0, 0, 1]])
     hz = None
@@ -23,11 +23,17 @@ def rep_code() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None
 
 
 @pytest.fixture
-def steane_code() -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
+def steane_code_checks() -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
     """Return the check matrices for the Steane code."""
     hx = np.array([[1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 1], [0, 1, 1, 0, 1, 1, 0]])
     hz = hx
     return hx, hz
+
+
+@pytest.fixture
+def five_qubit_code_stabs() -> list[str]:
+    """Return the five qubit code."""
+    return ["XZZXI", "IXZZX", "XIXZZ", "ZXIXZ"]
 
 
 def test_invalid_css_codes() -> None:
@@ -57,7 +63,7 @@ def test_invalid_css_codes() -> None:
         CSSCode(distance=3)
 
 
-@pytest.mark.parametrize("checks", ["steane_code", "rep_code"])
+@pytest.mark.parametrize("checks", ["steane_code_checks", "rep_code_checks"])
 def test_logicals(checks: tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None], request) -> None:  # type: ignore[no-untyped-def]
     """Test the logical operators of the CSSCode class."""
     hx, hz = request.getfixturevalue(checks)
@@ -77,9 +83,9 @@ def test_logicals(checks: tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8
         assert np.all(code.Lz @ code.Hx.T % 2 == 0)
 
 
-def test_errors(steane_code: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) -> None:
+def test_errors(steane_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) -> None:
     """Test error detection and symdromes."""
-    hx, hz = steane_code
+    hx, hz = steane_code_checks
     code = CSSCode(distance=3, Hx=hx, Hz=hz)
     e1 = np.array([1, 0, 0, 0, 0, 0, 0])
     e2 = np.array([0, 1, 0, 0, 1, 0, 0])
@@ -111,9 +117,9 @@ def test_errors(steane_code: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) 
     assert code.stabilizer_eq_z_error(e1, e4)
 
 
-def test_steane(steane_code: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) -> None:
+def test_steane(steane_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) -> None:
     """Test utility functions and correctness of the Steane code."""
-    hx, hz = steane_code
+    hx, hz = steane_code_checks
     code = CSSCode(distance=3, Hx=hx, Hz=hz)
     assert code.n == 7
     assert code.k == 1
@@ -147,3 +153,25 @@ def test_bb_codes(n: int) -> None:
     assert code.Hx is not None
     assert code.Hz is not None
     assert np.all(code.Hx @ code.Hx.T % 2) == 0
+
+
+def test_five_qubit_code(five_qubit_code_stabs: list[str]) -> None:
+    """Test that the five qubit code is constructed as a valid stabilizer code."""
+    Lz = ["ZZZZZ"]  # noqa: N806
+    Lx = ["XXXXX"]  # noqa: N806
+
+    # Many assertions are already made in the constructor
+    code = StabilizerCode(five_qubit_code_stabs, distance=3, Lx=Lx, Lz=Lz)
+    assert code.n == 5
+    assert code.k == 1
+    assert code.distance == 3
+
+    error = "XIIII"
+    syndrome = code.get_syndrome(error)
+    assert np.array_equal(syndrome, np.array([0, 0, 0, 1]))
+
+    stabilizer_eq_error = "IZZXI"
+    assert code.stabilizer_equivalent(error, stabilizer_eq_error)
+
+    different_error = "IZIII"
+    assert not code.stabilizer_equivalent(error, different_error)

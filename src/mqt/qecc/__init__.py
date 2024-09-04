@@ -9,7 +9,7 @@ from __future__ import annotations
 from ._version import version as __version__
 from .analog_information_decoding.simulators.analog_tannergraph_decoding import AnalogTannergraphDecoder, AtdSimulator
 from .analog_information_decoding.simulators.quasi_single_shot_v2 import QssSimulator
-from .codes import CSSCode, InvalidCSSCodeError
+from .codes import CSSCode, InvalidCSSCodeError, StabilizerCode
 from .pyqecc import (
     Code,
     Decoder,
@@ -37,6 +37,7 @@ __all__ = [
     "InvalidCSSCodeError",
     # "SoftInfoDecoder",
     "QssSimulator",
+    "StabilizerCode",
     "UFDecoder",
     "UFHeuristic",
     "__version__",

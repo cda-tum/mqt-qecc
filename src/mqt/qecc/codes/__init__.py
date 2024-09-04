@@ -7,6 +7,7 @@ from .color_code import ColorCode, LatticeType
 from .css_code import CSSCode, InvalidCSSCodeError
 from .hexagonal_color_code import HexagonalColorCode
 from .square_octagon_color_code import SquareOctagonColorCode
+from .stabilizer_code import StabilizerCode
 
 __all__ = [
     "CSSCode",
@@ -15,5 +16,6 @@ __all__ = [
     "InvalidCSSCodeError",
     "LatticeType",
     "SquareOctagonColorCode",
+    "StabilizerCode",
     "construct_bb_code",
 ]
