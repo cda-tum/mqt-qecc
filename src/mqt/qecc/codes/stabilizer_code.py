@@ -138,16 +138,16 @@ class StabilizerCode:
             msg = "Logical operators must have the same number of qubits as the stabilizer generators."
             raise InvalidStabilizerCodeError(msg)
 
-        if self.Lz.shape[0] != self.k:
-            msg = "Number of logical Z-operators must be equal to the number of logical qubits."
+        if self.Lz.shape[0] > self.k:
+            msg = "Number of logical Z-operators must be at most the number of logical qubits."
             raise InvalidStabilizerCodeError(msg)
 
         if get_n_qubits_from_pauli(self.Lz[0]) != self.n:
             msg = "Logical operators must have the same number of qubits as the stabilizer generators."
             raise InvalidStabilizerCodeError(msg)
 
-        if self.Lx.shape[0] != self.k:
-            msg = "Number of logical X-operators must be equal to the number of logical qubits."
+        if self.Lx.shape[0] > self.k:
+            msg = "Number of logical X-operators must be at most the number of logical qubits."
             raise InvalidStabilizerCodeError(msg)
 
         if not all_commute(self.Lz_symplectic, self.symplectic_matrix):
@@ -192,7 +192,7 @@ def binary_to_pauli_string(b: npt.NDArray) -> str:
     phase = b[-1]
 
     pauli = ["X" if x and not z else "Z" if z and not x else "Y" if x and z else "I" for x, z in zip(x_part, z_part)]
-    return f"{'+' if phase == 1 else '-'}" + "".join(pauli)
+    return f"{'' if phase == 0 else '-'}" + "".join(pauli)
 
 
 def is_pauli_string(p: str) -> bool:

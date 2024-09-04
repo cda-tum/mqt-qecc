@@ -23,6 +23,14 @@ def rep_code_checks() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8]
 
 
 @pytest.fixture
+def rep_code_checks_reverse() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None]:
+    """Return the parity check matrices for the repetition code."""
+    hz = np.array([[1, 1, 0], [0, 0, 1]])
+    hx = None
+    return hx, hz
+
+
+@pytest.fixture
 def steane_code_checks() -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
     """Return the check matrices for the Steane code."""
     hx = np.array([[1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 1], [0, 1, 1, 0, 1, 1, 0]])
@@ -59,7 +67,7 @@ def test_invalid_css_codes() -> None:
         CSSCode(distance=3)
 
 
-@pytest.mark.parametrize("checks", ["steane_code_checks", "rep_code_checks"])
+@pytest.mark.parametrize("checks", ["steane_code_checks", "rep_code_checks", "rep_code_checks_reverse"])
 def test_logicals(checks: tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None], request) -> None:  # type: ignore[no-untyped-def]
     """Test the logical operators of the CSSCode class."""
     hx, hz = request.getfixturevalue(checks)
@@ -173,11 +181,20 @@ def test_five_qubit_code(five_qubit_code_stabs: list[str]) -> None:
     different_error = "IZIII"
     assert not code.stabilizer_equivalent(error, different_error)
 
+    strings = code.stabs_as_pauli_strings()
+    assert strings == five_qubit_code_stabs
+
 
 def test_no_stabilizers() -> None:
     """Test that an error is raised if no stabilizers are provided."""
     with pytest.raises(InvalidStabilizerCodeError):
         StabilizerCode([])
+
+
+def test_negative_distance() -> None:
+    """Test that an error is raised if a negative distance is provided."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], distance=-1)
 
 
 def test_different_length_stabilizers() -> None:
@@ -219,4 +236,10 @@ def test_commuting_logicals() -> None:
 def test_anticommuting_logicals() -> None:
     """Test that an error is raised if the logicals anticommute with the stabilizer generators."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lx=["ZIII"], Lz=["XIII"])
+        StabilizerCode(["ZZZZ", "XXXX"], Lx=["ZI II"], Lz=["XIII"])
+
+
+def test_too_many_logicals() -> None:
+    """Test that an error is raised if too many logicals are provided."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], Lx=["ZZII", "ZZII", "ZZII"], Lz=["XXII", "IIXX", "IIXX"])
