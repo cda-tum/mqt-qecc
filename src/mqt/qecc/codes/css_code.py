@@ -77,19 +77,8 @@ class CSSCode(StabilizerCode):
         return ["".join("Z" if bit == 1 else "I" for bit in row) for row in self.Lz]
 
     @staticmethod
-    def _compute_logical(m1: npt.NDArray[np.int8] | None, m2: npt.NDArray[np.int8] | None) -> npt.NDArray[np.int8]:
+    def _compute_logical(m1: npt.NDArray[np.int8], m2: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Compute the logical matrix L."""
-        if m1 is None:
-            ker_m2 = mod2.nullspace(m2)  # compute the kernel basis of m2
-            pivots = mod2.row_echelon(ker_m2)[-1]
-            logs = np.zeros_like(ker_m2, dtype=np.int8)  # type: npt.NDArray[np.int8]
-            for i, pivot in enumerate(pivots):
-                logs[i, pivot] = 1
-            return logs
-
-        if m2 is None:
-            return mod2.nullspace(m1).astype(np.int8)
-
         ker_m1 = mod2.nullspace(m1)  # compute the kernel basis of m1
         im_m2_transp = mod2.row_basis(m2)  # compute the image basis of m2
         log_stack = np.vstack([im_m2_transp, ker_m1])

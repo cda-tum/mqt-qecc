@@ -74,7 +74,7 @@ def test_logicals(checks: tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8
     code = CSSCode(distance=3, Hx=hx, Hz=hz)
     assert code.Lx is not None
     assert code.Lz is not None
-    assert code.Lx.shape[1] == code.Lz.shape[1] == hx.shape[1]
+    assert code.Lx.shape[1] == code.Lz.shape[1] == code.n
     assert code.Lx.shape[0] == code.Lz.shape[0]
 
     # assert that logicals anticommute
