@@ -50,7 +50,12 @@ class StabilizerCode:
         self.symplectic_matrix = self.generators[:, :-1]  # discard the phase
         self.phases = self.generators[:, -1]
         self.k = self.n - mod2.rank(self.generators)
-        self.distance = distance
+
+        if distance is not None and distance <= 0:
+            msg = "Distance must be a positive integer."
+            raise InvalidStabilizerCodeError(msg)
+
+        self.distance = 1 if distance is None else distance  # default distance is 1
 
         if Lz is not None:
             self.Lz = paulis_to_binary(Lz)
@@ -118,10 +123,6 @@ class StabilizerCode:
 
     def _check_code_correct(self) -> None:
         """Check if the code is correct. Throws an exception if not."""
-        if self.distance is not None and self.distance <= 0:
-            msg = "Distance must be a positive integer."
-            raise InvalidStabilizerCodeError(msg)
-
         if self.Lz is not None or self.Lx is not None:
             if self.Lz is None:
                 msg = "If logical X-operators are given, logical Z-operators must also be given."

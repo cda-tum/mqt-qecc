@@ -15,13 +15,12 @@ class HexagonalColorCode(ColorCode):
     def __init__(self, distance: int) -> None:
         """Hexagonal Color Code initialization from base class."""
         super().__init__(distance=distance, lattice_type=LatticeType.HEXAGON)
-        assert self.distance is not None
 
     def add_qubits(self) -> None:
         """Add qubits to the code."""
         colour = ["r", "b", "g"]
         y = 0
-        assert self.distance is not None
+
         x_max = self.distance + self.distance // 2
         while x_max > 0:
             ancilla_colour = colour[y % 3]

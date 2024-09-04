@@ -25,7 +25,6 @@ class SquareOctagonColorCode(ColorCode):
         """Add qubits to the code."""
         self.bottom_row_ancillas()
         y = 1
-        assert self.distance is not None
         x_max = self.distance
 
         while y <= (self.distance + self.distance // 2):
@@ -113,7 +112,6 @@ class SquareOctagonColorCode(ColorCode):
 
     def bottom_row_ancillas(self) -> None:
         """Create ancilla qubits on the bottom row of the lattice."""
-        assert self.distance is not None
         for x in range(4, self.distance // 2 * 6, 6):
             self.octagon_ancilla_qubits.add((x, 0))
 
