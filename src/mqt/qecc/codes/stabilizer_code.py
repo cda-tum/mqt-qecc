@@ -43,9 +43,7 @@ class StabilizerCode:
             Lz: The logical Z-operators.
             Lx: The logical X-operators.
         """
-        if len(generators) == 0:
-            msg = "Stabilizer code must have at least one generator."
-            raise InvalidStabilizerCodeError(msg)
+        self._check_stabilizer_generators(generators)
 
         self.generators = paulis_to_binary(generators)
         self.n = get_n_qubits_from_pauli(self.generators[0])
@@ -101,6 +99,23 @@ class StabilizerCode:
         v2 = pauli_to_binary(p2)
         return bool(mod2.rank(np.vstack((self.generators, v1, v2))) == mod2.rank(np.vstack((self.generators, v1))))
 
+    @staticmethod
+    def _check_stabilizer_generators(generators: npt.NDArray[np.int8] | list[str]) -> None:
+        """Check if the stabilizer generators are valid. Throws an exception if not."""
+        if len(generators) == 0:
+            msg = "Stabilizer code must have at least one generator."
+            raise InvalidStabilizerCodeError(msg)
+        if not all(len(generators[0]) == len(g) for g in generators):
+            msg = "All stabilizer generators must have the same length."
+            raise InvalidStabilizerCodeError(msg)
+
+        if not isinstance(generators[0], str):
+            return
+
+        if not all(is_pauli_string(g) for g in generators):
+            msg = "When providing stabilizer generators as strings, they must be valid Pauli strings."
+            raise InvalidStabilizerCodeError(msg)
+
     def _check_code_correct(self) -> None:
         """Check if the code is correct. Throws an exception if not."""
         if self.distance is not None and self.distance <= 0:
@@ -149,7 +164,7 @@ class StabilizerCode:
 
 def pauli_to_binary(p: Pauli) -> npt.NDArray:
     """Convert a Pauli string to a binary array."""
-    if isinstance(p, np.ndarray) and p.dtype == np.int8:
+    if isinstance(p, np.ndarray):
         return p
 
     # check if there is a sign
@@ -179,10 +194,15 @@ def binary_to_pauli_string(b: npt.NDArray) -> str:
     return f"{'+' if phase == 1 else '-'}" + "".join(pauli)
 
 
+def is_pauli_string(p: str) -> bool:
+    """Check if a string is a valid Pauli string."""
+    return len(p) > 0 and all(c in {"I", "X", "Y", "Z"} for c in p[1:]) and p[0] in {"+", "-", "I", "X", "Y", "Z"}
+
+
 def get_n_qubits_from_pauli(p: Pauli) -> int:
     """Get the number of qubits from a Pauli string."""
     if isinstance(p, np.ndarray):
-        return len(p) // 2
+        return int(p.shape[0] // 2)
     return len(p)
 
 

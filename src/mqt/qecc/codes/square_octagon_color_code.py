@@ -19,12 +19,13 @@ class SquareOctagonColorCode(ColorCode):
         # additionally to ancilla_qubits (on squares) we have the ones on octagons
         self.octagon_ancilla_qubits: set[tuple[int, int]] = set()
         self.square_ancilla_qubits: set[tuple[int, int]] = set()
-        ColorCode.__init__(self, distance=distance, lattice_type=LatticeType.SQUARE_OCTAGON)
+        super().__init__(distance=distance, lattice_type=LatticeType.SQUARE_OCTAGON)
 
     def add_qubits(self) -> None:
         """Add qubits to the code."""
         self.bottom_row_ancillas()
         y = 1
+        assert self.distance is not None
         x_max = self.distance
 
         while y <= (self.distance + self.distance // 2):
@@ -112,6 +113,7 @@ class SquareOctagonColorCode(ColorCode):
 
     def bottom_row_ancillas(self) -> None:
         """Create ancilla qubits on the bottom row of the lattice."""
+        assert self.distance is not None
         for x in range(4, self.distance // 2 * 6, 6):
             self.octagon_ancilla_qubits.add((x, 0))
 

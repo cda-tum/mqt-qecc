@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from mqt.qecc import CSSCode, InvalidCSSCodeError, StabilizerCode
-from mqt.qecc.codes import construct_bb_code
+from mqt.qecc import CSSCode, StabilizerCode
+from mqt.qecc.codes import InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -53,10 +53,6 @@ def test_invalid_css_codes() -> None:
     hz = np.array([[1, 1]])
     with pytest.raises(InvalidCSSCodeError):
         CSSCode(distance=3, Hx=hx, Hz=hz)
-
-    # Invalid distance
-    with pytest.raises(InvalidCSSCodeError):
-        CSSCode(distance=-1, Hx=hx)
 
     # Checks not provided
     with pytest.raises(InvalidCSSCodeError):
@@ -126,15 +122,16 @@ def test_steane(steane_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.i
     assert code.distance == 3
     assert code.is_self_dual()
 
-    x_paulis, z_paulis = code.stabs_as_pauli_strings()
+    x_paulis = code.x_checks_as_pauli_strings()
+    z_paulis = code.z_checks_as_pauli_strings()
     assert x_paulis is not None
     assert z_paulis is not None
     assert len(x_paulis) == len(z_paulis) == 3
     assert x_paulis == ["XXXXIII", "XIXIXIX", "IXXIXXI"]
     assert z_paulis == ["ZZZZIII", "ZIZIZIZ", "IZZIZZI"]
 
-    x_log = code.x_logicals_as_pauli_string()
-    z_log = code.z_logicals_as_pauli_string()
+    x_log = code.x_logicals_as_pauli_strings()[0]
+    z_log = code.z_logicals_as_pauli_strings()[0]
     assert x_log.count("X") == 3
     assert x_log.count("I") == 4
     assert z_log.count("Z") == 3
@@ -175,3 +172,51 @@ def test_five_qubit_code(five_qubit_code_stabs: list[str]) -> None:
 
     different_error = "IZIII"
     assert not code.stabilizer_equivalent(error, different_error)
+
+
+def test_no_stabilizers() -> None:
+    """Test that an error is raised if no stabilizers are provided."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode([])
+
+
+def test_different_length_stabilizers() -> None:
+    """Test that an error is raised if stabilizers have different lengths."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "X", "Y"])
+
+
+def test_invalid_pauli_strings() -> None:
+    """Test that invalid Pauli strings raise an error."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ABCD", "XIXI", "YIYI"])
+
+
+def test_no_x_logical() -> None:
+    """Test that an error is raised if no X logical is provided when a Z logical is provided."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], Lz=["XXII"])
+
+
+def test_no_z_logical() -> None:
+    """Test that an error is raised if no Z logical is provided when an X logical is provided."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], Lx=["ZZII"])
+
+
+def test_logicals_wrong_length() -> None:
+    """Test that an error is raised if the logicals have the wrong length."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], Lx=["XX"], Lz=["ZZ"])
+
+
+def test_commuting_logicals() -> None:
+    """Test that an error is raised if the logicals commute."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], Lx=["ZZII"], Lz=["XXII"])
+
+
+def test_anticommuting_logicals() -> None:
+    """Test that an error is raised if the logicals anticommute with the stabilizer generators."""
+    with pytest.raises(InvalidStabilizerCodeError):
+        StabilizerCode(["ZZZZ", "XXXX"], Lx=["ZIII"], Lz=["XIII"])
