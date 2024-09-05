@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
 from ldpc import mod2
 
+from .stabilizer_code import StabilizerCode
+
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
 
 
-class CSSCode:
+class CSSCode(StabilizerCode):
     """A class for representing CSS codes."""
 
     def __init__(
@@ -25,79 +26,59 @@ class CSSCode:
         z_distance: int | None = None,
     ) -> None:
         """Initialize the code."""
+        self._check_valid_check_matrices(Hx, Hz)
+
+        if Hx is None:
+            assert Hz is not None
+            self.n = Hz.shape[1]
+            self.Hx = np.zeros((0, self.n), dtype=np.int8)
+        else:
+            self.Hx = Hx
+        if Hz is None:
+            assert Hx is not None
+            self.n = Hx.shape[1]
+            self.Hz = np.zeros((0, self.n), dtype=np.int8)
+        else:
+            self.Hz = Hz
+
+        z_padding = np.zeros(self.Hx.shape, dtype=np.int8)
+        x_padding = np.zeros(self.Hz.shape, dtype=np.int8)
+
+        x_padded = np.hstack([self.Hx, z_padding])
+        z_padded = np.hstack([x_padding, self.Hz])
+        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0], 1), dtype=np.int8)
+        super().__init__(np.hstack((np.vstack((x_padded, z_padded)), phases)), distance)
+
         self.distance = distance
         self.x_distance = x_distance if x_distance is not None else distance
         self.z_distance = z_distance if z_distance is not None else distance
 
-        if self.distance < 0:
-            msg = "The distance must be a non-negative integer"
-            raise InvalidCSSCodeError(msg)
-        if Hx is None and Hz is None:
-            msg = "At least one of the check matrices must be provided"
-            raise InvalidCSSCodeError(msg)
         if self.x_distance < self.distance or self.z_distance < self.distance:
             msg = "The x and z distances must be greater than or equal to the distance"
             raise InvalidCSSCodeError(msg)
-        if Hx is not None and Hz is not None:
-            if Hx.shape[1] != Hz.shape[1]:
-                msg = "Check matrices must have the same number of columns"
-                raise InvalidCSSCodeError(msg)
-            if np.any(Hx @ Hz.T % 2 != 0):
-                msg = "The check matrices must be orthogonal"
-                raise InvalidCSSCodeError(msg)
 
-        self.Hx = Hx
-        self.Hz = Hz
-        self.n = Hx.shape[1] if Hx is not None else Hz.shape[1]  # type: ignore[union-attr]
-        self.k = self.n - (Hx.shape[0] if Hx is not None else 0) - (Hz.shape[0] if Hz is not None else 0)
         self.Lx = CSSCode._compute_logical(self.Hz, self.Hx)
         self.Lz = CSSCode._compute_logical(self.Hx, self.Hz)
 
-    def __hash__(self) -> int:
-        """Compute a hash for the CSS code."""
-        x_hash = int.from_bytes(self.Hx.tobytes(), sys.byteorder) if self.Hx is not None else 0
-        z_hash = int.from_bytes(self.Hz.tobytes(), sys.byteorder) if self.Hz is not None else 0
-        return hash(x_hash ^ z_hash)
+    def x_checks_as_pauli_strings(self) -> list[str]:
+        """Return the x checks as Pauli strings."""
+        return ["".join("X" if bit == 1 else "I" for bit in row) for row in self.Hx]
 
-    def __eq__(self, other: object) -> bool:
-        """Check if two CSS codes are equal."""
-        if not isinstance(other, CSSCode):
-            return NotImplemented
-        if self.Hx is None and other.Hx is None:
-            assert self.Hz is not None
-            assert other.Hz is not None
-            return np.array_equal(self.Hz, other.Hz)
-        if self.Hz is None and other.Hz is None:
-            assert self.Hx is not None
-            assert other.Hx is not None
-            return np.array_equal(self.Hx, other.Hx)
-        if (self.Hx is None and other.Hx is not None) or (self.Hx is not None and other.Hx is None):
-            return False
-        if (self.Hz is None and other.Hz is not None) or (self.Hz is not None and other.Hz is None):
-            return False
-        assert self.Hx is not None
-        assert other.Hx is not None
-        assert self.Hz is not None
-        assert other.Hz is not None
-        return bool(
-            mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, other.Hx]))
-            and mod2.rank(self.Hz) == mod2.rank(np.vstack([self.Hz, other.Hz]))
-        )
+    def z_checks_as_pauli_strings(self) -> list[str]:
+        """Return the z checks as Pauli strings."""
+        return ["".join("Z" if bit == 1 else "I" for bit in row) for row in self.Hz]
+
+    def x_logicals_as_pauli_strings(self) -> list[str]:
+        """Return the x logicals as a Pauli strings."""
+        return ["".join("X" if bit == 1 else "I" for bit in row) for row in self.Lx]
+
+    def z_logicals_as_pauli_strings(self) -> list[str]:
+        """Return the z logicals as Pauli strings."""
+        return ["".join("Z" if bit == 1 else "I" for bit in row) for row in self.Lz]
 
     @staticmethod
-    def _compute_logical(m1: npt.NDArray[np.int8] | None, m2: npt.NDArray[np.int8] | None) -> npt.NDArray[np.int8]:
+    def _compute_logical(m1: npt.NDArray[np.int8], m2: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Compute the logical matrix L."""
-        if m1 is None:
-            ker_m2 = mod2.nullspace(m2)  # compute the kernel basis of m2
-            pivots = mod2.row_echelon(ker_m2)[-1]
-            logs = np.zeros_like(ker_m2, dtype=np.int8)  # type: npt.NDArray[np.int8]
-            for i, pivot in enumerate(pivots):
-                logs[i, pivot] = 1
-            return logs
-
-        if m2 is None:
-            return mod2.nullspace(m1).astype(np.int8)
-
         ker_m1 = mod2.nullspace(m1)  # compute the kernel basis of m1
         im_m2_transp = mod2.row_basis(m2)  # compute the image basis of m2
         log_stack = np.vstack([im_m2_transp, ker_m1])
@@ -161,19 +142,20 @@ class CSSCode:
             self.Hx.shape[0] == self.Hz.shape[0] and mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, self.Hz]))
         )
 
-    def stabs_as_pauli_strings(self) -> tuple[list[str] | None, list[str] | None]:
-        """Return the stabilizers as Pauli strings."""
-        x_str = None if self.Hx is None else ["".join(["I" if x == 0 else "X" for x in row]) for row in self.Hx]
-        z_str = None if self.Hz is None else ["".join(["I" if z == 0 else "Z" for z in row]) for row in self.Hz]
-        return x_str, z_str
+    @staticmethod
+    def _check_valid_check_matrices(Hx: npt.NDArray[np.int8] | None, Hz: npt.NDArray[np.int8] | None) -> None:  # noqa: N803
+        """Check if the code is a valid CSS code."""
+        if Hx is None and Hz is None:
+            msg = "At least one of the check matrices must be provided"
+            raise InvalidCSSCodeError(msg)
 
-    def z_logicals_as_pauli_string(self) -> str:
-        """Return the logical Z operator as a Pauli string."""
-        return "".join(["I" if z == 0 else "Z" for z in self.Lx[0]])
-
-    def x_logicals_as_pauli_string(self) -> str:
-        """Return the logical X operator as a Pauli string."""
-        return "".join(["I" if x == 0 else "X" for x in self.Lz[0]])
+        if Hx is not None and Hz is not None:
+            if Hx.shape[1] != Hz.shape[1]:
+                msg = "Check matrices must have the same number of columns"
+                raise InvalidCSSCodeError(msg)
+            if np.any(Hx @ Hz.T % 2 != 0):
+                msg = "The check matrices must be orthogonal"
+                raise InvalidCSSCodeError(msg)
 
     @staticmethod
     def from_code_name(code_name: str, distance: int | None = None) -> CSSCode:

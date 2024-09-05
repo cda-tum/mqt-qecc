@@ -19,7 +19,7 @@ class SquareOctagonColorCode(ColorCode):
         # additionally to ancilla_qubits (on squares) we have the ones on octagons
         self.octagon_ancilla_qubits: set[tuple[int, int]] = set()
         self.square_ancilla_qubits: set[tuple[int, int]] = set()
-        ColorCode.__init__(self, distance=distance, lattice_type=LatticeType.SQUARE_OCTAGON)
+        super().__init__(distance=distance, lattice_type=LatticeType.SQUARE_OCTAGON)
 
     def add_qubits(self) -> None:
         """Add qubits to the code."""
