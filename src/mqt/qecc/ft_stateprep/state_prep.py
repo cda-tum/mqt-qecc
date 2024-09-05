@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import multiprocess
 import numpy as np
+import itertools
 import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -996,7 +997,8 @@ def verification_stabilizers(
     num_anc: int,
     num_cnots: int,
     x_errors: bool = True,
-) -> list[npt.NDArray[np.int8]] | None:
+    return_all_solutions: bool = False
+) -> list[npt.NDArray[np.int8]] | list[list[npt.NDArray[np.int8]]] | None:
     """Return verification stabilizers for num_errors independent errors in the state preparation circuit using z3.
 
     Args:
@@ -1005,6 +1007,7 @@ def verification_stabilizers(
         num_anc: The maximum number of ancilla qubits to use.
         num_cnots: The maximumg number of CNOT gates to use.
         x_errors: If True, the errors are X errors. Otherwise, the errors are Z errors.
+        return_all_solutions: If True, return all solutions. Otherwise, return the first solution found.
     """
     # Measurements are written as sums of generators
     # The variables indicate which generators are non-zero in the sum
@@ -1031,7 +1034,8 @@ def verification_stabilizers(
         )
     )
 
-    if solver.check() == z3.sat:
+    solutions = []
+    while solver.check() == z3.sat:
         model = solver.model()
         # Extract stabilizer measurements from model
         actual_measurements = []
@@ -1041,8 +1045,13 @@ def verification_stabilizers(
                 if model[m[g]]:
                     v += gens[g]
             actual_measurements.append(v % 2)
-
-        return actual_measurements
+        if not return_all_solutions:
+            return actual_measurements
+        solutions.append(actual_measurements)
+        # add constraint to avoid same solution again
+        solver.add(z3.Or([vars_[i] != model[vars_[i]] for vars_ in measurement_vars for i in range(n_gens)]))
+    if solutions:
+        return solutions
     return None
 
 
