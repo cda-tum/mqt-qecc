@@ -1,18 +1,16 @@
-//
-// Created by luca on 09/08/22.
-//
+#pragma once
 
-#ifndef QECC_DECODINGSIMULATOR_HPP
-#define QECC_DECODINGSIMULATOR_HPP
+#include "Code.hpp"
 
-#include "Decoder.hpp"
-#include "UFHeuristic.hpp"
-
+#include <cstddef>
+#include <cstdint>
+#include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <string>
-#include <utility>
-using json = nlohmann::json;
 
-enum DecoderType {
+using json = nlohmann::basic_json<>;
+
+enum DecoderType : std::uint8_t {
     UfHeuristic,
     UfDecoder
 };
@@ -25,7 +23,8 @@ enum DecoderType {
     }
     throw std::invalid_argument("Invalid decodinger type: " + status);
 }
-NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UfHeuristic, "UF_HEURISTIC"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays,misc-include-cleaner)
+NLOHMANN_JSON_SERIALIZE_ENUM(DecoderType, {{UfHeuristic, "UF_HEURISTIC"},
                                            {UfDecoder, "UF_DECODER"}})
 
 class DecodingSimulator {
@@ -72,5 +71,3 @@ public:
                                        std::size_t        nrSamples,
                                        const DecoderType& decoderType);
 };
-
-#endif // QECC_DECODINGSIMULATOR_HPP

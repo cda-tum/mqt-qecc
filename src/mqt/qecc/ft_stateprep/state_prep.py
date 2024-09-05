@@ -18,7 +18,6 @@ from ..codes import InvalidCSSCodeError
 
 logger = logging.getLogger(__name__)
 
-
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
@@ -32,13 +31,16 @@ if TYPE_CHECKING:  # pragma: no cover
 class StatePrepCircuit:
     """Represents a state preparation circuit for a CSS code."""
 
-    def __init__(self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True) -> None:
+    def __init__(
+        self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True, error_detection_code: bool = False
+    ) -> None:
         """Initialize a state preparation circuit.
 
         Args:
             circ: The state preparation circuit.
             code: The CSS code to prepare the state for.
             zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+            error_detection_code: If True, prepare the state for error detection. This ensures that when computing the fault set of the circuit, up to d//2 errors errors can occur in the circuit.
         """
         self.circ = circ
         self.code = code
@@ -52,14 +54,17 @@ class StatePrepCircuit:
         self.z_checks = code.Hz.copy() if not zero_state else np.vstack((code.Lz.copy(), code.Hz.copy()))
 
         self.num_qubits = circ.num_qubits
-        self.max_errors = (code.distance - 1) // 2
-        self.x_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
-        self.z_fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
-        self.x_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
-        self.z_fault_sets_unreduced = [None for _ in range(self.max_errors + 1)]  # type: list[npt.NDArray[np.int8] | None]
+
+        self.error_detection_code = error_detection_code
+        self._set_max_errors()
 
         self.max_x_measurements = len(self.x_checks)
         self.max_z_measurements = len(self.z_checks)
+
+    def set_error_detection(self, error_detection: bool) -> None:
+        """Set whether the state preparation circuit is for error detection."""
+        self.error_detection_code = error_detection
+        self._set_max_errors()
 
     def compute_fault_sets(self, reduce: bool = True) -> None:
         """Compute the fault sets for the state preparation circuit."""
@@ -72,7 +77,6 @@ class StatePrepCircuit:
         """Compute the fault set of the state.
 
         Args:
-            state: The stabilizer state to compute the fault set for.
             num_errors: The number of independent errors to propagate through the circuit.
             x_errors: If True, compute the fault set for X errors. If False, compute the fault set for Z errors.
             reduce: If True, reduce the fault set by the stabilizers of the code to reduce weights.
@@ -80,7 +84,9 @@ class StatePrepCircuit:
         Returns:
             The fault set of the state.
         """
-        faults = self.x_fault_sets[num_errors] if x_errors else self.z_fault_sets[num_errors]  # type: npt.NDArray[np.int8] | None
+        faults: npt.NDArray[np.int8] | None = (
+            self.x_fault_sets[num_errors] if x_errors else self.z_fault_sets[num_errors]
+        )
         if faults is not None:
             return faults
 
@@ -98,7 +104,7 @@ class StatePrepCircuit:
             faults = np.unique(faults, axis=0)
 
             if x_errors and self.x_fault_sets_unreduced[1] is None:
-                non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)  # type: npt.NDArray[np.int8]
+                non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)
                 self.x_fault_sets_unreduced[1] = np.vstack((faults, non_propagated_single_errors))
             elif not x_errors and self.z_fault_sets[1] is None:
                 non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)
@@ -162,13 +168,30 @@ class StatePrepCircuit:
             next_faults = fault_sets_unreduced[i + 1]
             assert next_faults is not None
             fault_sets_unreduced[i + 1] = np.vstack((next_faults, combined))
-        fault_sets = [None for _ in range(self.max_errors + 1)]  # type: list[None | npt.NDArray[np.int8]]
+        fault_sets: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
         stabs = self.x_checks if x_errors else self.z_checks
         for num_errors in range(1, self.max_errors + 1):
             fs = fault_sets_unreduced[num_errors]
             assert fs is not None
             fault_sets[num_errors] = _remove_trivial_faults(fs, stabs, self.code, x_errors, num_errors)
         return fault_sets
+
+    def _set_max_errors(self) -> None:
+        if self.code.distance == 2:
+            logging.warning("Code distance is 2, assuming error detection code.")
+            self.error_detection_code = True
+
+        self.max_errors = (self.code.distance - 1) // 2 if not self.error_detection_code else self.code.distance // 2
+        self.max_x_errors = (
+            (self.code.x_distance - 1) // 2 if not self.error_detection_code else self.code.x_distance // 2
+        )
+        self.max_z_errors = (
+            (self.code.z_distance - 1) // 2 if not self.error_detection_code else self.code.z_distance // 2
+        )
+        self.x_fault_sets: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
+        self.z_fault_sets: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
+        self.x_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
+        self.z_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
 
 
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True) -> StatePrepCircuit:
@@ -195,16 +218,16 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
     costs -= np.sum(checks, axis=0)
     np.fill_diagonal(costs, 1)
 
-    used_qubits = []  # type: list[np.int_]
-    cnots = []  # type: list[tuple[int, int]]
+    used_qubits: list[np.int_] = []
+    cnots: list[tuple[int, int]] = []
     while not is_reduced():
-        m = np.zeros((checks.shape[1], checks.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
+        m = np.zeros((checks.shape[1], checks.shape[1]), dtype=bool)
         m[used_qubits, :] = True
         m[:, used_qubits] = True
 
         costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
         if np.all(costs_unused >= 0) or len(used_qubits) == checks.shape[1]:  # no more reductions possible
-            if used_qubits == []:  # local minimum => get out by making matrix triangular
+            if not used_qubits:  # local minimum => get out by making matrix triangular
                 logging.warning("Local minimum reached. Making matrix triangular.")
                 checks = mod2.reduced_row_echelon(checks)[0]
                 costs = np.array([
@@ -306,22 +329,19 @@ def _generate_circ_with_bounded_depth(
 
 def _generate_circ_with_bounded_gates(
     checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True
-) -> QuantumCircuit:
+) -> QuantumCircuit | None:
     """Find the gate optimal circuit for a given check matrix and maximum depth."""
+    n = checks.shape[1]
     columns = np.array([
-        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(checks.shape[1])] for i in range(checks.shape[0])]
-        for d in range(max_cnots + 1)
+        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(n)] for i in range(checks.shape[0])] for d in range(max_cnots + 1)
     ])
-    n_bits = int(np.ceil(np.log2(checks.shape[1])))
+    n_bits = int(np.ceil(np.log2(n)))
     targets = [z3.BitVec(f"target_{d}", n_bits) for d in range(max_cnots)]
     controls = [z3.BitVec(f"control_{d}", n_bits) for d in range(max_cnots)]
     s = z3.Solver()
 
     additions = np.array([
-        [
-            [z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(checks.shape[1])]
-            for col_1 in range(checks.shape[1])
-        ]
+        [[z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(n)] for col_1 in range(n)]
         for d in range(max_cnots)
     ])
 
@@ -334,23 +354,24 @@ def _generate_circ_with_bounded_gates(
         s.add(controls[d - 1] != targets[d - 1])
 
         # control and target must be valid qubits
-        if checks.shape[1] and (checks.shape[1] - 1) != 0:
-            s.add(z3.ULT(controls[d - 1], checks.shape[1]))
-            s.add(z3.ULT(targets[d - 1], checks.shape[1]))
+
+        if n and (n - 1) != 0 and not ((n & (n - 1) == 0) and n != 0):  # check if n is a power of 2 or 1 or 0
+            s.add(z3.ULT(controls[d - 1], n))
+            s.add(z3.ULT(targets[d - 1], n))
 
     # if column is not involved in any addition at certain depth, it is the same as the previous column
     for d in range(1, max_cnots + 1):
-        for col in range(checks.shape[1]):
+        for col in range(n):
             s.add(z3.Implies(targets[d - 1] != col, _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
 
-    # assert that final check matrix has checks.shape[1]-checks.shape[0] zero columns
+    # assert that final check matrix has n-checks.shape[0] zero columns
     s.add(_final_matrix_constraint(columns))
 
     if s.check() == z3.sat:
         m = s.model()
         cnots = [(m[controls[d]].as_long(), m[targets[d]].as_long()) for d in range(max_cnots)]
         checks = np.array([
-            [bool(m[columns[max_cnots][i][j]]) for j in range(checks.shape[1])] for i in range(checks.shape[0])
+            [bool(m[columns[max_cnots][i][j]]) for j in range(n)] for i in range(checks.shape[0])
         ]).astype(int)
         return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
 
@@ -569,8 +590,8 @@ def gate_optimal_verification_stabilizers(
     Returns:
         A list of stabilizers to verify the state preparation circuit.
     """
-    max_errors = (sp_circ.code.distance - 1) // 2
-    layers = [[] for _ in range(max_errors)]  # type: list[list[npt.NDArray[np.int8]]]
+    max_errors = sp_circ.max_errors
+    layers: list[list[npt.NDArray[np.int8]]] = [[] for _ in range(max_errors)]
     if max_ancillas is None:
         max_ancillas = sp_circ.max_z_measurements if x_errors else sp_circ.max_x_measurements
 
@@ -597,8 +618,8 @@ def gate_optimal_verification_stabilizers(
         # Minimal CNOT solution must be achievable with these
         num_anc = max_ancillas
         checks = sp_circ.z_checks if x_errors else sp_circ.x_checks
-        min_cnots = np.min(np.sum(checks, axis=1))
-        max_cnots = np.sum(checks)
+        min_cnots: int = np.min(np.sum(checks, axis=1))
+        max_cnots: int = np.sum(checks)
 
         logging.info(
             f"Finding verification stabilizers for {num_errors} errors with {min_cnots} to {max_cnots} CNOTs using {num_anc} ancillas"
@@ -679,7 +700,7 @@ def _verification_circuit(
     full_fault_tolerance: bool = True,
 ) -> QuantumCircuit:
     logging.info("Finding verification stabilizers for the state preparation circuit")
-    layers_1 = verification_stabs_fun(sp_circ, sp_circ.zero_state)  # type: ignore[call-arg]
+    layers_1 = verification_stabs_fun(sp_circ, sp_circ.zero_state, None)
     measurements_1 = [measurement for layer in layers_1 for measurement in layer]
 
     if full_fault_tolerance:
@@ -771,8 +792,8 @@ def heuristic_verification_stabilizers(
         additional_faults: Faults to verify in addition to the faults propagating in the state preparation circuit.
     """
     logging.info("Finding verification stabilizers using heuristic method")
-    max_errors = (sp_circ.code.distance - 1) // 2
-    layers = [[] for _ in range(max_errors)]  # type: list[list[npt.NDArray[np.int8]]]
+    max_errors = sp_circ.max_errors
+    layers: list[list[npt.NDArray[np.int8]]] = [[] for _ in range(max_errors)]
     sp_circ.compute_fault_sets()
     fault_sets = (
         sp_circ.combine_faults(additional_faults, x_errors)
@@ -804,13 +825,10 @@ def _set_cover(
     n: int, cands: set[frozenset[int]], mapping: dict[frozenset[int], list[npt.NDArray[np.int8]]]
 ) -> set[frozenset[int]]:
     universe = set(range(n))
-    cover = set()  # type: set[frozenset[int]]
-
-    def sort_key(stab: frozenset[int], universe: set[int] = universe) -> tuple[int, np.int_]:
-        return (len(stab & universe), -np.sum(mapping[stab]))
+    cover: set[frozenset[int]] = set()
 
     while universe:
-        best = max(cands, key=sort_key)
+        best = max(cands, key=lambda stab: (len(stab & universe), -np.sum(mapping[stab])))  # type: ignore[operator]
         cover.add(best)
         universe -= best
     return cover
@@ -819,8 +837,8 @@ def _set_cover(
 def _extend_covering_sets(
     candidate_sets: set[frozenset[int]], size_limit: int, mapping: dict[frozenset[int], list[npt.NDArray[np.int8]]]
 ) -> set[frozenset[int]]:
-    to_remove = set()  # type: set[frozenset[int]]
-    to_add = set()  # type: set[frozenset[int]]
+    to_remove: set[frozenset[int]] = set()
+    to_add: set[frozenset[int]] = set()
     for c1 in candidate_sets:
         for c2 in candidate_sets:
             if len(to_add) >= size_limit:
@@ -902,7 +920,7 @@ def _heuristic_layer(
     return measurements
 
 
-def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]], flags: bool = False) -> None:
+def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]], t: int, flags: bool = False) -> None:
     if len(x_measurements) == 0:
         return
     num_x_anc = len(x_measurements)
@@ -914,15 +932,15 @@ def _measure_ft_x(qc: QuantumCircuit, x_measurements: list[npt.NDArray[np.int8]]
     for i, m in enumerate(x_measurements):
         stab = np.where(m != 0)[0]
         if flags:
-            measure_flagged(qc, stab, x_anc[i], x_c[i], z_measurement=False)
+            measure_flagged(qc, stab, x_anc[i], x_c[i], z_measurement=False, t=t)
         else:
-            qc.h(x_anc)
+            qc.h(x_anc[i])
             qc.cx([x_anc[i]] * len(stab), stab)
-            qc.h(x_anc)
-            qc.measure(x_anc, x_c)
+            qc.h(x_anc[i])
+            qc.measure(x_anc[i], x_c[i])
 
 
-def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]], flags: bool = False) -> None:
+def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]], t: int, flags: bool = False) -> None:
     if len(z_measurements) == 0:
         return
     num_z_anc = len(z_measurements)
@@ -934,7 +952,7 @@ def _measure_ft_z(qc: QuantumCircuit, z_measurements: list[npt.NDArray[np.int8]]
     for i, m in enumerate(z_measurements):
         stab = np.where(m != 0)[0]
         if flags:
-            measure_flagged(qc, stab, z_anc[i], z_c[i], z_measurement=True)
+            measure_flagged(qc, stab, z_anc[i], z_c[i], z_measurement=True, t=t)
         else:
             qc.cx(stab, [z_anc[i]] * len(stab))
     qc.measure(z_anc, z_c)
@@ -952,20 +970,20 @@ def _measure_ft_stabs(
     measured_circ.compose(sp_circ.circ, inplace=True)
 
     if sp_circ.zero_state:
-        _measure_ft_z(measured_circ, z_measurements)
+        _measure_ft_z(measured_circ, z_measurements, t=sp_circ.max_x_errors)
         if full_fault_tolerance:
-            _measure_ft_x(measured_circ, x_measurements, flags=True)
+            _measure_ft_x(measured_circ, x_measurements, flags=True, t=sp_circ.max_x_errors)
     else:
-        _measure_ft_x(measured_circ, x_measurements)
+        _measure_ft_x(measured_circ, x_measurements, t=sp_circ.max_z_errors)
         if full_fault_tolerance:
-            _measure_ft_z(measured_circ, z_measurements, flags=True)
+            _measure_ft_z(measured_circ, z_measurements, flags=True, t=sp_circ.max_z_errors)
 
     return measured_circ
 
 
 def _vars_to_stab(
     measurement: list[z3.BoolRef | bool], generators: npt.NDArray[np.int8]
-) -> npt.NDArray[z3.BoolRef | bool]:  # type: ignore[type-var]
+) -> npt.NDArray[z3.BoolRef | bool]:
     measurement_stab = _symbolic_scalar_mult(generators[0], measurement[0])
     for i, scalar in enumerate(measurement[1:]):
         measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(generators[i + 1], scalar))
@@ -986,7 +1004,6 @@ def verification_stabilizers(
         fault_set: The set of errors to verify.
         num_anc: The maximum number of ancilla qubits to use.
         num_cnots: The maximumg number of CNOT gates to use.
-        num_errors: The number of errors occur in the state prep circuit.
         x_errors: If True, the errors are X errors. Otherwise, the errors are Z errors.
     """
     # Measurements are written as sums of generators
@@ -1019,7 +1036,7 @@ def verification_stabilizers(
         # Extract stabilizer measurements from model
         actual_measurements = []
         for m in measurement_vars:
-            v = np.zeros(sp_circ.num_qubits, dtype=np.int8)  # type: npt.NDArray[np.int8]
+            v = np.zeros(sp_circ.num_qubits, dtype=np.int8)
             for g in range(n_gens):
                 if model[m[g]]:
                     v += gens[g]
@@ -1117,7 +1134,7 @@ def _column_addition_constraint(
     col_add_vars: npt.NDArray[z3.BoolRef],
 ) -> z3.BoolRef:
     assert len(columns.shape) == 3
-    max_depth = col_add_vars.shape[0]  # type: ignore[unreachable]
+    max_depth = col_add_vars.shape[0]
     n_cols = col_add_vars.shape[2]
 
     constraints = []
@@ -1151,7 +1168,7 @@ def _column_addition_constraint(
 
 def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
     assert len(columns.shape) == 3
-    return z3.PbEq(  # type: ignore[unreachable]
+    return z3.PbEq(
         [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
         columns.shape[2] - columns.shape[1],
     )
@@ -1159,12 +1176,12 @@ def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.Bool
 
 def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> PauliList:
     """Propagates a Pauli error through a circuit beginning from control of node."""
-    control = node.qargs[0]._index  # noqa: SLF001
-    error = np.array([0] * dag.num_qubits(), dtype=np.int8)  # type: npt.NDArray[np.int8]
+    control = node.qargs[0]._index if x_errors else node.qargs[1]._index  # noqa: SLF001
+    error: npt.NDArray[np.int8] = np.array([0] * dag.num_qubits(), dtype=np.int8)
     error[control] = 1
     # propagate error through circuit via bfs
     q = deque([node])
-    visited = set()  # type: set[DAGNode]
+    visited: set[DAGNode] = set()
     while q:
         node = q.popleft()
         if node in visited or isinstance(node, DAGOutNode):
@@ -1183,12 +1200,11 @@ def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> P
 def _remove_trivial_faults(
     faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], code: CSSCode, x_errors: bool, num_errors: int
 ) -> npt.NDArray[np.int8]:
-    # remove trivial faults
     faults = faults.copy()
     logging.info("Removing trivial faults.")
     d_error = code.x_distance if x_errors else code.z_distance
-    t_error = (d_error - 1) // 2
-    t = (code.distance - 1) // 2
+    t_error = max((d_error - 1) // 2, 1)
+    t = max((code.distance - 1) // 2, 1)
     max_w = t_error // t
     for i, fault in enumerate(faults):
         faults[i] = _coset_leader(fault, stabs)
@@ -1239,8 +1255,8 @@ def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
 
     z_measurements = list(sp_circ.code.Hx)
     x_measurements = list(sp_circ.code.Hz)
-    reps = (sp_circ.code.distance - 1) // 2
-    return _measure_ft_stabs(sp_circ, x_measurements * reps, z_measurements * reps)
+    reps = sp_circ.max_errors
+    return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps)
 
 
 def w_flag_pattern(w: int) -> list[int]:
@@ -1303,6 +1319,7 @@ def measure_flagged(
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
     measurement_bit: ClBit,
+    t: int,
     z_measurement: bool = True,
 ) -> None:
     """Measure a w-flagged stabilizer with the general scheme.
@@ -1314,64 +1331,136 @@ def measure_flagged(
         stab: The qubits to measure.
         ancilla: The ancilla qubit to use for the measurement.
         measurement_bit: The classical bit to store the measurement result of the ancilla.
+        t: The number of errors to protect from.
         z_measurement: Whether to measure an X (False) or Z (True) stabilizer.
     """
     w = len(stab)
-    if w < 3:
-        _measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
+    if t == 1:
+        _measure_stab_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
 
-    if w == 4:
+    if w < 3 and t == 2:
+        _measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+
+    if w == 4 and t == 2:
         measure_flagged_4(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 6:
+    if w == 6 and t == 2:
         measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 8:
+    if w == 8 and t == 2:
         measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    flag_reg = AncillaRegister(w - 1)
-    meas_reg = ClassicalRegister(w - 1)
+    if t == 2:
+        measure_stab_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+
+    msg = f"Flagged measurement for w={w} and t={t} not implemented."
+    raise NotImplementedError(msg)
+
+
+def _measure_stab_one_flagged(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+) -> None:
+    """Measure a 1-flagged stabilizer using an optimized scheme."""
+    flag_reg = AncillaRegister(1)
+    meas_reg = ClassicalRegister(1)
     qc.add_register(flag_reg)
     qc.add_register(meas_reg)
-
-    pattern = w_flag_pattern(w)
-
+    flag = flag_reg[0]
+    flag_meas = meas_reg[0]
     if not z_measurement:
         qc.h(ancilla)
 
-    for flag in flag_reg:
-        _flag_init(qc, flag, z_measurement)
-        _ancilla_cnot(qc, flag, ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+    _flag_init(qc, flag, z_measurement)
 
-    for i, q in enumerate(stab[:-3]):
-        flag = pattern[i]
+    _ancilla_cnot(qc, flag, ancilla, z_measurement)
+
+    for q in stab[1:-1]:
         _ancilla_cnot(qc, q, ancilla, z_measurement)
-        _ancilla_cnot(qc, flag_reg[flag], ancilla, z_measurement)
-        _flag_measure(qc, flag_reg[flag], meas_reg[flag], z_measurement)
-        _flag_reset(qc, flag_reg[flag], z_measurement)
-        _ancilla_cnot(qc, flag_reg[flag], ancilla, z_measurement)
 
-    _ancilla_cnot(qc, stab[-2], ancilla, z_measurement)
-
-    subpattern_length = (w - 4) // 2
-    reordered_pattern = [
-        pattern[-1],
-        *list(reversed(pattern[subpattern_length + 2 : -1])),
-        *list(reversed(pattern[subpattern_length : subpattern_length + 2])),
-        *list(reversed(pattern[:subpattern_length])),
-    ]
-
-    for flag in reordered_pattern:
-        _ancilla_cnot(qc, flag_reg[flag], ancilla, z_measurement)
-        _flag_measure(qc, flag_reg[flag], meas_reg[flag], z_measurement)
+    _ancilla_cnot(qc, flag, ancilla, z_measurement)
+    _flag_measure(qc, flag, flag_meas, z_measurement)
 
     _ancilla_cnot(qc, stab[-1], ancilla, z_measurement)
 
     if not z_measurement:
         qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_stab_two_flagged(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+) -> None:
+    """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13)."""
+    assert len(stab) > 4
+    n_flags = (len(stab) + 1) // 2 - 1
+    flag_reg = AncillaRegister(n_flags)
+    meas_reg = ClassicalRegister(n_flags)
+
+    qc.add_register(flag_reg)
+    qc.add_register(meas_reg)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag_reg[0], z_measurement)
+    _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+    _flag_init(qc, flag_reg[1], z_measurement)
+    _ancilla_cnot(qc, flag_reg[1], ancilla, z_measurement)
+
+    cnots = 2
+    flags = 2
+    for q in stab[2:-2]:
+        _ancilla_cnot(qc, q, ancilla, z_measurement)
+        cnots += 1
+        if cnots % 2 == 0 and cnots < len(stab) - 2:
+            _flag_init(qc, flag_reg[flags], z_measurement)
+            _ancilla_cnot(qc, flag_reg[flags], ancilla, z_measurement)
+        if cnots >= 7 and cnots % 2 == 1:
+            _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
+            _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+        flags += 1
+
+    _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
+    _flag_measure(qc, flag_reg[0], meas_reg[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[-2], ancilla, z_measurement)
+
+    cnots += 1
+    if cnots >= 7 and cnots % 2 == 1:
+        _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
+        _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+
+    _ancilla_cnot(qc, flag_reg[1], ancilla, z_measurement)
+    _flag_measure(qc, flag_reg[1], meas_reg[1], z_measurement)
+
+    _ancilla_cnot(qc, stab[-1], ancilla, z_measurement)
+
+    cnots += 1
+    if cnots >= 7 and cnots % 2 == 1:
+        _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
+        _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
+    if not z_measurement:
+        qc.h(ancilla)
+
     qc.measure(ancilla, measurement_bit)
 
 

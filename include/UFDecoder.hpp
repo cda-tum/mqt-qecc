@@ -1,10 +1,13 @@
-//
-// Created by lucas on 09/06/22.
-//
+#pragma once
 
-#ifndef QUNIONFIND_IMPROVEDUF_HPP
-#define QUNIONFIND_IMPROVEDUF_HPP
+#include "Code.hpp"
 #include "Decoder.hpp"
+
+#include <cstddef>
+#include <memory>
+#include <unordered_set>
+#include <vector>
+
 class UFDecoder : public Decoder {
 public:
     using Decoder::Decoder;
@@ -25,4 +28,3 @@ private:
     void                                                       singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& comps);
     [[nodiscard]] std::vector<std::unordered_set<std::size_t>> getConnectedComps(const std::unordered_set<std::size_t>& nodes) const;
 };
-#endif // QUNIONFIND_IMPROVEDUF_HPP

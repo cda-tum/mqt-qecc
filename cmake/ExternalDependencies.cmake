@@ -16,13 +16,13 @@ if(BUILD_MQT_QECC_BINDINGS)
   endif()
 
   # add pybind11 library
-  find_package(pybind11 CONFIG REQUIRED)
+  find_package(pybind11 2.13 CONFIG REQUIRED)
 endif()
 
 # cmake-format: off
-set(MQT_CORE_VERSION 2.5.1
+set(MQT_CORE_VERSION 2.6.1
     CACHE STRING "MQT Core version")
-set(MQT_CORE_REV "35e06ca3067ca3cf36bda1f0c38edf5bd7456fb6"
+set(MQT_CORE_REV "5be1c3ec4efb773d0330298621704e876afa7c16"
     CACHE STRING "MQT Core identifier (tag, branch or commit hash)")
 set(MQT_CORE_REPO_OWNER "cda-tum"
     CACHE STRING "MQT Core repository owner (change when using a fork)")
@@ -44,18 +44,6 @@ else()
     list(APPEND FETCH_PACKAGES mqt-core)
   endif()
 endif()
-
-set(LDPC_REV
-    "main"
-    CACHE STRING "LDPC V2 identifier (tag, branch or commit hash)")
-set(LDPC_REPO_OWNER
-    "quantumgizmos"
-    CACHE STRING "LDPC repository owner (change when using a fork)")
-FetchContent_Declare(
-  ldpc_v2
-  GIT_REPOSITORY https://github.com/${LDPC_REPO_OWNER}/ldpc_v2.git
-  GIT_TAG ${LDPC_REV})
-list(APPEND FETCH_PACKAGES ldpc_v2)
 
 if(BUILD_MQT_QECC_TESTS)
   set(gtest_force_shared_crt

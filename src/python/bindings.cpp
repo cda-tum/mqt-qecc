@@ -6,7 +6,6 @@
 #include "Decoder.hpp"
 #include "DecodingRunInformation.hpp"
 #include "DecodingSimulator.hpp"
-#include "QuantumComputation.hpp"
 #include "UFDecoder.hpp"
 #include "UFHeuristic.hpp"
 #include "ecc/Ecc.hpp"
@@ -17,12 +16,11 @@
 #include "ecc/Q7Steane.hpp"
 #include "ecc/Q9Shor.hpp"
 #include "ecc/Q9Surface.hpp"
-#include "nlohmann/json.hpp"
-#include "pybind11/pybind11.h"
-#include "pybind11_json/pybind11_json.hpp"
+#include "ir/QuantumComputation.hpp"
 #include "python/qiskit/QuantumCircuit.hpp"
 
-#include <pybind11/stl.h>
+#include <pybind11/pybind11.h>
+#include <pybind11_json/pybind11_json.hpp>
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -88,7 +86,7 @@ py::dict applyEcc(const py::object& circ, const std::string& eccName, const size
     return py::dict("circ"_a = oss.str());
 }
 
-PYBIND11_MODULE(pyqecc, m) {
+PYBIND11_MODULE(pyqecc, m, py::mod_gil_not_used()) {
     // In this function the exposed python functions are defined.
     // Additionally, the required parameters are described.
     m.doc() = "pybind11 for the MQT QECC quantum error-correcting codes tool";

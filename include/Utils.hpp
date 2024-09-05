@@ -1,6 +1,6 @@
 #pragma once
 
-#include "QeccException.hpp"
+#include "GF2.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -76,5 +76,5 @@ public:
     [[maybe_unused]] static void
     readInFilePathsFromDirectory(const std::string& inPath, std::vector<std::string>& codePaths);
 
-    static std::vector<std::vector<int>> toCsc(const std::vector<std::vector<bool>>& mat);
+    static CscMatrix toCsc(const gf2Mat& mat);
 };

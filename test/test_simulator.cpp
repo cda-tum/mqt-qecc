@@ -1,14 +1,13 @@
-//
-// Created by luca on 09/08/22.
-//
 #include "Codes.hpp"
 #include "DecodingSimulator.hpp"
+#include "QeccException.hpp"
 #include "UFDecoder.hpp"
 
-#include <bitset>
-#include <fstream>
+#include <cstddef>
 #include <gtest/gtest.h>
-using json = nlohmann::json;
+#include <iostream>
+#include <string>
+
 class DecodingSimulatorTest : public testing::TestWithParam<std::string> {
 };
 

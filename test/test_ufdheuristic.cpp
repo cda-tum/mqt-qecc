@@ -1,13 +1,16 @@
-//
-// Created by lucas on 13/06/22.
-//
 // to keep 0/1 in boolean areas without clang-tidy warnings:
 // NOLINTBEGIN(readability-implicit-bool-conversion,modernize-use-bool-literals)
 
 #include "Codes.hpp"
+#include "QeccException.hpp"
 #include "UFHeuristic.hpp"
+#include "Utils.hpp"
 
+#include <cstddef>
 #include <gtest/gtest.h>
+#include <iostream>
+#include <vector>
+
 class ImprovedUFDtestBase : public testing::TestWithParam<std::vector<bool>> {};
 class UniquelyCorrectableErrTest : public ImprovedUFDtestBase {};
 class IncorrectableErrTest : public ImprovedUFDtestBase {};
@@ -44,27 +47,26 @@ TEST_P(UniquelyCorrectableErrTest, SteaneCodeDecodingTestEstim) {
     auto        code = SteaneXCode();
     UFHeuristic decoder;
     decoder.setCode(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
+    std::cout << "code:\n"
+              << code << '\n';
     const std::vector<bool> err = GetParam();
 
     auto syndr = code.getXSyndrome(err);
-    std::cout << "syndrome: " << Utils::getStringFrom(syndr) << std::endl;
+    std::cout << "syndrome: " << Utils::getStringFrom(syndr);
     decoder.decode(syndr);
     auto const& decodingResult = decoder.result;
     auto const& estim          = decodingResult.estimBoolVector;
     auto const& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
-    std::cout << std::endl;
     const gf2Vec sol = GetParam();
 
-    std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
-    std::cout << "Sol: " << std::endl;
+    std::cout << "\nEstim: " << Utils::getStringFrom(estim);
+    std::cout << "\nSol:\n";
     Utils::printGF2vector(sol);
     EXPECT_TRUE(sol == estim);
     EXPECT_TRUE(sol == estim2);
@@ -77,14 +79,14 @@ TEST_P(IncorrectableErrTest, SteaneCodeDecodingTestEstim2) {
     auto        code = SteaneXCode();
     UFHeuristic decoder;
     decoder.setCode(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
+    std::cout << "code:\n"
+              << code << '\n';
     std::vector<bool> err   = GetParam();
     auto              syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
     const auto& decodingResult = decoder.result;
     const auto& estim          = decodingResult.estimBoolVector;
-    std::cout << "estim: " << Utils::getStringFrom(estim) << std::endl;
+    std::cout << "estim: " << Utils::getStringFrom(estim) << '\n';
     const auto& estimIdx = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
     std::cout << "estiIdxs: ";
@@ -107,26 +109,24 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     auto        code = SteaneXCode();
     UFHeuristic decoder;
     decoder.setCode(code);
-    std::cout << "code: " << std::endl
-              << code << std::endl;
+    std::cout << "code:\n"
+              << code << '\n';
     std::vector<bool> err = GetParam();
-    std::cout << "err :" << std::endl;
+    std::cout << "err:\n";
     Utils::printGF2vector(err);
-    std::cout << std::endl;
+    std::cout << '\n';
     auto syndr = code.getXSyndrome(err);
     Utils::printGF2vector(syndr);
-    std::cout << std::endl;
     decoder.decode(syndr);
     const auto& decodingResult = decoder.result;
     const auto& estim          = decodingResult.estimBoolVector;
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
-    std::cout << std::endl;
     std::vector<bool> residualErr(err.size());
     for (size_t i = 0; i < err.size(); i++) {
         residualErr.at(i) = err[i] ^ estim[i];
@@ -135,8 +135,8 @@ TEST_P(UpToStabCorrectableErrTest, SteaneCodeDecodingTest) {
     for (size_t i = 0; i < err.size(); i++) {
         residualErr2.at(i) = err[i] ^ estim2[i];
     }
-    std::cout << "estim: " << Utils::getStringFrom(estim) << std::endl;
-    std::cout << "resid: " << Utils::getStringFrom(residualErr) << std::endl;
+    std::cout << "\nestim: " << Utils::getStringFrom(estim);
+    std::cout << "\nresid: " << Utils::getStringFrom(residualErr) << '\n';
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethZ()->pcm, residualErr));
     EXPECT_TRUE(Utils::isVectorInRowspace(*code.gethZ()->pcm, residualErr2));
 }
@@ -148,33 +148,29 @@ TEST_F(ImprovedUFDtestBase, UniquelyCorrectableErrLargeToricCodeTest) {
     auto        code = ToricCode32();
     UFHeuristic decoder;
     decoder.setCode(code);
-    std::cout << "Adj lists code: " << std::endl
-              << Utils::getStringFrom(*code.gethZ()->pcm) << std::endl;
+    std::cout << "Adj lists code:\n"
+              << Utils::getStringFrom(*code.gethZ()->pcm) << '\n';
     const std::vector<bool> err = {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
     std::cout << "error: ";
     Utils::printGF2vector(err);
-    std::cout << std::endl;
     auto syndr = code.getXSyndrome(err);
-    std::cout << "syndrome: ";
+    std::cout << "\nsyndrome: ";
     Utils::printGF2vector(syndr);
-    std::cout << std::endl;
     decoder.decode(syndr);
     const auto& decodingResult = decoder.result;
     const auto& estim          = decodingResult.estimBoolVector;
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
     EXPECT_TRUE(estim == estim2);
-
-    std::cout << std::endl;
     const gf2Vec& sol = err;
-    std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
-    std::cout << "Estim from Idx: " << Utils::getStringFrom(estim2) << std::endl;
-    std::cout << "Sol: " << Utils::getStringFrom(sol) << std::endl;
+    std::cout << "\nEstim: " << Utils::getStringFrom(estim);
+    std::cout << "\nEstim from Idx: " << Utils::getStringFrom(estim2);
+    std::cout << "\nSol: " << Utils::getStringFrom(sol) << '\n';
     EXPECT_TRUE(sol == estim2);
 }
 
@@ -185,33 +181,29 @@ TEST_P(CorrectableLargeToric, UniquelyCorrectableErrLargeToricCodeTest2) {
     auto        code = ToricCode32();
     UFHeuristic decoder;
     decoder.setCode(code);
-    std::cout << "Adj lists code: " << std::endl
-              << Utils::getStringFrom(*code.gethZ()->pcm) << std::endl;
+    std::cout << "Adj lists code:\n"
+              << Utils::getStringFrom(*code.gethZ()->pcm);
     const std::vector<bool> err = GetParam();
-    std::cout << "error: ";
+    std::cout << "\nerror: ";
     Utils::printGF2vector(err);
-    std::cout << std::endl;
     auto syndr = code.getXSyndrome(err);
-    std::cout << "syndrome: ";
+    std::cout << "\nsyndrome: ";
     Utils::printGF2vector(syndr);
-    std::cout << std::endl;
     decoder.decode(syndr);
     const auto& decodingResult = decoder.result;
     const auto& estim          = decodingResult.estimBoolVector;
     const auto& estimIdx       = decodingResult.estimNodeIdxVector;
     gf2Vec      estim2(err.size());
-    std::cout << "estiIdxs: ";
+    std::cout << "\nestiIdxs: ";
     for (auto idx : estimIdx) {
         estim2.at(idx) = true;
         std::cout << idx << "; ";
     }
     EXPECT_TRUE(estim == estim2);
-
-    std::cout << std::endl;
     const gf2Vec& sol = err;
-    std::cout << "Estim: " << Utils::getStringFrom(estim) << std::endl;
-    std::cout << "Estim from Idx: " << Utils::getStringFrom(estim2) << std::endl;
-    std::cout << "Sol: " << Utils::getStringFrom(sol) << std::endl;
+    std::cout << "\nEstim: " << Utils::getStringFrom(estim);
+    std::cout << "\nEstim from Idx: " << Utils::getStringFrom(estim2);
+    std::cout << "\nSol: " << Utils::getStringFrom(sol) << '\n';
     EXPECT_TRUE(sol == estim2);
 }
 /**
@@ -224,7 +216,7 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
     auto err  = gf2Vec(code.n);
     err.at(0) = 1;
 
-    std::cout << "err :" << std::endl;
+    std::cout << "err:\n";
     Utils::printGF2vector(err);
     auto syndr = code.getXSyndrome(err);
     decoder.decode(syndr);
@@ -237,7 +229,7 @@ TEST_F(ImprovedUFDtestBase, LargeCodeTest) {
         estim2.at(idx) = true;
         std::cout << idx;
     }
-    std::cout << std::endl;
+    std::cout << '\n';
     std::vector<bool> residualErr(err.size());
     for (std::size_t i = 0; i < err.size(); i++) {
         residualErr.at(i) = (err.at(i) != estim.at(i));
@@ -259,7 +251,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         err.at(0)           = 1;
         err.at(code.getN()) = 1;
 
-        std::cout << "err :" << std::endl;
+        std::cout << "err:\n";
         Utils::printGF2vector(err);
         auto syndr = code.getXSyndrome(err);
         decoder.decode(syndr);
@@ -272,7 +264,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
             estim2.at(idx) = true;
             std::cout << idx;
         }
-        std::cout << std::endl;
+        std::cout << '\n';
         std::vector<bool> residualErr(err.size());
         for (std::size_t i = 0; i < err.size(); i++) {
             residualErr.at(i) = (err.at(i) != estim.at(i));
@@ -283,7 +275,7 @@ TEST_F(ImprovedUFDtestBase, BothErrsTest) {
         }
         EXPECT_TRUE(code.isStabilizer(residualErr));
     } catch (QeccException& e) {
-        std::cout << e.getMessage() << std::endl;
+        std::cout << e.getMessage() << '\n';
         EXPECT_TRUE(false);
     }
 }

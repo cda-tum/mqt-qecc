@@ -1,12 +1,11 @@
 // to keep 0/1 in boolean areas without clang-tidy warnings:
 // NOLINTBEGIN(readability-implicit-bool-conversion,modernize-use-bool-literals)
 
-//
-// Created by lucas on 13/06/22.
-//
-#include "Codes.hpp"
+#include "QeccException.hpp"
+#include "Utils.hpp"
 
 #include <gtest/gtest.h>
+#include <string>
 
 class UtilsTest : public testing::TestWithParam<std::string> {};
 

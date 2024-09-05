@@ -7,7 +7,7 @@ pybind11_add_module(
   # Source code goes here
   bindings.cpp)
 target_compile_definitions(pyqecc PRIVATE Z3_FOUND)
-target_link_libraries(pyqecc PRIVATE MQT::QECC MQT::CoreECC MQT::CorePython pybind11_json
+target_link_libraries(pyqecc PRIVATE MQT::QECC MQT::QECCFramework MQT::CorePython pybind11_json
                                      MQT::ProjectOptions MQT::ProjectWarnings)
 
 # Install directive for scikit-build-core

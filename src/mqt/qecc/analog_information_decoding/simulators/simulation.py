@@ -238,9 +238,9 @@ class SingleShotSimulator:
                 z_syndrome_w_err = get_noisy_analog_syndrome(perfect_syndr=z_syndrome, sigma=self.sigma_z)
             else:  # usual pauli error channel syndrome error
                 x_syndrome_err = generate_syndr_err(channel_probs=self.x_syndr_error_channel)
-                x_syndrome_w_err = (x_syndrome + x_syndrome_err) % 2  # type: ignore[assignment] # only occurs due to reused var name
+                x_syndrome_w_err = (x_syndrome + x_syndrome_err) % 2
                 z_syndrome_err = generate_syndr_err(channel_probs=self.z_syndr_error_channel)
-                z_syndrome_w_err = (z_syndrome + z_syndrome_err) % 2  # type: ignore[assignment] # only occurs due to reused var name
+                z_syndrome_w_err = (z_syndrome + z_syndrome_err) % 2
         else:
             x_syndrome_w_err = np.copy(x_syndrome)
             z_syndrome_w_err = np.copy(z_syndrome)
@@ -354,7 +354,7 @@ class SingleShotSimulator:
                 meta_bin = (meta_pcm @ get_binary_from_analog(syndrome_w_err)) % 2
                 meta_syndr = get_signed_from_binary(meta_bin)  # for AI decoder we need {-1,+1} syndrome as input
             else:
-                meta_syndr = (meta_pcm @ syndrome_w_err) % 2  # type: ignore[assignment] # only occurs due to reused var name
+                meta_syndr = (meta_pcm @ syndrome_w_err) % 2
 
             ss_syndr = np.hstack((syndrome_w_err, meta_syndr))
             # only first n bit are data, the other are virtual nodes and can be discarded for estimate
@@ -383,7 +383,7 @@ class SingleShotSimulator:
         meta_syndr = (meta_pcm @ bin_syndr) % 2
         ss_syndr = np.hstack((bin_syndr, meta_syndr))
         # only first n bit are data, return them
-        return decoder.decode(ss_syndr)[: self.n]  # type: ignore[no-any-return]
+        return decoder.decode(ss_syndr)[: self.n]
 
     def _two_stage_decoding(
         self, x_syndrome_w_err: NDArray[np.float64], z_syndrome_w_err: NDArray[np.float64]
@@ -483,7 +483,7 @@ class SingleShotSimulator:
         analog_channel = get_virtual_check_init_vals(analog_syndrome, sigma)
         decoder.update_channel_probs(np.hstack((bit_err_channel, analog_channel)))
         # only first n bit are data so only return those
-        return decoder.decode(hard_syndrome)[: self.n]  # type: ignore[no-any-return]
+        return decoder.decode(hard_syndrome)[: self.n]
 
     def _single_stage_setup(
         self,
@@ -505,11 +505,11 @@ class SingleShotSimulator:
         if self.z_meta and self.Mz is not None:
             self.ss_z_pcm = build_single_stage_pcm(self.Hz, self.Mz)
         else:
-            self.ss_z_pcm = None  # type: ignore[assignment]
+            self.ss_z_pcm = None
         if self.x_meta and self.Mx is not None:
             self.ss_x_pcm = build_single_stage_pcm(self.Hx, self.Mx)
         else:
-            self.ss_x_pcm = None  # type: ignore[assignment]
+            self.ss_x_pcm = None
 
         # X-checks := (Hx|Mx) => Influenced by Z-syndrome error rate
         # ss_x_bpd used to decode X bit errors using Z-side check matrices

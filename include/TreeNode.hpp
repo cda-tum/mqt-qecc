@@ -1,12 +1,10 @@
-//
-// Created by lucas on 26/04/2022.
-//
+#pragma once
 
-#ifndef QUNIONFIND_TREENODE_HPP
-#define QUNIONFIND_TREENODE_HPP
+#include <algorithm>
+#include <cstddef>
 #include <iostream>
+#include <iterator>
 #include <limits>
-#include <map>
 #include <memory>
 #include <unordered_set>
 #include <vector>
@@ -19,10 +17,10 @@ public:
     std::size_t                     vertexIdx = 0U;
     bool                            isCheck   = false;
     TreeNode*                       parent    = nullptr;
-    std::vector<TreeNode*>          children{};
+    std::vector<TreeNode*>          children;
     std::size_t                     clusterSize = 1U;
-    std::unordered_set<std::size_t> boundaryVertices{};
-    std::vector<std::size_t>        checkVertices{};
+    std::unordered_set<std::size_t> boundaryVertices;
+    std::vector<std::size_t>        checkVertices;
     bool                            marked  = false;
     bool                            deleted = false;
 
@@ -155,5 +153,3 @@ public:
         return os;
     }
 };
-
-#endif // QUNIONFIND_TREENODE_HPP

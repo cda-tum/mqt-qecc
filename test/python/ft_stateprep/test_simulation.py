@@ -67,7 +67,7 @@ def test_lut(steane_code: CSSCode) -> None:
     assert len(lut.x_lut) != 0
     assert lut.x_lut is lut.z_lut  # Code is self dual so luts should be the same
 
-    error_1 = np.zeros(steane_code.n, dtype=np.int8)  # type: ignore[var-annotated]
+    error_1 = np.zeros(steane_code.n, dtype=np.int8)
     error_1[0] = 1
 
     error_w1 = (steane_code.Hx[0] + error_1) % 2
@@ -76,7 +76,7 @@ def test_lut(steane_code: CSSCode) -> None:
     assert steane_code.stabilizer_eq_x_error(estimate_1, error_1)
     assert steane_code.stabilizer_eq_z_error(estimate_1, error_1)
 
-    error_2 = np.zeros(steane_code.n, dtype=np.int8)  # type: ignore[var-annotated]
+    error_2 = np.zeros(steane_code.n, dtype=np.int8)
     error_2[0] = 1
     error_2[1] = 1
     error_w2 = (steane_code.Hx[0] + error_2) % 2
@@ -87,7 +87,7 @@ def test_lut(steane_code: CSSCode) -> None:
     assert not steane_code.stabilizer_eq_x_error(estimate_2, error_2)
     assert np.sum(estimate_2) == 1
 
-    error_3 = np.ones((steane_code.n), dtype=np.int8)  # type: ignore[var-annotated]
+    error_3 = np.ones((steane_code.n), dtype=np.int8)
     error_w3 = (steane_code.Hx[0] + error_3) % 2
     syndrome_3 = steane_code.get_x_syndrome(error_w3)
     estimate_3 = lut.decode_x(syndrome_3.astype(np.int8))

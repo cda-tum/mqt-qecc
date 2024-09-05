@@ -158,4 +158,4 @@ def decode_multiround(
         # correct in the commit and tentative region as the last round stabilizer is perfect
         decoded = (np.cumsum(space_correction, 1) % 2)[:, -1]
 
-    return decoded.astype(np.int32), syndrome, analog_syndr, bp_iter  # type: ignore[return-value]
+    return decoded.astype(np.int32), syndrome, analog_syndr, bp_iter
