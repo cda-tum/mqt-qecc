@@ -17,6 +17,7 @@ from .state_prep import (
 from .state_prep_det import (
     optimal_deterministic_verification,
     deterministic_verification,
+    optimal_global_deterministic_verification,
 )
 from .simulation_det import NoisyDFTStatePrepSimulator
 
@@ -35,4 +36,5 @@ __all__ = [
     "optimal_deterministic_verification",
     "deterministic_verification",
     "NoisyDFTStatePrepSimulator",
+    "optimal_global_deterministic_verification",
 ]
