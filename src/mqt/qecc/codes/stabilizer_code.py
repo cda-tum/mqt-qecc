@@ -44,9 +44,8 @@ class StabilizerCode:
             Lx: The logical X-operators.
         """
         self._check_stabilizer_generators(generators)
-
+        self.n = get_n_qubits_from_pauli(generators[0])
         self.generators = paulis_to_binary(generators)
-        self.n = get_n_qubits_from_pauli(self.generators[0])
         self.symplectic_matrix = self.generators[:, :-1]  # discard the phase
         self.phases = self.generators[:, -1]
         self.k = self.n - mod2.rank(self.generators)
@@ -172,6 +171,7 @@ def pauli_to_binary(p: Pauli) -> npt.NDArray:
     phase = 0
     if p[0] in {"+", "-"}:
         phase = 0 if p[0] == "+" else 1
+        p = p[1:]
     x_part = np.array([int(p == "X") for p in p])
     z_part = np.array([int(p == "Z") for p in p])
     y_part = np.array([int(p == "Y") for p in p])
@@ -204,6 +204,8 @@ def get_n_qubits_from_pauli(p: Pauli) -> int:
     """Get the number of qubits from a Pauli string."""
     if isinstance(p, np.ndarray):
         return int(p.shape[0] // 2)
+    if p[0] in {"+", "-"}:
+        return len(p) - 1
     return len(p)
 
 
