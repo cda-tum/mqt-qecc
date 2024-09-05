@@ -141,7 +141,7 @@ class StabilizerCode:
             msg = "Number of logical Z-operators must be at most the number of logical qubits."
             raise InvalidStabilizerCodeError(msg)
 
-        if get_n_qubits_from_pauli(self.Lz[0]) != self.n:
+        if get_n_qubits_from_pauli(self.Lx[0]) != self.n:
             msg = "Logical operators must have the same number of qubits as the stabilizer generators."
             raise InvalidStabilizerCodeError(msg)
 
