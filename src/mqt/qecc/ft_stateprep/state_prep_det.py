@@ -40,7 +40,9 @@ def optimal_deterministic_verification(
         for s in nd_d3_verification_stabilizers:
             for i in range(num_qubits):
                 if np.any(s[i] == 1):
-                    fault_set = np.vstack((fault_set, np.eye(num_qubits, dtype=np.int8)[i]))
+                    # if not already in the fault set
+                    if not np.any(np.all(fault_set == np.eye(num_qubits, dtype=np.int8)[i], axis=1)):
+                        fault_set = np.vstack((fault_set, np.eye(num_qubits, dtype=np.int8)[i]))
         
         det_verify = dict()
         for verify_outcome_int in range(1, 2**num_nd_stabs):
@@ -51,7 +53,12 @@ def optimal_deterministic_verification(
             # add the no-error case for the error beeing on one of the verification ancillae
             if np.sum(verify_outcome) == 1:
                 errors_filtered = np.vstack((errors_filtered, np.zeros(num_qubits, dtype=np.int8)))
-            det_verify[verify_outcome_int] = optimal_deterministic_verification_single_outcome(sp_circ, errors_filtered, min_timeout, max_timeout, max_ancillas, zero_state)
+            if errors_filtered.shape[0] == 0:
+                det_verify[verify_outcome_int] = np.zeros((num_qubits, 0), dtype=np.int8), {0: np.zeros(num_qubits, dtype=np.int8), 1: np.zeros(num_qubits, dtype=np.int8)}
+            elif errors_filtered.shape[0] == 1:
+                det_verify[verify_outcome_int] = ([np.zeros(num_qubits, dtype=np.int8)], {0: errors_filtered[0], 1: errors_filtered[0]})
+            else:
+                det_verify[verify_outcome_int] = optimal_deterministic_verification_single_outcome(sp_circ, errors_filtered, min_timeout, max_timeout, max_ancillas, zero_state)
         return det_verify
 
 def optimal_deterministic_verification_single_outcome(
@@ -80,7 +87,7 @@ def optimal_deterministic_verification_single_outcome(
     optimal_det_verify, num_anc = res
     logger.info(f"Found deterministic verification with {num_anc} ancillae.")
 
-    while True and num_anc > 1:
+    while num_anc > 1:
         logger.info(f"Trying to reduce the number of ancillae to {num_anc-1}.")
         det_verify = _run_with_timeout(_func, num_anc-1, timeout=max_timeout)
         if det_verify is None or (isinstance(det_verify, str) and det_verify == "timeout"):
