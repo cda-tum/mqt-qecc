@@ -313,11 +313,11 @@ def build_css_circuit_from_cnot_list(n: int, cnots: list[tuple[int, int]], hadam
 
 
 def _column_addition_constraint(
-    columns: npt.NDArray[z3.BoolRef | bool],  # type: ignore[type-var]
+    columns: npt.NDArray[z3.BoolRef | bool],
     col_add_vars: npt.NDArray[z3.BoolRef],
 ) -> z3.BoolRef:
     assert len(columns.shape) == 3
-    max_parallel_steps = col_add_vars.shape[0]  # type: ignore[unreachable]
+    max_parallel_steps = col_add_vars.shape[0]
     n_cols = col_add_vars.shape[2]
 
     constraints = []

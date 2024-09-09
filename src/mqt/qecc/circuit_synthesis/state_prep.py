@@ -808,7 +808,7 @@ def _measure_ft_stabs(
 
 def _vars_to_stab(
     measurement: list[z3.BoolRef | bool], generators: npt.NDArray[np.int8]
-) -> npt.NDArray[z3.BoolRef | bool]:  # type: ignore[type-var]
+) -> npt.NDArray[z3.BoolRef | bool]:
     measurement_stab = symbolic_scalar_mult(generators[0], measurement[0])
     for i, scalar in enumerate(measurement[1:]):
         measurement_stab = symbolic_vector_add(measurement_stab, symbolic_scalar_mult(generators[i + 1], scalar))
