@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import operator
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,12 +22,15 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
-def heuristic_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> QuantumCircuit:
+def heuristic_encoding_circuit(
+    code: CSSCode, optimize_depth: bool = True, balance_checks: bool = True
+) -> QuantumCircuit:
     """Synthesize an encoding circuit for the given CSS code using a heuristic greedy search.
 
     Args:
         code: The CSS code to synthesize the encoding circuit for.
         optimize_depth: Whether to optimize the depth of the circuit.
+        balance_checks: Whether to balance the entries of the stabilizer matrix via row operations.
 
     Returns:
         The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
@@ -35,6 +39,10 @@ def heuristic_encoding_circuit(code: CSSCode, optimize_depth: bool = True) -> Qu
 
     checks, logicals, use_x_checks = _get_matrix_with_fewest_checks(code)
     n_checks = checks.shape[0]
+
+    if balance_checks:
+        _balance_matrix(logicals)
+
     checks, cnots = heuristic_gaussian_elimination(
         np.vstack((checks, logicals)),
         parallel_elimination=optimize_depth,
@@ -210,3 +218,40 @@ def _build_css_encoder_from_cnot_list(
     hadamards = np.setdiff1d(hadamards, encoding_qubits)
     circ = build_css_circuit_from_cnot_list(checks_and_logicals.shape[1], cnots, list(hadamards))
     return circ, encoding_qubits
+
+
+def _balance_matrix(m: npt.NDArray[np.int8]) -> None:
+    """Balance the columns of the matrix.
+
+    Try to balance the number of 1's in each column via row operations without increasing the row-weight.
+    """
+    variance = np.var(m.sum(axis=0))
+    reduced = False
+
+    while not reduced:
+        reduced = True
+        # compute row operations that do not increase the row-weights
+        row_ops = []
+        for i, row_1 in enumerate(m):
+            for j, row_2 in enumerate(m):
+                if i == j:
+                    continue
+                s = (row_1 + row_2) % 2
+                if s.sum() > row_1.sum() or s.sum() > row_2.sum():
+                    continue
+                # compute associated column weights
+                m[j] = s  # noqa: B909
+
+                new_variance = np.var(m.sum(axis=0))
+                if new_variance < variance:
+                    row_ops.append((i, j, new_variance))
+
+                m[j] = row_2  # noqa: B909
+        # sort by lowest variance
+        row_ops.sort(key=operator.itemgetter(2))
+        # apply best row operation
+        if row_ops:
+            i, j = row_ops[0][:2]
+            m[i] = (m[i] + m[j]) % 2
+            reduced = False
+            variance = row_ops[0][2]

@@ -27,6 +27,30 @@ def steane_code() -> CSSCode:
 
 
 @pytest.fixture
+def surface_3() -> CSSCode:
+    """Return the surface code."""
+    return CSSCode.from_code_name("surface", 3)
+
+
+@pytest.fixture
+def tetrahedral() -> CSSCode:
+    """Return the tetrahedral code."""
+    return CSSCode.from_code_name("tetrahedral")
+
+
+@pytest.fixture
+def hamming() -> CSSCode:
+    """Return the Hamming code."""
+    return CSSCode.from_code_name("Hamming")
+
+
+@pytest.fixture
+def shor() -> CSSCode:
+    """Return the Shor code."""
+    return CSSCode.from_code_name("Shor")
+
+
+@pytest.fixture
 def css_4_2_2_code() -> CSSCode:
     """Return the 4,2,2  code."""
     return CSSCode(2, np.array([[1] * 4]), np.array([[1] * 4]))
@@ -69,7 +93,9 @@ def _assert_correct_encoding_circuit(encoder: QuantumCircuit, encoding_qubits: l
         assert in_span(np.vstack((code.Hx, code.Lx)), logical)
 
 
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize(
+    "code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code", "tetrahedral", "surface_3", "hamming", "shor"]
+)
 def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that heuristic_encoding_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
