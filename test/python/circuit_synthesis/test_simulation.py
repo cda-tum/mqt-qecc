@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode
-from mqt.qecc.ft_stateprep import (
+from mqt.qecc.circuit_synthesis import (
     LutDecoder,
     NoisyNDFTStatePrepSimulator,
     gate_optimal_verification_circuit,

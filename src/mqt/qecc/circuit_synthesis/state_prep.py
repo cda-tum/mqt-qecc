@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict, deque
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import multiprocess
 import numpy as np
 import z3
 from ldpc import mod2
@@ -15,6 +14,19 @@ from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGOutNode
 
 from ..codes import InvalidCSSCodeError
+from .synthesis_utils import (
+    build_css_circuit_from_cnot_list,
+    gaussian_elimination_min_column_ops,
+    gaussian_elimination_min_parallel_eliminations,
+    heuristic_gaussian_elimination,
+    iterative_search_with_timeout,
+    odd_overlap,
+    optimal_elimination,
+    run_with_timeout,
+    symbolic_scalar_mult,
+    symbolic_vector_add,
+    symbolic_vector_eq,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +206,19 @@ class StatePrepCircuit:
         self.z_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
 
 
+def _build_state_prep_circuit_from_back(
+    checks: npt.NDArray[np.int8], cnots: list[tuple[int, int]], zero_state: bool = True
+) -> QuantumCircuit:
+    cnots.reverse()
+    if zero_state:
+        hadamards = np.where(np.sum(checks, axis=0) != 0)[0]
+    else:
+        hadamards = np.where(np.sum(checks, axis=0) == 0)[0]
+        cnots = [(j, i) for i, j in cnots]
+
+    return build_css_circuit_from_cnot_list(checks.shape[1], cnots, list(hadamards))
+
+
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True) -> StatePrepCircuit:
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
 
@@ -206,56 +231,12 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
     if code.Hx is None or code.Hz is None:
         msg = "The code must have both X and Z stabilizers defined."
         raise InvalidCSSCodeError(msg)
-    checks = code.Hx.copy() if zero_state else code.Hz.copy()
-    rank = mod2.rank(checks)
 
-    def is_reduced() -> bool:
-        return bool(len(np.where(np.all(checks == 0, axis=0))[0]) == checks.shape[1] - rank)
+    checks = code.Hx if zero_state else code.Hz
+    assert checks is not None
+    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
 
-    costs = np.array([
-        [np.sum((checks[:, i] + checks[:, j]) % 2) for j in range(checks.shape[1])] for i in range(checks.shape[1])
-    ])
-    costs -= np.sum(checks, axis=0)
-    np.fill_diagonal(costs, 1)
-
-    used_qubits: list[np.int_] = []
-    cnots: list[tuple[int, int]] = []
-    while not is_reduced():
-        m = np.zeros((checks.shape[1], checks.shape[1]), dtype=bool)
-        m[used_qubits, :] = True
-        m[:, used_qubits] = True
-
-        costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
-        if np.all(costs_unused >= 0) or len(used_qubits) == checks.shape[1]:  # no more reductions possible
-            if not used_qubits:  # local minimum => get out by making matrix triangular
-                logging.warning("Local minimum reached. Making matrix triangular.")
-                checks = mod2.reduced_row_echelon(checks)[0]
-                costs = np.array([
-                    [np.sum((checks[:, i] + checks[:, j]) % 2) for j in range(checks.shape[1])]
-                    for i in range(checks.shape[1])
-                ])
-                costs -= np.sum(checks, axis=0)
-                np.fill_diagonal(costs, 1)
-            else:  # try to move onto the next layer
-                used_qubits = []
-            continue
-
-        i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
-        cnots.append((int(i), int(j)))
-
-        if optimize_depth:
-            used_qubits.append(i)
-            used_qubits.append(j)
-
-        # update checks
-        checks[:, j] = (checks[:, i] + checks[:, j]) % 2
-        # update costs
-        new_weights = np.sum((checks[:, j][:, np.newaxis] + checks) % 2, axis=0)
-        costs[j, :] = new_weights - np.sum(checks, axis=0)
-        costs[:, j] = new_weights - np.sum(checks[:, j])
-        np.fill_diagonal(costs, 1)
-
-    circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state)
+    circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
 
 
@@ -263,119 +244,22 @@ def _generate_circ_with_bounded_depth(
     checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True
 ) -> QuantumCircuit | None:
     assert max_depth > 0, "max_depth should be greater than 0"
-    columns = np.array([
-        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(checks.shape[1])] for i in range(checks.shape[0])]
-        for d in range(max_depth + 1)
-    ])
-
-    additions = np.array([
-        [[z3.Bool(f"add_{d}_{i}_{j}") for j in range(checks.shape[1])] for i in range(checks.shape[1])]
-        for d in range(max_depth)
-    ])
-    n_cols = checks.shape[1]
-    s = z3.Solver()
-
-    # create initial matrix
-    columns[0, :, :] = checks.astype(bool)
-
-    s.add(_column_addition_constraint(columns, additions))
-
-    # qubit can be involved in at most one addition at each depth
-    for d in range(max_depth):
-        for col in range(n_cols):
-            s.add(
-                z3.PbLe(
-                    [(additions[d, col_1, col], 1) for col_1 in range(n_cols) if col != col_1]
-                    + [(additions[d, col, col_2], 1) for col_2 in range(n_cols) if col != col_2],
-                    1,
-                )
-            )
-
-    # if column is not involved in any addition at certain depth, it is the same as the previous column
-    for d in range(1, max_depth + 1):
-        for col in range(n_cols):
-            s.add(
-                z3.Implies(
-                    z3.Not(
-                        z3.Or(
-                            list(np.delete(additions[d - 1, :, col], [col]))
-                            + list(np.delete(additions[d - 1, col, :], [col]))
-                        )
-                    ),
-                    _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col]),
-                )
-            )
-
-    s.add(_final_matrix_constraint(columns))
-
-    if s.check() == z3.sat:
-        m = s.model()
-        cnots = [
-            (i, j)
-            for d in range(max_depth)
-            for j in range(checks.shape[1])
-            for i in range(checks.shape[1])
-            if m[additions[d, i, j]]
-        ]
-
-        checks = np.array([
-            [bool(m[columns[max_depth, i, j]]) for j in range(checks.shape[1])] for i in range(checks.shape[0])
-        ])
-
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
-
-    return None
+    res = gaussian_elimination_min_parallel_eliminations(checks, _final_matrix_constraint, max_depth)
+    if res is None:
+        return None
+    checks, cnots = res
+    return _build_state_prep_circuit_from_back(checks, cnots, zero_state)
 
 
 def _generate_circ_with_bounded_gates(
-    checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True
+    checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True
 ) -> QuantumCircuit | None:
-    """Find the gate optimal circuit for a given check matrix and maximum depth."""
-    n = checks.shape[1]
-    columns = np.array([
-        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(n)] for i in range(checks.shape[0])] for d in range(max_cnots + 1)
-    ])
-    n_bits = int(np.ceil(np.log2(n)))
-    targets = [z3.BitVec(f"target_{d}", n_bits) for d in range(max_cnots)]
-    controls = [z3.BitVec(f"control_{d}", n_bits) for d in range(max_cnots)]
-    s = z3.Solver()
-
-    additions = np.array([
-        [[z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(n)] for col_1 in range(n)]
-        for d in range(max_cnots)
-    ])
-
-    # create initial matrix
-    columns[0, :, :] = checks.astype(bool)
-    s.add(_column_addition_constraint(columns, additions))
-
-    for d in range(1, max_cnots + 1):
-        # qubit cannot be control and target at the same time
-        s.add(controls[d - 1] != targets[d - 1])
-
-        # control and target must be valid qubits
-
-        if n and (n - 1) != 0 and not ((n & (n - 1) == 0) and n != 0):  # check if n is a power of 2 or 1 or 0
-            s.add(z3.ULT(controls[d - 1], n))
-            s.add(z3.ULT(targets[d - 1], n))
-
-    # if column is not involved in any addition at certain depth, it is the same as the previous column
-    for d in range(1, max_cnots + 1):
-        for col in range(n):
-            s.add(z3.Implies(targets[d - 1] != col, _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
-
-    # assert that final check matrix has n-checks.shape[0] zero columns
-    s.add(_final_matrix_constraint(columns))
-
-    if s.check() == z3.sat:
-        m = s.model()
-        cnots = [(m[controls[d]].as_long(), m[targets[d]].as_long()) for d in range(max_cnots)]
-        checks = np.array([
-            [bool(m[columns[max_cnots][i][j]]) for j in range(n)] for i in range(checks.shape[0])
-        ]).astype(int)
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
-
-    return None
+    assert max_depth > 0, "max_depth should be greater than 0"
+    res = gaussian_elimination_min_column_ops(checks, _final_matrix_constraint, max_depth)
+    if res is None:
+        return None
+    checks, cnots = res
+    return _build_state_prep_circuit_from_back(checks, cnots, zero_state)
 
 
 def _optimal_circuit(
@@ -426,7 +310,7 @@ def _optimal_circuit(
     logging.info("Trying to minimize param")
     while True:
         logging.info(f"Trying param {curr_param - 1}")
-        opt_res = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
+        opt_res = run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
         circ = opt_res
@@ -454,9 +338,22 @@ def depth_optimal_prep_circuit(
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
     """
-    return _optimal_circuit(
-        code, _generate_circ_with_bounded_depth, zero_state, min_depth, max_depth, min_timeout, max_timeout
+    checks = code.Hx if zero_state else code.Hz
+    assert checks is not None
+    res = optimal_elimination(
+        checks,
+        _final_matrix_constraint,
+        "parallel_ops",
+        min_param=min_depth,
+        max_param=max_depth,
+        min_timeout=min_timeout,
+        max_timeout=max_timeout,
     )
+    if res is None:
+        return None
+    checks, cnots = res
+    circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    return StatePrepCircuit(circ, code, zero_state)
 
 
 def gate_optimal_prep_circuit(
@@ -477,94 +374,22 @@ def gate_optimal_prep_circuit(
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
     """
-    return _optimal_circuit(
-        code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout
+    checks = code.Hx if zero_state else code.Hz
+    assert checks is not None
+    res = optimal_elimination(
+        checks,
+        _final_matrix_constraint,
+        "column_ops",
+        min_param=min_gates,
+        max_param=max_gates,
+        min_timeout=min_timeout,
+        max_timeout=max_timeout,
     )
-
-
-def _build_circuit_from_list_and_checks(
-    cnots: list[tuple[int, int]], checks: npt.NDArray[np.int8], zero_state: bool = True
-) -> QuantumCircuit:
-    # Build circuit
-    n = checks.shape[1]
-    circ = QuantumCircuit(n)
-
-    controls = [i for i in range(n) if np.sum(checks[:, i]) >= 1]
-    if zero_state:
-        for control in controls:
-            circ.h(control)
-    else:
-        for i in range(n):
-            if i not in controls:
-                circ.h(i)
-
-    for i, j in reversed(cnots):
-        if zero_state:
-            ctrl, tar = i, j
-        else:
-            ctrl, tar = j, i
-        circ.cx(ctrl, tar)
-    return circ
-
-
-def _run_with_timeout(func: Callable[[Any], Any], *args: Any, timeout: int = 10) -> Any | str | None:  # noqa: ANN401
-    """Run a function with a timeout.
-
-    If the function does not complete within the timeout, return None.
-
-    Args:
-        func: The function to run.
-        args: The arguments to pass to the function.
-        timeout: The maximum time to allow the function to run for in seconds.
-    """
-    manager = multiprocess.Manager()
-    return_list = manager.list()
-    p = multiprocess.Process(target=lambda: return_list.append(func(*args)))
-    p.start()
-    p.join(timeout)
-    if p.is_alive():
-        p.terminate()
-        return "timeout"
-    return return_list[0]
-
-
-def iterative_search_with_timeout(
-    fun: Callable[[int], QuantumCircuit],
-    min_param: int,
-    max_param: int,
-    min_timeout: int,
-    max_timeout: int,
-    param_factor: float = 2,
-    timeout_factor: float = 2,
-) -> None | tuple[None | QuantumCircuit, int]:
-    """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
-
-    Args:
-        fun: function to run with increasing parameters and timeouts
-        min_param: minimum parameter to start with
-        max_param: maximum parameter to reach
-        min_timeout: minimum timeout to start with
-        max_timeout: maximum timeout to reach
-        param_factor: factor to increase the parameter by at each iteration
-        timeout_factor: factor to increase the timeout by at each iteration
-    """
-    curr_timeout = min_timeout
-    curr_param = min_param
-    while curr_timeout <= max_timeout:
-        while curr_param <= max_param:
-            logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
-            res = _run_with_timeout(fun, curr_param, timeout=curr_timeout)
-            if res is not None and (not isinstance(res, str) or res != "timeout"):
-                return res, curr_param
-            if curr_param == max_param:
-                break
-
-            curr_param = int(curr_param * param_factor)
-            curr_param = min(curr_param, max_param)
-
-        curr_timeout = int(curr_timeout * timeout_factor)
-        curr_param = min_param
-    return None, max_param
+    if res is None:
+        return None
+    checks, cnots = res
+    circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    return StatePrepCircuit(circ, code, zero_state)
 
 
 def gate_optimal_verification_stabilizers(
@@ -658,7 +483,7 @@ def gate_optimal_verification_stabilizers(
         while num_cnots - 1 > 0:
             logging.info(f"Trying {num_cnots - 1} CNOTs")
 
-            cnot_opt = _run_with_timeout(
+            cnot_opt = run_with_timeout(
                 search_cnots,
                 num_cnots - 1,
                 timeout=max_timeout,
@@ -677,7 +502,7 @@ def gate_optimal_verification_stabilizers(
             def search_anc(num_anc: int) -> list[npt.NDArray[np.int8]] | None:
                 return verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors)  # noqa: B023
 
-            anc_opt = _run_with_timeout(
+            anc_opt = run_with_timeout(
                 search_anc,
                 num_anc - 1,
                 timeout=max_timeout,
@@ -984,9 +809,9 @@ def _measure_ft_stabs(
 def _vars_to_stab(
     measurement: list[z3.BoolRef | bool], generators: npt.NDArray[np.int8]
 ) -> npt.NDArray[z3.BoolRef | bool]:
-    measurement_stab = _symbolic_scalar_mult(generators[0], measurement[0])
+    measurement_stab = symbolic_scalar_mult(generators[0], measurement[0])
     for i, scalar in enumerate(measurement[1:]):
-        measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(generators[i + 1], scalar))
+        measurement_stab = symbolic_vector_add(measurement_stab, symbolic_scalar_mult(generators[i + 1], scalar))
     return measurement_stab
 
 
@@ -1019,7 +844,7 @@ def verification_stabilizers(
     # assert that each error is detected
     solver.add(
         z3.And([
-            z3.PbGe([(_odd_overlap(measurement, error), 1) for measurement in measurement_stabs], 1)
+            z3.PbGe([(odd_overlap(measurement, error), 1) for measurement in measurement_stabs], 1)
             for error in fault_set
         ])
     )
@@ -1055,121 +880,12 @@ def _coset_leader(error: npt.NDArray[np.int8], generators: npt.NDArray[np.int8])
 
     g = _vars_to_stab(coeff, generators)
 
-    s.add(_symbolic_vector_eq(np.array(leader), _symbolic_vector_add(error.astype(bool), g)))
+    s.add(symbolic_vector_eq(np.array(leader), symbolic_vector_add(error.astype(bool), g)))
     s.minimize(z3.Sum(leader))
 
     s.check()  # always SAT
     m = s.model()
     return np.array([bool(m[leader[i]]) for i in range(len(error))]).astype(int)
-
-
-def _symbolic_scalar_mult(v: npt.NDArray[np.int8], a: z3.BoolRef | bool) -> npt.NDArray[z3.BoolRef]:
-    """Multiply a concrete vector by a symbolic scalar."""
-    return np.array([a if s == 1 else False for s in v])
-
-
-def _symbolic_vector_add(
-    v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]
-) -> npt.NDArray[z3.BoolRef | bool]:
-    """Add two symbolic vectors."""
-    v_new = [False for _ in range(len(v1))]
-    for i in range(len(v1)):
-        # If one of the elements is a bool, we can simplify the expression
-        v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
-        v2_i_is_bool = isinstance(v2[i], (bool, np.bool_))
-        if v1_i_is_bool:
-            v1[i] = bool(v1[i])
-            if v1[i]:
-                v_new[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
-            else:
-                v_new[i] = v2[i]
-
-        elif v2_i_is_bool:
-            v2[i] = bool(v2[i])
-            if v2[i]:
-                v_new[i] = z3.Not(v1[i])
-            else:
-                v_new[i] = v1[i]
-
-        else:
-            v_new[i] = z3.Xor(v1[i], v2[i])
-
-    return np.array(v_new)
-
-
-def _odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
-    """Return True if the overlap of symbolic vector with constant vector is odd."""
-    return z3.PbEq([(v_sym[i], 1) for i, c in enumerate(v_con) if c == 1], 1)
-
-
-def _symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
-    """Return assertion that two symbolic vectors should be equal."""
-    constraints = [False for _ in v1]
-    for i in range(len(v1)):
-        # If one of the elements is a bool, we can simplify the expression
-        v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
-        v2_i_is_bool = isinstance(v2[i], (bool, np.bool_))
-        if v1_i_is_bool:
-            v1[i] = bool(v1[i])
-            if v1[i]:
-                constraints[i] = v2[i]
-            else:
-                constraints[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
-
-        elif v2_i_is_bool:
-            v2[i] = bool(v2[i])
-            if v2[i]:
-                constraints[i] = v1[i]
-            else:
-                constraints[i] = z3.Not(v1[i])
-        else:
-            constraints[i] = v1[i] == v2[i]
-    return z3.And(constraints)
-
-
-def _column_addition_constraint(
-    columns: npt.NDArray[z3.BoolRef | bool],
-    col_add_vars: npt.NDArray[z3.BoolRef],
-) -> z3.BoolRef:
-    assert len(columns.shape) == 3
-    max_depth = col_add_vars.shape[0]
-    n_cols = col_add_vars.shape[2]
-
-    constraints = []
-    for d in range(1, max_depth + 1):
-        for col_1 in range(n_cols):
-            for col_2 in range(col_1 + 1, n_cols):
-                col_sum = _symbolic_vector_add(columns[d - 1, :, col_1], columns[d - 1, :, col_2])
-
-                # encode col_2 += col_1
-                add_col1_to_col2 = z3.Implies(
-                    col_add_vars[d - 1, col_1, col_2],
-                    z3.And(
-                        _symbolic_vector_eq(columns[d, :, col_2], col_sum),
-                        _symbolic_vector_eq(columns[d, :, col_1], columns[d - 1, :, col_1]),
-                    ),
-                )
-
-                # encode col_1 += col_2
-                add_col2_to_col1 = z3.Implies(
-                    col_add_vars[d - 1, col_2, col_1],
-                    z3.And(
-                        _symbolic_vector_eq(columns[d, :, col_1], col_sum),
-                        _symbolic_vector_eq(columns[d, :, col_2], columns[d - 1, :, col_2]),
-                    ),
-                )
-
-                constraints.extend([add_col1_to_col2, add_col2_to_col1])
-
-    return z3.And(constraints)
-
-
-def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
-    assert len(columns.shape) == 3
-    return z3.PbEq(
-        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
-        columns.shape[2] - columns.shape[1],
-    )
 
 
 def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> PauliList:
@@ -1610,3 +1326,11 @@ def _hook_errors(stabs: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
                 errors.append(error.copy())
                 error[i] = 1
     return np.array(errors)
+
+
+def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+    assert len(columns.shape) == 3
+    return z3.PbEq(
+        [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
+        columns.shape[2] - columns.shape[1],
+    )
