@@ -193,13 +193,6 @@ preview = true
 unsafe-fixes = true
 
 [tool.ruff.lint]
-exclude = [
-    "scripts/*",
-    "*/cc_decoder/plots.py",
-    "*/analog_information_decoding/code_construction/*",
-    "*/analog_information_decoding/utils/data_utils.py",
-
-]
 extend-select = [
     "A",           # flake8-builtins
     "ANN",         # flake8-annotations
@@ -270,6 +263,8 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
+"*/cc_decoder/plots.py" = ["T201"]
+"scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

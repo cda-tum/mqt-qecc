@@ -20,7 +20,7 @@ step_size = 0.00001
 nr_failed_runs = 0
 code_k = code.K
 
-with Path(outpath).open("w") as outfile:
+with Path(outpath).open("w", encoding="utf-8") as outfile:
     while curr_p < max_per:
         nr_failed_runs = 0
         for _ in range(runs_per_p):

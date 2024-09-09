@@ -77,7 +77,6 @@ repos:
     hooks:
       - id: mypy
         files: ^(src/mqt|test/python)
-        exclude: "code_construction* | ^data_utils\\.py$"
         args: []
         additional_dependencies:
           - numpy
