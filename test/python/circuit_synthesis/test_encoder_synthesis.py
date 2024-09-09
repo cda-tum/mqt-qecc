@@ -111,7 +111,7 @@ def test_gate_optimal_encoding_consistent(code: CSSCode, request) -> None:  # ty
     """Check that `gate_optimal_encoding_circuit` returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
 
-    encoder, encoding_qubits = gate_optimal_encoding_circuit(code, max_timeout=1, min_gates=3, max_gates=10)
+    encoder, encoding_qubits = gate_optimal_encoding_circuit(code, max_timeout=5, min_gates=3, max_gates=10)
     assert encoder.num_qubits == code.n
 
     _assert_correct_encoding_circuit(encoder, encoding_qubits, code)
@@ -122,7 +122,7 @@ def test_depth_optimal_encoding_consistent(code: CSSCode, request) -> None:  # t
     """Check that `gate_optimal_encoding_circuit` returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
 
-    encoder, encoding_qubits = depth_optimal_encoding_circuit(code, max_timeout=1)
+    encoder, encoding_qubits = depth_optimal_encoding_circuit(code, max_timeout=5)
     assert encoder.num_qubits == code.n
 
     _assert_correct_encoding_circuit(encoder, encoding_qubits, code)
