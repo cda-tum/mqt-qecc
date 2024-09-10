@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2024.3.2"
 nox.options.default_venv_backend = "uv|virtualenv"
 
-nox.options.sessions = ["lint", "tests"]
+nox.options.sessions = ["lint", "tests", "minimums"]
 
 PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
@@ -38,12 +38,11 @@ if os.environ.get("CI", None):
 
 @nox.session(reuse_venv=True)
 def lint(session: nox.Session) -> None:
-    """Lint the Python part of the codebase using pre-commit.
+    """Run the linter."""
+    if shutil.which("pre-commit") is None:
+        session.install("pre-commit")
 
-    Simply execute `nox -rs lint` to run all configured hooks.
-    """
-    session.install("pre-commit")
-    session.run("pre-commit", "run", "--all-files", *session.posargs)
+    session.run("pre-commit", "run", "--all-files", *session.posargs, external=True)
 
 
 def _run_tests(
@@ -54,8 +53,7 @@ def _run_tests(
     extras: Sequence[str] = (),
 ) -> None:
     posargs = list(session.posargs)
-    env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
-
+    env = {}
     if os.environ.get("CI", None) and sys.platform == "win32":
         env["SKBUILD_CMAKE_ARGS"] = "-T ClangCL"
 
