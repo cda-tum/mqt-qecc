@@ -28,7 +28,7 @@ PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13"]
 BUILD_REQUIREMENTS = [
     "scikit-build-core>=0.10.1",
     "setuptools_scm>=7",
-    "pybind11>=2.13",
+    "pybind11>=2.13.5",
     "wheel>=0.40",  # transitive dependency of pytest on Windows
 ]
 

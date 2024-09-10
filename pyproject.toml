@@ -1,5 +1,9 @@
 [build-system]
-requires = ["scikit-build-core>=0.10.1", "setuptools-scm>=7", "pybind11>=2.13"]
+requires = [
+  "scikit-build-core>=0.10.1",
+  "setuptools-scm>=7",
+  "pybind11>=2.13.5",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -125,6 +129,14 @@ sdist.exclude = [
 BUILD_MQT_QECC_TESTS = "OFF"
 BUILD_MQT_QECC_BINDINGS = "ON"
 ENABLE_IPO = "ON"
+
+[[tool.scikit-build.overrides]]
+if.python-version = ">=3.13"
+if.abi-flags = "t"
+if.platform-system = "win32"
+inherit.cmake.define = "append"
+cmake.define.DISABLE_GIL = "1"
+
 
 [tool.check-sdist]
 sdist-only = ["src/mqt/qecc/_version.py"]
