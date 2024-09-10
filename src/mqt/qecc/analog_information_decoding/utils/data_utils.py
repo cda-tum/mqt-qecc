@@ -39,7 +39,7 @@ def extract_settings(filename: str) -> dict[str, list[str]]:
     """Extracts all settings from a parameter file and returns them as a dictionary."""
     keyword_lists: dict[str, list[str]] = {}
 
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding="utf-8") as file:
         for line in file:
             json_data = json.loads(line.strip())
             for keyword, value in json_data.items():
@@ -269,15 +269,11 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
     Returns:
         Dict[str, Any]: A dictionary containing the merged data.
     """
-    datasets = _datasets.copy()
+    # remove datasets that do not contain x_success_cnt
+    datasets = [data for data in _datasets if "x_success_cnt" in data]
 
     if not datasets:
         return {}
-
-    # remove datasets that do not contain x_success_cnt
-    for i, data in enumerate(datasets):
-        if "x_success_cnt" not in data:
-            datasets.pop(i)
 
     # Start with a copy of the first dictionary in the list that contains z_success_cnt
     # and remove that dict from the list
@@ -320,17 +316,11 @@ def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
     Returns:
         Dict[str, Any]: A dictionary containing the merged data.
     """
-    datasets = _datasets.copy()
-    # print("datasets", datasets)
+    # remove datasets that do not contain z_success_cnt
+    datasets = [data for data in _datasets if "z_success_cnt" in data]
+
     if not datasets:
         return {}
-
-    # remove datasets that do not contain z_success_cnt
-    for i, data in enumerate(datasets):
-        if "z_success_cnt" not in data:
-            datasets.pop(i)
-
-    # print(datasets)
 
     # Start with a copy of the first dictionary in the list that contains z_success_cnt
     # and remove that dict from the list
@@ -377,21 +367,23 @@ def merge_json_files(input_path: str) -> None:
     output_data: list[dict[str, Any]] = []
     for folder_name in Path(input_path).iterdir():
         folder_path = input_path / folder_name
-        if folder_path.is_dir():
-            data: list[dict[str, Any]] = []
-            for filename in folder_path.iterdir():
-                if filename.suffix == ".json":
-                    file_path = folder_path / filename
-                    with file_path.open() as file:
-                        try:
-                            json_data = json.load(file)
-                            data.append(json_data)
-                        except JSONDecodeError:
-                            # don't care about json decode error here
-                            pass
-            merged_data = merge_datasets(data)
-            if merged_data:
-                output_data.append(merged_data)
+        if not folder_path.is_dir():
+            continue
+
+        data: list[dict[str, Any]] = []
+        for filename in folder_path.iterdir():
+            if filename.suffix == ".json":
+                file_path = folder_path / filename
+                with file_path.open() as file:
+                    try:
+                        json_data = json.load(file)
+                        data.append(json_data)
+                    except JSONDecodeError:
+                        # don't care about json decode error here
+                        pass
+        merged_data = merge_datasets(data)
+        if merged_data:
+            output_data.append(merged_data)
 
     # save output to parent directory
     code_name = Path(input_path).name
@@ -415,20 +407,22 @@ def merge_json_files_x(input_path: str) -> None:
     output_data: list[dict[str, Any]] = []
     for folder_name in Path(input_path).iterdir():
         folder_path = input_path / folder_name
-        if folder_path.is_dir():
-            data: list[dict[str, Any]] = []
-            for filename in folder_path.iterdir():
-                if filename.suffix == ".json":
-                    with (folder_path / filename).open() as file:
-                        try:
-                            json_data = json.load(file)
-                            data.append(json_data)
-                        except JSONDecodeError:
-                            # don't care about json decode error here
-                            pass
-            merged_data = _merge_datasets_x(data)
-            if merged_data:
-                output_data.append(merged_data)
+        if not folder_path.is_dir():
+            continue
+
+        data: list[dict[str, Any]] = []
+        for filename in folder_path.iterdir():
+            if filename.suffix == ".json":
+                with (folder_path / filename).open() as file:
+                    try:
+                        json_data = json.load(file)
+                        data.append(json_data)
+                    except JSONDecodeError:
+                        # don't care about json decode error here
+                        pass
+        merged_data = _merge_datasets_x(data)
+        if merged_data:
+            output_data.append(merged_data)
 
     # save output to parent directory
     code_name = Path(input_path).name
@@ -452,20 +446,23 @@ def merge_json_files_z(input_path: str) -> None:
     output_data: list[dict[str, Any]] = []
     for folder_name in Path(input_path).iterdir():
         folder_path = input_path / folder_name
-        if folder_path.is_dir():
-            data: list[dict[str, Any]] = []
-            for filename in folder_path.iterdir():
-                if filename.suffix == ".json":
-                    with (folder_path / filename).open() as file:
-                        try:
-                            json_data = json.load(file)
-                            data.append(json_data)
-                        except JSONDecodeError:
-                            # don't care about json decode error here
-                            pass
-            merged_data = _merge_datasets_z(data)
-            if merged_data:
-                output_data.append(merged_data)
+
+        if not folder_path.is_dir():
+            continue
+
+        data: list[dict[str, Any]] = []
+        for filename in folder_path.iterdir():
+            if filename.suffix == ".json":
+                with (folder_path / filename).open() as file:
+                    try:
+                        json_data = json.load(file)
+                        data.append(json_data)
+                    except JSONDecodeError:
+                        # don't care about json decode error here
+                        pass
+        merged_data = _merge_datasets_z(data)
+        if merged_data:
+            output_data.append(merged_data)
 
     # save output to parent directory
     code_name = Path(input_path).name
@@ -489,22 +486,24 @@ def merge_json_files_xz(input_path: str) -> None:
     output_data: list[dict[str, Any]] = []
     for folder_name in Path(input_path).iterdir():
         folder_path = input_path / folder_name
-        if folder_path.is_dir():
-            data: list[dict[str, Any]] = []
-            for filename in folder_path.iterdir():
-                if filename.suffix == ".json":
-                    with (folder_path / filename).open() as file:
-                        try:
-                            json_data = json.load(file)
-                            data.append(json_data)
-                        except JSONDecodeError:
-                            # don't care about json decode error here
-                            pass
-            merged_data_x = _merge_datasets_x(data)
-            merged_data_z = _merge_datasets_z(data)
-            merged_data = _combine_xz_data(merged_data_x, merged_data_z)
-            if merged_data:
-                output_data.append(merged_data)
+        if not folder_path.is_dir():
+            continue
+
+        data: list[dict[str, Any]] = []
+        for filename in folder_path.iterdir():
+            if filename.suffix == ".json":
+                with (folder_path / filename).open() as file:
+                    try:
+                        json_data = json.load(file)
+                        data.append(json_data)
+                    except JSONDecodeError:
+                        # don't care about json decode error here
+                        pass
+        merged_data_x = _merge_datasets_x(data)
+        merged_data_z = _merge_datasets_z(data)
+        merged_data = _combine_xz_data(merged_data_x, merged_data_z)
+        if merged_data:
+            output_data.append(merged_data)
 
     # save output to parent directory
     code_name = Path(input_path).name

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # noqa: S404
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -145,7 +145,7 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
     code_dict: Any = {}
     _m, n = hx.shape
     code_k = n - mod2.rank(hx) - mod2.rank(hz)
-    with Path(f"generated_codes/{codename}/info.txt").open() as f:
+    with Path(f"generated_codes/{codename}/info.txt").open(encoding="utf-8") as f:
         code_dict = dict(
             line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
@@ -157,7 +157,7 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
     code_dict["dMX"] = int(code_dict["dMX"])
     code_dict["dMZ"] = int(code_dict["dMZ"])
 
-    with Path(f"generated_codes/{codename}/code_params.txt").open("w") as file:
+    with Path(f"generated_codes/{codename}/code_params.txt").open("w", encoding="utf-8") as file:
         file.write(json.dumps(code_dict))
 
 

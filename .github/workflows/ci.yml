@@ -20,7 +20,7 @@ jobs:
     name: 🇨‌ Test
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-cpp-tests)
-    uses: ./.github/workflows/reusable-cpp-ci.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-ci.yml@v1.3
 
   cpp-linter:
     name: 🇨‌ Lint
@@ -32,7 +32,9 @@ jobs:
     name: 🐍 Test
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-python-tests)
-    uses: ./.github/workflows/reusable-python-ci.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-ci.yml@v1.3
+    with:
+      skip-testing-latest-python: true
 
   code-ql:
     name: 📝 CodeQL

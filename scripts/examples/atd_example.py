@@ -1,4 +1,6 @@
-"""example simulation script"""
+"""example simulation script."""
+
+from __future__ import annotations
 
 import numpy as np
 import scipy
@@ -20,7 +22,7 @@ for bp_method in ["msl"]:
             lers = []
             ebs = []
             for sigma in s:
-                print(sigma)  # noqa: T201
+                print(sigma)
                 sim = AtdSimulator(
                     hx=Hx,
                     lx=Lx,

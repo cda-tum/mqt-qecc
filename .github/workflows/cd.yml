@@ -7,10 +7,14 @@ on:
     paths:
       - .github/workflows/cd.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   python-packaging:
     name: 🐍 Packaging
-    uses: ./.github/workflows/reusable-python-packaging.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.3
 
   deploy:
     if: github.event_name == 'release' && github.event.action == 'published'
@@ -35,3 +39,5 @@ jobs:
         with:
           subject-path: "dist/*"
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true

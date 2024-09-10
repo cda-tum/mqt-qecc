@@ -76,10 +76,10 @@ repos:
     rev: v1.11.2
     hooks:
       - id: mypy
-        files: ^(src/mqt|test/python)
-        exclude: "code_construction* | ^data_utils\\.py$"
+        files: ^(src/mqt|test/python|noxfile.py)
         args: []
         additional_dependencies:
+          - nox
           - numpy
           - pytest
           - pytest-mock
