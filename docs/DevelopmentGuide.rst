@@ -88,11 +88,6 @@ Working on the core C++ library
 
 Building the project requires a C++ compiler supporting *C++17* and CMake with a minimum version of *3.19*.
 
-    .. note::
-        We noticed some issues when compiling with Microsoft's *MSCV* compiler toolchain.
-        If you want to start development on this project under Windows, consider using the *clang* compiler toolchain.
-        A detailed description of how to set this up can be found `here <https://docs.microsoft.com/en-us/cpp/build/clang-support-msbuild?view=msvc-160>`_.
-
 Configure and Build
 -------------------
 
