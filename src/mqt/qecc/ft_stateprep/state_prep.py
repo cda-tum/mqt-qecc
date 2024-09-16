@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict, deque
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 import multiprocess
@@ -12,7 +12,6 @@ import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag
-from qiskit.dagcircuit import DAGOutNode
 
 from ..codes import InvalidCSSCodeError
 
@@ -22,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     import numpy.typing as npt
-    from qiskit import AncillaQubit, ClBit, DagCircuit, DAGNode, Qubit
+    from qiskit import AncillaQubit, ClBit, DAGNode, Qubit
     from qiskit.quantum_info import PauliList
 
     from ..codes import CSSCode
@@ -97,8 +96,9 @@ class StatePrepCircuit:
                 dag.remove_op_node(node)
             fault_list = []
             # propagate every error before a control
-            for node in dag.topological_op_nodes():
-                error = _propagate_error(dag, node, x_errors=x_errors)
+            nodes = list(dag.topological_op_nodes())
+            for i in range(len(nodes)):
+                error = _propagate_error(nodes[i:], dag.num_qubits(), x_errors=x_errors)
                 fault_list.append(error)
             faults = np.array(fault_list, dtype=np.int8)
             faults = np.unique(faults, axis=0)
@@ -1172,26 +1172,26 @@ def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.Bool
     )
 
 
-def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> PauliList:
-    """Propagates a Pauli error through a circuit beginning from control of node."""
-    control = node.qargs[0]._index if x_errors else node.qargs[1]._index  # noqa: SLF001
-    error: npt.NDArray[np.int8] = np.array([0] * dag.num_qubits(), dtype=np.int8)
+def _propagate_error(nodes: list[DAGNode], n_qubits: int, x_errors: bool = True) -> PauliList:
+    """Propagates a Pauli error through a circuit beginning from first node.
+
+    Args:
+        nodes: List of nodes in the circuit in topological order.
+        n_qubits: Number of qubits in the circuit.
+        x_errors: If True, propagate X errors. Otherwise, propagate Z errors.
+    """
+    start = nodes[0]
+    control = start.qargs[0]._index if x_errors else start.qargs[1]._index  # noqa: SLF001
+    error: npt.NDArray[np.int8] = np.array([0] * n_qubits, dtype=np.int8)
     error[control] = 1
     # propagate error through circuit via bfs
-    q = deque([node])
-    visited: set[DAGNode] = set()
-    while q:
-        node = q.popleft()
-        if node in visited or isinstance(node, DAGOutNode):
-            continue
+    for node in nodes[1:]:
         control = node.qargs[0]._index  # noqa: SLF001
         target = node.qargs[1]._index  # noqa: SLF001
         if x_errors:
             error[target] = (error[target] + error[control]) % 2
         else:
             error[control] = (error[target] + error[control]) % 2
-        for succ in dag.successors(node):
-            q.append(succ)
     return error
 
 
