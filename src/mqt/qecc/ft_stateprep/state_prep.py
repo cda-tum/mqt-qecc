@@ -575,7 +575,8 @@ def gate_optimal_verification_stabilizers(
     max_timeout: int = 3600,
     max_ancillas: int | None = None,
     additional_faults: npt.NDArray[np.int8] | None = None,
-) -> list[list[npt.NDArray[np.int8]]]:
+    return_all_solutions: bool = False
+) -> list[list[npt.NDArray[np.int8]]] | list[list[list[npt.NDArray[np.int8]]]]:
     """Return verification stabilizers for the state preparation circuit.
 
     The method uses an iterative search to find the optimal set of stabilizers by repeatedly computing the optimal circuit for each number of ancillas and cnots. This is repeated for each number of independent correctable errors in the state preparation circuit. Thus the verification circuit is constructed of multiple "layers" of stabilizers, each layer corresponding to a fault set it verifies.
@@ -587,6 +588,7 @@ def gate_optimal_verification_stabilizers(
         max_timeout: The maximum time to allow each search to run for.
         max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
         additional_faults: Faults to verify in addition to the faults propagating in the state preparation circuit.
+        return_all_solutions: If True, return all equivalent solutions for each number of errors.
 
     Returns:
         A list of stabilizers to verify the state preparation circuit.
@@ -688,7 +690,11 @@ def gate_optimal_verification_stabilizers(
             num_anc -= 1
             measurements = anc_opt
         logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
-        layers[num_errors - 1] = measurements
+        if not return_all_solutions:
+            layers[num_errors - 1] = measurements
+        else:
+            layers[num_errors - 1] = verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors, return_all_solutions=True)
+            logger.info(f"Found {len(layers[num_errors - 1])} equivalent solutions for {num_errors} errors")
 
     return layers
 
