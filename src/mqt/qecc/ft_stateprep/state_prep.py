@@ -1632,6 +1632,6 @@ def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int
         error = stab.copy()
         for qubit in support[:-1]:
             error[qubit] = 0
-            errors.append(error)
+            errors.append(error.copy())
 
     return np.array(errors)
