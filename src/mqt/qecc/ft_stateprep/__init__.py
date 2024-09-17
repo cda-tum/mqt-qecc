@@ -15,9 +15,7 @@ from .state_prep import (
     naive_verification_circuit,
 )
 from .state_prep_det import (
-    optimal_deterministic_verification,
-    deterministic_verification,
-    optimal_global_deterministic_verification,
+    DeterministicVerificationHelper,
 )
 from .simulation_det import NoisyDFTStatePrepSimulator
 
@@ -33,8 +31,6 @@ __all__ = [
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
     "naive_verification_circuit",
-    "optimal_deterministic_verification",
-    "deterministic_verification",
     "NoisyDFTStatePrepSimulator",
-    "optimal_global_deterministic_verification",
+    "DeterministicVerificationHelper",
 ]

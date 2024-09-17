@@ -5,51 +5,202 @@ from __future__ import annotations
 import logging
 
 import numpy as np
+import galois
 import z3
 from typing import TYPE_CHECKING
 
-from qiskit import QuantumCircuit
-from .state_prep import StatePrepCircuit, _vars_to_stab, _odd_overlap, _symbolic_vector_eq, _coset_leader, iterative_search_with_timeout, _run_with_timeout, gate_optimal_verification_stabilizers, verification_stabilizers
+from .state_prep import StatePrepCircuit, _vars_to_stab, _odd_overlap, _symbolic_vector_eq, _coset_leader, iterative_search_with_timeout, _run_with_timeout, gate_optimal_verification_stabilizers, verification_stabilizers, _hook_errors
 
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    DeterministicVerification = dict[int, tuple[list[npt.NDArray[np.int8]], dict[int, npt.NDArray[np.int8]]]]
+    Recovery = dict[int, tuple[list[npt.NDArray[np.int8]], dict[int, npt.NDArray[np.int8]]]]
+    DeterministicCorrection = tuple[list[npt.NDArray[np.int8]], Recovery]
+    Verification = list[npt.NDArray[np.int8]]
 
-def get_all_stabs(
+
+def _CNOT_count_verification(verify_stabs: Verification) -> int:
+    """Counts the number of CNOTs in a verification stabilizer."""
+    return np.sum([np.sum(m) for m in verify_stabs])
+def _ANC_count_verification(verify_stabs: Verification) -> int:
+    """Counts the number of ancillae in a verification stabilizer."""
+    return len(verify_stabs)
+
+        # det_num_anc = np.sum([len(v[0]) for v in det_verify.values()])
+        # det_num_cnots = np.sum([np.sum([np.sum(m) for m in v[0]]) for v in det_verify.values()])
+def _CNOT_count_correction(correction: DeterministicCorrection) -> int:
+    """Counts the number of CNOTs in a correction."""
+    if correction is None:
+        return 0
+    return np.sum([np.sum([np.sum(s) for s in v[0]]) for v in correction.values()])
+def _ANC_count_correction(correction: DeterministicCorrection) -> int:
+    """Counts the number of ancillae in a correction."""
+    if correction is None:
+        return 0
+    return np.sum([len(v[0]) for v in correction.values()])
+
+
+class DeterministicVerification:
+    """
+    """
+
+    def __init__(self, nd_verification_stabs: Verification, det_correction: DeterministicCorrection | None = None, hook_corrections: list[DeterministicCorrection] | None = None):
+        self.stabs = nd_verification_stabs
+        self.det_correction = det_correction
+        self.hook_corrections = [None for _ in nd_verification_stabs] if hook_corrections is None else hook_corrections
+
+    def is_flagged(self, stab_idx : int) -> bool:
+        if self.hook_corrections[stab_idx] == None:
+            return False
+        return True
+
+
+class DeterministicVerificationHelper:
+    """
+    Class for storing deterministic verification stabilizers and corrections. 
+    The methods can be used to compute deterministic verifications for X or Z errors seperatly for d=3 CSS codes. For d=4 it also supports the computation of the deterministic hook error correction.
+    """
+
+    def __init__(self, state_prep: StatePrepCircuit, full_fault_tolerance: bool = True):
+        self.state_prep = state_prep
+        self.code = state_prep.code
+        self.full_fault_tolerance = full_fault_tolerance
+        assert self.code.distance < 5, "Only d=3 and d=4 codes are supported."
+        self.num_qubits = self.code.n
+
+        self._nd_layers = [[], []]
+
+    def compute_nd_stabs(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None, compute_all_solutions: bool = False):
+        """
+        Returns the gate non-deterministic verification stabilizers for X and Z errors. 
+        """
+        for idx, x_errors in enumerate([self.state_prep.zero_state, not self.state_prep.zero_state]):
+            logger.info(f"Computing non-deterministic verification stabilizers for layer {idx + 1} / 2.")
+            stabs = gate_optimal_verification_stabilizers(self.state_prep, x_errors=x_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, return_all_solutions=compute_all_solutions)[0]
+            if not compute_all_solutions:
+                verify = DeterministicVerification(stabs)
+                self._nd_layers[idx] = [verify]
+            else:
+                self._nd_layers[idx] = [DeterministicVerification(stabs) for stabs in stabs]
+    
+    def compute_det_corrections(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None):
+        """
+        Returns the deterministic verification stabilizers for the first layer of non-deterministic verification stabilizers.
+        """
+        for layer_idx in range(2):
+            logger.info(f"Computing deterministic verification for layer {layer_idx + 1} / 2.")
+            for verify_idx, verify in enumerate(self._nd_layers[layer_idx]):
+                logger.info(f"Computing deterministic verification for non-det verification {verify_idx + 1} / {len(self._nd_layers[layer_idx])}.")
+                self._nd_layers[layer_idx][verify_idx].det_correction = deterministic_correction(self.state_prep, verify.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=self.state_prep.zero_state)
+
+    def compute_hook_corrections(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None):
+        """
+        Computes the additional stabilizers to measure with corresponding corrections for the hook errors of each stabilizer measurement in layer 2.
+        """
+        for layer_idx in range(2):
+            logger.info(f"Computing deterministic verification for hook errors of layer {layer_idx + 1} / 2.")
+            for verify_idx, verify in enumerate(self._nd_layers[layer_idx]):
+                if verify.stabs == []:
+                    self._nd_layers[layer_idx][verify_idx].hook_corrections = []
+                    continue
+                for stab in verify.stabs:
+                    hook_errors = _hook_errors(stab)
+
+                    # check if the hook error is trivial
+                    errors_trivial = []
+                    code_stabs = np.vstack((self.code.Hz, self.code.Lz)) if self.state_prep.zero_state else np.vstack((self.code.Hx, self.code.Lx))
+                    rank = np.linalg.matrix_rank(code_stabs)
+                    GF = galois.GF(2)
+                    for error in hook_errors:
+                        single_qubit_deviation = [(error + np.eye(self.num_qubits, dtype=np.int8)[i]) % 2 for i in range(self.num_qubits)]
+                        stabs_plus_single_qubit = [GF(np.vstack((code_stabs, single_qubit_deviation[i]))) for i in range(self.num_qubits)]
+                        trivial = any([np.linalg.matrix_rank(m.row_reduce()) == rank for m in stabs_plus_single_qubit])
+                        errors_trivial.append(trivial)
+                    if all(errors_trivial):
+                        self._nd_layers[layer_idx][verify_idx].hook_corrections.append(None)
+                        continue
+                    
+                    # hook errors are non-trivial
+                    # add case of error on hook ancilla
+                    hook_errors = np.vstack((hook_errors, np.zeros(self.num_qubits, dtype=np.int8)))
+                    self._nd_layers[layer_idx][verify_idx].hook_corrections.append(deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not self.state_prep.zero_state))
+    
+    def get_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[tuple[Verification,DeterministicCorrection], tuple[Verification,DeterministicCorrection], list[DeterministicCorrection]]:
+        """
+        Returns a tuple representing the first layer, second layer and hook error corrections.
+        """
+        if max_ancilla is None:
+            max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
+
+        self.compute_nd_stabs(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
+        self.compute_det_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
+        self.compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
+        return self._nd_layers[0][0], self._nd_layers[1][0]
+
+    def _filter_nd_stabs(self):
+        """
+        Only keep the best non-deterministic verification stabilizers with minimal number of ancillae and CNOTs.
+        """
+        for layer_idx in range(2):
+            # get best numbers
+            best_num_anc = int(1e6)
+            best_num_cnots = int(1e6)
+            best_case_indices = []
+            for idx_verify, verify in enumerate(self._nd_layers[layer_idx]):
+                num_anc = _ANC_count_verification(verify.stabs)
+                num_cnot = _CNOT_count_verification(verify.stabs)
+                for idx_stab in range(len(verify.stabs)):
+                    # add possible flag scheme
+                    if verify.is_flagged(idx_stab):
+                        num_anc += 1
+                        num_cnot += 2
+                if best_num_anc > num_anc or (best_num_anc == num_anc and best_num_cnots > num_cnot):
+                    best_num_anc = num_anc
+                    best_num_cnots = num_cnot
+                    best_case_indices = [idx_verify]
+                elif best_num_anc == num_anc and best_num_cnots == num_cnot:
+                    best_case_indices.append(idx_verify)
+            # filter out all but the best case
+            self._nd_layers[layer_idx] = [self._nd_layers[layer_idx][idx] for idx in best_case_indices]
+
+    def get_global_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[Verification, Verification]:
+        """
+        Returns the optimal non-deterministic verification stabilizers for the first and second layer regarding the number of ancillae and CNOTs.
+        """
+
+        if max_ancilla is None:
+            max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
+
+        self.compute_nd_stabs(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla, compute_all_solutions=True)
+        self.compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
+        self._filter_nd_stabs()
+        self.compute_det_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
+
+        best_stab_indices = [0, 0]
+        for layer_idx in range(2):
+            best_num_anc = 3 * max_ancilla
+            best_num_cnots = 3 * max_ancilla * self.num_qubits
+            for idx_verify, verify in enumerate(self._nd_layers[layer_idx]):
+                num_anc = _ANC_count_verification(verify.stabs) + _ANC_count_correction(verify.det_correction) + sum([_ANC_count_correction(c) for c in verify.hook_corrections])
+                num_cnots = _CNOT_count_verification(verify.stabs) + _CNOT_count_correction(verify.det_correction) + sum([_CNOT_count_correction(c) for c in verify.hook_corrections])
+                if best_num_anc > num_anc or (best_num_anc == num_anc and best_num_cnots > num_cnots):
+                    best_num_anc = num_anc
+                    best_num_cnots = num_cnots
+                    best_stab_indices[layer_idx] = idx_verify
+        if len(self._nd_layers[1]) == 0:
+            return self._nd_layers[0][best_stab_indices[0]], DeterministicVerification([])
+        return self._nd_layers[0][best_stab_indices[0]], self._nd_layers[1][best_stab_indices[1]]
+                
+
+
+def global_deterministic_verification(
         sp_circ: StatePrepCircuit,
         min_timeout: int = 1,
         max_timeout: int = 3600,
         max_ancillas: int | None = None,
-        zero_state: bool = True) -> tuple[list[npt.NDArray[np.int8]],DeterministicVerification]:
-        # get optimal number of ancillae for non-deterministic verification
-    sp_circ.max_errors = 1
-    opt_nd_verif_stabs = gate_optimal_verification_stabilizers(sp_circ, x_errors=zero_state, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)[0]
-    num_nd_stabs = len(opt_nd_verif_stabs)
-    num_cnots = np.sum([np.sum(m) for m in opt_nd_verif_stabs])
-
-    logger.info(f"Found optimal non-det verification stabilizers with {num_nd_stabs} stabilizers and {num_cnots} CNOTs.\n Computing all possible solutions...")
-
-    # get the fault set
-    fault_set = sp_circ.compute_fault_set(1, x_errors=zero_state)
-    # get all solutions with the optimal number of ancillae and cnots
-    all_nd_verify_stabs = verification_stabilizers(sp_circ,
-                                                   fault_set,
-                                                   num_anc=num_nd_stabs,
-                                                   num_cnots=num_cnots,
-                                                   x_errors=zero_state,
-                                                   return_all_solutions=True)
-    return all_nd_verify_stabs
-
-def optimal_global_deterministic_verification(
-        sp_circ: StatePrepCircuit,
-        min_timeout: int = 1,
-        max_timeout: int = 3600,
-        max_ancillas: int | None = None,
-        optimize_cnots: bool = True,
-        zero_state: bool = True) -> tuple[list[npt.NDArray[np.int8]],DeterministicVerification]:
+        zero_state: bool = True) -> DeterministicCorrection:
         """
         Returns the gate and ancilla optimal deterministic verification circuit for a given state preparation circuit.
 
@@ -93,12 +244,12 @@ def optimal_global_deterministic_verification(
 
         for idx, nd_verify_stabs in enumerate(all_nd_verify_stabs):
             logger.info(f"Computing deterministic verification for non-det solution {idx+1}/{len(all_nd_verify_stabs)}")
-            det_verify = optimal_deterministic_verification(sp_circ=sp_circ, nd_d3_verification_stabilizers=nd_verify_stabs,
+            det_verify = deterministic_correction(sp_circ=sp_circ, nd_d3_verification_stabilizers=nd_verify_stabs,
                                                             min_timeout=min_timeout,max_timeout=max_timeout,max_ancillas=best_det_verify_num_anc,zero_state=zero_state)
             det_num_anc = np.sum([len(v[0]) for v in det_verify.values()])
             det_num_cnots = np.sum([np.sum([np.sum(m) for m in v[0]]) for v in det_verify.values()])
             logger.info(f"Found deterministic verification with {det_num_anc} ancillae and {det_num_cnots} CNOTs.")
-            if (optimize_cnots and best_det_verify_num_cnots > det_num_cnots) or (not optimize_cnots and best_det_verify_num_anc > det_num_anc) or (best_det_verify_num_anc == det_num_anc and best_det_verify_num_cnots > det_num_cnots):
+            if best_det_verify_num_anc > det_num_anc or (best_det_verify_num_anc == det_num_anc and best_det_verify_num_cnots > det_num_cnots):
                 best_nd_verify = nd_verify_stabs
                 best_det_verify = det_verify
                 best_det_verify_num_anc = det_num_anc
@@ -107,13 +258,14 @@ def optimal_global_deterministic_verification(
         return best_nd_verify, best_det_verify 
 
 
-def optimal_deterministic_verification(
+def deterministic_correction(
         sp_circ: StatePrepCircuit,
         nd_d3_verification_stabilizers: list[npt.NDArray[np.int8]],
         min_timeout: int = 1,
         max_timeout: int = 3600,
         max_ancillas: int | None = None,
-        zero_state: bool = True) -> DeterministicVerification:
+        zero_state: bool = True,
+        additional_faults: npt.NDArray[np.int8] | None = None) -> DeterministicCorrection:
         """
         Returns an gate and ancilla optimal deterministic verification circuit for a given state preparation circuit and 
         non-deterministic verification stabilizers.
@@ -122,31 +274,19 @@ def optimal_deterministic_verification(
         """
         num_nd_stabs = len(nd_d3_verification_stabilizers)
         num_qubits = sp_circ.code.n
+        if max_ancillas is None:
+            max_ancillas = sp_circ.code.Hx.shape[0] + sp_circ.code.Hz.shape[0]
 
         # get the fault set
-        # fault_set = sp_circ.compute_fault_set(1, x_errors=zero_state)
-        fault_set = np.array([[0,0,0,0,0,0,0,0,0,0,1,1,0,0,0],
- [0,0,0,0,0,0,0,0,0,1,0,0,0,1,0],
- [0,0,0,0,0,0,0,0,1,0,1,1,0,0,0],
- [0,0,0,0,0,0,0,0,1,0,1,1,1,0,0],
- [0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
- [0,0,0,0,0,0,1,0,0,0,1,0,0,0,0],
- [0,0,0,0,0,0,1,0,0,0,1,0,0,0,1],
- [0,0,0,0,0,0,1,1,0,0,1,0,0,0,0],
- [0,0,0,0,0,1,1,1,0,0,1,0,0,0,0],
- [0,0,0,1,0,0,0,0,0,1,0,0,0,0,0],
- [0,0,0,1,0,0,0,0,1,1,0,0,0,0,0],
-#  [0,0,1,0,1,0,0,0,1,1,0,0,0,0,0],
- [0,0,1,0,1,0,0,0,1,0,0,0,0,0,0],
- [0,0,1,1,1,0,0,0,1,1,0,0,0,0,0],
- [0,1,1,0,0,1,0,0,0,0,0,0,0,1,0],
- [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
- [1,1,0,0,0,0,0,0,0,0,0,1,0,0,1]])
-        print(fault_set)
-        
+        if additional_faults is not None:
+            fault_set = sp_circ.combine_faults(additional_faults=additional_faults, x_errors=zero_state)
+        else:
+            fault_set = sp_circ.compute_fault_set(1, x_errors=zero_state)
+
         det_verify = dict()
         for verify_outcome_int in range(1, 2**num_nd_stabs):
             verify_outcome = _int_to_int8_array(verify_outcome_int, num_nd_stabs)
+            logger.info(f"Computing deterministic verification for non-det outcome {verify_outcome}: {verify_outcome_int}/{2**num_nd_stabs-1}")
 
             # only consider errors that triggered the verification pattern
             errors_filtered = np.array([error for error in fault_set if np.array_equal(verify_outcome, [np.sum(m * error) % 2 for m in nd_d3_verification_stabilizers])])
@@ -166,20 +306,16 @@ def optimal_deterministic_verification(
             # add the no-error case for the error beeing on one of the verification ancillae
             if np.sum(verify_outcome) == 1:
                 errors_filtered = np.vstack((errors_filtered, np.zeros(num_qubits, dtype=np.int8)))
-
-            print(verify_outcome)
-            print(errors_filtered)
-
             # case of no errors or only one error is trivial
             if errors_filtered.shape[0] == 0:
                 det_verify[verify_outcome_int] = np.zeros((num_qubits, 0), dtype=np.int8), {0: np.zeros(num_qubits, dtype=np.int8), 1: np.zeros(num_qubits, dtype=np.int8)}
             elif errors_filtered.shape[0] == 1:
                 det_verify[verify_outcome_int] = ([np.zeros(num_qubits, dtype=np.int8)], {0: errors_filtered[0], 1: errors_filtered[0]})
             else:
-                det_verify[verify_outcome_int] = optimal_deterministic_verification_single_outcome(sp_circ, errors_filtered, min_timeout, max_timeout, max_ancillas, zero_state)
+                det_verify[verify_outcome_int] = deterministic_correction_single_outcome(sp_circ, errors_filtered, min_timeout, max_timeout, max_ancillas, zero_state)
         return det_verify
 
-def optimal_deterministic_verification_single_outcome(
+def deterministic_correction_single_outcome(
         sp_circ: StatePrepCircuit,
         fault_set: npt.NDArray[np.int8],
         min_timeout: int,
@@ -196,7 +332,7 @@ def optimal_deterministic_verification_single_outcome(
     num_qubits = sp_circ.code.n
 
     def _func(num_anc: int):
-        return deterministic_verification(sp_circ, fault_set, num_anc, num_anc*num_qubits, x_errors=zero_state)
+        return correction_stabilizers(sp_circ, fault_set, num_anc, num_anc*num_qubits, x_errors=zero_state)
 
     res = iterative_search_with_timeout(_func, num_anc, max_ancillas, min_timeout, max_timeout)
 
@@ -216,7 +352,7 @@ def optimal_deterministic_verification_single_outcome(
 
     # try to reduce the number of CNOTs
     def min_cnot_func(num_cnots: int):
-        return deterministic_verification(sp_circ, fault_set, num_anc, num_cnots, x_errors=zero_state)
+        return correction_stabilizers(sp_circ, fault_set, num_anc, num_cnots, x_errors=zero_state)
 
     num_cnots = 2
     while num_cnots > 1:
@@ -234,7 +370,7 @@ def optimal_deterministic_verification_single_outcome(
 
 
 
-def deterministic_verification(
+def correction_stabilizers(
         sp_circ: StatePrepCircuit,
         fault_set: npt.NDArray[np.int8],
         num_anc: int,
