@@ -1,5 +1,9 @@
 [build-system]
-requires = ["scikit-build-core>=0.10.1", "setuptools-scm>=7", "pybind11>=2.13"]
+requires = [
+  "scikit-build-core>=0.10.1",
+  "setuptools-scm>=7",
+  "pybind11>=2.13.5",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -50,9 +54,8 @@ dependencies = [
     "multiprocess >= 0.70.16",
     "bposd>=1.6",
     "numba>=0.59; python_version > '3.11'",
-    "numpy>=0.57; python_version <= '3.11'",
-    "pymatching>=2.2; python_version > '3.11'",
-    "pymatching>=2; python_version <= '3.11'",
+    "numba>=0.57; python_version <= '3.11'",
+    "pymatching>=2.2.1",
 ]
 dynamic = ["version"]
 
@@ -127,6 +130,14 @@ BUILD_MQT_QECC_TESTS = "OFF"
 BUILD_MQT_QECC_BINDINGS = "ON"
 ENABLE_IPO = "ON"
 
+[[tool.scikit-build.overrides]]
+if.python-version = ">=3.13"
+if.abi-flags = "t"
+if.platform-system = "win32"
+inherit.cmake.define = "append"
+cmake.define.DISABLE_GIL = "1"
+
+
 [tool.check-sdist]
 sdist-only = ["src/mqt/qecc/_version.py"]
 git-only = [
@@ -163,7 +174,7 @@ report.exclude_also = [
 ]
 
 [tool.mypy]
-files = ["src/mqt", "test/python"]
+files = ["src/mqt", "test/python", "noxfile.py"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 python_version = "3.9"
 warn_unused_configs = true
@@ -178,7 +189,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qecsim.*","qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
     "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*"]
 ignore_missing_imports = true
 
@@ -194,13 +205,6 @@ preview = true
 unsafe-fixes = true
 
 [tool.ruff.lint]
-exclude = [
-    "scripts/*",
-    "*/cc_decoder/plots.py",
-    "*/analog_information_decoding/code_construction/*",
-    "*/analog_information_decoding/utils/data_utils.py",
-
-]
 extend-select = [
     "A",           # flake8-builtins
     "ANN",         # flake8-annotations
@@ -271,6 +275,8 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
+"*/cc_decoder/plots.py" = ["T201"]
+"scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -289,9 +295,13 @@ build = "cp3*"
 skip = "*-musllinux*"
 archs = "auto64"
 test-command = "python -c \"from mqt import qecc\""
-test-skip = ["cp38-macosx_arm64", "cp313*"] # skip testing on Python 3.13 until our dependencies are ready
+test-skip = ["cp313*"] # skip testing on Python 3.13 until our dependencies are ready
 build-frontend = "build[uv]"
 free-threaded-support = true
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
 environment = { DEPLOY = "ON" }

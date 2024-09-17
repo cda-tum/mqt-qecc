@@ -66,13 +66,13 @@ def runtime() -> None:
     colors = mcolors.BASE_COLORS
 
     for i in range(len(x_data)):
-        col, val = colors.popitem()
+        col, _val = colors.popitem()
         if col in {"w", "k"}:
-            col, val = colors.popitem()
+            col, _val = colors.popitem()
             if col in {"w", "k"}:
-                col, val = colors.popitem()
+                col, _val = colors.popitem()
                 cols.append(col)
-        label = "% 6.3f" % pers[i]
+        label = f"{pers[i]: 6.3f}"
         orders.append(np.argsort(x_data[i]))
         xfinal.append(np.array(x_data[i])[orders[i]])
         yfinal.append(np.array(y_data[i])[orders[i]])
@@ -98,9 +98,9 @@ def runtime_comparison() -> None:
     pers2 = 0.0
     orders = []
 
-    with Path(input_filen).open() as data_file:
+    with Path(input_filen).open(encoding="utf-8") as data_file:
         data = json.load(data_file)
-    with Path(input_filen2).open() as data_file2:
+    with Path(input_filen2).open(encoding="utf-8") as data_file2:
         data2 = json.load(data_file2)
 
     for per in data:
@@ -126,19 +126,19 @@ def runtime_comparison() -> None:
     colors = mcolors.BASE_COLORS
 
     for i in range(len(x_data)):
-        col, val = colors.popitem()
+        col, _val = colors.popitem()
         if col in {"w", "k"}:
-            col, val = colors.popitem()
+            col, _val = colors.popitem()
             if col in {"w", "k"}:
-                col, val = colors.popitem()
+                col, _val = colors.popitem()
                 cols.append(col)
-        label = "%2.2f" % pers[i]
+        label = f"{pers[i]:2.2f}"
         orders.append(np.argsort(x_data[i]))
         xfinal.append(np.array(x_data[i])[orders[i]])
         yfinal.append(np.array(y_data[i])[orders[i]])
         plt.plot(xfinal[i], yfinal[i], "o", label="UFH, p=" + label, color=col)
         start = 0
-        optimized_parameters, pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
+        optimized_parameters, _pcov = opt.curve_fit(lin_fun, xfinal[i][start:], yfinal[i][start:])
         plt.plot(
             xfinal[i][start:],
             lin_fun(xfinal[i][start:], *optimized_parameters),
@@ -148,13 +148,13 @@ def runtime_comparison() -> None:
         )
 
     # general qlpd decoder data
-    label = "%2.2f" % pers2
+    label = f"{pers2:2.2f}"
     orders2 = np.argsort(x_data2)
     xfinal2 = np.array(x_data2)[orders2]
     yfinal2 = np.array(y_data2)[orders2]
     plt.plot(xfinal2, yfinal2, "d", label="GD, p=" + label, color="green")
     start = 0
-    optimized_parameters2, pcov = opt.curve_fit(quad_fun, xfinal2[start:], yfinal2[start:])
+    optimized_parameters2, _pcov = opt.curve_fit(quad_fun, xfinal2[start:], yfinal2[start:])
     plt.plot(
         xfinal2[start:],
         quad_fun(xfinal2[start:], *optimized_parameters2),

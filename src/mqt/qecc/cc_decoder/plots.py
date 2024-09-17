@@ -13,6 +13,8 @@ from matplotlib import pyplot as plt
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+import operator
+
 from scipy.optimize import curve_fit
 
 ler_k = "logical_error_rates"
@@ -32,7 +34,7 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_yscale("log")
     ax.legend()
     ax.set_ylabel("Logical failure rate")
-    ax.set_xlabel(r"Code distance $\it{d}$")
+    ax.set_xlabel("Code distance $\it\{d\}$")
 
 
 def threshold_fit(
@@ -210,7 +212,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         xys.append((run["physical_error_rate"], run["logical_failure_rate"]))
 
     for xys in code_to_xys.values():
-        xys.sort(key=lambda xy: xy[0])
+        xys.sort(key=operator.itemgetter(0))
 
     _, ax = plt.subplots(2, 2, figsize=(12, 10))
     # add data
@@ -228,7 +230,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         xys.append((run["error_probability"], (run["wall_time"] / run["n_run"]) * 1e6))
 
     for xys in code_to_xys.values():
-        xys.sort(key=lambda xy: xy[0])
+        xys.sort(key=operator.itemgetter(0))
 
     for code, xys in sorted(code_to_xys.items()):
         ax[1][0].plot(*zip(*xys), "x-", label=f"d={code}")
@@ -289,7 +291,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             idx += 1
         for f in files:
             fp = subdir + "/" + f
-            with Path(fp).open() as ff:
+            with Path(fp).open(encoding="utf-8") as ff:
                 data.append(json.loads(ff.read()))
 
         metrics: dict[int, dict[str, Any]] = {}
