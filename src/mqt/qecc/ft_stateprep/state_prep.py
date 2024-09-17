@@ -1468,7 +1468,7 @@ def measure_stab_two_flagged(
 
     cnots = 2
     flags = 2
-    for q in stab[4:-2]:
+    for q in stab[2:-2]:
         _ancilla_cnot(qc, q, ancilla, z_measurement)
         cnots += 1
         if cnots % 2 == 0 and cnots < len(stab) - 2:
@@ -1477,7 +1477,7 @@ def measure_stab_two_flagged(
         if cnots >= 7 and cnots % 2 == 1:
             _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
             _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
-        flags += 1
+            flags += 1
 
     _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
     _flag_measure(qc, flag_reg[0], meas_reg[0], z_measurement)
@@ -1647,6 +1647,7 @@ def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int
     for stab in measurements:
         support = np.where(stab == 1)[0]
         error = stab.copy()
+        error[support[0]] = 0
         for qubit in support[1:-1]:
             error[qubit] = 0
             errors.append(error)
