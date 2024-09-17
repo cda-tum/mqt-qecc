@@ -698,21 +698,37 @@ def _verification_circuit(
         [StatePrepCircuit, bool, npt.NDArray[np.int8] | None], list[list[npt.NDArray[np.int8]]]
     ],
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     logging.info("Finding verification stabilizers for the state preparation circuit")
     layers_1 = verification_stabs_fun(sp_circ, sp_circ.zero_state, None)
     measurements_1 = [measurement for layer in layers_1 for measurement in layer]
 
     if full_fault_tolerance:
-        additional_errors = _hook_errors(measurements_1)
-        layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+        if not flag_first_layer:
+            additional_errors = _hook_errors(measurements_1)
+            layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+        else:
+            layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, None)
         measurements_2 = [measurement for layer in layers_2 for measurement in layer]
     else:
         measurements_2 = []
 
     if sp_circ.zero_state:
-        return _measure_ft_stabs(sp_circ, measurements_2, measurements_1, full_fault_tolerance=full_fault_tolerance)
-    return _measure_ft_stabs(sp_circ, measurements_1, measurements_2, full_fault_tolerance=full_fault_tolerance)
+        return _measure_ft_stabs(
+            sp_circ,
+            measurements_2,
+            measurements_1,
+            full_fault_tolerance=full_fault_tolerance,
+            flag_first_layer=flag_first_layer,
+        )
+    return _measure_ft_stabs(
+        sp_circ,
+        measurements_1,
+        measurements_2,
+        full_fault_tolerance=full_fault_tolerance,
+        flag_first_layer=flag_first_layer,
+    )
 
 
 def gate_optimal_verification_circuit(
@@ -721,6 +737,7 @@ def gate_optimal_verification_circuit(
     max_timeout: int = 3600,
     max_ancillas: int | None = None,
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -734,6 +751,7 @@ def gate_optimal_verification_circuit(
         max_timeout: The maximum time to allow each search to run for.
         max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
         full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
+        flag_first_layer: If True, the first verification layer (verifying X or Z errors) will also be flagged. If False, the potential hook errors introduced by the first layer will be caught by the second layer. This is only relevant if full_fault_tolerance is True.
     """
 
     def verification_stabs_fun(
@@ -745,7 +763,9 @@ def gate_optimal_verification_circuit(
             sp_circ, zero_state, min_timeout, max_timeout, max_ancillas, additional_errors
         )
 
-    return _verification_circuit(sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance)
+    return _verification_circuit(
+        sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance, flag_first_layer=flag_first_layer
+    )
 
 
 def heuristic_verification_circuit(
@@ -963,6 +983,7 @@ def _measure_ft_stabs(
     x_measurements: list[npt.NDArray[np.int8]],
     z_measurements: list[npt.NDArray[np.int8]],
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     # Create the verification circuit
     q = QuantumRegister(sp_circ.num_qubits, "q")
@@ -970,11 +991,11 @@ def _measure_ft_stabs(
     measured_circ.compose(sp_circ.circ, inplace=True)
 
     if sp_circ.zero_state:
-        _measure_ft_z(measured_circ, z_measurements, t=sp_circ.max_x_errors)
+        _measure_ft_z(measured_circ, z_measurements, t=sp_circ.max_x_errors, flags=flag_first_layer)
         if full_fault_tolerance:
             _measure_ft_x(measured_circ, x_measurements, flags=True, t=sp_circ.max_x_errors)
     else:
-        _measure_ft_x(measured_circ, x_measurements, t=sp_circ.max_z_errors)
+        _measure_ft_x(measured_circ, x_measurements, t=sp_circ.max_z_errors, flags=flag_first_layer)
         if full_fault_tolerance:
             _measure_ft_z(measured_circ, z_measurements, flags=True, t=sp_circ.max_z_errors)
 
@@ -1426,7 +1447,7 @@ def measure_stab_two_flagged(
 
     cnots = 2
     flags = 2
-    for q in stab[2:-2]:
+    for q in stab[4:-2]:
         _ancilla_cnot(qc, q, ancilla, z_measurement)
         cnots += 1
         if cnots % 2 == 0 and cnots < len(stab) - 2:
@@ -1599,14 +1620,14 @@ def measure_flagged_8(
     qc.measure(ancilla, measurement_bit)
 
 
-def _hook_errors(stabs: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
+def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
     """Assuming CNOTs are executed in ascending order of qubit index, this function gives all the hook errors of the given stabilizer measurements."""
     errors = []
-    for stab in stabs:
+    for stab in measurements:
+        support = np.where(stab == 1)[0]
         error = stab.copy()
-        for i in range(len(stab)):
-            if stab[i] == 1:
-                error[i] = 0
-                errors.append(error.copy())
-                error[i] = 1
+        for qubit in support[len(support) // 2 : -1]:
+            error[qubit] = 0
+            errors.append(error)
+
     return np.array(errors)
