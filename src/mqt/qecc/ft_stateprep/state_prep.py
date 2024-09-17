@@ -773,6 +773,7 @@ def heuristic_verification_circuit(
     max_covering_sets: int = 10000,
     find_coset_leaders: bool = True,
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -783,6 +784,7 @@ def heuristic_verification_circuit(
         max_covering_sets: The maximum number of covering sets to consider.
         find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
         full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
+        flag_first_layer: If True, the first verification layer (verifying X or Z errors) will also be flagged. If False, the potential hook errors introduced by the first layer will be caught by the second layer. This is only relevant if full_fault_tolerance is True.
     """
 
     def verification_stabs_fun(
@@ -792,7 +794,9 @@ def heuristic_verification_circuit(
             sp_circ, zero_state, max_covering_sets, find_coset_leaders, additional_errors
         )
 
-    return _verification_circuit(sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance)
+    return _verification_circuit(
+        sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance, flag_first_layer=flag_first_layer
+    )
 
 
 def heuristic_verification_stabilizers(
