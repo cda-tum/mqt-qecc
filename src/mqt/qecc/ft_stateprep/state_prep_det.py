@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 import numpy as np
-import galois
+from ldpc import mod2
 import z3
 from typing import TYPE_CHECKING
 
@@ -99,6 +99,7 @@ class DeterministicVerificationHelper:
         self.full_fault_tolerance = full_fault_tolerance
         assert self.code.distance < 5, "Only d=3 and d=4 codes are supported."
         self.num_qubits = self.code.n
+        self.layer_x_errors = [self.state_prep.zero_state, not self.state_prep.zero_state]
 
         self._nd_layers = [[], []]
 
@@ -106,7 +107,7 @@ class DeterministicVerificationHelper:
         """
         Returns the gate non-deterministic verification stabilizers for X and Z errors. 
         """
-        for idx, x_errors in enumerate([self.state_prep.zero_state, not self.state_prep.zero_state]):
+        for idx, x_errors in enumerate(self.layer_x_errors):
             logger.info(f"Computing non-deterministic verification stabilizers for layer {idx + 1} / 2.")
             stabs = gate_optimal_verification_stabilizers(self.state_prep, x_errors=x_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, return_all_solutions=compute_all_solutions)[0]
             if not compute_all_solutions:
@@ -119,17 +120,17 @@ class DeterministicVerificationHelper:
         """
         Returns the deterministic verification stabilizers for the first layer of non-deterministic verification stabilizers.
         """
-        for layer_idx in range(2):
+        for layer_idx, x_errors in enumerate(self.layer_x_errors):
             logger.info(f"Computing deterministic verification for layer {layer_idx + 1} / 2.")
             for verify_idx, verify in enumerate(self._nd_layers[layer_idx]):
                 logger.info(f"Computing deterministic verification for non-det verification {verify_idx + 1} / {len(self._nd_layers[layer_idx])}.")
-                self._nd_layers[layer_idx][verify_idx].det_correction = deterministic_correction(self.state_prep, verify.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=self.state_prep.zero_state)
+                self._nd_layers[layer_idx][verify_idx].det_correction = deterministic_correction(self.state_prep, verify.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=x_errors)
 
     def compute_hook_corrections(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None):
         """
         Computes the additional stabilizers to measure with corresponding corrections for the hook errors of each stabilizer measurement in layer 2.
         """
-        for layer_idx in range(2):
+        for layer_idx, x_error in enumerate(self.layer_x_errors):
             logger.info(f"Computing deterministic verification for hook errors of layer {layer_idx + 1} / 2.")
             for verify_idx, verify in enumerate(self._nd_layers[layer_idx]):
                 if verify.stabs == []:
@@ -140,24 +141,22 @@ class DeterministicVerificationHelper:
 
                     # check if the hook error is trivial
                     errors_trivial = []
-                    code_stabs = np.vstack((self.code.Hz, self.code.Lz)) if self.state_prep.zero_state else np.vstack((self.code.Hx, self.code.Lx))
-                    rank = np.linalg.matrix_rank(code_stabs)
-                    GF = galois.GF(2)
+                    code_stabs = np.vstack((self.code.Hz, self.code.Lz)) if x_error else np.vstack((self.code.Hx, self.code.Lx))
+                    rank = mod2.rank(code_stabs)
                     for error in hook_errors:
                         single_qubit_deviation = [(error + np.eye(self.num_qubits, dtype=np.int8)[i]) % 2 for i in range(self.num_qubits)]
-                        stabs_plus_single_qubit = [GF(np.vstack((code_stabs, single_qubit_deviation[i]))) for i in range(self.num_qubits)]
-                        trivial = any([np.linalg.matrix_rank(m.row_reduce()) == rank for m in stabs_plus_single_qubit])
+                        stabs_plus_single_qubit = [np.vstack((code_stabs, single_qubit_deviation[i])) for i in range(self.num_qubits)]
+                        trivial = any([mod2.rank(m) == rank for m in stabs_plus_single_qubit])
                         errors_trivial.append(trivial)
                     if all(errors_trivial):
                         self._nd_layers[layer_idx][verify_idx].hook_corrections.append(None)
                         continue
-                    # TODO only keep non-trivial errors
-                    # hook_errors = hook_errors[np.logical_not(errors_trivial)]
+                    hook_errors = hook_errors[np.logical_not(errors_trivial)]
 
                     # hook errors are non-trivial
                     # add case of error on hook ancilla
                     hook_errors = np.vstack((hook_errors, np.zeros(self.num_qubits, dtype=np.int8)))
-                    self._nd_layers[layer_idx][verify_idx].hook_corrections.append({1: deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not self.state_prep.zero_state)})
+                    self._nd_layers[layer_idx][verify_idx].hook_corrections.append({1: deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not x_error)})
     
     def get_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[tuple[Verification,DeterministicCorrection], tuple[Verification,DeterministicCorrection], list[DeterministicCorrection]]:
         """

@@ -29,13 +29,15 @@ def _support_int(array: npt.NDArray[np.int8]) -> set[int]:
     """
     Return the indices of the non-zero elements of the array.
     """
-    return set([int(i) for i in np.where(array)[0]])
+    return [int(i) for i in np.where(array)[0]]
 
 def return_correction(outcome: int, corrections: dict, zero_state: bool) -> qs.Circuit:
     """
     Return the det correction circuit for the given outcome of the D-verification.
     """
     correction = _support_int(corrections[outcome])
+    if len(correction) == 0:
+        return qs.Circuit([], noisy=False)
     correction_circuit = []
     if zero_state:
         correction_circuit.append({"X": set(correction)})
@@ -43,15 +45,19 @@ def return_correction(outcome: int, corrections: dict, zero_state: bool) -> qs.C
         correction_circuit.append({"Z": set(correction)})
     return qs.Circuit(correction_circuit, noisy=False)
 
-def ndv_outcome_check(outcome: int, correction_index: int, num_nd_measurements: int, flag: bool) -> bool:
+def ndv_outcome_check(outcome: int, correction_index: int, num_measurements: int, cutoff: int, flag: bool) -> bool:
     """
     Check if the outcome of the ND-verification is equal to the given outcome.
     """
-    outcome_bitstring = format(outcome, f'0{num_nd_measurements}b')
-    correction_outcome_bitstring = format(correction_index, f'0{num_nd_measurements}b')
+    outcome_bitstring = format(outcome, f'0{num_measurements}b')
     if not flag:
-        return outcome_bitstring[:num_nd_measurements] == correction_outcome_bitstring
-    return outcome_bitstring[num_nd_measurements:] == correction_outcome_bitstring
+        # return False if any of the flags trigged
+        if '1' in outcome_bitstring[cutoff:]:
+            return False 
+        correction_outcome_bitstring = format(correction_index, f'0{cutoff}b')
+        return outcome_bitstring[:cutoff] == correction_outcome_bitstring
+    correction_outcome_bitstring = format(correction_index, f'0{num_measurements - cutoff}b')
+    return outcome_bitstring[cutoff:] == correction_outcome_bitstring
 
 # perform decoding using LUT
 def decode_failure(measurements: int, code: CSSCode, decoder: LutDecoder, zero_state: bool, num_measurements: int) -> bool:
@@ -123,15 +129,15 @@ class NoisyDFTStatePrepSimulator:
         self.protocol.add_edge("START", "PREP", check='True')
 
         # create ND-verifications
-        self.protocol.add_node(name=f"NDV_0", circuit=self._create_stab_measurement_circuit(verifications[0].stabs, are_flagged=verifications[0].are_flagged(), z_stabs=self.zero_state))
-        self.protocol.add_node(name=f"NDV_1", circuit=self._create_stab_measurement_circuit(verifications[1].stabs, are_flagged=verifications[1].are_flagged(), z_stabs=self.zero_state))
+        self.protocol.add_node(name=f"NDV_0", circuit=self._create_stab_measurement_circuit(verifications[0].stabs, are_flagged=verifications[0].are_flagged(), z_stabs=self.zero_state, noisy=True))
+        self.protocol.add_node(name=f"NDV_1", circuit=self._create_stab_measurement_circuit(verifications[1].stabs, are_flagged=verifications[1].are_flagged(), z_stabs=not self.zero_state, noisy=True))
 
         self.protocol.add_edge("PREP", "NDV_0", check='True')
 
 
         # create decoding circuit
         matrix = code.Hz if self.zero_state else code.Hx
-        decoding_circuit = self._create_stab_measurement_circuit(code.Hz, z_stabs=self.zero_state, noisy = False)
+        decoding_circuit = self._create_stab_measurement_circuit(matrix, z_stabs=self.zero_state, noisy = False)
         if not self.zero_state:
             decoding_circuit.append({"H": set(range(self.code.n))})
         decoding_circuit.append({"measure": set(range(self.code.n))})
@@ -139,61 +145,49 @@ class NoisyDFTStatePrepSimulator:
         self.protocol.add_node(name="DEC", circuit=decoding_circuit)
 
         # add layers
-        self._append_verification(verifications[0], layer = "0", end_node="NDV_1")
-        self._append_verification(verifications[1], layer = "1", end_node="DEC")
+        self._append_verification(verifications[0], layer = "0", end_node="NDV_1", z_stabs=self.zero_state)
+        self._append_verification(verifications[1], layer = "1", end_node="DEC", z_stabs=not self.zero_state)
         
         # add decoding and failure check
         self._append_decoding(code)
 
-    def _append_verification(self, verification: DeterministicVerification, layer: str, end_node: str) -> None:
+    def _append_verification(self, verification: DeterministicVerification, layer: str, end_node: str, z_stabs: bool) -> None:
         """
         Append the different deterministic verification circuits to the protocol and connect them to the ND-verification 
         depending on the outcome of the ND-verification.
         """
-        # append ND-verification
-
-        # case of no errors detected
+        # # case of no errors detected
         self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0")
-        self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == None")
             
         num_measurements = verification.num_ancillae_verification() + verification.num_ancillae_hooks()
+        num_nd_measurements = verification.num_ancillae_verification()
 
         for outcome, (cor_stabs, rec) in verification.det_correction.items():
-            # split measurement outcome into ndv outcome and flags
-
             # det corrections
-            self.protocol.add_node(name=f"COR_{layer}_{outcome}", circuit=self._create_stab_measurement_circuit(cor_stabs,z_stabs=self.zero_state))
-            self.protocol.check_functions[f"ndv_outcome_check_{layer}_{outcome}"] = partial(ndv_outcome_check, correction_index=outcome, num_nd_measurements=num_measurements, flag=False)
+            self.protocol.add_node(name=f"COR_{layer}_{outcome}", circuit=self._create_stab_measurement_circuit(cor_stabs,z_stabs=z_stabs, noisy=True))
+            self.protocol.check_functions[f"ndv_outcome_check_{layer}_{outcome}"] = partial(ndv_outcome_check, correction_index=outcome, num_measurements=num_measurements, cutoff=num_nd_measurements, flag=False)
             self.protocol.add_edge(f"NDV_{layer}", f"COR_{layer}_{outcome}", check=f"ndv_outcome_check_{layer}_{outcome}(NDV_{layer}[-1])")
             # recovery
-            self.protocol.check_functions[f"return_correction_circuit_{layer}_{outcome}" ] = partial(return_correction, corrections=rec, zero_state=self.zero_state)
-            self.protocol.add_edge(f"COR_{layer}_{outcome}", end_node, check=f"return_correction_circuit_{layer}_{outcome}(COR_{layer}_{outcome}[-1])")
+            self.protocol.check_functions[f"return_correction_circuit_{layer}_{outcome}" ] = partial(return_correction, corrections=rec, zero_state=z_stabs)
+            self.protocol.add_edge(f"COR_{layer}_{outcome}", f"REC_{layer}", check=f"return_correction_circuit_{layer}_{outcome}(COR_{layer}_{outcome}[-1])")
+            self.protocol.add_edge(f"REC_{layer}", end_node, check='True')
 
         # hooks
         hooks_idx = 0
         for hook_correction, flagged in zip(verification.hook_corrections, verification.are_flagged()):
             if not flagged:
                 continue
-            outcome, (hook_stabs, rec) = hook_correction["1"]
-            self.protocol.add_node(name=f"COR_{layer}_hook_{hooks_idx}", circuit=self._create_stab_measurement_circuit(hook_stabs,z_stabs=self.zero_state))
-            self.protocol.check_functions[f"ndv_outcome_check_{layer}_hook_{hooks_idx}"] = partial(ndv_outcome_check, correction_index=outcome, num_nd_measurements=num_measurements, flag=True)
-            self.protocol.add_edge(f"NDV_{layer}", f"COR_{layer}_hook_{hooks_idx}", check=f"ndv_outcome_check_{layer}_hook_{hooks_idx}(NDV_{layer}[-1])")
+            hook_stabs, rec = hook_correction[1]
+            outcome = int('0' * hooks_idx + '1' + '0' * (verification.num_ancillae_hooks() - hooks_idx - 1),2)
+            self.protocol.add_node(name=f"COR_{layer}_H_{hooks_idx}", circuit=self._create_stab_measurement_circuit(hook_stabs,z_stabs=not z_stabs, noisy=True))
+            self.protocol.check_functions[f"ndv_outcome_check_h_{layer}_{hooks_idx}"] = partial(ndv_outcome_check, correction_index=outcome, num_measurements=num_measurements, cutoff=num_nd_measurements, flag=True)
+            self.protocol.add_edge(f"NDV_{layer}", f"COR_{layer}_H_{hooks_idx}", check=f"ndv_outcome_check_h_{layer}_{hooks_idx}(NDV_{layer}[-1])")
 
             # recovery
-            self.protocol.check_functions[f"return_correction_circuit_{layer}_hook_{hooks_idx}" ] = partial(return_correction, corrections=rec, zero_state=self.zero_state)
-            self.protocol.add_edge(f"COR_{layer}_hook_{hooks_idx}", end_node, check=f"return_correction_circuit_{layer}_hook_{hooks_idx}(COR_{layer}_hook_{hooks_idx}[-1])")
+            self.protocol.check_functions[f"return_correction_circuit_{layer}_hook_{hooks_idx}" ] = partial(return_correction, corrections=rec, zero_state=not z_stabs)
+            self.protocol.add_edge(f"COR_{layer}_H_{hooks_idx}", f"REC_{layer}", check=f"return_correction_circuit_{layer}_hook_{hooks_idx}(COR_{layer}_H_{hooks_idx}[-1])")
+            self.protocol.add_edge(f"REC_{layer}", end_node, check='True')
             hooks_idx += 1
-
-        # for outcome, (verification_stabilizers, corrections) in det_verification.items():
-        #     self.num_d_verify_qubits.append(len(verification_stabilizers))
-        #     if outcome == 0:
-        #         continue
-        #     self.protocol.add_node(name=f"DV{outcome}", circuit=_create_det_verification_circuit(verification_stabilizers, ancilla_index))
-        #     self.protocol.add_edge("NDV", f"DV{outcome}", check=f"NDV[-1] == {outcome}")
-        #     self.protocol.check_functions[f"return_correction{outcome}" ] = partial(return_correction, corrections=corrections, zero_state=self.zero_state)
-        #     # self.protocol.check_functions["return_correction" ] = return_correction
-        #     self.protocol.add_edge(f"DV{outcome}", "COR", check=f"return_correction{outcome}(DV{outcome}[-1])")
-            
 
     def _append_decoding(self, code: CSSCode) -> None:
         """
@@ -250,9 +244,17 @@ class NoisyDFTStatePrepSimulator:
         """
         Create the deterministic verification circuit for the given verification stabilizers using CNOT gates starting from the ancilla_index.
         """
+        num_stabs = len(verification_stabilizers)
+        if num_stabs == 0:
+            return qs.Circuit([], noisy=False)
+
         if are_flagged is None:
             are_flagged = [False]*len(verification_stabilizers)
         circuit = []
+        # init new ancillae
+        num_ancllae = len(verification_stabilizers) + sum(are_flagged)
+        circuit.append({"init": set(range(self._ancilla_index, self._ancilla_index + num_ancllae))})
+
         flag_ancilla_index = self._ancilla_index + len(verification_stabilizers)
         for stabilizer, flagged in zip(verification_stabilizers,are_flagged):
             stabilizer = _support_int(stabilizer)
@@ -281,8 +283,9 @@ class NoisyDFTStatePrepSimulator:
                     circuit.append({"CNOT": {(self._ancilla_index, qubit)}})
             if not z_stabs:
                 circuit.append({"H": {self._ancilla_index}})
-            circuit.append({"measure": {self._ancilla_index}})
+            # circuit.append({"measure": {self._ancilla_index}})
             self._ancilla_index += 1
+        circuit.append({"measure": set(range(self._ancilla_index - num_stabs, flag_ancilla_index))})
         self._ancilla_index = flag_ancilla_index
         return qs.Circuit(circuit, noisy=noisy)
 
