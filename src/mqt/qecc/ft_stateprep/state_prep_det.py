@@ -49,6 +49,11 @@ class DeterministicVerification:
         if self.hook_corrections[stab_idx] == None:
             return False
         return True
+    def are_flagged(self) -> list[bool]:
+        return [self.is_flagged(i) for i in range(len(self.stabs))]
+
+
+    # Statistics methods
     def num_ancillae_verification(self) -> int:
         return len(self.stabs)
     def num_cnots_verification(self) -> int:
@@ -61,7 +66,7 @@ class DeterministicVerification:
         return self._num_cnots_correction(self.det_correction)
 
     def num_ancillae_hooks(self) -> int:
-        return len(self.hook_corrections)
+        return len([v for v in self.hook_corrections if v is not None])
     def num_cnots_hooks(self) -> int:
         return len(self.hook_corrections) * 2
     def num_ancillae_hook_corrections(self) -> int:
@@ -152,7 +157,7 @@ class DeterministicVerificationHelper:
                     # hook errors are non-trivial
                     # add case of error on hook ancilla
                     hook_errors = np.vstack((hook_errors, np.zeros(self.num_qubits, dtype=np.int8)))
-                    self._nd_layers[layer_idx][verify_idx].hook_corrections.append(deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not self.state_prep.zero_state))
+                    self._nd_layers[layer_idx][verify_idx].hook_corrections.append({1: deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not self.state_prep.zero_state)})
     
     def get_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[tuple[Verification,DeterministicCorrection], tuple[Verification,DeterministicCorrection], list[DeterministicCorrection]]:
         """
