@@ -1206,9 +1206,9 @@ def _propagate_error(nodes: list[DAGNode], n_qubits: int, x_errors: bool = True)
         x_errors: If True, propagate X errors. Otherwise, propagate Z errors.
     """
     start = nodes[0]
-    control = start.qargs[0]._index if x_errors else start.qargs[1]._index  # noqa: SLF001
     error: npt.NDArray[np.int8] = np.array([0] * n_qubits, dtype=np.int8)
-    error[control] = 1
+    error[start.qargs[0]._index] = 1  # noqa: SLF001
+    error[start.qargs[1]._index] = 1  # noqa: SLF001
     # propagate error through circuit via bfs
     for node in nodes[1:]:
         control = node.qargs[0]._index  # noqa: SLF001
