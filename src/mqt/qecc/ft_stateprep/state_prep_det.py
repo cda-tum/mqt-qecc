@@ -20,28 +20,6 @@ if TYPE_CHECKING:
     DeterministicCorrection = tuple[list[npt.NDArray[np.int8]], Recovery]
     Verification = list[npt.NDArray[np.int8]]
 
-
-def _CNOT_count_verification(verify_stabs: Verification) -> int:
-    """Counts the number of CNOTs in a verification stabilizer."""
-    return np.sum([np.sum(m) for m in verify_stabs])
-def _ANC_count_verification(verify_stabs: Verification) -> int:
-    """Counts the number of ancillae in a verification stabilizer."""
-    return len(verify_stabs)
-
-        # det_num_anc = np.sum([len(v[0]) for v in det_verify.values()])
-        # det_num_cnots = np.sum([np.sum([np.sum(m) for m in v[0]]) for v in det_verify.values()])
-def _CNOT_count_correction(correction: DeterministicCorrection) -> int:
-    """Counts the number of CNOTs in a correction."""
-    if correction is None:
-        return 0
-    return np.sum([np.sum([np.sum(s) for s in v[0]]) for v in correction.values()])
-def _ANC_count_correction(correction: DeterministicCorrection) -> int:
-    """Counts the number of ancillae in a correction."""
-    if correction is None:
-        return 0
-    return np.sum([len(v[0]) for v in correction.values()])
-
-
 class DeterministicVerification:
     """
     """
@@ -49,12 +27,59 @@ class DeterministicVerification:
     def __init__(self, nd_verification_stabs: Verification, det_correction: DeterministicCorrection | None = None, hook_corrections: list[DeterministicCorrection] | None = None):
         self.stabs = nd_verification_stabs
         self.det_correction = det_correction
-        self.hook_corrections = [None for _ in nd_verification_stabs] if hook_corrections is None else hook_corrections
+        self.hook_corrections = [] if hook_corrections is None else hook_corrections
+
+    @staticmethod
+    def _num_cnots_correction(correction: DeterministicCorrection) -> int:
+        if correction is None:
+            return 0
+        return np.sum([np.sum([np.sum(m) for m in v[0]]) for v in correction.values()])
+    @staticmethod
+    def _num_anc_correction(correction: DeterministicCorrection) -> int:
+        if correction is None:
+            return 0
+        return np.sum([len(v[0]) for v in correction.values()])
+    @staticmethod
+    def _num_branches_correction(correction: DeterministicCorrection) -> int:
+        if correction is None:
+            return 0
+        return sum([len(v[1]) for v in correction.values()]) 
 
     def is_flagged(self, stab_idx : int) -> bool:
         if self.hook_corrections[stab_idx] == None:
             return False
         return True
+    def num_ancillae_verification(self) -> int:
+        return len(self.stabs)
+    def num_cnots_verification(self) -> int:
+        return np.sum([np.sum(m) for m in self.stabs])
+
+    def num_ancillae_correction(self) -> int:
+        return self._num_anc_correction(self.det_correction)
+
+    def num_cnots_correction(self) -> int:
+        return self._num_cnots_correction(self.det_correction)
+
+    def num_ancillae_hooks(self) -> int:
+        return len(self.hook_corrections)
+    def num_cnots_hooks(self) -> int:
+        return len(self.hook_corrections) * 2
+    def num_ancillae_hook_corrections(self) -> int:
+        return sum([self._num_anc_correction(c) for c in self.hook_corrections])
+    def num_cnots_hook_corrections(self) -> int:
+        return sum([self._num_cnots_correction(c) for c in self.hook_corrections])
+    
+    def num_ancillae_total(self) -> int:
+        return self.num_ancillae_verification() + self.num_ancillae_correction() + self.num_ancillae_hooks() + self.num_ancillae_hook_corrections()
+    def num_cnots_total(self) -> int:
+        return self.num_cnots_verification() + self.num_cnots_correction() + self.num_cnots_hooks() + self.num_cnots_hook_corrections()
+    
+    def num_branches_det_correction(self) -> int:
+        return self._num_branches_correction(self.det_correction)
+    def num_branches_hook_corrections(self) -> int:
+        return sum([self._num_branches_correction(c) for c in self.hook_corrections])
+    def num_branches_total(self) -> int:
+        return self.num_branches_det_correction() + self.num_branches_hook_corrections()
 
 
 class DeterministicVerificationHelper:
@@ -106,7 +131,7 @@ class DeterministicVerificationHelper:
                     self._nd_layers[layer_idx][verify_idx].hook_corrections = []
                     continue
                 for stab in verify.stabs:
-                    hook_errors = _hook_errors(stab)
+                    hook_errors = _hook_errors([stab])
 
                     # check if the hook error is trivial
                     errors_trivial = []
@@ -121,7 +146,9 @@ class DeterministicVerificationHelper:
                     if all(errors_trivial):
                         self._nd_layers[layer_idx][verify_idx].hook_corrections.append(None)
                         continue
-                    
+                    # TODO only keep non-trivial errors
+                    # hook_errors = hook_errors[np.logical_not(errors_trivial)]
+
                     # hook errors are non-trivial
                     # add case of error on hook ancilla
                     hook_errors = np.vstack((hook_errors, np.zeros(self.num_qubits, dtype=np.int8)))
@@ -135,8 +162,8 @@ class DeterministicVerificationHelper:
             max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
 
         self.compute_nd_stabs(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
-        self.compute_det_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
         self.compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
+        self.compute_det_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
         return self._nd_layers[0][0], self._nd_layers[1][0]
 
     def _filter_nd_stabs(self):
@@ -149,13 +176,8 @@ class DeterministicVerificationHelper:
             best_num_cnots = int(1e6)
             best_case_indices = []
             for idx_verify, verify in enumerate(self._nd_layers[layer_idx]):
-                num_anc = _ANC_count_verification(verify.stabs)
-                num_cnot = _CNOT_count_verification(verify.stabs)
-                for idx_stab in range(len(verify.stabs)):
-                    # add possible flag scheme
-                    if verify.is_flagged(idx_stab):
-                        num_anc += 1
-                        num_cnot += 2
+                num_anc = verify.num_ancillae_verification() + verify.num_ancillae_hook_corrections()
+                num_cnot = verify.num_cnots_verification() + verify.num_cnots_hook_corrections()
                 if best_num_anc > num_anc or (best_num_anc == num_anc and best_num_cnots > num_cnot):
                     best_num_anc = num_anc
                     best_num_cnots = num_cnot
@@ -183,8 +205,8 @@ class DeterministicVerificationHelper:
             best_num_anc = 3 * max_ancilla
             best_num_cnots = 3 * max_ancilla * self.num_qubits
             for idx_verify, verify in enumerate(self._nd_layers[layer_idx]):
-                num_anc = _ANC_count_verification(verify.stabs) + _ANC_count_correction(verify.det_correction) + sum([_ANC_count_correction(c) for c in verify.hook_corrections])
-                num_cnots = _CNOT_count_verification(verify.stabs) + _CNOT_count_correction(verify.det_correction) + sum([_CNOT_count_correction(c) for c in verify.hook_corrections])
+                num_anc = verify.num_ancillae_total()
+                num_cnots = verify.num_cnots_total()
                 if best_num_anc > num_anc or (best_num_anc == num_anc and best_num_cnots > num_cnots):
                     best_num_anc = num_anc
                     best_num_cnots = num_cnots
