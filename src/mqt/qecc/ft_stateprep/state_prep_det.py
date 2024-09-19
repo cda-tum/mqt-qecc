@@ -26,7 +26,7 @@ class DeterministicVerification:
     """
     """
 
-    def __init__(self, nd_verification_stabs: Verification, det_correction: DeterministicCorrection | None = None, hook_corrections: list[DeterministicCorrection] | None = None):
+    def __init__(self, nd_verification_stabs: Verification, det_correction: DeterministicCorrection  = {}, hook_corrections: list[DeterministicCorrection] | None = None):
         self.stabs = nd_verification_stabs
         self.det_correction = det_correction
         self.hook_corrections = [None] * len(nd_verification_stabs) if hook_corrections is None else hook_corrections
@@ -220,7 +220,7 @@ class DeterministicVerificationHelper:
                 else:
                     # hook errors require different verification in second layer
                     # compute new verification
-                    stabs_2_list = gate_optimal_verification_stabilizers(self.state_prep, x_errors=not self.state_prep.zero_state, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, return_all_solutions=compute_all_solutions)[0] 
+                    stabs_2_list = gate_optimal_verification_stabilizers(self.state_prep, x_errors=not self.state_prep.zero_state, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, additional_faults=hook_errors, return_all_solutions=compute_all_solutions)[0] 
                     if not compute_all_solutions:
                         stabs_2_list = [stabs_2_list]
                     verify_2_list = [DeterministicVerification(stabs_2) for stabs_2 in stabs_2_list]
@@ -231,7 +231,7 @@ class DeterministicVerificationHelper:
                         # hook propagation is better than hook correction
                         # compute deterministic verification
                         for verify_2_idx, verify_2 in enumerate(verify_2_list):
-                            verify_2_list[verify_2_idx].det_correction = deterministic_correction(self.state_prep, verify_2.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=not self.state_prep.zero_state)
+                            verify_2_list[verify_2_idx].det_correction = {1: deterministic_correction(self.state_prep, verify_2.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=not self.state_prep.zero_state)}
                             for stab_idx, stab in enumerate(verify_2.stabs):
                                 hook_errors_2 = _hook_errors([stab])
                                 if self._trivial_hook_errors(hook_errors_2, self.code, self.state_prep.zero_state):
