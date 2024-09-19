@@ -129,8 +129,8 @@ class NoisyDFTStatePrepSimulator:
         self.protocol.add_edge("START", "PREP", check='True')
 
         # create ND-verifications
-        self.protocol.add_node(name=f"NDV_0", circuit=self._create_stab_measurement_circuit(verifications[0].stabs, are_flagged=verifications[0].are_flagged(), z_stabs=self.zero_state, noisy=True))
-        self.protocol.add_node(name=f"NDV_1", circuit=self._create_stab_measurement_circuit(verifications[1].stabs, are_flagged=verifications[1].are_flagged(), z_stabs=not self.zero_state, noisy=True))
+        self.protocol.add_node(name=f"NDV_0", circuit=self._create_stab_measurement_circuit(verifications[0].stabs, hook_corrections=verifications[0].hook_corrections, z_stabs=self.zero_state, noisy=True))
+        self.protocol.add_node(name=f"NDV_1", circuit=self._create_stab_measurement_circuit(verifications[1].stabs, hook_corrections=verifications[1].hook_corrections, z_stabs=not self.zero_state, noisy=True))
 
         self.protocol.add_edge("PREP", "NDV_0", check='True')
 
@@ -158,6 +158,7 @@ class NoisyDFTStatePrepSimulator:
         """
         # # case of no errors detected
         self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0")
+        self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == None")
             
         num_measurements = verification.num_ancillae_verification() + verification.num_ancillae_hooks()
         num_nd_measurements = verification.num_ancillae_verification()
@@ -174,8 +175,8 @@ class NoisyDFTStatePrepSimulator:
 
         # hooks
         hooks_idx = 0
-        for hook_correction, flagged in zip(verification.hook_corrections, verification.are_flagged()):
-            if not flagged:
+        for hook_correction in verification.hook_corrections:
+            if not hook_correction:
                 continue
             hook_stabs, rec = hook_correction[1]
             outcome = int('0' * hooks_idx + '1' + '0' * (verification.num_ancillae_hooks() - hooks_idx - 1),2)
@@ -222,7 +223,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        return sampler.stats() / self.code.k
+        return (s / self.code.k for s in sampler.stats())
 
     def mc_logical_error_rates(
             self,
@@ -238,9 +239,9 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        return sampler.stats() / self.code.k
+        return (s / self.code.k for s in sampler.stats())
 
-    def _create_stab_measurement_circuit(self, verification_stabilizers: list[npt.NDArray[np.int8]],  z_stabs: bool, are_flagged: list[bool]| None = None, noisy: bool = True) -> qs.Circuit:
+    def _create_stab_measurement_circuit(self, verification_stabilizers: list[npt.NDArray[np.int8]],  z_stabs: bool, hook_corrections: list[bool]| None = None, noisy: bool = True) -> qs.Circuit:
         """
         Create the deterministic verification circuit for the given verification stabilizers using CNOT gates starting from the ancilla_index.
         """
@@ -248,15 +249,15 @@ class NoisyDFTStatePrepSimulator:
         if num_stabs == 0:
             return qs.Circuit([], noisy=False)
 
-        if are_flagged is None:
-            are_flagged = [False]*len(verification_stabilizers)
+        if hook_corrections is None:
+            hook_corrections = [False]*len(verification_stabilizers)
         circuit = []
         # init new ancillae
-        num_ancllae = len(verification_stabilizers) + sum(are_flagged)
+        num_ancllae = len(verification_stabilizers) + sum([1 for hook in hook_corrections if hook])
         circuit.append({"init": set(range(self._ancilla_index, self._ancilla_index + num_ancllae))})
 
         flag_ancilla_index = self._ancilla_index + len(verification_stabilizers)
-        for stabilizer, flagged in zip(verification_stabilizers,are_flagged):
+        for stabilizer, flagged in zip(verification_stabilizers, [True if hook else False for hook in hook_corrections]):
             stabilizer = _support_int(stabilizer)
             if not z_stabs:
                 circuit.append({"H": {self._ancilla_index}})
