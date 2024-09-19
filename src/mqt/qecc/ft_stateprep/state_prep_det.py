@@ -10,7 +10,7 @@ import z3
 from typing import TYPE_CHECKING
 from itertools import product
 
-from .state_prep import StatePrepCircuit, _vars_to_stab, _odd_overlap, _symbolic_vector_eq, _coset_leader, iterative_search_with_timeout, _run_with_timeout, gate_optimal_verification_stabilizers, verification_stabilizers, _hook_errors
+from .state_prep import StatePrepCircuit, _vars_to_stab, _odd_overlap, _symbolic_vector_eq, _coset_leader, iterative_search_with_timeout, _run_with_timeout, gate_optimal_verification_stabilizers, heuristic_verification_stabilizers, _hook_errors
 from ..codes import CSSCode
 
 
@@ -98,6 +98,7 @@ class DeterministicVerificationHelper:
         assert self.code.distance < 5, "Only d=3 and d=4 codes are supported."
         self.num_qubits = self.code.n
         self.layer_x_errors = [self.state_prep.zero_state, not self.state_prep.zero_state]
+        self.use_optimal_verification = True
 
         self._nd_layers = [[], []]
         self._hook_propagation_solutions = []
@@ -108,7 +109,10 @@ class DeterministicVerificationHelper:
         """
         for idx, x_errors in enumerate(self.layer_x_errors):
             logger.info(f"Computing non-deterministic verification stabilizers for layer {idx + 1} / 2.")
-            stabs = gate_optimal_verification_stabilizers(self.state_prep, x_errors=x_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, return_all_solutions=compute_all_solutions)[0]
+            if self.use_optimal_verification:
+                stabs = gate_optimal_verification_stabilizers(self.state_prep, x_errors=x_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, return_all_solutions=compute_all_solutions)[0]
+            else:
+                stabs = heuristic_verification_stabilizers(self.state_prep, x_errors=x_errors)[0]
             if not compute_all_solutions:
                 verify = DeterministicVerification(stabs)
                 verify.hook_corrections = [not self._trivial_hook_errors(_hook_errors([stab]), self.code, not x_errors) for stab in stabs]
@@ -211,16 +215,19 @@ class DeterministicVerificationHelper:
                 if stabs_flagged == verify.hook_corrections:
                     continue
                 # get hook errors
-                hook_errors = []
+                hook_errors = np.empty((0, self.num_qubits), dtype=np.int8)
                 for idx, flag in enumerate(stabs_flagged):
                     if not flag:
-                        hook_errors.append(verify.stabs[idx])
+                        hook_errors= np.vstack((hook_errors, _hook_errors([verify.stabs[idx]])))
                 if self._trivial_hook_errors(hook_errors, self.code, not self.state_prep.zero_state):
                     continue
                 else:
                     # hook errors require different verification in second layer
                     # compute new verification
-                    stabs_2_list = gate_optimal_verification_stabilizers(self.state_prep, x_errors=not self.state_prep.zero_state, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, additional_faults=hook_errors, return_all_solutions=compute_all_solutions)[0] 
+                    if self.use_optimal_verification:
+                        stabs_2_list = gate_optimal_verification_stabilizers(self.state_prep, x_errors=not self.state_prep.zero_state, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, additional_faults=hook_errors, return_all_solutions=compute_all_solutions)[0] 
+                    else:
+                        stabs_2_list = heuristic_verification_stabilizers(self.state_prep, x_errors=not self.state_prep.zero_state, additional_faults=hook_errors)[0]
                     if not compute_all_solutions:
                         stabs_2_list = [stabs_2_list]
                     verify_2_list = [DeterministicVerification(stabs_2) for stabs_2 in stabs_2_list]
@@ -231,7 +238,7 @@ class DeterministicVerificationHelper:
                         # hook propagation is better than hook correction
                         # compute deterministic verification
                         for verify_2_idx, verify_2 in enumerate(verify_2_list):
-                            verify_2_list[verify_2_idx].det_correction = {1: deterministic_correction(self.state_prep, verify_2.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=not self.state_prep.zero_state)}
+                            verify_2_list[verify_2_idx].det_correction = deterministic_correction(self.state_prep, verify_2.stabs, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=not self.state_prep.zero_state)
                             for stab_idx, stab in enumerate(verify_2.stabs):
                                 hook_errors_2 = _hook_errors([stab])
                                 if self._trivial_hook_errors(hook_errors_2, self.code, self.state_prep.zero_state):
@@ -257,12 +264,13 @@ class DeterministicVerificationHelper:
 
                         self._hook_propagation_solutions.append((verify_new, verify_2_best))
 
-    def get_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[tuple[Verification,DeterministicCorrection], tuple[Verification,DeterministicCorrection], list[DeterministicCorrection]]:
+    def get_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None, use_optimal_verification: bool = True) -> tuple[tuple[Verification,DeterministicCorrection], tuple[Verification,DeterministicCorrection], list[DeterministicCorrection]]:
         """
         Returns a tuple representing the first layer, second layer and hook error corrections.
         """
         if max_ancilla is None:
             max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
+        self.use_optimal_verification = use_optimal_verification
 
         self.compute_nd_stabs(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
         self.compute_det_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla, layer_idx=0)
@@ -272,6 +280,8 @@ class DeterministicVerificationHelper:
         if len(self._hook_propagation_solutions) == 0:
             self.compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla)
             self.compute_det_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancilla=max_ancilla, layer_idx=1)
+            if len(self._nd_layers[1]) == 0:
+                return self._nd_layers[0][0], DeterministicVerification([])
             return self._nd_layers[0][0], self._nd_layers[1][0]
         # else return the hook propagation solution
         return self._hook_propagation_solutions[0]
@@ -281,7 +291,6 @@ class DeterministicVerificationHelper:
         """
         Returns the optimal non-deterministic verification stabilizers for the first and second layer regarding the number of ancillae and CNOTs.
         """
-
         if max_ancilla is None:
             max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
 
@@ -367,7 +376,9 @@ def deterministic_correction(
                 for i in range(num_nd_stabs):
                     if np.array_equal(verify_outcome, error_pattern):
                         # if not already in the fault set
-                        if not np.any(np.all(errors_filtered == np.eye(num_qubits, dtype=np.int8)[qubit], axis=1)):
+                        if len(errors_filtered) == 0:
+                            errors_filtered = np.array([np.eye(num_qubits, dtype=np.int8)[qubit]])
+                        elif not np.any(np.all(errors_filtered == np.eye(num_qubits, dtype=np.int8)[qubit], axis=1)):
                             errors_filtered = np.vstack((errors_filtered, np.eye(num_qubits, dtype=np.int8)[qubit]))
                     else:
                         error_pattern[i] = 0
