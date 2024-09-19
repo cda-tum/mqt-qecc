@@ -326,72 +326,7 @@ class DeterministicVerificationHelper:
                 # save the new verification
                 best_solution = (verify, verify_2)
         return best_solution
-                
-
-
-def global_deterministic_verification(
-        sp_circ: StatePrepCircuit,
-        min_timeout: int = 1,
-        max_timeout: int = 3600,
-        max_ancillas: int | None = None,
-        zero_state: bool = True) -> DeterministicCorrection:
-        """
-        Returns the gate and ancilla optimal deterministic verification circuit for a given state preparation circuit.
-
-        First, the optimal non-deterministic verification stabilizers are computed.
-        Then, the optimal deterministic verification stabilizers for each non-deterministic verification outcome are computed and the best overall solution is returned.
-
-        Args:
-            sp_circ: The state preparation circuit.
-            min_timeout: Minimum timeout for the z3 solver.
-            max_timeout: Maximum timeout for the z3 solver.
-            max_ancillas: Maximum number of ancillae to use.
-            optimize_cnots: Whether to optimize the number of CNOTs, otherwise the number of ancillae is optimized.
-            zero_state: Whether to optimize for the zero state.
-        """
-        num_qubits = sp_circ.code.n
-
-
-        # get optimal number of ancillae for non-deterministic verification
-        sp_circ.max_errors = 1
-        opt_nd_verif_stabs = gate_optimal_verification_stabilizers(sp_circ, x_errors=zero_state, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)[0]
-        num_nd_stabs = len(opt_nd_verif_stabs)
-        num_cnots = np.sum([np.sum(m) for m in opt_nd_verif_stabs])
-
-        logger.info(f"Found optimal non-det verification stabilizers with {num_nd_stabs} stabilizers and {num_cnots} CNOTs.\n Computing all possible solutions...")
-
-        # get the fault set
-        fault_set = sp_circ.compute_fault_set(1, x_errors=zero_state)
-        # get all solutions with the optimal number of ancillae and cnots
-        all_nd_verify_stabs = verification_stabilizers(sp_circ,
-                                                       fault_set,
-                                                       num_anc=num_nd_stabs,
-                                                       num_cnots=num_cnots,
-                                                       x_errors=zero_state,
-                                                       return_all_solutions=True)
-        logger.info(f"Found {len(all_nd_verify_stabs)} optimal non-det solutions.")
-        # compute det verification for each solution and return the best one
-        best_nd_verify = None
-        best_det_verify = None
-        best_det_verify_num_anc = max_ancillas
-        best_det_verify_num_cnots = max_ancillas * num_qubits
-
-        for idx, nd_verify_stabs in enumerate(all_nd_verify_stabs):
-            logger.info(f"Computing deterministic verification for non-det solution {idx+1}/{len(all_nd_verify_stabs)}")
-            det_verify = deterministic_correction(sp_circ=sp_circ, nd_d3_verification_stabilizers=nd_verify_stabs,
-                                                            min_timeout=min_timeout,max_timeout=max_timeout,max_ancillas=best_det_verify_num_anc,zero_state=zero_state)
-            det_num_anc = np.sum([len(v[0]) for v in det_verify.values()])
-            det_num_cnots = np.sum([np.sum([np.sum(m) for m in v[0]]) for v in det_verify.values()])
-            logger.info(f"Found deterministic verification with {det_num_anc} ancillae and {det_num_cnots} CNOTs.")
-            if best_det_verify_num_anc > det_num_anc or (best_det_verify_num_anc == det_num_anc and best_det_verify_num_cnots > det_num_cnots):
-                best_nd_verify = nd_verify_stabs
-                best_det_verify = det_verify
-                best_det_verify_num_anc = det_num_anc
-                best_det_verify_num_cnots = det_num_cnots
-        logger.info(f"Optimal deterministic verification with {best_det_verify_num_anc} ancillae and {best_det_verify_num_cnots} CNOTs.")
-        return best_nd_verify, best_det_verify 
-
-
+               
 def deterministic_correction(
         sp_circ: StatePrepCircuit,
         nd_d3_verification_stabilizers: list[npt.NDArray[np.int8]],
