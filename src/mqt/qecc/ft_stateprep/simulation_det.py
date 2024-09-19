@@ -222,7 +222,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        return sampler.stats()
+        return sampler.stats() / self.code.k
 
     def mc_logical_error_rates(
             self,
@@ -238,7 +238,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        return sampler.stats()
+        return sampler.stats() / self.code.k
 
     def _create_stab_measurement_circuit(self, verification_stabilizers: list[npt.NDArray[np.int8]],  z_stabs: bool, are_flagged: list[bool]| None = None, noisy: bool = True) -> qs.Circuit:
         """
