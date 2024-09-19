@@ -27,7 +27,10 @@ class DeterministicVerification:
     def __init__(self, nd_verification_stabs: Verification, det_correction: DeterministicCorrection | None = None, hook_corrections: list[DeterministicCorrection] | None = None):
         self.stabs = nd_verification_stabs
         self.det_correction = det_correction
-        self.hook_corrections = [] if hook_corrections is None else hook_corrections
+        self.hook_corrections = [None] * len(nd_verification_stabs) if hook_corrections is None else hook_corrections
+
+    def copy(self) -> DeterministicVerification:
+        return DeterministicVerification(self.stabs, self.det_correction, self.hook_corrections)
 
     @staticmethod
     def _num_cnots_correction(correction: DeterministicCorrection) -> int:
@@ -134,9 +137,9 @@ class DeterministicVerificationHelper:
             logger.info(f"Computing deterministic verification for hook errors of layer {layer_idx + 1} / 2.")
             for verify_idx, verify in enumerate(self._nd_layers[layer_idx]):
                 if verify.stabs == []:
-                    self._nd_layers[layer_idx][verify_idx].hook_corrections = []
+                    self._nd_layers[layer_idx][verify_idx].hook_corrections = [None] * len(verify.stabs)
                     continue
-                for stab in verify.stabs:
+                for stab_idx,stab in enumerate(verify.stabs):
                     hook_errors = _hook_errors([stab])
 
                     # check if the hook error is trivial
@@ -149,14 +152,13 @@ class DeterministicVerificationHelper:
                         trivial = any([mod2.rank(m) == rank for m in stabs_plus_single_qubit])
                         errors_trivial.append(trivial)
                     if all(errors_trivial):
-                        self._nd_layers[layer_idx][verify_idx].hook_corrections.append(None)
                         continue
                     hook_errors = hook_errors[np.logical_not(errors_trivial)]
 
                     # hook errors are non-trivial
                     # add case of error on hook ancilla
                     hook_errors = np.vstack((hook_errors, np.zeros(self.num_qubits, dtype=np.int8)))
-                    self._nd_layers[layer_idx][verify_idx].hook_corrections.append({1: deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not x_error)})
+                    self._nd_layers[layer_idx][verify_idx].hook_corrections[stab_idx] = {1: deterministic_correction_single_outcome(self.state_prep, hook_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state= not x_error)}
     
     def get_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[tuple[Verification,DeterministicCorrection], tuple[Verification,DeterministicCorrection], list[DeterministicCorrection]]:
         """
