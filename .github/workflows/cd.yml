@@ -14,7 +14,7 @@ concurrency:
 jobs:
   python-packaging:
     name: 🐍 Packaging
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.3
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.4
 
   deploy:
     if: github.event_name == 'release' && github.event.action == 'published'
