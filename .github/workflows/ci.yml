@@ -33,8 +33,6 @@ jobs:
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-python-tests)
     uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-ci.yml@v1.4
-    with:
-      skip-testing-latest-python: true
 
   code-ql:
     name: 📝 CodeQL
