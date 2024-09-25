@@ -58,7 +58,7 @@ repos:
 
   #  Python linting and formatting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.5
+    rev: v0.6.7
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -86,7 +86,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/crate-ci/typos
-    rev: v1.24.5
+    rev: v1.24.6
     hooks:
       - id: typos
 
@@ -139,6 +139,6 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.08.26
+    rev: 2024.09.20
     hooks:
       - id: validate-pyproject
