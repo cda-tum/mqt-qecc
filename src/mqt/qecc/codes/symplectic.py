@@ -81,6 +81,11 @@ class SymplecticMatrix:
             ])
         )
 
+    @classmethod
+    def empty(cls, n: int) -> SymplecticMatrix:
+        """Create an empty matrix of size n."""
+        return cls(np.empty((0, 2 * n), dtype=np.int8))
+
     def __add__(self, other: SymplecticMatrix) -> SymplecticMatrix:
         """Add two symplectic matrices."""
         return SymplecticMatrix((self.matrix + other.matrix) % 2)
@@ -114,3 +119,13 @@ class SymplecticMatrix:
     def __iter__(self) -> npt.NDArray[np.int8]:
         """Iterate over the rows of the matrix."""
         return self.matrix.__iter__()
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two matrices are equal."""
+        if not isinstance(other, SymplecticMatrix):
+            return False
+        return np.array_equal(self.matrix, other.matrix)
+
+    def __hash__(self) -> int:
+        """Return the hash of the matrix."""
+        return hash(self.matrix.tobytes())

@@ -22,6 +22,7 @@ class StabilizerCode:
         distance: int | None = None,
         z_logicals: StabilizerTableau | list[Pauli] | list[str] | None = None,
         x_logicals: StabilizerTableau | list[Pauli] | list[str] | None = None,
+        n: int | None = None,
     ) -> None:
         """Initialize the code.
 
@@ -30,12 +31,20 @@ class StabilizerCode:
             distance: The distance of the code.
             z_logicals: The logical Z-operators.
             x_logicals: The logical X-operators.
+            n: The number of qubits in the code. If not given, it is inferred from the stabilizer generators.
         """
-        self.generators = self.get_generators(generators)
+        self.generators = self.get_generators(generators, n)
         self.symplectic = self.generators.tableau.matrix
 
-        self.n = self.generators.n
-        self.k = self.n - mod2.rank(self.generators.as_matrix())
+        if n is None:
+            self.n = self.generators.n
+        else:
+            self.n = n
+
+        if self.generators.n_rows != 0:
+            self.k = self.n - mod2.rank(self.generators.as_matrix())
+        else:
+            self.k = self.n
 
         if distance is not None and distance <= 0:
             msg = "Distance must be a positive integer."
@@ -137,21 +146,33 @@ class StabilizerCode:
             raise InvalidStabilizerCodeError(msg)
 
     @staticmethod
-    def get_generators(generators: StabilizerTableau | list[Pauli] | list[str]) -> StabilizerTableau:
+    def get_generators(
+        generators: StabilizerTableau | list[Pauli] | list[str], n: int | None = None
+    ) -> StabilizerTableau:
         """Get the stabilizer generators as a StabilizerTableau object.
 
         Args:
             generators: The stabilizer generators as a StabilizerTableau object, a list of Pauli objects, or a list of Pauli strings.
+            n: The number of qubits in the code. Required if generators is an empty list.
         """
         if isinstance(generators, list):
             if len(generators) == 0:
-                msg = "Generators must not be empty."
-                raise InvalidStabilizerCodeError(msg)
+                if n is None:
+                    msg = "Number of qubits must be given if no generators are provided."
+                    raise ValueError(msg)
+                return StabilizerTableau.empty(n)
             if isinstance(generators[0], str):
                 return StabilizerTableau.from_pauli_strings(generators)  # type: ignore[arg-type]
             if isinstance(generators[0], Pauli):
                 return StabilizerTableau.from_paulis(generators)  # type: ignore[arg-type]
         return generators
+
+    @classmethod
+    def get_trivial_code(cls, n: int) -> StabilizerCode:
+        """Get the trivial stabilizer code."""
+        z_logicals = ["I" * i + "Z" + "I" * (n - i - 1) for i in range(n)]
+        x_logicals = ["I" * i + "X" + "I" * (n - i - 1) for i in range(n)]
+        return StabilizerCode([], distance=1, z_logicals=z_logicals, x_logicals=x_logicals, n=n)
 
 
 class InvalidStabilizerCodeError(ValueError):

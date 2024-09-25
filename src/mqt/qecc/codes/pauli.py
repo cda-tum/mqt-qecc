@@ -122,6 +122,27 @@ class StabilizerTableau:
         paulis = [Pauli.from_pauli_string(p) for p in pauli_strings]
         return cls.from_paulis(paulis)
 
+    @classmethod
+    def empty(cls, n: int) -> StabilizerTableau:
+        """Create a new empty stabilizer tableau."""
+        return cls(SymplecticMatrix.empty(n), np.zeros(0, dtype=np.int8))
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two stabilizer tableaus are equal."""
+        if isinstance(other, list):
+            if len(other) != self.n_rows:
+                return False
+            if isinstance(other[0], Pauli):
+                other = StabilizerTableau.from_paulis(other)
+            elif isinstance(other[0], str):
+                other = StabilizerTableau.from_pauli_strings(other)
+            else:
+                return False
+
+        if not isinstance(other, StabilizerTableau):
+            return False
+        return bool(self.tableau == other.tableau and np.all(self.phase == other.phase))
+
     def all_commute(self, other: StabilizerTableau) -> bool:
         """Check if all Pauli operators in this stabilizer tableau commute with all Pauli operators in another stabilizer tableau."""
         return bool(np.all((self.tableau @ other.tableau).matrix == 0))

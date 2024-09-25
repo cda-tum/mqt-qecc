@@ -191,10 +191,14 @@ def test_stabilizer_sign() -> None:
     assert np.array_equal(syndrome, np.array([1, 0]))
 
 
-def test_no_stabilizers() -> None:
-    """Test that an error is raised if no stabilizers are provided."""
-    with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode([])
+def test_trivial_code() -> None:
+    """Test code with no stabilizers."""
+    code = StabilizerCode.get_trivial_code(3)
+    assert code.n == 3
+    assert code.k == 3
+    assert code.x_logicals == ["XII", "IXI", "IIX"]
+    assert code.z_logicals == ["ZII", "IZI", "IIZ"]
+    assert code.generators.n_rows == 0
 
 
 def test_negative_distance() -> None:
