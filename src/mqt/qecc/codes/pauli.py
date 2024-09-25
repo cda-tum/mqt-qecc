@@ -31,9 +31,12 @@ class Pauli:
     @classmethod
     def from_pauli_string(cls, p: str) -> Pauli:
         """Create a new Pauli operator from a Pauli string."""
-        assert is_pauli_string(p), f"Invalid Pauli string: {p}"
-        x_part = np.array([c == "X" for c in p[1:]]).astype(np.int8)
-        z_part = np.array([c == "Z" for c in p[1:]]).astype(np.int8)
+        if not is_pauli_string(p):
+            msg = f"Invalid Pauli string: {p}"
+            raise InvalidPauliError(msg)
+        pauli_start_index = 1 if p[0] in "+-" else 0
+        x_part = np.array([c == "X" for c in p[pauli_start_index:]]).astype(np.int8)
+        z_part = np.array([c == "Z" for c in p[pauli_start_index:]]).astype(np.int8)
         phase = int(p[0] == "-")
         return cls(SymplecticVector(np.concatenate((x_part, z_part))), phase)
 
@@ -47,7 +50,9 @@ class Pauli:
 
     def __mul__(self, other: Pauli) -> Pauli:
         """Multiply this Pauli operator by another Pauli operator."""
-        assert self.n == other.n, "Pauli operators must have the same number of qubits."
+        if self.n != other.n:
+            msg = "Pauli operators must have the same number of qubits."
+            raise InvalidPauliError(msg)
         return Pauli(self.symplectic + other.symplectic, (self.phase + other.phase) % 2)
 
     def __repr__(self) -> str:
@@ -61,7 +66,7 @@ class Pauli:
 
     def as_vector(self) -> npt.NDArray[np.int8]:
         """Convert the Pauli operator to a binary vector."""
-        return np.concatenate((self.symplectic, self.phase))
+        return np.concatenate((self.symplectic.vector, np.array([self.phase])))
 
     def __len__(self) -> int:
         """Return the number of qubits in the Pauli operator."""
@@ -82,9 +87,9 @@ class StabilizerTableau:
             self.tableau = SymplecticMatrix(tableau)
         else:
             self.tableau = tableau
-        assert (
-            self.tableau.shape[0] == phase.shape[0]
-        ), "The number of rows in the tableau must match the number of phases."
+        if self.tableau.shape[0] != phase.shape[0]:
+            msg = "The number of rows in the tableau must match the number of phases."
+            raise InvalidPauliError(msg)
         self.n = self.tableau.n
         self.n_rows = self.tableau.shape[0]
         self.phase = phase
@@ -93,30 +98,37 @@ class StabilizerTableau:
     @classmethod
     def from_paulis(cls, paulis: Sequence[Pauli]) -> StabilizerTableau:
         """Create a new stabilizer tableau from a list of Pauli operators."""
-        assert len(paulis) > 0, "At least one Pauli operator is required."
+        if len(paulis) == 0:
+            msg = "At least one Pauli operator is required."
+            raise InvalidPauliError(msg)
         n = paulis[0].n
-        assert all(p.n == n for p in paulis), "All Pauli operators must have the same number of qubits."
+        if not all(p.n == n for p in paulis):
+            msg = "All Pauli operators must have the same number of qubits."
+            raise InvalidPauliError(msg)
         mat = SymplecticMatrix.zeros(len(paulis), n)
-        phase = np.zeros((len(paulis), 1), dtype=np.int8)
+        phase = np.zeros((len(paulis)), dtype=np.int8)
         for i, p in enumerate(paulis):
-            mat[i] = p.symplectic
+            mat[i] = p.symplectic.vector
             phase[i] = p.phase
         return cls(mat, phase)
 
     @classmethod
     def from_pauli_strings(cls, pauli_strings: Sequence[str]) -> StabilizerTableau:
         """Create a new stabilizer tableau from a list of Pauli strings."""
-        assert len(pauli_strings) > 0, "At least one Pauli string is required."
+        if len(pauli_strings) == 0:
+            msg = "At least one Pauli string is required."
+            raise InvalidPauliError(msg)
+
         paulis = [Pauli.from_pauli_string(p) for p in pauli_strings]
         return cls.from_paulis(paulis)
 
     def all_commute(self, other: StabilizerTableau) -> bool:
         """Check if all Pauli operators in this stabilizer tableau commute with all Pauli operators in another stabilizer tableau."""
-        return all(self.tableau @ other.tableau == 0)
+        return bool(np.all((self.tableau @ other.tableau).matrix == 0))
 
     def __getitem__(self, key: int) -> Pauli:
         """Get a Pauli operator from the stabilizer tableau."""
-        return Pauli(self.tableau[key], self.phase[key])
+        return Pauli(SymplecticVector(self.tableau[key]), self.phase[key])
 
     def __hash__(self) -> int:
         """Compute the hash of the stabilizer tableau."""
@@ -129,9 +141,17 @@ class StabilizerTableau:
 
     def as_matrix(self) -> npt.NDArray[np.int8]:
         """Convert the stabilizer tableau to a binary matrix."""
-        return np.concatenate((self.tableau, self.phase), axis=1)
+        return np.hstack((self.tableau.matrix, self.phase[..., np.newaxis]))
 
 
 def is_pauli_string(p: str) -> bool:
     """Check if a string is a valid Pauli string."""
     return len(p) > 0 and all(c in {"I", "X", "Y", "Z"} for c in p[1:]) and p[0] in {"+", "-", "I", "X", "Y", "Z"}
+
+
+class InvalidPauliError(ValueError):
+    """Exception raised when an invalid Pauli operator is encountered."""
+
+    def __init__(self, message: str) -> None:
+        """Create a new InvalidPauliError."""
+        super().__init__(message)

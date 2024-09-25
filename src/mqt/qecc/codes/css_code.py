@@ -47,7 +47,7 @@ class CSSCode(StabilizerCode):
 
         x_padded = np.hstack([self.Hx, z_padding])
         z_padded = np.hstack([x_padding, self.Hz])
-        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0], 1), dtype=np.int8)
+        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0]), dtype=np.int8)
         super().__init__(StabilizerTableau(np.vstack((x_padded, z_padded)), phases), distance)
 
         self.distance = distance
@@ -69,13 +69,13 @@ class CSSCode(StabilizerCode):
         """Return the z checks as Pauli strings."""
         return ["".join("Z" if bit == 1 else "I" for bit in row) for row in self.Hz]
 
-    # def x_logicals_as_pauli_strings(self) -> list[str]:
-    #     """Return the x logicals as a Pauli strings."""
-    #     return ["".join("X" if bit == 1 else "I" for bit in row) for row in self.Lx]
+    def x_logicals_as_pauli_strings(self) -> list[str]:
+        """Return the x logicals as a Pauli strings."""
+        return ["".join("X" if bit == 1 else "I" for bit in row) for row in self.Lx]
 
-    # def z_logicals_as_pauli_strings(self) -> list[str]:
-    #     """Return the z logicals as Pauli strings."""
-    #     return ["".join("Z" if bit == 1 else "I" for bit in row) for row in self.Lz]
+    def z_logicals_as_pauli_strings(self) -> list[str]:
+        """Return the z logicals as Pauli strings."""
+        return ["".join("Z" if bit == 1 else "I" for bit in row) for row in self.Lz]
 
     @staticmethod
     def _compute_logical(m1: npt.NDArray[np.int8], m2: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:

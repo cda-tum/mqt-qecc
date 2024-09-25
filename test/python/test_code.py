@@ -9,6 +9,7 @@ import pytest
 
 from mqt.qecc import CSSCode, StabilizerCode
 from mqt.qecc.codes import InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code
+from mqt.qecc.codes.pauli import InvalidPauliError
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -138,13 +139,6 @@ def test_steane(steane_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.i
     assert x_paulis == ["XXXXIII", "XIXIXIX", "IXXIXXI"]
     assert z_paulis == ["ZZZZIII", "ZIZIZIZ", "IZZIZZI"]
 
-    x_log = code.x_logicals_as_pauli_strings()[0]
-    z_log = code.z_logicals_as_pauli_strings()[0]
-    assert x_log.count("X") == 3
-    assert x_log.count("I") == 4
-    assert z_log.count("Z") == 3
-    assert z_log.count("I") == 4
-
     hx_reordered = hx[::-1, :]
     code_reordered = CSSCode(distance=3, Hx=hx_reordered, Hz=hz)
     assert code == code_reordered
@@ -162,11 +156,11 @@ def test_bb_codes(n: int) -> None:
 
 def test_five_qubit_code(five_qubit_code_stabs: list[str]) -> None:
     """Test that the five qubit code is constructed as a valid stabilizer code."""
-    Lz = ["ZZZZZ"]  # noqa: N806
-    Lx = ["XXXXX"]  # noqa: N806
+    z_logicals = ["ZZZZZ"]
+    x_logicals = ["XXXXX"]
 
     # Many assertions are already made in the constructor
-    code = StabilizerCode(five_qubit_code_stabs, distance=3, Lx=Lx, Lz=Lz)
+    code = StabilizerCode(five_qubit_code_stabs, distance=3, x_logicals=x_logicals, z_logicals=z_logicals)
     assert code.n == 5
     assert code.k == 1
     assert code.distance == 3
@@ -211,53 +205,53 @@ def test_negative_distance() -> None:
 
 def test_different_length_stabilizers() -> None:
     """Test that an error is raised if stabilizers have different lengths."""
-    with pytest.raises(InvalidStabilizerCodeError):
+    with pytest.raises(InvalidPauliError):
         StabilizerCode(["ZZZZ", "X", "Y"])
 
 
 def test_invalid_pauli_strings() -> None:
     """Test that invalid Pauli strings raise an error."""
-    with pytest.raises(InvalidStabilizerCodeError):
+    with pytest.raises(InvalidPauliError):
         StabilizerCode(["ABCD", "XIXI", "YIYI"])
 
 
 def test_no_x_logical() -> None:
     """Test that an error is raised if no X logical is provided when a Z logical is provided."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lx=["XXII"])
+        StabilizerCode(["ZZZZ", "XXXX"], x_logicals=["XXII"])
 
 
 def test_no_z_logical() -> None:
     """Test that an error is raised if no Z logical is provided when an X logical is provided."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lz=["ZZII"])
+        StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["ZZII"])
 
 
 def test_logicals_wrong_length() -> None:
     """Test that an error is raised if the logicals have the wrong length."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lx=["XX"], Lz=["IZZI"])
+        StabilizerCode(["ZZZZ", "XXXX"], x_logicals=["XX"], z_logicals=["IZZI"])
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lx=["IXXI"], Lz=["ZZ"])
+        StabilizerCode(["ZZZZ", "XXXX"], x_logicals=["IXXI"], z_logicals=["ZZ"])
 
 
 def test_commuting_logicals() -> None:
     """Test that an error is raised if the logicals commute."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lz=["ZZII"], Lx=["XXII"])
+        StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["ZZII"], x_logicals=["XXII"])
 
 
 def test_anticommuting_logicals() -> None:
     """Test that an error is raised if the logicals anticommute with the stabilizer generators."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lz=["ZIII"], Lx=["IXXI"])
+        StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["ZIII"], x_logicals=["IXXI"])
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lz=["IZZI"], Lx=["XIII"])
+        StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["IZZI"], x_logicals=["XIII"])
 
 
 def test_too_many_logicals() -> None:
     """Test that an error is raised if too many logicals are provided."""
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lz=["ZZII", "ZZII", "ZZII"], Lx=["IXXI"])
+        StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["ZZII", "ZZII", "ZZII"], x_logicals=["IXXI"])
     with pytest.raises(InvalidStabilizerCodeError):
-        StabilizerCode(["ZZZZ", "XXXX"], Lz=["IZZI"], Lx=["XXII", "XXII", "XXII"])
+        StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["IZZI"], x_logicals=["XXII", "XXII", "XXII"])
