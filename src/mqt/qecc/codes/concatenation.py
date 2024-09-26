@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import cast
 
-from . import StabilizerCode
 from .pauli import Pauli
-from .stabilizer_code import InvalidStabilizerCodeError
+from .stabilizer_code import InvalidStabilizerCodeError, StabilizerCode
 from .symplectic import SymplecticVector
 
 
