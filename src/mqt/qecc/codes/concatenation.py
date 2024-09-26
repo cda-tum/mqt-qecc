@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 from .pauli import Pauli
 from .stabilizer_code import InvalidStabilizerCodeError, StabilizerCode
 from .symplectic import SymplecticVector
@@ -28,15 +26,12 @@ class ConcatenatedCode(StabilizerCode):
             msg = "The inner codes must be stabilizer codes with a single logical qubit."
             raise InvalidStabilizerCodeError(msg)
 
-        x_s = [code.x_logicals for code in self.inner_codes]
-        z_s = [code.z_logicals for code in self.inner_codes]
-        if None in x_s or None in z_s:
-            msg = "The inner codes must have valid logical operators."
-            raise InvalidStabilizerCodeError(msg)
         self.n = sum(code.n for code in self.inner_codes)
         generators = [self._outer_pauli_to_physical(p) for p in outer_code.generators]
-        x_logicals = [self._outer_pauli_to_physical(p) for p in cast(list[Pauli], x_s)]
-        z_logicals = [self._outer_pauli_to_physical(p) for p in cast(list[Pauli], z_s)]
+        if outer_code.x_logicals is not None:
+            x_logicals = [self._outer_pauli_to_physical(p) for p in outer_code.x_logicals]
+        if outer_code.z_logicals is not None:
+            z_logicals = [self._outer_pauli_to_physical(p) for p in outer_code.z_logicals]
         d = min(code.distance * outer_code.distance for code in self.inner_codes)
         super().__init__(generators, d, x_logicals, z_logicals)
 
