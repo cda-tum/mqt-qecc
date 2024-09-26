@@ -72,6 +72,23 @@ class Pauli:
         """Return the number of qubits in the Pauli operator."""
         return int(self.n)
 
+    def __getitem__(self, key: int) -> str:
+        """Return the Pauli operator for a single qubit."""
+        if key < 0 or key >= self.n:
+            msg = "Index out of range."
+            raise IndexError(msg)
+        x = self.symplectic[key]
+        z = self.symplectic[key + self.n]
+        return "X" if x and not z else "Z" if z and not x else "Y" if x and z else "I"
+
+    def x_part(self) -> npt.NDArray[np.int8]:
+        """Return the X part of the Pauli operator."""
+        return self.symplectic[: self.n]
+
+    def z_part(self) -> npt.NDArray[np.int8]:
+        """Return the Z part of the Pauli operator."""
+        return self.symplectic[self.n :]
+
 
 class StabilizerTableau:
     """Class representing a stabilizer tableau."""

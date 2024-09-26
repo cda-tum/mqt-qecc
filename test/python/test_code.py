@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode, StabilizerCode
-from mqt.qecc.codes import InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code
+from mqt.qecc.codes import ConcatenatedCode, InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code
 from mqt.qecc.codes.pauli import InvalidPauliError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -43,6 +43,12 @@ def steane_code_checks() -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
 def five_qubit_code_stabs() -> list[str]:
     """Return the five qubit code."""
     return ["XZZXI", "IXZZX", "XIXZZ", "ZXIXZ"]
+
+
+@pytest.fixture
+def five_qubit_code() -> StabilizerCode:
+    """Return the five qubit code."""
+    return StabilizerCode(["XZZXI", "IXZZX", "XIXZZ", "ZXIXZ"], 3, z_logicals=["ZZZZZ"], x_logicals=["XXXXX"])
 
 
 def test_invalid_css_codes() -> None:
@@ -259,3 +265,14 @@ def test_too_many_logicals() -> None:
         StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["ZZII", "ZZII", "ZZII"], x_logicals=["IXXI"])
     with pytest.raises(InvalidStabilizerCodeError):
         StabilizerCode(["ZZZZ", "XXXX"], z_logicals=["IZZI"], x_logicals=["XXII", "XXII", "XXII"])
+
+
+def test_trivial_concatenation(five_qubit_code: StabilizerCode) -> None:
+    """Test that the trivial concatenation of a code is the code itself."""
+    inner_code = StabilizerCode.get_trivial_code(1)
+    concatenated = ConcatenatedCode(five_qubit_code, inner_code)
+
+    assert concatenated.n == 5
+    assert concatenated.k == 1
+    assert concatenated.distance == 3
+    assert concatenated == five_qubit_code
