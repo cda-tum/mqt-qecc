@@ -13,6 +13,7 @@ from .stabilizer_code import InvalidStabilizerCodeError, StabilizerCode
 __all__ = [
     "CSSCode",
     "ColorCode",
+    "ConcatenatedCSSCode",
     "ConcatenatedCode",
     "HexagonalColorCode",
     "InvalidCSSCodeError",
@@ -21,5 +22,4 @@ __all__ = [
     "SquareOctagonColorCode",
     "StabilizerCode",
     "construct_bb_code",
-    "ConcatenatedCSSCode",
 ]

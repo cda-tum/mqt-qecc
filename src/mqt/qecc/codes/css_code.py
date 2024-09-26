@@ -35,7 +35,7 @@ class CSSCode(StabilizerCode):
             self.Lz = np.eye(n, dtype=np.int8)
             super().__init__([], 1, n=n)
             return
-        
+
         self._check_valid_check_matrices(Hx, Hz)
 
         if Hx is None:

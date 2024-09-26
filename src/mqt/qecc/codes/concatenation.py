@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
+import numpy as np
+
+from .css_code import CSSCode
 from .pauli import Pauli
 from .stabilizer_code import InvalidStabilizerCodeError, StabilizerCode
 from .symplectic import SymplecticVector
-from .css_code import CSSCode
-import numpy as np
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+
 
 class ConcatenatedCode(StabilizerCode):
     """A concatenated quantum code."""
@@ -81,10 +84,11 @@ class ConcatenatedCode(StabilizerCode):
 # def _valid_logicals(lst: list[StabilizerTableau | None]) -> TypeGuard[list[StabilizerTableau]]:
 #     return None not in lst
 
+
 class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
     """A concatenated CSS code."""
 
-    def __init__(self, outer_code:CSSCode, inner_codes: CSSCode | list[CSSCode]):
+    def __init__(self, outer_code: CSSCode, inner_codes: CSSCode | list[CSSCode]) -> None:
         """Initialize a concatenated CSS code.
 
         Args:
@@ -101,14 +105,14 @@ class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
             raise InvalidStabilizerCodeError(msg)
 
         self.n = sum(code.n for code in self.inner_codes)
-        Hx = np.array([self._outer_checks_to_physical(check, 'X') for check in outer_code.Hx], dtype=np.int8)
-        Hz = np.array([self._outer_checks_to_physical(check, 'Z') for check in outer_code.Hz], dtype=np.int8)
-        Lx = np.array([self._outer_checks_to_physical(check, 'X') for check in outer_code.Lx], dtype=np.int8)
-        Lz = np.array([self._outer_checks_to_physical(check, 'Z') for check in outer_code.Lz], dtype=np.int8)
+        Hx = np.array([self._outer_checks_to_physical(check, "X") for check in outer_code.Hx], dtype=np.int8)
+        Hz = np.array([self._outer_checks_to_physical(check, "Z") for check in outer_code.Hz], dtype=np.int8)
+        Lx = np.array([self._outer_checks_to_physical(check, "X") for check in outer_code.Lx], dtype=np.int8)
+        Lz = np.array([self._outer_checks_to_physical(check, "Z") for check in outer_code.Lz], dtype=np.int8)
         d = min(code.distance * outer_code.distance for code in self.inner_codes)
         super(CSSCode, self).__init__(Hx, Hz, Lx, Lz, d)
 
-    def _outer_checks_to_physical(self, check: npt.NDArray[np.int8], operator:str) -> npt.NDArray[np.int8]:
+    def _outer_checks_to_physical(self, check: npt.NDArray[np.int8], operator: str) -> npt.NDArray[np.int8]:
         """Convert a check operator on the outer code to the operator on the concatenated code.
 
         Args:
@@ -127,7 +131,7 @@ class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
             c = self.inner_codes[i]
             new_offset = offset + c.n
             if check[i] == 1:
-                logical = c.Lx if operator == 'X' else c.Lz
+                logical = c.Lx if operator == "X" else c.Lz
                 concatenated[offset:new_offset] = logical
             offset = new_offset
         return concatenated
