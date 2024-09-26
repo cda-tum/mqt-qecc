@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .bb_codes import construct_bb_code
 from .color_code import ColorCode, LatticeType
-from .concatenation import ConcatenatedCode
+from .concatenation import ConcatenatedCode, ConcatenatedCSSCode
 from .css_code import CSSCode, InvalidCSSCodeError
 from .hexagonal_color_code import HexagonalColorCode
 from .square_octagon_color_code import SquareOctagonColorCode
@@ -21,4 +21,5 @@ __all__ = [
     "SquareOctagonColorCode",
     "StabilizerCode",
     "construct_bb_code",
+    "ConcatenatedCSSCode",
 ]

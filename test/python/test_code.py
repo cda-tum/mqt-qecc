@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode, StabilizerCode
-from mqt.qecc.codes import ConcatenatedCode, InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code
+from mqt.qecc.codes import ConcatenatedCode, InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code, ConcatenatedCSSCode
 from mqt.qecc.codes.pauli import InvalidPauliError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -37,6 +37,14 @@ def steane_code_checks() -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
     hx = np.array([[1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 1], [0, 1, 1, 0, 1, 1, 0]])
     hz = hx
     return hx, hz
+
+
+@pytest.fixture
+def steane_code() -> CSSCode:
+    """Return the Steane code."""
+    hx = np.array([[1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 1], [0, 1, 1, 0, 1, 1, 0]])
+    hz = hx
+    return CSSCode(distance=3, Hx=hx, Hz=hz)
 
 
 @pytest.fixture
@@ -276,3 +284,14 @@ def test_trivial_concatenation(five_qubit_code: StabilizerCode) -> None:
     assert concatenated.k == 1
     assert concatenated.distance == 3
     assert concatenated == five_qubit_code
+
+
+def test_trivial_css_concatenation(steane_code: CSSCode) -> None:
+    """Test that the trivial concatenation of a CSS code is the code itself."""
+    inner_code = CSSCode.get_trivial_code(1)
+    concatenated = ConcatenatedCSSCode(steane_code, inner_code)
+
+    assert concatenated.n == 7
+    assert concatenated.k == 1
+    assert concatenated.distance == 3
+    assert concatenated == steane_code
