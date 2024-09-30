@@ -56,6 +56,9 @@ dependencies = [
     "numba>=0.59; python_version > '3.11'",
     "numba>=0.57; python_version <= '3.11'",
     "pymatching>=2.2.1",
+    "qsample>=0.0.2",
+    "urllib3<2.0",
+    "fastcore"
 ]
 dynamic = ["version"]
 
