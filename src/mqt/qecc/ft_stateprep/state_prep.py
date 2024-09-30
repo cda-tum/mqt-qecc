@@ -574,7 +574,7 @@ def gate_optimal_verification_stabilizers(
     max_timeout: int = 3600,
     max_ancillas: int | None = None,
     additional_faults: npt.NDArray[np.int8] | None = None,
-    return_all_solutions: bool = False
+    return_all_solutions: bool = False,
 ) -> list[list[npt.NDArray[np.int8]]] | list[list[list[npt.NDArray[np.int8]]]]:
     """Return verification stabilizers for the state preparation circuit.
 
@@ -593,7 +593,7 @@ def gate_optimal_verification_stabilizers(
         A list of stabilizers to verify the state preparation circuit.
     """
     max_errors = sp_circ.max_errors
-    layers: list[list[npt.NDArray[np.int8]]] = [[] for _ in range(max_errors)]
+    layers: list[list[npt.NDArray[np.int8]]] | list[list[list[npt.NDArray[np.int8]]]] = [[] for _ in range(max_errors)]
     if max_ancillas is None:
         max_ancillas = sp_circ.max_z_measurements if x_errors else sp_circ.max_x_measurements
 
@@ -690,9 +690,11 @@ def gate_optimal_verification_stabilizers(
             measurements = anc_opt
         logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
         if not return_all_solutions:
-            layers[num_errors - 1] = measurements
+            layers[num_errors - 1]: list[list[npt.NDArray[np.int8]]] = measurements
         else:
-            layers[num_errors - 1] = verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors, return_all_solutions=True)
+            layers[num_errors - 1]: list[list[list[npt.NDArray[np.int8]]]] = verification_stabilizers(
+                sp_circ, faults, num_anc, num_cnots, x_errors=x_errors, return_all_solutions=True
+            )
             logger.info(f"Found {len(layers[num_errors - 1])} equivalent solutions for {num_errors} errors")
 
     return layers
@@ -1027,7 +1029,7 @@ def verification_stabilizers(
     num_anc: int,
     num_cnots: int,
     x_errors: bool = True,
-    return_all_solutions: bool = False
+    return_all_solutions: bool = False,
 ) -> list[npt.NDArray[np.int8]] | list[list[npt.NDArray[np.int8]]] | None:
     """Return verification stabilizers for num_errors independent errors in the state preparation circuit using z3.
 
