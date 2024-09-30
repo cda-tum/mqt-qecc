@@ -35,18 +35,18 @@ class DeterministicVerification:
         return DeterministicVerification(self.stabs, self.det_correction, self.hook_corrections)
 
     @staticmethod
-    def _num_cnots_correction(correction: DeterministicCorrection) -> int:
-        if correction is None:
+    def _stat_cnots_correction(fun: callable, correction: DeterministicCorrection) -> int:
+        if correction is None or correction == {} or correction is False or correction == []:
             return 0
-        return np.sum([np.sum([np.sum(m) for m in v[0]]) for v in correction.values()])
+        return fun([np.sum([np.sum(m) for m in v[0]]) for v in correction.values()])
     @staticmethod
-    def _num_anc_correction(correction: DeterministicCorrection) -> int:
-        if correction is None:
+    def _stat_anc_correction(fun: callable, correction: DeterministicCorrection) -> int:
+        if correction is None or correction == {} or correction is False or correction == []:
             return 0
-        return np.sum([len(v[0]) for v in correction.values()])
+        return fun([len(v[0]) for v in correction.values()])
     @staticmethod
     def _num_branches_correction(correction: DeterministicCorrection) -> int:
-        if correction is None:
+        if correction is None or correction == {} or correction is False or correction == []:
             return 0
         return sum([len(v[1]) for v in correction.values()]) 
 
@@ -58,19 +58,30 @@ class DeterministicVerification:
         return np.sum([np.sum(m) for m in self.stabs])
 
     def num_ancillae_correction(self) -> int:
-        return self._num_anc_correction(self.det_correction)
-
+        return self._stat_anc_correction(sum, self.det_correction)
+    def stat_ancillae_correction(self, fun: callable) -> int:
+        return self._stat_anc_correction(fun, self.det_correction)
     def num_cnots_correction(self) -> int:
-        return self._num_cnots_correction(self.det_correction)
+        return self._stat_cnots_correction(sum, self.det_correction)
+    def stat_cnots_correction(self, fun: callable) -> int:
+        return self._stat_cnots_correction(fun, self.det_correction)
 
     def num_ancillae_hooks(self) -> int:
-        return len([v for v in self.hook_corrections if v is not None or False])
+        return len([v for v in self.hook_corrections if v is not False])
     def num_cnots_hooks(self) -> int:
         return self.num_ancillae_hooks() * 2
     def num_ancillae_hook_corrections(self) -> int:
-        return sum([self._num_anc_correction(c) if c is not False else 0 for c in self.hook_corrections])
+        return sum([self._stat_anc_correction(sum,c) if c is not False else 0 for c in self.hook_corrections])
+    def stat_ancillae_hook_corrections(self, fun: callable) -> int:
+        if self.hook_corrections == []:
+            return 0
+        return fun([self._stat_anc_correction(fun, c) if c is not False else 0 for c in self.hook_corrections])
     def num_cnots_hook_corrections(self) -> int:
-        return sum([self._num_cnots_correction(c) if c is not False else 0 for c in self.hook_corrections])
+        return sum([self._stat_cnots_correction(sum,c) if c is not False else 0 for c in self.hook_corrections])
+    def stat_cnots_hook_corrections(self, fun: callable) -> int:
+        if self.hook_corrections == []:
+            return 0
+        return fun([self._stat_cnots_correction(fun, c) if c is not False else 0 for c in self.hook_corrections])
     
     def num_ancillae_total(self) -> int:
         return self.num_ancillae_verification() + self.num_ancillae_correction() + self.num_ancillae_hooks() + self.num_ancillae_hook_corrections()
@@ -99,6 +110,7 @@ class DeterministicVerificationHelper:
         self.num_qubits = self.code.n
         self.layer_x_errors = [self.state_prep.zero_state, not self.state_prep.zero_state]
         self.use_optimal_verification = True
+        self._max_possibilities = None
 
         self._nd_layers = [[], []]
         self._hook_propagation_solutions = []
@@ -113,12 +125,12 @@ class DeterministicVerificationHelper:
                 stabs = gate_optimal_verification_stabilizers(self.state_prep, x_errors=x_errors, min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, return_all_solutions=compute_all_solutions)[0]
             else:
                 stabs = heuristic_verification_stabilizers(self.state_prep, x_errors=x_errors)[0]
-            if not compute_all_solutions:
+            if not compute_all_solutions and stabs != []:
                 verify = DeterministicVerification(stabs)
                 verify.hook_corrections = [not self._trivial_hook_errors(_hook_errors([stab]), self.code, not x_errors) for stab in stabs]
                 self._nd_layers[idx] = [verify]
             else:
-                for stabs in stabs:
+                for stabs in stabs[:self._max_possibilities]:
                     verify = DeterministicVerification(stabs)
                     verify.hook_corrections = [not self._trivial_hook_errors(_hook_errors([stab]), self.code, not x_errors) for stab in stabs]
                     self._nd_layers[idx].append(verify)
@@ -155,12 +167,12 @@ class DeterministicVerificationHelper:
         for layer_idx, x_error in enumerate(self.layer_x_errors):
             logger.info(f"Computing deterministic verification for hook errors of layer {layer_idx + 1} / 2.")
             for verify_idx, verify in enumerate(self._nd_layers[layer_idx]):
+                logger.info(f"Computing deterministic hook correction for non-det verification {verify_idx + 1} / {len(self._nd_layers[layer_idx])}.")
                 if verify.stabs == []:
                     self._nd_layers[layer_idx][verify_idx].hook_corrections = [None] * len(verify.stabs)
                     continue
                 for stab_idx,stab in enumerate(verify.stabs):
                     hook_errors = _hook_errors([stab])
-
                     if self._trivial_hook_errors(hook_errors, self.code, not x_error):
                         continue
 
@@ -208,6 +220,7 @@ class DeterministicVerificationHelper:
         best_num_cnots = 3 * max_ancilla * self.num_qubits
 
         for verify in self._nd_layers[0]:
+            logger.info(f"Computing hook propagation solutions for verification {verify} / {len(self._nd_layers[0])}.")
             # create possible combinations of which hook errors are flagged
             stabs_flagged_combs = list(product([False, True], repeat=len(verify.stabs)))
             stabs_flagged_combs = [comb for comb in stabs_flagged_combs if not all(comb)]
@@ -230,7 +243,7 @@ class DeterministicVerificationHelper:
                         stabs_2_list = heuristic_verification_stabilizers(self.state_prep, x_errors=not self.state_prep.zero_state, additional_faults=hook_errors)[0]
                     if not compute_all_solutions:
                         stabs_2_list = [stabs_2_list]
-                    verify_2_list = [DeterministicVerification(stabs_2) for stabs_2 in stabs_2_list]
+                    verify_2_list = [DeterministicVerification(stabs_2) for stabs_2 in stabs_2_list[:self._max_possibilities]]
                     # check if better than normal verification
                     anc_saved = verify.num_ancillae_hooks() - sum(stabs_flagged) + self._nd_layers[1][0].num_ancillae_verification() - verify_2_list[0].num_ancillae_verification()
                     cnots_saved = verify.num_cnots_hooks() - 2 * sum(stabs_flagged) + self._nd_layers[1][0].num_cnots_verification() - verify_2_list[0].num_cnots_verification()
@@ -260,7 +273,12 @@ class DeterministicVerificationHelper:
 
                         # modify the first layer verification and reduce necessary hooks
                         verify_new = verify.copy()
-                        verify_new.hook_corrections = [verify.hook_corrections[i] if stabs_flagged[i] else False for i in range(len(verify.stabs))]
+                        # compute necessary hooks
+                        for idx, flag in enumerate(stabs_flagged):
+                            if flag:
+                                verify_new.hook_corrections[idx] = {1:deterministic_correction_single_outcome(self.state_prep, _hook_errors([verify.stabs[idx]]), min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancilla, zero_state=not self.state_prep.zero_state)}
+                            else:
+                                verify_new.hook_corrections[idx] = False
 
                         self._hook_propagation_solutions.append((verify_new, verify_2_best))
 
@@ -268,6 +286,7 @@ class DeterministicVerificationHelper:
         """
         Returns a tuple representing the first layer, second layer and hook error corrections.
         """
+        self.__init__(self.state_prep, self.full_fault_tolerance)
         if max_ancilla is None:
             max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
         self.use_optimal_verification = use_optimal_verification
@@ -287,10 +306,12 @@ class DeterministicVerificationHelper:
         return self._hook_propagation_solutions[0]
 
 
-    def get_global_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None) -> tuple[Verification, Verification]:
+    def get_global_solution(self, min_timeout: int = 1, max_timeout: int = 3600, max_ancilla: int | None = None, max_possibilities: int | None = None) -> tuple[Verification, Verification]:
         """
         Returns the optimal non-deterministic verification stabilizers for the first and second layer regarding the number of ancillae and CNOTs.
         """
+        self._max_possibilities = max_possibilities
+        self.__init__(self.state_prep, self.full_fault_tolerance)
         if max_ancilla is None:
             max_ancilla = self.code.Hx.shape[0] + self.code.Hz.shape[0]
 
@@ -327,11 +348,11 @@ class DeterministicVerificationHelper:
         best_solution = self._hook_propagation_solutions[0]
         for verify, verify_2 in self._hook_propagation_solutions[1:]:
             # check if better than overall best solution
-            best_num_anc = verify.num_ancillae_total() + verify_2.num_ancillae_total()
-            best_num_cnots = verify.best_num_cnots() + verify_2.best_num_cnots()
-            if best_num_anc > best_num_anc or (best_num_anc == best_num_anc and best_num_cnots > best_num_cnots):
-                best_num_anc = best_num_anc
-                best_num_cnots = best_num_cnots
+            num_anc = verify.num_ancillae_total() + verify_2.num_ancillae_total()
+            num_cnots = verify.num_cnots_total() + verify_2.num_cnots_total()
+            if best_num_anc > num_anc or (best_num_anc == num_anc and best_num_cnots > num_cnots):
+                best_num_anc = num_anc
+                best_num_cnots = num_cnots
                 # save the new verification
                 best_solution = (verify, verify_2)
         return best_solution

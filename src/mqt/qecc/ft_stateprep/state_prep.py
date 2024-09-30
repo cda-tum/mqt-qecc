@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 
 import multiprocess
 import numpy as np
-import itertools
 import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister

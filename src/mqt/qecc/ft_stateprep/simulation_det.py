@@ -157,8 +157,9 @@ class NoisyDFTStatePrepSimulator:
         depending on the outcome of the ND-verification.
         """
         # # case of no errors detected
-        self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0")
-        self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == None")
+        self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0 or NDV_{layer}[-1] == None")
+        # self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0")
+        # self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == None")
             
         num_measurements = verification.num_ancillae_verification() + verification.num_ancillae_hooks()
         num_nd_measurements = verification.num_ancillae_verification()
@@ -223,7 +224,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        return (s / self.code.k for s in sampler.stats())
+        return [s / self.code.k for s in sampler.stats()]
 
     def mc_logical_error_rates(
             self,
@@ -239,7 +240,7 @@ class NoisyDFTStatePrepSimulator:
                                    err_model=self.err_model,
                                    err_params=err_params)
         sampler.run(n_shots=shots, callbacks=callbacks)
-        return (s / self.code.k for s in sampler.stats())
+        return [s / self.code.k for s in sampler.stats()]
 
     def _create_stab_measurement_circuit(self, verification_stabilizers: list[npt.NDArray[np.int8]],  z_stabs: bool, hook_corrections: list[bool]| None = None, noisy: bool = True) -> qs.Circuit:
         """
@@ -247,9 +248,10 @@ class NoisyDFTStatePrepSimulator:
         """
         num_stabs = len(verification_stabilizers)
         if num_stabs == 0:
-            return qs.Circuit([], noisy=False)
+            return qs.Circuit([{"I" : {0}}], noisy=False)
 
         if hook_corrections is None:
+            # qsample does not like empty circuits
             hook_corrections = [False]*len(verification_stabilizers)
         circuit = []
         # init new ancillae
@@ -288,6 +290,9 @@ class NoisyDFTStatePrepSimulator:
             self._ancilla_index += 1
         circuit.append({"measure": set(range(self._ancilla_index - num_stabs, flag_ancilla_index))})
         self._ancilla_index = flag_ancilla_index
+        if len(circuit) == 0:
+            # qsample does not like empty circuits
+            return qs.Circuit([{"I" : {0}}], noisy=False)
         return qs.Circuit(circuit, noisy=noisy)
 
 def qiskit_to_qsample(qiskit_circuit : QuantumCircuit) -> qs.Circuit:
