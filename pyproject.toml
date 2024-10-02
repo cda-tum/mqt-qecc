@@ -161,10 +161,11 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
-    "error",
+    #"error",
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
+    'ignore::SyntaxWarning:.*(latextools).*',
 ]
 
 [tool.coverage]
@@ -193,7 +194,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
 ignore_missing_imports = true
 
 

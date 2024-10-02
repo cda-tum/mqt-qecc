@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import multiprocess
 import numpy as np
@@ -414,8 +414,6 @@ def _optimal_circuit(
         max_timeout,
     )
 
-    if res is None:
-        return None
     circ, curr_param = res
     if circ is None:
         return None
@@ -426,11 +424,13 @@ def _optimal_circuit(
     logging.info("Trying to minimize param")
     while True:
         logging.info(f"Trying param {curr_param - 1}")
-        opt_res = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
-        if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
+        opt_res: QuantumCircuit | str | None = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
+        # not None or str
+        if opt_res and not (isinstance(opt_res, str) and opt_res == "timeout"):
+            circ = opt_res
+            curr_param -= 1
+        else:
             break
-        circ = opt_res
-        curr_param -= 1
 
     logging.info(f"Optimal param: {curr_param}")
     return StatePrepCircuit(circ, code, zero_state)
@@ -507,7 +507,10 @@ def _build_circuit_from_list_and_checks(
     return circ
 
 
-def _run_with_timeout(func: Callable[[Any], Any], *args: Any, timeout: int = 10) -> Any | str | None:  # noqa: ANN401
+S = TypeVar("S")
+
+
+def _run_with_timeout(func: Callable[[Any], S | None], *args: Any, timeout: int = 10) -> S | str | None:  # noqa: ANN401
     """Run a function with a timeout.
 
     If the function does not complete within the timeout, return None.
@@ -525,18 +528,23 @@ def _run_with_timeout(func: Callable[[Any], Any], *args: Any, timeout: int = 10)
     if p.is_alive():
         p.terminate()
         return "timeout"
-    return return_list[0]
+    if return_list[0] is None:
+        return None
+    return cast(S, return_list[0])
+
+
+T = TypeVar("T")
 
 
 def iterative_search_with_timeout(
-    fun: Callable[[int], QuantumCircuit],
+    fun: Callable[[int], T],
     min_param: int,
     max_param: int,
     min_timeout: int,
     max_timeout: int,
     param_factor: float = 2,
     timeout_factor: float = 2,
-) -> None | tuple[None | QuantumCircuit, int]:
+) -> tuple[None | T, int]:
     """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
 
     Args:
@@ -555,7 +563,7 @@ def iterative_search_with_timeout(
             logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
             res = _run_with_timeout(fun, curr_param, timeout=curr_timeout)
             if res is not None and (not isinstance(res, str) or res != "timeout"):
-                return res, curr_param
+                return cast(T, res), curr_param
             if curr_param == max_param:
                 break
 
@@ -574,8 +582,7 @@ def gate_optimal_verification_stabilizers(
     max_timeout: int = 3600,
     max_ancillas: int | None = None,
     additional_faults: npt.NDArray[np.int8] | None = None,
-    return_all_solutions: bool = False,
-) -> list[list[npt.NDArray[np.int8]]] | list[list[list[npt.NDArray[np.int8]]]]:
+) -> list[list[npt.NDArray[np.int8]]]:
     """Return verification stabilizers for the state preparation circuit.
 
     The method uses an iterative search to find the optimal set of stabilizers by repeatedly computing the optimal circuit for each number of ancillas and cnots. This is repeated for each number of independent correctable errors in the state preparation circuit. Thus the verification circuit is constructed of multiple "layers" of stabilizers, each layer corresponding to a fault set it verifies.
@@ -587,13 +594,50 @@ def gate_optimal_verification_stabilizers(
         max_timeout: The maximum time to allow each search to run for.
         max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
         additional_faults: Faults to verify in addition to the faults propagating in the state preparation circuit.
-        return_all_solutions: If True, return all equivalent solutions for each number of errors.
 
     Returns:
-        A list of stabilizers to verify the state preparation circuit.
+        A list of stabilizers for each number of errors to verify the state preparation circuit.
+    """
+    return [
+        stabs[0] if stabs != [] else []
+        for stabs in all_gate_optimal_verification_stabilizers(
+            sp_circ,
+            x_errors,
+            min_timeout,
+            max_timeout,
+            max_ancillas,
+            additional_faults,
+        )
+    ]
+
+
+def all_gate_optimal_verification_stabilizers(
+    sp_circ: StatePrepCircuit,
+    x_errors: bool = True,
+    min_timeout: int = 1,
+    max_timeout: int = 3600,
+    max_ancillas: int | None = None,
+    additional_faults: npt.NDArray[np.int8] | None = None,
+    return_all_solutions: bool = False,
+) -> list[list[list[npt.NDArray[np.int8]]]]:
+    """Return all equivalent verification stabilizers for the state preparation circuit.
+
+    The method uses an iterative search to find the optimal set of stabilizers by repeatedly computing the optimal circuit for each number of ancillas and cnots. This is repeated for each number of independent correctable errors in the state preparation circuit. Thus the verification circuit is constructed of multiple "layers" of stabilizers, each layer corresponding to a fault set it verifies.
+
+    Args:
+        sp_circ: The state preparation circuit to verify.
+        x_errors: If True, verify the X errors. If False, verify the Z errors.
+        min_timeout: The minimum time to allow each search to run for.
+        max_timeout: The maximum time to allow each search to run for.
+        max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
+        additional_faults: Faults to verify in addition to the faults propagating in the state preparation circuit.
+        return_all_solutions: If False only the first solution for each number of errors is returned. If True all solutions are returned.
+
+    Returns:
+        A list of all equivalent stabilizers for each number of errors to verify the state preparation circuit.
     """
     max_errors = sp_circ.max_errors
-    layers: list[list[npt.NDArray[np.int8]]] | list[list[list[npt.NDArray[np.int8]]]] = [[] for _ in range(max_errors)]
+    layers: list[list[list[npt.NDArray[np.int8]]]] = [[] for _ in range(max_errors)]
     if max_ancillas is None:
         max_ancillas = sp_circ.max_z_measurements if x_errors else sp_circ.max_x_measurements
 
@@ -638,12 +682,8 @@ def gate_optimal_verification_stabilizers(
             max_timeout,
         )
 
-        if res is None:
-            logging.info(f"No verification stabilizers found for {num_errors} errors")
-            layers[num_errors - 1] = []
-            continue
         measurements, num_cnots = res
-        if measurements is None or (isinstance(measurements, str) and measurements == "timeout"):
+        if measurements is None:
             logging.info(f"No verification stabilizers found for {num_errors} errors")
             return []  # No solution found
 
@@ -665,10 +705,13 @@ def gate_optimal_verification_stabilizers(
                 num_cnots - 1,
                 timeout=max_timeout,
             )
-            if cnot_opt is None or (isinstance(cnot_opt, str) and cnot_opt == "timeout"):
-                break
             num_cnots -= 1
-            measurements = cnot_opt
+            # if cnot_opt is None or (isinstance(cnot_opt, str) and cnot_opt == "timeout"):
+            #     break
+            if cnot_opt and not isinstance(cnot_opt, str):
+                measurements = cnot_opt
+            else:
+                break
         logging.info(f"Minimal number of CNOTs for {num_errors} errors is: {num_cnots}")
 
         # If the number of CNOTs is minimal, we can reduce the number of ancillas
@@ -684,18 +727,21 @@ def gate_optimal_verification_stabilizers(
                 num_anc - 1,
                 timeout=max_timeout,
             )
-            if anc_opt is None or (isinstance(anc_opt, str) and anc_opt == "timeout"):
-                break
             num_anc -= 1
-            measurements = anc_opt
+            if anc_opt and not isinstance(anc_opt, str):
+                measurements = anc_opt
+            else:
+                break
         logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
         if not return_all_solutions:
-            layers[num_errors - 1]: list[list[npt.NDArray[np.int8]]] = measurements
+            layers[num_errors - 1] = [measurements]
         else:
-            layers[num_errors - 1]: list[list[list[npt.NDArray[np.int8]]]] = verification_stabilizers(
+            all_stabs = all_verification_stabilizers(
                 sp_circ, faults, num_anc, num_cnots, x_errors=x_errors, return_all_solutions=True
             )
-            logger.info(f"Found {len(layers[num_errors - 1])} equivalent solutions for {num_errors} errors")
+            if all_stabs:
+                layers[num_errors - 1] = all_stabs
+                logger.info(f"Found {len(layers[num_errors - 1])} equivalent solutions for {num_errors} errors")
 
     return layers
 
@@ -1029,15 +1075,39 @@ def verification_stabilizers(
     num_anc: int,
     num_cnots: int,
     x_errors: bool = True,
-    return_all_solutions: bool = False,
-) -> list[npt.NDArray[np.int8]] | list[list[npt.NDArray[np.int8]]] | None:
-    """Return verification stabilizers for num_errors independent errors in the state preparation circuit using z3.
+) -> list[npt.NDArray[np.int8]] | None:
+    """Return a verification stabilizers for num_errors independent errors in the state preparation circuit using z3.
 
     Args:
         sp_circ: The state preparation circuit.
         fault_set: The set of errors to verify.
         num_anc: The maximum number of ancilla qubits to use.
-        num_cnots: The maximumg number of CNOT gates to use.
+        num_cnots: The maximum number of CNOT gates to use.
+        x_errors: If True, the errors are X errors. Otherwise, the errors are Z errors.
+    """
+    stabs_list = all_verification_stabilizers(
+        sp_circ, fault_set, num_anc, num_cnots, x_errors, return_all_solutions=False
+    )
+    if stabs_list:
+        return stabs_list[0]
+    return None
+
+
+def all_verification_stabilizers(
+    sp_circ: StatePrepCircuit,
+    fault_set: npt.NDArray[np.int8],
+    num_anc: int,
+    num_cnots: int,
+    x_errors: bool = True,
+    return_all_solutions: bool = False,
+) -> list[list[npt.NDArray[np.int8]]] | None:
+    """Return a list of verification stabilizers for num_errors independent errors in the state preparation circuit using z3.
+
+    Args:
+        sp_circ: The state preparation circuit.
+        fault_set: The set of errors to verify.
+        num_anc: The maximum number of ancilla qubits to use.
+        num_cnots: The maximum number of CNOT gates to use.
         x_errors: If True, the errors are X errors. Otherwise, the errors are Z errors.
         return_all_solutions: If True, return all solutions. Otherwise, return the first solution found.
     """
@@ -1078,7 +1148,7 @@ def verification_stabilizers(
                     v += gens[g]
             actual_measurements.append(v % 2)
         if not return_all_solutions:
-            return actual_measurements
+            return [actual_measurements]
         solutions.append(actual_measurements)
         # add constraint to avoid same solution again
         solver.add(z3.Or([vars_[i] != model[vars_[i]] for vars_ in measurement_vars for i in range(n_gens)]))

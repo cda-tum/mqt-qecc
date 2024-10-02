@@ -14,21 +14,22 @@ from .simulation import LutDecoder
 if TYPE_CHECKING:
     import numpy.typing as npt
     from qiskit import QuantumCircuit
+    from qsample.callbacks import Callback, CallbackList
 
     from ..codes import CSSCode
-    from .state_prep_det import DeterministicVerification
+    from .state_prep_det import DeterministicCorrection, DeterministicVerification
 
 
 class UnsupportedCodeError(ValueError):
     """Raised when the code is not supported by the simulator."""
 
 
-def _support_int(array: npt.NDArray[np.int8]) -> set[int]:
+def _support_int(array: npt.NDArray[np.int8]) -> list[int]:
     """Return the indices of the non-zero elements of the array."""
     return [int(i) for i in np.where(array)[0]]
 
 
-def return_correction(outcome: int, corrections: dict, zero_state: bool) -> qs.Circuit:
+def return_correction(outcome: int, corrections: dict[int, npt.NDArray[np.int8]], zero_state: bool) -> qs.Circuit:
     """Return the det correction circuit for the given outcome of the D-verification."""
     correction = _support_int(corrections[outcome])
     if len(correction) == 0:
@@ -60,10 +61,10 @@ def decode_failure(
 ) -> bool:
     """Check if the decoding failed."""
     # convert outcome to binary numpy int8 array
-    measurements = np.array([int(x) for x in f"{measurements:0{num_measurements}b}"], dtype=np.int8)
+    measurements_array = np.array([int(x) for x in f"{measurements:0{num_measurements}b}"], dtype=np.int8)
     num_syndromes = num_measurements - code.n
-    syndrome = measurements[:num_syndromes]
-    state = measurements[num_syndromes:]
+    syndrome = measurements_array[:num_syndromes]
+    state = measurements_array[num_syndromes:]
     if zero_state:
         estimate = decoder.decode_x(syndrome)
         observables = code.Lz
@@ -77,18 +78,25 @@ def decode_failure(
 
 
 class NoisyDFTStatePrepSimulator:
-    """Class to simulate the state preparation circuits using qsample (https://github.com/dpwinter/qsample) using
-    with one of the predefined noise models.
-    """
+    """Class to simulate the state preparation circuits using qsample (https://github.com/dpwinter/qsample)."""
 
     def __init__(
         self,
         state_prep_circuit: QuantumCircuit,
-        verifications: tuple[DeterministicVerification],
+        verifications: tuple[DeterministicVerification, DeterministicVerification],
         code: CSSCode,
-        err_model: qs.ErrorModel = qs.noise.E1_1,
+        err_model: type[qs.ErrorModel] = qs.noise.E1_1,
         zero_state: bool = True,
     ) -> None:
+        """Initialize the simulator.
+
+        Args:
+            state_prep_circuit: The state preparation circuit to simulate.
+            verifications: The deterministic verification circuits for the two layers.
+            code: The CSS code used for the state preparation circuit.
+            err_model: The error model to use for the simulation.
+            zero_state: If True the state preparation circuit prepares the |0> state, otherwise the |+> state.
+        """
         if code.Hx is None or code.Hz is None:
             msg = "The code must have both X and Z checks."
             raise InvalidCSSCodeError(msg)
@@ -114,10 +122,19 @@ class NoisyDFTStatePrepSimulator:
         self.create_det_protocol(state_prep_circuit, verifications, code)
 
     def create_det_protocol(
-        self, and_state_prep_circuit: QuantumCircuit, verifications: tuple[DeterministicVerification], code: CSSCode
-    ) -> qs.Protocol:
-        """Create the protocol for the noisy deterministic state preparation circuit."""
-        circ = qiskit_to_qsample(and_state_prep_circuit)
+        self,
+        non_det_state_prep_circuit: QuantumCircuit,
+        verifications: tuple[DeterministicVerification, DeterministicVerification],
+        code: CSSCode,
+    ) -> None:
+        """Create the protocol for the noisy deterministic state preparation circuit based on the given Verifications.
+
+        Args:
+            non_det_state_prep_circuit: The state preparation circuit for the NonDet-verification.
+            verifications: The deterministic verifications for the two layers.
+            code: The CSS code used for the state preparation circuit.
+        """
+        circ = qiskit_to_qsample(non_det_state_prep_circuit)
         self.protocol.add_node(name="PREP", circuit=circ)
         self.protocol.add_edge("START", "PREP", check="True")
 
@@ -162,16 +179,20 @@ class NoisyDFTStatePrepSimulator:
     def _append_verification(
         self, verification: DeterministicVerification, layer: str, end_node: str, z_stabs: bool
     ) -> None:
-        """Append the different deterministic verification circuits to the protocol and connect them to the AND-verification
-        depending on the outcome of the AND-verification.
+        """Append a deterministic verification circuits to the protocol and connect them to the following node.
+
+        Args:
+            verification: The deterministic verification circuit to append.
+            layer: The layer of the verification circuit ("0" or "1").
+            end_node: The name of the node to connect the verification to.
+            z_stabs: If True the verification uses Z-stabilizers, otherwise X-stabilizers.
         """
-        # # case of no errors detected
+        assert layer in {"0", "1"}, "Layer must be either '0' or '1'."
+        # case of no errors detected
         self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0 or NDV_{layer}[-1] == None")
-        # self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == 0")
-        # self.protocol.add_edge(f"NDV_{layer}", end_node, check=f"NDV_{layer}[-1] == None")
 
         num_measurements = verification.num_ancillas_verification() + verification.num_ancillas_hooks()
-        num_and_measurements = verification.num_ancillas_verification()
+        num_non_det_measurements = verification.num_ancillas_verification()
 
         for outcome, (cor_stabs, rec) in verification.det_correction.items():
             # det corrections
@@ -183,7 +204,7 @@ class NoisyDFTStatePrepSimulator:
                 ndv_outcome_check,
                 correction_index=outcome,
                 num_measurements=num_measurements,
-                cutoff=num_and_measurements,
+                cutoff=num_non_det_measurements,
                 flag=False,
             )
             self.protocol.add_edge(
@@ -215,7 +236,7 @@ class NoisyDFTStatePrepSimulator:
                 ndv_outcome_check,
                 correction_index=outcome,
                 num_measurements=num_measurements,
-                cutoff=num_and_measurements,
+                cutoff=num_non_det_measurements,
                 flag=True,
             )
             self.protocol.add_edge(
@@ -238,8 +259,12 @@ class NoisyDFTStatePrepSimulator:
 
     def _append_decoding(self, code: CSSCode) -> None:
         """Append the decoding circuit to the end of the protocol.
+
         This consists of measuring the stabilizers of the code and using the LUT decoder to correct the errors.
         If the correction is not successful the protocol terminates with FAIL.
+
+        Args:
+            code: The CSS code used for the state preparation circuit.
         """
         assert code.Hx is not None
         assert code.Hz is not None
@@ -260,11 +285,21 @@ class NoisyDFTStatePrepSimulator:
         self,
         err_params: dict[str, list[float]],
         p_max: dict[str, float],
-        L: int = 3,
+        dss_l: int = 3,
         shots: int = 1000,
-        callbacks: list[callable] | None = None,
-    ) -> tuple[float, int]:
-        """Calculate the logical error rate of the deterministic state preparation circuit using direct Monte Carlo sampling."""
+        callbacks: Callback | CallbackList | None = None,
+    ) -> list[npt.NDArray[np.float64]]:
+        """Calculate the logical error rate of the deterministic state preparation circuit using subset sampling.
+
+        For more detail on the parameters see the qsample documentation (https://dpwinter.github.io/qsample/).
+
+        Args:
+            err_params: The error parameters (physical errors) for the error model.
+            p_max: The physical error rate to sample at for the subset sampling.
+            dss_l: The sampling depth for the subset sampling.
+            shots: The number of shots to use for the simulation.
+            callbacks: A list of callback functions to call after each layer from qsample.
+        """
         if callbacks is None:
             callbacks = []
         sampler = qs.SubsetSampler(
@@ -273,14 +308,21 @@ class NoisyDFTStatePrepSimulator:
             p_max=p_max,
             err_model=self.err_model,
             err_params=err_params,
+            L=dss_l,
         )
         sampler.run(n_shots=shots, callbacks=callbacks)
         return [s / self.code.k for s in sampler.stats()]
 
     def mc_logical_error_rates(
-        self, err_params: dict[str, list[float]], shots: int = 10000, callbacks: list[callable] | None = None
-    ) -> tuple[float, int]:
-        """Calculate the logical error rate of the deterministic state preparation circuit using direct Monte Carlo sampling."""
+        self, err_params: dict[str, list[float]], shots: int = 10000, callbacks: Callback | CallbackList | None = None
+    ) -> list[npt.NDArray[np.float64]]:
+        """Calculate the logical error rate of the deterministic state preparation circuit using direct Monte Carlo sampling.
+
+        Args:
+            err_params: The error parameters (physical errors) for the error model.
+            shots: The number of shots to use for the simulation.
+            callbacks: A list of callback functions to call after each layer from qsample.
+        """
         if callbacks is None:
             callbacks = []
         sampler = qs.DirectSampler(
@@ -293,28 +335,34 @@ class NoisyDFTStatePrepSimulator:
         self,
         verification_stabilizers: list[npt.NDArray[np.int8]],
         z_stabs: bool,
-        hook_corrections: list[bool] | None = None,
+        hook_corrections: list[DeterministicCorrection] | None = None,
         noisy: bool = True,
     ) -> qs.Circuit:
-        """Create the deterministic verification circuit for the given verification stabilizers using CNOT gates starting from the ancilla_index."""
+        """Create the deterministic verification circuit for the given verification stabilizers.
+
+        Args:
+            verification_stabilizers: The stabilizers to measure.
+            z_stabs: If True the stabilizers are Z-stabilizers, otherwise X-stabilizers.
+            hook_corrections: Whether to apply hook corrections for the stabilizers.
+            noisy: If True the circuit is noisy, otherwise it is noiseless (used for decoding).
+        """
         num_stabs = len(verification_stabilizers)
         if num_stabs == 0:
             return qs.Circuit([{"I": {0}}], noisy=False)
-
         if hook_corrections is None:
-            # qsample does not like empty circuits
-            hook_corrections = [False] * len(verification_stabilizers)
-        circuit = []
+            hook_corrections = [{}] * num_stabs
+
+        circuit: list[dict[str, set[int]] | dict[str, set[tuple[int, int]]]] = []
         # init new ancillas
-        num_ancllae = len(verification_stabilizers) + sum(1 for hook in hook_corrections if hook)
-        circuit.append({"init": set(range(self._ancilla_index, self._ancilla_index + num_ancllae))})
+        num_ancillas = len(verification_stabilizers) + sum(1 for hook in hook_corrections if hook)
+        circuit.append({"init": set(range(self._ancilla_index, self._ancilla_index + num_ancillas))})
 
         flag_ancilla_index = self._ancilla_index + len(verification_stabilizers)
         for stabilizer, flagged in zip(verification_stabilizers, [bool(hook) for hook in hook_corrections]):
-            stabilizer = _support_int(stabilizer)
+            stabilizer_sup = _support_int(stabilizer)
             if not z_stabs:
                 circuit.append({"H": {self._ancilla_index}})
-            for qubit_idx, qubit in enumerate(stabilizer):
+            for qubit_idx, qubit in enumerate(stabilizer_sup):
                 # add flag
                 if flagged and qubit_idx == 1:
                     if z_stabs:
@@ -324,7 +372,7 @@ class NoisyDFTStatePrepSimulator:
                         ))
                     else:
                         circuit.append({"CNOT": {(self._ancilla_index, flag_ancilla_index)}})
-                if flagged and qubit_idx == len(stabilizer) - 1:
+                if flagged and qubit_idx == len(stabilizer_sup) - 1:
                     if z_stabs:
                         circuit.extend((
                             {"CNOT": {(flag_ancilla_index, self._ancilla_index)}},

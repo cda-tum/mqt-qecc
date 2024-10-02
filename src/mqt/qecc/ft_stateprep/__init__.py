@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .simulation import LutDecoder, NoisyNDFTStatePrepSimulator
+from .simulation_det import NoisyDFTStatePrepSimulator
 from .state_prep import (
     StatePrepCircuit,
     depth_optimal_prep_circuit,
@@ -14,13 +15,13 @@ from .state_prep import (
     heuristic_verification_stabilizers,
     naive_verification_circuit,
 )
-from .state_prep_det import (
-    DeterministicVerificationHelper, DeterministicVerification
-)
-from .simulation_det import NoisyDFTStatePrepSimulator
+from .state_prep_det import DeterministicVerification, DeterministicVerificationHelper
 
 __all__ = [
+    "DeterministicVerification",
+    "DeterministicVerificationHelper",
     "LutDecoder",
+    "NoisyDFTStatePrepSimulator",
     "NoisyNDFTStatePrepSimulator",
     "StatePrepCircuit",
     "depth_optimal_prep_circuit",
@@ -31,7 +32,4 @@ __all__ = [
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
     "naive_verification_circuit",
-    "NoisyDFTStatePrepSimulator",
-    "DeterministicVerificationHelper",
-    "DeterministicVerification",
 ]
