@@ -1,7 +1,7 @@
 [build-system]
 requires = [
   "scikit-build-core>=0.10.1",
-  "setuptools-scm>=7",
+  "setuptools-scm>=8.1",
   "pybind11>=2.13.5",
 ]
 build-backend = "scikit_build_core.build"
@@ -43,7 +43,8 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "z3-solver>=4.12,<4.14",
+    "z3-solver>=4.12",
+    "z3-solver<4.13; sys_platform == 'darwin' and 'x86_64' in platform_machine", # z3 4.13 wheels on x86 macOS are broken
     "qecsim",
     "ldpc>=0.1.53",
     "numpy>=1.26; python_version > '3.11'",
@@ -60,20 +61,16 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
+test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
 coverage = ["mqt.qecc[test]", "pytest-cov>=4"]
 docs = [
-    "furo>=2023.08.17",
-    "sphinx",
-    "setuptools-scm>=7",
+    "furo>=2023.9.10",
+    "setuptools-scm>=8.1",
     "sphinxcontrib-bibtex>=2.4.2",
-    "sphinx-copybutton",
-    "sphinx-hoverxref",
-    "pybtex>=0.24",
-    "ipython",
+    "sphinx-copybutton>=0.5",
     "ipykernel",
     "nbsphinx",
-    "sphinxext-opengraph",
+    "sphinxext-opengraph>=0.9",
     "sphinx-autodoc-typehints",
     "qiskit[visualization]",
 ]
@@ -152,7 +149,7 @@ git-only = [
 write_to = "src/mqt/qecc/_version.py"
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "7.2"
 testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
@@ -313,3 +310,7 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 before-build = "uv pip install delvewheel>=1.7.3"
 repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
 environment = { CMAKE_ARGS = "-T ClangCL", SKBUILD_CMAKE_ARGS="--fresh" }
+
+
+[tool.uv]
+reinstall-package = ["mqt.qecc"]

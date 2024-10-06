@@ -20,7 +20,7 @@ build:
         fi
 
 sphinx:
-  configuration: docs/source/conf.py
+  configuration: docs/conf.py
 
 python:
   install:
