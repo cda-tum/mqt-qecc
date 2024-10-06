@@ -1,9 +1,12 @@
 version = 1
 requires-python = ">=3.9"
 resolution-markers = [
-    "python_full_version < '3.11'",
-    "python_full_version == '3.11.*'",
-    "python_full_version >= '3.12'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
+    "(python_full_version < '3.11' and sys_platform != 'darwin') or (python_full_version < '3.11' and 'x86_64' not in platform_machine)",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
+    "(python_full_version == '3.11.*' and sys_platform != 'darwin') or (python_full_version == '3.11.*' and 'x86_64' not in platform_machine)",
+    "python_full_version >= '3.12' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
+    "(python_full_version >= '3.12' and sys_platform != 'darwin') or (python_full_version >= '3.12' and 'x86_64' not in platform_machine)",
 ]
 
 [[package]]
@@ -610,7 +613,7 @@ name = "importlib-metadata"
 version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp", marker = "python_full_version < '3.12'" },
+    { name = "zipp", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cd/12/33e59336dca5be0c398a7482335911a33aa0e20776128f038019f1a95f1b/importlib_metadata-8.5.0.tar.gz", hash = "sha256:71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7", size = 55304 }
 wheels = [
@@ -1094,7 +1097,7 @@ wheels = [
 
 [[package]]
 name = "mqt-qecc"
-version = "1.8.1.dev8+gd5b6570"
+version = "1.8.1.dev11+ga364ba4.d20241006"
 source = { editable = "." }
 dependencies = [
     { name = "bposd" },
@@ -1107,7 +1110,8 @@ dependencies = [
     { name = "qiskit", extra = ["qasm3-import"] },
     { name = "qiskit-aer" },
     { name = "stim" },
-    { name = "z3-solver" },
+    { name = "z3-solver", version = "4.12.6.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' and 'x86_64' in platform_machine" },
+    { name = "z3-solver", version = "4.13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' or 'x86_64' not in platform_machine" },
 ]
 
 [package.optional-dependencies]
@@ -1186,7 +1190,8 @@ requires-dist = [
     { name = "sphinxcontrib-bibtex", marker = "extra == 'docs'", specifier = ">=2.4.2" },
     { name = "sphinxext-opengraph", marker = "extra == 'docs'", specifier = ">=0.9" },
     { name = "stim", specifier = ">=1.13.0" },
-    { name = "z3-solver", specifier = ">=4.12,<4.14" },
+    { name = "z3-solver", specifier = ">=4.12" },
+    { name = "z3-solver", marker = "sys_platform == 'darwin' and 'x86_64' in platform_machine", specifier = "<4.13" },
 ]
 
 [[package]]
@@ -2706,8 +2711,28 @@ wheels = [
 
 [[package]]
 name = "z3-solver"
+version = "4.12.6.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
+    "python_full_version >= '3.12' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
+]
+sdist = { url = "https://files.pythonhosted.org/packages/66/a8/fb9141e779cece45778c98feec75fe35337ac8d54836503b290af3b81207/z3-solver-4.12.6.0.tar.gz", hash = "sha256:9a0f30e9648ee2649adc301dbf91470bc1600f34112ffeaf1063f8a8075e1a48", size = 4821806 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/0c/b0074b9384753e841c1a7252ef44ee5444221eff2d7cb88b8957bdc2e57e/z3_solver-4.12.6.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:9347c9c4f966c97c807f73b1b4365d11dbb25e390b3908b1c3a6e3bceff62e6d", size = 26979615 },
+    { url = "https://files.pythonhosted.org/packages/47/02/bd1a78832beb0eac459a189da64caafd1a34ecd2b4a74d32a4c9b9fafe9c/z3_solver-4.12.6.0-py2.py3-none-macosx_11_0_x86_64.whl", hash = "sha256:359d2af6dbcc017dadb99f286b39df101edf6ac9a45332ba15c0a2012ff46d45", size = 29911008 },
+]
+
+[[package]]
+name = "z3-solver"
 version = "4.13.2.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(python_full_version < '3.11' and sys_platform != 'darwin') or (python_full_version < '3.11' and 'x86_64' not in platform_machine)",
+    "(python_full_version == '3.11.*' and sys_platform != 'darwin') or (python_full_version == '3.11.*' and 'x86_64' not in platform_machine)",
+    "(python_full_version >= '3.12' and sys_platform != 'darwin') or (python_full_version >= '3.12' and 'x86_64' not in platform_machine)",
+]
 sdist = { url = "https://files.pythonhosted.org/packages/73/99/6254d665acd924d64e0afddb2a35f68bcd5875e5bdc9dccd2d651c215eeb/z3_solver-4.13.2.0.tar.gz", hash = "sha256:8b02db03e028e8f3b8498fe65e45ce7348c2995e66427353a0a8ce84ed83d934", size = 4898217 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/06/8d01fa67f8bfc9b3d15667d821ac0bf0e782fa256feb46e5f7510fcad4b8/z3_solver-4.13.2.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:93456e4c462c4bf9c94371807548ffbbfe68aa7187f67b8c9ce19e82db7d3d27", size = 35602201 },
