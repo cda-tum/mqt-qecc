@@ -705,10 +705,8 @@ def all_gate_optimal_verification_stabilizers(
                 num_cnots - 1,
                 timeout=max_timeout,
             )
-            num_cnots -= 1
-            # if cnot_opt is None or (isinstance(cnot_opt, str) and cnot_opt == "timeout"):
-            #     break
             if cnot_opt and not isinstance(cnot_opt, str):
+                num_cnots -= 1
                 measurements = cnot_opt
             else:
                 break
@@ -727,8 +725,8 @@ def all_gate_optimal_verification_stabilizers(
                 num_anc - 1,
                 timeout=max_timeout,
             )
-            num_anc -= 1
             if anc_opt and not isinstance(anc_opt, str):
+                num_anc -= 1
                 measurements = anc_opt
             else:
                 break
