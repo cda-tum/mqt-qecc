@@ -163,6 +163,8 @@ filterwarnings = [
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
     'ignore::SyntaxWarning:.*(latextools).*',
+    'ignore::DeprecationWarning:.*(simpleeval).*',
+    'ignore::RuntimeWarning:.*(qsample).*',
 ]
 
 [tool.coverage]
