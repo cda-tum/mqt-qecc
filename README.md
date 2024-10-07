@@ -52,7 +52,7 @@ creating an issue on [GitHub](https://github.com/cda-tum/mqt-qecc/issues).
 
 ## Getting Started
 
-QECC is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux and macOS and supports Python 3.8 to 3.12.
+QECC is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux, macOS, as well as Windows and supports Python 3.9 to 3.13.
 
 ```console
 (venv) $ pip install mqt.qecc
@@ -124,7 +124,7 @@ at [ReadTheDocs](https://mqt.readthedocs.io/projects/qecc).**
 
 ## System Requirements and Building
 
-The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.19.
+The implementation is compatible with any C++17 compiler, a minimum CMake version of 3.19, and Python 3.9+.
 Please refer to the [documentation](https://mqt.readthedocs.io/projects/qecc) on how to build the project.
 
 Building (and running) is continuously tested under Linux and macOS using the

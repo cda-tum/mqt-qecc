@@ -27,9 +27,8 @@ PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12"]
 # not available via wheels on PyPI (i.e., only as source distributions).
 BUILD_REQUIREMENTS = [
     "scikit-build-core>=0.10.1",
-    "setuptools_scm>=7",
+    "setuptools_scm>=8.1",
     "pybind11>=2.13.5",
-    "wheel>=0.40",  # transitive dependency of pytest on Windows
 ]
 
 if os.environ.get("CI", None):
@@ -69,7 +68,7 @@ def _run_tests(
 
     session.install(*BUILD_REQUIREMENTS, *install_args, env=env)
     install_arg = f"-ve.[{','.join(_extras)}]"
-    session.install("--no-build-isolation", "--reinstall-package", "mqt.qecc", install_arg, *install_args, env=env)
+    session.install("--no-build-isolation", install_arg, *install_args, env=env)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
@@ -100,18 +99,18 @@ def docs(session: nox.Session) -> None:
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
     session.install(*BUILD_REQUIREMENTS, *extra_installs)
-    session.install("--no-build-isolation", "-ve.[docs]", "--reinstall-package", "mqt.qecc")
+    session.install("--no-build-isolation", "-ve.[docs]")
     session.chdir("docs")
 
     if args.builder == "linkcheck":
-        session.run("sphinx-build", "-b", "linkcheck", "source", "_build/linkcheck", *posargs)
+        session.run("sphinx-build", "-b", "linkcheck", ".", "_build/linkcheck", *posargs)
         return
 
     shared_args = (
         "-n",  # nitpicky mode
         "-T",  # full tracebacks
         f"-b={args.builder}",
-        "source",
+        ".",
         f"_build/{args.builder}",
         *posargs,
     )

@@ -61,7 +61,6 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinxcontrib.bibtex",
     "sphinx_copybutton",
-    "hoverxref.extension",
     "nbsphinx",
     "sphinxext.opengraph",
     "sphinx_autodoc_typehints",
@@ -95,20 +94,6 @@ nbsphinx_kernel_name = "python3"
 
 autosectionlabel_prefix_document = True
 
-hoverxref_auto_ref = True
-hoverxref_domains = ["cite", "py"]
-hoverxref_roles = []
-hoverxref_mathjax = True
-hoverxref_role_types = {
-    "ref": "tooltip",
-    "p": "tooltip",
-    "labelpar": "tooltip",
-    "class": "tooltip",
-    "meth": "tooltip",
-    "func": "tooltip",
-    "attr": "tooltip",
-    "property": "tooltip",
-}
 exclude_patterns = [
     "_build",
     "build",
