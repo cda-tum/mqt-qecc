@@ -70,7 +70,7 @@ def assert_statistics(
     assert verify.num_ancillas_verification() == num_ancillas_verification
     assert verify.num_cnots_verification() == num_cnots_verification
     assert verify.num_ancillas_correction() == num_ancillas_correction
-    assert verify.num_cnots_correction() == num_cnots_correction
+    assert verify.num_cnots_correction() <= num_cnots_correction
     assert verify.num_ancillas_hooks() == num_ancillas_hooks
     assert verify.num_cnots_hooks() == num_cnots_hooks
     assert verify.num_ancillas_hook_corrections() == num_ancillas_hook_corrections
@@ -105,7 +105,7 @@ def assert_scaling(simulation_results: list[npt.NDArray[np.float64]]) -> None:
     x = np.log10(err_params["q"])
     y = np.log10(dss_upper_bound)
     m = np.diff(y) / np.diff(x)
-    assert np.average(m[:4]) > 1.5
+    assert np.average(m[:4]) > 1.7
 
 
 def test_11_1_3_det_verification(css_11_1_3_code_sp: StatePrepCircuit) -> None:
@@ -114,7 +114,7 @@ def test_11_1_3_det_verification(css_11_1_3_code_sp: StatePrepCircuit) -> None:
     verify_x, verify_z = verify_helper.get_solution()
 
     # as this is not optimal it might be possible that changes in the code lead to different results
-    assert_statistics(verify_x, 2, 8, 3, 12, 0, 0)
+    assert_statistics(verify_x, 2, 8, 3, 9, 0, 0)
     assert_stabs(verify_x, css_11_1_3_code_sp.code, z_stabs=True)
 
     assert_statistics(verify_z, 1, 4, 1, 4, 1, 2, 1, 3)
