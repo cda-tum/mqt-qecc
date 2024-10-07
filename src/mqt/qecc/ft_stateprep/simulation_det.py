@@ -119,9 +119,9 @@ class NoisyDFTStatePrepSimulator:
 
         # create protocol
         self.protocol = qs.Protocol()
-        self.create_det_protocol(state_prep_circuit, verifications, code)
+        self._create_det_protocol(state_prep_circuit, verifications, code)
 
-    def create_det_protocol(
+    def _create_det_protocol(
         self,
         non_det_state_prep_circuit: QuantumCircuit,
         verifications: tuple[DeterministicVerification, DeterministicVerification],

@@ -197,7 +197,7 @@ class DeterministicVerificationHelper:
         # Variable to store the deterministic verification stabilizers and corrections for the hook propagation solution
         self._hook_propagation_solutions: list[tuple[DeterministicVerification, DeterministicVerification]] = []
 
-    def compute_non_det_stabs(
+    def _compute_non_det_stabs(
         self,
         min_timeout: int = 1,
         max_timeout: int = 3600,
@@ -227,7 +227,7 @@ class DeterministicVerificationHelper:
                 verify = DeterministicVerification(stabs, {})
                 self._layers[idx].append(verify)
 
-    def compute_det_corrections(
+    def _compute_det_corrections(
         self, min_timeout: int = 1, max_timeout: int = 3600, max_ancillas: int | None = None, layer_idx: int = 0
     ) -> None:
         """Returns the deterministic verification stabilizers for the first layer of non-deterministic verification stabilizers."""
@@ -268,7 +268,7 @@ class DeterministicVerificationHelper:
             errors_trivial.append(trivial)
         return bool(all(errors_trivial))
 
-    def compute_hook_corrections(
+    def _compute_hook_corrections(
         self, min_timeout: int = 1, max_timeout: int = 3600, max_ancillas: int | None = None
     ) -> None:
         """Computes the additional stabilizers to measure with corresponding corrections for the hook errors of each stabilizer measurement in layer 2."""
@@ -391,7 +391,7 @@ class DeterministicVerificationHelper:
 
         self._hook_propagation_solutions.append((verify_new, verify_2_best))
 
-    def compute_hook_propagation_solutions(
+    def _compute_hook_propagation_solutions(
         self,
         min_timeout: int = 1,
         max_timeout: int = 3600,
@@ -482,18 +482,18 @@ class DeterministicVerificationHelper:
             max_ancillas = self.code.Hx.shape[0] + self.code.Hz.shape[0]
         self.use_optimal_verification = use_optimal_verification
 
-        self.compute_non_det_stabs(min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)
-        self.compute_det_corrections(
+        self._compute_non_det_stabs(min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)
+        self._compute_det_corrections(
             min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, layer_idx=0
         )
-        self.compute_hook_propagation_solutions(
+        self._compute_hook_propagation_solutions(
             min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, compute_all_solutions=False
         )
 
         # if hook propagation is worse, compute the hook corrections and deterministic corrections
         if len(self._hook_propagation_solutions) == 0:
-            self.compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)
-            self.compute_det_corrections(
+            self._compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)
+            self._compute_det_corrections(
                 min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, layer_idx=1
             )
             if len(self._layers[1]) == 0:
@@ -512,21 +512,21 @@ class DeterministicVerificationHelper:
         if max_ancillas is None:
             max_ancillas = self.code.Hx.shape[0] + self.code.Hz.shape[0]
 
-        self.compute_non_det_stabs(
+        self._compute_non_det_stabs(
             min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, compute_all_solutions=True
         )
         self._filter_and_stabs()
-        self.compute_det_corrections(
+        self._compute_det_corrections(
             min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, layer_idx=0
         )
-        self.compute_hook_propagation_solutions(
+        self._compute_hook_propagation_solutions(
             min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, compute_all_solutions=False
         )
 
         # if hook propagation is worse, compute the hook corrections and deterministic corrections
         if len(self._hook_propagation_solutions) == 0:
-            self.compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)
-            self.compute_det_corrections(
+            self._compute_hook_corrections(min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas)
+            self._compute_det_corrections(
                 min_timeout=min_timeout, max_timeout=max_timeout, max_ancillas=max_ancillas, layer_idx=1
             )
 
