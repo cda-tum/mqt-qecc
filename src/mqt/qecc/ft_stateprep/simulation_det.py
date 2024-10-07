@@ -402,8 +402,7 @@ class NoisyDFTStatePrepSimulator:
 def qiskit_to_qsample(qiskit_circuit: QuantumCircuit) -> qs.Circuit:
     """Convert a Qiskit circuit to a qsample circuit. Only supports H, X, Y, Z, CX, and MEASURE gates."""
     custom_circuit = [{"init": set(range(qiskit_circuit.num_qubits))}]
-    for instruction in qiskit_circuit.data:
-        qargs = instruction.qubits
+    for instruction, qargs, _ in qiskit_circuit.data:
         gate_name = instruction.name.upper()
         if gate_name == "CX":
             gate_name = "CNOT"
