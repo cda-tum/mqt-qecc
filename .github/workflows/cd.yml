@@ -1,21 +1,50 @@
 name: CD
 on:
+  push:
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
-  pull_request:
-    paths:
-      - .github/workflows/cd.yml
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+permissions:
+  attestations: write
+  contents: read
+  id-token: write
 
 jobs:
+  # Builds the sdist and wheels on all supported platforms and uploads the resulting
+  # wheels as GitHub artifacts `dev-cibw-*`, `test-cibw-*`, or `cibw-*`, depending on
+  # whether the workflow is triggered from a PR, a push to main, or a release, respectively.
   python-packaging:
     name: 🐍 Packaging
     uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.4
+    with:
+      # Do not include local version information on pushes to main to facilitate TestPyPI uploads.
+      no-local-version: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+      # Do not build emulated wheels on pushes to main to reduce runner load for CD.
+      build-emulated-wheels: ${{ github.ref != 'refs/heads/main' || github.event_name != 'push' }}
 
+  # Downloads the previously generated artifacts and deploys to TestPyPI on pushes to main
+  deploy-test-pypi:
+    name: 🚀 Deploy to Test PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: test-pypi
+      url: https://test.pypi.org/p/mqt.qecc
+    needs: [python-packaging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: test-cibw-*
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          attestations: true
+
+  # Downloads the previously generated artifacts and deploys to PyPI on published releases.
   deploy:
     if: github.event_name == 'release' && github.event.action == 'published'
     name: 🚀 Deploy to PyPI
@@ -23,10 +52,6 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/mqt.qecc
-    permissions:
-      id-token: write
-      attestations: write
-      contents: read
     needs: [python-packaging]
     steps:
       - uses: actions/download-artifact@v4
