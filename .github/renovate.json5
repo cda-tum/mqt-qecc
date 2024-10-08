@@ -1,0 +1,38 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended", ":gitSignOff"],
+  prHourlyLimit: 10,
+  enabledManagers: ["github-actions", "pre-commit", "pep621"],
+  "pre-commit": {
+    enabled: true
+  },
+  lockFileMaintenance: {
+    "enabled": true,
+    // "automerge": true, disabled due to endless update loops caused by setuptools_scm
+  },
+  configMigration: true,
+  labels: ["dependencies"],
+  schedule: ["every weekend"],
+  packageRules: [
+    {
+      matchManagers: ["github-actions"],
+      addLabels: ["github-actions", "continuous integration"],
+      commitMessagePrefix: "⬆\uFE0F\uD83D\uDC68\u200D\uD83D\uDCBB"
+    },
+    {
+      matchManagers: ["pep621"],
+      addLabels: ["python"],
+      commitMessagePrefix: "⬆\uFE0F\uD83D\uDC0D"
+    },
+    {
+      matchManagers: ["pre-commit"],
+      addLabels: ["pre-commit", "continuous integration"],
+      commitMessagePrefix: "⬆\uFE0F\uD83E\uDE9D",
+    },
+    {
+      "description": "Automerge patch updates",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ]
+}
