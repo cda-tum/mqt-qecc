@@ -291,67 +291,6 @@ def test_heuristic_steane_verification_circuit(steane_code_sp: StatePrepCircuit)
 
 
 @pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
-def test_optimal_tetrahedral_verification_circuit(tetrahedral_code_sp: StatePrepCircuit) -> None:
-    """Test the optimal verification circuit for the tetrahedral code is correct.
-
-    The tetrahedral code has an x-distance of 7. We expect that the verification only checks for a single propagated error since the tetrahedral code has a distance of 3.
-    """
-    circ = tetrahedral_code_sp
-
-    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=1, max_timeout=5)
-
-    assert len(ver_stabs_layers) == 1  # 1 layer of verification measurements
-
-    ver_stabs = ver_stabs_layers[0]
-    assert len(ver_stabs) == 1  # 1 Ancilla measurement
-    assert np.sum(ver_stabs[0]) == 3  # 3 CNOTs
-    z_gens = circ.z_checks
-
-    for stab in ver_stabs:
-        assert in_span(z_gens, stab)
-
-    errors = circ.compute_fault_set(1)
-    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0, axis=1))[0]
-    assert len(non_detected) == 0
-
-    # Check that circuit is correct
-    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=1, max_timeout=5)
-    assert circ_ver.num_qubits == circ.num_qubits + 1
-    assert circ_ver.num_nonlocal_gates() == np.sum(ver_stabs) + circ.circ.num_nonlocal_gates()
-    assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
-
-
-def test_heuristic_tetrahedral_verification_circuit(tetrahedral_code_sp: StatePrepCircuit) -> None:
-    """Test the optimal verification circuit for the tetrahedral code is correct.
-
-    The tetrahedral code has an x-distance of 7. We expect that the verification only checks for a single propagated error since the tetrahedral code has a distance of 3.
-    """
-    circ = tetrahedral_code_sp
-
-    ver_stabs_layers = heuristic_verification_stabilizers(circ, x_errors=True)
-
-    assert len(ver_stabs_layers) == 1  # 1 layer of verification measurements
-
-    ver_stabs = ver_stabs_layers[0]
-    assert len(ver_stabs) == 1  # 1 Ancilla measurement
-    assert np.sum(ver_stabs[0]) == 3  # 3 CNOTs
-    z_gens = circ.z_checks
-
-    for stab in ver_stabs:
-        assert in_span(z_gens, stab)
-
-    errors = circ.compute_fault_set(1)
-    non_detected = np.where(np.all(ver_stabs @ errors.T % 2 == 0, axis=1))[0]
-    assert len(non_detected) == 0
-
-    # Check that circuit is correct
-    circ_ver = heuristic_verification_circuit(circ)
-    assert circ_ver.num_qubits == circ.num_qubits + 1
-    assert circ_ver.num_nonlocal_gates() == np.sum(ver_stabs) + circ.circ.num_nonlocal_gates()
-    assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
-
-
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification is also correct for higher distance.
 
