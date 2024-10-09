@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from ldpc import mod2
 
+from .pauli import StabilizerTableau
 from .stabilizer_code import StabilizerCode
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,8 +25,17 @@ class CSSCode(StabilizerCode):
         Hz: npt.NDArray[np.int8] | None = None,  # noqa: N803
         x_distance: int | None = None,
         z_distance: int | None = None,
+        n: int | None = None,
     ) -> None:
         """Initialize the code."""
+        if Hx is None and Hz is None:
+            self.Hx = np.zeros((0, n), dtype=np.int8)
+            self.Hz = np.zeros((0, n), dtype=np.int8)
+            self.Lx = np.eye(n, dtype=np.int8)
+            self.Lz = np.eye(n, dtype=np.int8)
+            super().__init__([], 1, n=n)
+            return
+
         self._check_valid_check_matrices(Hx, Hz)
 
         if Hx is None:
@@ -46,8 +56,8 @@ class CSSCode(StabilizerCode):
 
         x_padded = np.hstack([self.Hx, z_padding])
         z_padded = np.hstack([x_padding, self.Hz])
-        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0], 1), dtype=np.int8)
-        super().__init__(np.hstack((np.vstack((x_padded, z_padded)), phases)), distance)
+        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0]), dtype=np.int8)
+        super().__init__(StabilizerTableau(np.vstack((x_padded, z_padded)), phases), distance)
 
         self.distance = distance
         self.x_distance = x_distance if x_distance is not None else distance
@@ -156,6 +166,11 @@ class CSSCode(StabilizerCode):
             if np.any(Hx @ Hz.T % 2 != 0):
                 msg = "The check matrices must be orthogonal"
                 raise InvalidCSSCodeError(msg)
+
+    @classmethod
+    def get_trivial_code(cls, n: int) -> CSSCode:
+        """Return the trivial code."""
+        return cls(1, None, None, n=n)
 
     @staticmethod
     def from_code_name(code_name: str, distance: int | None = None) -> CSSCode:
