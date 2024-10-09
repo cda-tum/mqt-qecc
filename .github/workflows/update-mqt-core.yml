@@ -23,4 +23,4 @@ jobs:
     name: ⬆️ Update MQT Core
     uses: cda-tum/mqt-workflows/.github/workflows/reusable-mqt-core-update.yml@v1.4
     with:
-      update-to-head: ${{ github.event.inputs.update-to-head || false }}
+      update-to-head: ${{ github.event.inputs.update-to-head == 'true' }}
