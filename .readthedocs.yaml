@@ -18,6 +18,8 @@ build:
         then
           exit 183;
         fi
+      # Unshallow the git clone and fetch tags to get proper version information
+      - git fetch --unshallow --tags
 
 sphinx:
   configuration: docs/conf.py
