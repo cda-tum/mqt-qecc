@@ -29,13 +29,16 @@ class CSSCode(StabilizerCode):
     ) -> None:
         """Initialize the code."""
         if Hx is None and Hz is None:
+            if n is None:
+                msg = "If no check matrices are provided, the code size must be specified."
+                raise InvalidCSSCodeError(msg)
             self.Hx = np.zeros((0, n), dtype=np.int8)
             self.Hz = np.zeros((0, n), dtype=np.int8)
             self.Lx = np.eye(n, dtype=np.int8)
             self.Lz = np.eye(n, dtype=np.int8)
             super().__init__([], 1, n=n)
             return
-        
+
         self._check_valid_check_matrices(Hx, Hz)
 
         if Hx is None:
