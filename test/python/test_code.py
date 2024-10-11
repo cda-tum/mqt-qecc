@@ -14,6 +14,7 @@ from mqt.qecc.codes import (
     InvalidCSSCodeError,
     InvalidStabilizerCodeError,
     construct_bb_code,
+    construct_quantum_hamming_code,
 )
 from mqt.qecc.codes.pauli import InvalidPauliError
 
@@ -301,3 +302,11 @@ def test_trivial_css_concatenation(steane_code: CSSCode) -> None:
     assert concatenated.k == 1
     assert concatenated.distance == 3
     assert concatenated == steane_code
+
+
+def test_hamming_code() -> None:
+    """Test that the Hamming code is constructed as a valid CSS code."""
+    code = construct_quantum_hamming_code(3)
+    assert code.n == 7
+    assert code.k == 1
+    assert code.distance == 3
