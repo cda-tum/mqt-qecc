@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 class Pauli:
     """Class representing an n-qubit Pauli operator."""
 
-    def __init__(self, symplectic: SymplecticVector, phase: int) -> None:
+    def __init__(self, symplectic: SymplecticVector, phase: int = 0) -> None:
         """Create a new Pauli operator.
 
         Args:
             symplectic: A 2n x n binary matrix representing the symplectic form of the Pauli operator. The first n entries correspond to X operators, and the second n entries correspond to Z operators.
-            phase: A 2n x 1 binary vector representing the phase of the Pauli operator.
+            phase: An integer 0 or 1 representing the phase of the Pauli operator (0 for +, 1 for -).
         """
         self.n = symplectic.n
         self.symplectic = symplectic
@@ -35,8 +35,8 @@ class Pauli:
             msg = f"Invalid Pauli string: {p}"
             raise InvalidPauliError(msg)
         pauli_start_index = 1 if p[0] in "+-" else 0
-        x_part = np.array([c == "X" for c in p[pauli_start_index:]]).astype(np.int8)
-        z_part = np.array([c == "Z" for c in p[pauli_start_index:]]).astype(np.int8)
+        x_part = np.array([c in "XY" for c in p[pauli_start_index:]]).astype(np.int8)
+        z_part = np.array([c in "ZY" for c in p[pauli_start_index:]]).astype(np.int8)
         phase = int(p[0] == "-")
         return cls(SymplecticVector(np.concatenate((x_part, z_part))), phase)
 
@@ -88,6 +88,24 @@ class Pauli:
     def z_part(self) -> npt.NDArray[np.int8]:
         """Return the Z part of the Pauli operator."""
         return self.symplectic[self.n :]
+
+    def __eq__(self, other: object) -> bool:
+        """Check if this Pauli operator is equal to another Pauli operator."""
+        if not isinstance(other, Pauli):
+            return False
+        return self.symplectic == other.symplectic and self.phase == other.phase
+
+    def __ne__(self, other: object) -> bool:
+        """Check if this Pauli operator is not equal to another Pauli operator."""
+        return not self == other
+
+    def __neg__(self) -> Pauli:
+        """Return the negation of this Pauli operator."""
+        return Pauli(self.symplectic, 1 - self.phase)
+
+    def __hash__(self) -> int:
+        """Return a hash of the Pauli operator."""
+        return hash((self.symplectic, self.phase))
 
 
 class StabilizerTableau:

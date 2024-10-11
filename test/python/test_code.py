@@ -14,12 +14,72 @@ from mqt.qecc.codes import (
     InvalidCSSCodeError,
     InvalidStabilizerCodeError,
     construct_bb_code,
+    construct_iceberg_code,
+    construct_many_hypercube_code,
     construct_quantum_hamming_code,
 )
-from mqt.qecc.codes.pauli import InvalidPauliError
+from mqt.qecc.codes.pauli import InvalidPauliError, Pauli, StabilizerTableau
+from mqt.qecc.codes.symplectic import SymplecticMatrix, SymplecticVector
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
+
+
+def test_pauli() -> None:
+    """Test the Pauli class."""
+    p1 = Pauli.from_pauli_string("XIZ")
+    p2 = Pauli(SymplecticVector(np.array([1, 0, 0, 0, 0, 1])))
+    assert p1 == p2
+    p3 = p1 * p2
+    assert p3 == Pauli.from_pauli_string("III")
+    p4 = Pauli.from_pauli_string("-X")
+    p5 = Pauli.from_pauli_string("+Z")
+    p6 = Pauli.from_pauli_string("Y")
+    assert p4 * p5 != p6
+    assert p4 * p5 == -p6
+
+    assert np.array_equal(p1.x_part(), np.array([1, 0, 0]))
+    assert np.array_equal(p1.z_part(), np.array([0, 0, 1]))
+    assert np.array_equal(p6.x_part(), np.array([1]))
+    assert np.array_equal(p6.z_part(), np.array([1]))
+    assert len(p1) == 3
+    assert len(p6) == 1
+
+    assert p4.anticommute(p5)
+    p7 = Pauli.from_pauli_string("XI")
+    p8 = Pauli.from_pauli_string("IZ")
+    assert p8.commute(p7)
+
+    with pytest.raises(IndexError):
+        p1[3]
+
+
+def test_stabilizer_tableau() -> None:
+    """Test the StabilizerTableau class."""
+    with pytest.raises(InvalidPauliError):
+        StabilizerTableau.from_pauli_strings([])
+
+    with pytest.raises(InvalidPauliError):
+        StabilizerTableau.from_paulis([])
+
+    m = SymplecticMatrix(np.array([[1, 0], [0, 1]]))
+    with pytest.raises(InvalidPauliError):
+        StabilizerTableau(m, np.array([1]))
+
+    p1 = Pauli.from_pauli_string("XIZ")
+    p2 = Pauli.from_pauli_string("ZIX")
+    p3 = Pauli.from_pauli_string("IZX")
+    t1 = StabilizerTableau.from_paulis([p1, p2, p3])
+    t2 = StabilizerTableau(np.array([[1, 0, 0, 0, 0, 1], [0, 0, 1, 1, 0, 0], [0, 0, 1, 0, 1, 0]]), np.array([0, 0, 0]))
+    assert t1 == t2
+
+    t3 = StabilizerTableau.from_pauli_strings(["ZII", "IZI", "IIZ"])
+    assert t1 != t3
+
+    t4 = StabilizerTableau.from_pauli_strings(["ZII"])
+    assert t1 != t4
+
+    assert t1 == [Pauli.from_pauli_string("XIZ"), Pauli.from_pauli_string("ZIX"), Pauli.from_pauli_string("IZX")]
 
 
 @pytest.fixture
@@ -310,3 +370,29 @@ def test_hamming_code() -> None:
     assert code.n == 7
     assert code.k == 1
     assert code.distance == 3
+
+
+def test_many_hypercube_code_level_1() -> None:
+    """Test that the many-hypercube code."""
+    code = construct_many_hypercube_code(1)
+    assert code.n == 6
+    assert code.k == 4
+    assert code.distance == 2
+    iceberg = construct_iceberg_code(3)
+    assert code == iceberg
+
+
+def test_many_hypercube_code_level_2() -> None:
+    """Test that the many-hypercube code."""
+    code = construct_many_hypercube_code(2)
+    assert code.n == 36
+    assert code.k == 16
+    assert code.distance == 4
+
+
+def test_many_hypercube_code_level_3() -> None:
+    """Test that the many-hypercube code."""
+    code = construct_many_hypercube_code(3)
+    assert code.n == 6**3
+    assert code.k == 4**3
+    assert code.distance == 2**3

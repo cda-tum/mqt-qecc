@@ -55,6 +55,20 @@ class SymplecticVector:
         """Set the value of the vector at index key."""
         self.vector[key] = value
 
+    def __eq__(self, other: object) -> bool:
+        """Check if two vectors are equal."""
+        if not isinstance(other, SymplecticVector):
+            return False
+        return np.array_equal(self.vector, other.vector)
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two vectors are not equal."""
+        return not self == other
+
+    def __hash__(self) -> int:
+        """Return the hash of the vector."""
+        return hash(self.vector.to_bytes())
+
 
 class SymplecticMatrix:
     """Symplectic Matrix Class."""
@@ -125,6 +139,10 @@ class SymplecticMatrix:
         if not isinstance(other, SymplecticMatrix):
             return False
         return np.array_equal(self.matrix, other.matrix)
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two matrices are not equal."""
+        return not self == other
 
     def __hash__(self) -> int:
         """Return the hash of the matrix."""
