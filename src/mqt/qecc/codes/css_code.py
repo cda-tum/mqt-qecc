@@ -182,7 +182,6 @@ class CSSCode(StabilizerCode):
         The following codes are supported:
         - [[7, 1, 3]] Steane (\"Steane\")
         - [[15, 1, 3]] tetrahedral code (\"Tetrahedral\")
-        - [[15, 7, 3]] Hamming code (\"Hamming\")
         - [[9, 1, 3]] Shore code (\"Shor\")
         - [[12, 2, 4]] Carbon Code (\"Carbon\")
         - [[9, 1, 3]] rotated surface code (\"Surface, 3\"), also default when no distance is given
@@ -197,7 +196,6 @@ class CSSCode(StabilizerCode):
         paths = {
             "steane": prefix / "steane/",
             "tetrahedral": prefix / "tetrahedral/",
-            "hamming": prefix / "hamming/",
             "shor": prefix / "shor/",
             "surface_3": prefix / "rotated_surface_d3/",
             "surface_5": prefix / "rotated_surface_d5/",
@@ -208,7 +206,6 @@ class CSSCode(StabilizerCode):
         distances = {
             "steane": (3, 3),
             "tetrahedral": (7, 3),
-            "hamming": (3, 3),
             "shor": (3, 3),
             "golay": (7, 7),
             "surface_3": (3, 3),
