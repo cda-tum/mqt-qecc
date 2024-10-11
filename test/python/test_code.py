@@ -8,7 +8,13 @@ import numpy as np
 import pytest
 
 from mqt.qecc import CSSCode, StabilizerCode
-from mqt.qecc.codes import ConcatenatedCode, InvalidCSSCodeError, InvalidStabilizerCodeError, construct_bb_code, ConcatenatedCSSCode
+from mqt.qecc.codes import (
+    ConcatenatedCode,
+    ConcatenatedCSSCode,
+    InvalidCSSCodeError,
+    InvalidStabilizerCodeError,
+    construct_bb_code,
+)
 from mqt.qecc.codes.pauli import InvalidPauliError
 
 if TYPE_CHECKING:  # pragma: no cover
