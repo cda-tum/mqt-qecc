@@ -44,7 +44,6 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "z3-solver>=4.12",
-    "z3-solver<4.14; sys_platform == 'darwin' and 'x86_64' in platform_machine", # z3 4.13 wheels on x86 macOS are broken
     "qecsim",
     "ldpc>=0.1.53",
     "numpy>=1.26; python_version > '3.11'",
