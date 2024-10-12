@@ -1097,7 +1097,7 @@ wheels = [
 
 [[package]]
 name = "mqt-qecc"
-version = "1.8.1.dev11+ga364ba4.d20241006"
+version = "1.8.2.dev4+g27843ea.d20241012"
 source = { editable = "." }
 dependencies = [
     { name = "bposd" },
@@ -1110,8 +1110,7 @@ dependencies = [
     { name = "qiskit", extra = ["qasm3-import"] },
     { name = "qiskit-aer" },
     { name = "stim" },
-    { name = "z3-solver", version = "4.12.6.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' and 'x86_64' in platform_machine" },
-    { name = "z3-solver", version = "4.13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' or 'x86_64' not in platform_machine" },
+    { name = "z3-solver" },
 ]
 
 [package.optional-dependencies]
@@ -1191,7 +1190,7 @@ requires-dist = [
     { name = "sphinxext-opengraph", marker = "extra == 'docs'", specifier = ">=0.9" },
     { name = "stim", specifier = ">=1.13.0" },
     { name = "z3-solver", specifier = ">=4.12" },
-    { name = "z3-solver", marker = "sys_platform == 'darwin' and 'x86_64' in platform_machine", specifier = "<4.13" },
+    { name = "z3-solver", marker = "sys_platform == 'darwin' and 'x86_64' in platform_machine", specifier = "<4.14" },
 ]
 
 [[package]]
@@ -1213,6 +1212,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/07/8cbb75d6cfbe8712d8f7f6a5615f083c6e710ab916b748fbb20373ddb142/multiprocess-0.70.17-py311-none-any.whl", hash = "sha256:2884701445d0177aec5bd5f6ee0df296773e4fb65b11903b94c613fb46cfb7d1", size = 144346 },
     { url = "https://files.pythonhosted.org/packages/a4/69/d3f343a61a2f86ef10ed7865a26beda7c71554136ce187b0384b1c2c9ca3/multiprocess-0.70.17-py312-none-any.whl", hash = "sha256:2818af14c52446b9617d1b0755fa70ca2f77c28b25ed97bdaa2c69a22c47b46c", size = 147990 },
     { url = "https://files.pythonhosted.org/packages/c8/b7/2e9a4fcd871b81e1f2a812cd5c6fb52ad1e8da7bf0d7646c55eaae220484/multiprocess-0.70.17-py313-none-any.whl", hash = "sha256:20c28ca19079a6c879258103a6d60b94d4ffe2d9da07dda93fb1c8bc6243f522", size = 149843 },
+    { url = "https://files.pythonhosted.org/packages/ae/d7/fd7a092fc0ab1845a1a97ca88e61b9b7cc2e9d6fcf0ed24e9480590c2336/multiprocess-0.70.17-py38-none-any.whl", hash = "sha256:1d52f068357acd1e5bbc670b273ef8f81d57863235d9fbf9314751886e141968", size = 132635 },
     { url = "https://files.pythonhosted.org/packages/f9/41/0618ac724b8a56254962c143759e04fa01c73b37aa69dd433f16643bd38b/multiprocess-0.70.17-py39-none-any.whl", hash = "sha256:c3feb874ba574fbccfb335980020c1ac631fbf2a3f7bee4e2042ede62558a021", size = 133359 },
 ]
 
@@ -1614,8 +1614,6 @@ version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/18/c7/8c6872f7372eb6a6b2e4708b88419fb46b857f7a2e1892966b851cc79fc9/psutil-6.0.0.tar.gz", hash = "sha256:8faae4f310b6d969fa26ca0545338b21f73c6b15db7c4a8d934a5482faa818f2", size = 508067 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/66/78c9c3020f573c58101dc43a44f6855d01bbbd747e24da2f0c4491200ea3/psutil-6.0.0-cp27-none-win32.whl", hash = "sha256:02b69001f44cc73c1c5279d02b30a817e339ceb258ad75997325e0e6169d8b35", size = 249766 },
-    { url = "https://files.pythonhosted.org/packages/e1/3f/2403aa9558bea4d3854b0e5e567bc3dd8e9fbc1fc4453c0aa9aafeb75467/psutil-6.0.0-cp27-none-win_amd64.whl", hash = "sha256:21f1fb635deccd510f69f485b87433460a603919b45e2a324ad65b0cc74f8fb1", size = 253024 },
     { url = "https://files.pythonhosted.org/packages/0b/37/f8da2fbd29690b3557cca414c1949f92162981920699cd62095a984983bf/psutil-6.0.0-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:c588a7e9b1173b6e866756dde596fd4cad94f9399daf99ad8c3258b3cb2b47a0", size = 250961 },
     { url = "https://files.pythonhosted.org/packages/35/56/72f86175e81c656a01c4401cd3b1c923f891b31fbcebe98985894176d7c9/psutil-6.0.0-cp36-abi3-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6ed2440ada7ef7d0d608f20ad89a04ec47d2d3ab7190896cd62ca5fc4fe08bf0", size = 287478 },
     { url = "https://files.pythonhosted.org/packages/19/74/f59e7e0d392bc1070e9a70e2f9190d652487ac115bb16e2eff6b22ad1d24/psutil-6.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5fd9a97c8e94059b0ef54a7d4baf13b405011176c3b6ff257c247cae0d560ecd", size = 290455 },
@@ -2711,36 +2709,16 @@ wheels = [
 
 [[package]]
 name = "z3-solver"
-version = "4.12.6.0"
+version = "4.13.3.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.11' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
-    "python_full_version == '3.11.*' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
-    "python_full_version >= '3.12' and sys_platform == 'darwin' and 'x86_64' in platform_machine",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/66/a8/fb9141e779cece45778c98feec75fe35337ac8d54836503b290af3b81207/z3-solver-4.12.6.0.tar.gz", hash = "sha256:9a0f30e9648ee2649adc301dbf91470bc1600f34112ffeaf1063f8a8075e1a48", size = 4821806 }
+sdist = { url = "https://files.pythonhosted.org/packages/12/43/66654a437cd16bc25802284bd0f7ee94a679993ec0d90df25d2cbb595239/z3_solver-4.13.3.0.tar.gz", hash = "sha256:4c27466455bac65d3c512f4bb4841ac79e05e121d3f98ddc99ac27ab4bc27e05", size = 4899797 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ce/0c/b0074b9384753e841c1a7252ef44ee5444221eff2d7cb88b8957bdc2e57e/z3_solver-4.12.6.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:9347c9c4f966c97c807f73b1b4365d11dbb25e390b3908b1c3a6e3bceff62e6d", size = 26979615 },
-    { url = "https://files.pythonhosted.org/packages/47/02/bd1a78832beb0eac459a189da64caafd1a34ecd2b4a74d32a4c9b9fafe9c/z3_solver-4.12.6.0-py2.py3-none-macosx_11_0_x86_64.whl", hash = "sha256:359d2af6dbcc017dadb99f286b39df101edf6ac9a45332ba15c0a2012ff46d45", size = 29911008 },
-]
-
-[[package]]
-name = "z3-solver"
-version = "4.13.2.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "(python_full_version < '3.11' and sys_platform != 'darwin') or (python_full_version < '3.11' and 'x86_64' not in platform_machine)",
-    "(python_full_version == '3.11.*' and sys_platform != 'darwin') or (python_full_version == '3.11.*' and 'x86_64' not in platform_machine)",
-    "(python_full_version >= '3.12' and sys_platform != 'darwin') or (python_full_version >= '3.12' and 'x86_64' not in platform_machine)",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/73/99/6254d665acd924d64e0afddb2a35f68bcd5875e5bdc9dccd2d651c215eeb/z3_solver-4.13.2.0.tar.gz", hash = "sha256:8b02db03e028e8f3b8498fe65e45ce7348c2995e66427353a0a8ce84ed83d934", size = 4898217 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/06/8d01fa67f8bfc9b3d15667d821ac0bf0e782fa256feb46e5f7510fcad4b8/z3_solver-4.13.2.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:93456e4c462c4bf9c94371807548ffbbfe68aa7187f67b8c9ce19e82db7d3d27", size = 35602201 },
-    { url = "https://files.pythonhosted.org/packages/2d/a0/954239972a9b5f793475daffe916827f2e9a19659882962fcc5777200d40/z3_solver-4.13.2.0-py3-none-macosx_12_7_x86_64.whl", hash = "sha256:61f313649d3877c91f67cded2cbefe0f33fe47f194eb43bb302694b9e3dfae2c", size = 38398793 },
-    { url = "https://files.pythonhosted.org/packages/b9/ce/b08b0b48dceb1ebcb1f1daec0891c0ab8bf06f3a6b223e57245c2c9d750b/z3_solver-4.13.2.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:18a67ba6f934350c352d9930ace9a69ba9f6d0c52aca5a8d2e2265ad57fca6bd", size = 28116329 },
-    { url = "https://files.pythonhosted.org/packages/6d/68/fd97fbb2e9cdd71ac71663ef711380ffceaac64960a637dea8abce43c439/z3_solver-4.13.2.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:1ae47832194d7ae6db6b04c856261f1ce3cd1ed0457d30cbec165559149859f9", size = 26162489 },
-    { url = "https://files.pythonhosted.org/packages/d5/5a/613714cde0cdeb9b6f9ffb3ee78a4659767ff53d0578e660d4571c71aa81/z3_solver-4.13.2.0-py3-none-win32.whl", hash = "sha256:ce5d7478c6d7e7649d5ea9ac4e06091f0e94ef5998e31c1ca35c3cec62037dbc", size = 12689836 },
-    { url = "https://files.pythonhosted.org/packages/b1/2e/1349c2ce814fd132c9ebd88b56d2dbc36d8900cd0cf92b80dce4f82c16d6/z3_solver-4.13.2.0-py3-none-win_amd64.whl", hash = "sha256:63cdae5e8144b27a6afaab2d21a0baf97ed452797bff01ef1f0cbe9608cdff01", size = 15590520 },
+    { url = "https://files.pythonhosted.org/packages/5b/3e/fbefba102a95621b2eb9030acbb74338ab6078d2fef587ba3dc2a705bc4b/z3_solver-4.13.3.0-py3-none-macosx_13_0_arm64.whl", hash = "sha256:cae621cb47ebcf055f6a27285343d5c932f4c282b15c5d2840327e73e15a86a4", size = 35854175 },
+    { url = "https://files.pythonhosted.org/packages/2f/c3/dde2e0ec7bd698bfa3d9b6d6eb5dcc4eb6434a5dc8430c2ac97eb413b1f4/z3_solver-4.13.3.0-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:7900fbd1917164c938a20bea7845f7b95fcb431d0ade474d408f979196bccb8f", size = 38534677 },
+    { url = "https://files.pythonhosted.org/packages/b6/f2/036f6501d3a2835cd4a17fd67364cd56337a5183e20b063d3d8a005f7288/z3_solver-4.13.3.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:794843e4946ade1561e40a75ffc1163b45d36b493fd6cc269ad1d6a65bddb8e5", size = 28124043 },
+    { url = "https://files.pythonhosted.org/packages/1c/ff/51b34658ceca98978be0d0e5161bc239015188debc4e3895803a311608fd/z3_solver-4.13.3.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:ab5057cb1f4680406a232d2c1d968daaf69fae10685baa0887b85ca8e938a5cf", size = 26208542 },
+    { url = "https://files.pythonhosted.org/packages/18/75/adfd645c3e3418052675b06717c4339f423ca7b51b7185fb0897f913acdc/z3_solver-4.13.3.0-py3-none-win32.whl", hash = "sha256:ba465489e9ab609f1cf0f232cbc102165b89a507347a6093c2ac3224cf161aa3", size = 12700057 },
+    { url = "https://files.pythonhosted.org/packages/26/94/352fc6e18bd23056b57132bbe9d40facd5f70acebe23a6c49bfd89fa2bc0/z3_solver-4.13.3.0-py3-none-win_amd64.whl", hash = "sha256:d55e4793fa48230af766c7f6f7f033198b2d9df150d89ec65b07fd7b87998897", size = 15606445 },
 ]
 
 [[package]]
