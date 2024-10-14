@@ -10,7 +10,7 @@ We encourage installing QECC via pip (preferably in a `virtual environment <http
 
         (venv) $ pip install mqt.qecc
 
-In most practical cases (under 64-bit Linux, MacOS incl. Apple Silicon), this requires no compilation and merely downloads and installs a platform-specific pre-built wheel.
+In most practical cases (under 64-bit Linux, MacOS incl. Apple Silicon, and Windows), this requires no compilation and merely downloads and installs a platform-specific pre-built wheel.
 
 .. note::
     In order to set up a virtual environment, you can use the following commands:
@@ -86,6 +86,3 @@ This requires a `C++ compiler <https://en.wikipedia.org/wiki/List_of_compilers#C
 
 The library is continuously tested under Linux, MacOS, and Windows using the `latest available system versions for GitHub Actions <https://github.com/actions/virtual-environments>`_.
 In order to access the latest build logs, visit `qecc/actions/workflows/ci.yml <https://github.com/cda-tum/mqt-qecc/actions/workflows/ci.yml>`_.
-
-.. note::
-    We noticed some issues when compiling with Microsoft's *MSCV* compiler toolchain. If you want to start development on this project under Windows, consider using the *clang* compiler toolchain. A detailed description of how to set this up can be found `here <https://docs.microsoft.com/en-us/cpp/build/clang-support-msbuild?view=msvc-160>`_.
