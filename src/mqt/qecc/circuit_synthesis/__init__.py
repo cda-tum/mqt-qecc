@@ -15,6 +15,7 @@ from .state_prep import (
     heuristic_verification_stabilizers,
     naive_verification_circuit,
 )
+from .synthesis_utils import qiskit_to_stim_circuit
 
 __all__ = [
     "LutDecoder",
@@ -31,4 +32,5 @@ __all__ = [
     "heuristic_verification_circuit",
     "heuristic_verification_stabilizers",
     "naive_verification_circuit",
+    "qiskit_to_stim_circuit",
 ]

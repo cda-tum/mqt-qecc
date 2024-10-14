@@ -11,6 +11,7 @@ import numpy as np
 import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit
+from stim import Circuit
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -580,7 +581,7 @@ def measure_flagged(
         return
 
     if t == 1:
-        measure_stab_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        measure_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
     if w == 4 and t >= 2:
@@ -596,14 +597,14 @@ def measure_flagged(
         return
 
     if t == 2:
-        measure_stab_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
     msg = f"Flagged measurement for w={w} and t={t} not implemented."
     raise NotImplementedError(msg)
 
 
-def measure_stab_one_flagged(
+def measure_one_flagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
@@ -641,7 +642,7 @@ def measure_stab_one_flagged(
     qc.measure(ancilla, measurement_bit)
 
 
-def measure_stab_two_flagged(
+def measure_two_flagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
@@ -649,7 +650,16 @@ def measure_stab_two_flagged(
     z_measurement: bool = True,
 ) -> None:
     """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13)."""
-    assert len(stab) > 4
+    if len(stab) <= 4:
+        measure_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+    if len(stab) == 6:
+        measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+    if len(stab) == 8:
+        measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
+        return
+
     n_flags = (len(stab) + 1) // 2 - 1
     flag_reg = AncillaRegister(n_flags)
     meas_reg = ClassicalRegister(n_flags)
@@ -850,3 +860,30 @@ def measure_flagged_8(
     if not z_measurement:
         qc.h(ancilla)
     qc.measure(ancilla, measurement_bit)
+
+
+def qiskit_to_stim_circuit(qc: QuantumCircuit) -> Circuit:
+    """Convert a Qiskit circuit to a Stim circuit."""
+    single_qubit_gate_map = {
+        "h": "H",
+        "x": "X",
+        "y": "Y",
+        "z": "Z",
+        "s": "S",
+        "sdg": "S_DAG",
+        "sx": "SQRT_X",
+        "measure": "MR",
+    }
+    stim_circuit = Circuit()
+    for gate in qc:
+        op = gate.operation.name
+        qubit = qc.find_bit(gate.qubits[0])[0]
+        if op in single_qubit_gate_map:
+            stim_circuit.append_operation(single_qubit_gate_map[op], [qubit])
+        elif op == "cx":
+            target = qc.find_bit(gate.qubits[1])[0]
+            stim_circuit.append_operation("CX", [qubit, target])
+        else:
+            msg = f"Unsupported gate: {op}"
+            raise ValueError(msg)
+    return stim_circuit
