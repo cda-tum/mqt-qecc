@@ -85,6 +85,16 @@ def color_code_d5_sp(cc_4_8_8_code: CSSCode) -> StatePrepCircuit:
     return sp_circ
 
 
+def test_heuristic_overcomplete_stabilizers() -> None:
+    """Check that synthesis also works for overcomplete stabilizers."""
+    code = CSSCode(2, np.array([[1, 1, 1, 1], [1, 1, 1, 1]]), np.array([[1, 1, 1, 1], [1, 1, 1, 1]]))
+    sp_circ = heuristic_prep_circuit(code)
+    circ = sp_circ.circ
+    x, z = get_stabs_css(circ)
+    assert eq_span(code.Hx, x)
+    assert eq_span(np.vstack((code.Hz, code.Lz)), z)
+
+
 @pytest.mark.parametrize(
     "code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code", "tetrahedral_code", "surface_code"]
 )

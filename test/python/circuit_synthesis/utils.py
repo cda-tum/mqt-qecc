@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 def eq_span(a: npt.NDArray[np.int_], b: npt.NDArray[np.int_]) -> bool:
     """Check if two matrices have the same row space."""
-    return (a.shape == b.shape) and (int(mod2.rank(np.vstack((a, b)))) == int(mod2.rank(a)) == int(mod2.rank(b)))
+    return (a.shape[1] == b.shape[1]) and (int(mod2.rank(np.vstack((a, b)))) == int(mod2.rank(a)) == int(mod2.rank(b)))
 
 
 def in_span(m: npt.NDArray[np.int_], v: npt.NDArray[np.int_]) -> bool:

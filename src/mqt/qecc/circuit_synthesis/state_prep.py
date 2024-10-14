@@ -259,9 +259,10 @@ def depth_optimal_prep_circuit(
     """
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
+    rank = mod2.rank(checks)
     res = optimal_elimination(
         checks,
-        _final_matrix_constraint,
+        lambda checks: final_matrix_constraint(checks, rank),
         "parallel_ops",
         min_param=min_depth,
         max_param=max_depth,
@@ -295,9 +296,10 @@ def gate_optimal_prep_circuit(
     """
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
+    rank = mod2.rank(checks)
     res = optimal_elimination(
         checks,
-        _final_matrix_constraint,
+        lambda checks: final_matrix_constraint(checks, rank),
         "column_ops",
         min_param=min_gates,
         max_param=max_gates,
@@ -905,9 +907,10 @@ def _hook_errors(stabs: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
     return np.array(errors)
 
 
-def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+def final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool], rank: int) -> z3.BoolRef:
+    """Return a z3 constraint that the final matrix has exactly rank non-zero columns."""
     assert len(columns.shape) == 3
     return z3.PbEq(
         [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
-        columns.shape[2] - columns.shape[1],
+        columns.shape[2] - rank,
     )

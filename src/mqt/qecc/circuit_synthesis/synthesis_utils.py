@@ -186,27 +186,32 @@ def gaussian_elimination_min_column_ops(
 
     # create initial matrix
     columns[0, :, :] = matrix.astype(bool)
-    s.add(_column_addition_constraint(columns, additions))
 
-    for d in range(1, max_eliminations + 1):
-        # two columns cannot be in two elimination steps at the same time
-        s.add(controls[d - 1] != targets[d - 1])
+    if max_eliminations != 0:
+        s.add(_column_addition_constraint(columns, additions))
 
-        # control and target must be valid qubits
+        for d in range(1, max_eliminations + 1):
+            # two columns cannot be in two elimination steps at the same time
+            s.add(controls[d - 1] != targets[d - 1])
 
-        if n and (n - 1) != 0 and not ((n & (n - 1) == 0) and n != 0):  # check if n is a power of 2 or 1 or 0
-            s.add(z3.ULT(controls[d - 1], n))
-            s.add(z3.ULT(targets[d - 1], n))
+            # control and target must be valid qubits
 
-    # if column is not involved in any addition at certain depth, it is the same as the previous column
-    for d in range(1, max_eliminations + 1):
-        for col in range(n):
-            s.add(z3.Implies(targets[d - 1] != col, symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
+            if n and (n - 1) != 0 and not ((n & (n - 1) == 0) and n != 0):  # check if n is a power of 2 or 1 or 0
+                s.add(z3.ULT(controls[d - 1], n))
+                s.add(z3.ULT(targets[d - 1], n))
+
+        # if column is not involved in any addition at certain depth, it is the same as the previous column
+        for d in range(1, max_eliminations + 1):
+            for col in range(n):
+                s.add(z3.Implies(targets[d - 1] != col, symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
 
     # assert that final check matrix has n-checks.shape[0] zero columns
     s.add(termination_criteria(columns))
 
     if s.check() == z3.sat:
+        if max_eliminations == 0:
+            return matrix, []
+
         m = s.model()
         eliminations = [(m[controls[d]].as_long(), m[targets[d]].as_long()) for d in range(max_eliminations)]
         reduced = np.array([
@@ -232,7 +237,6 @@ def gaussian_elimination_min_parallel_eliminations(
     returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
-    assert max_parallel_steps > 0, "max_parallel_steps should be greater than 0"
     columns = np.array([
         [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(matrix.shape[1])] for i in range(matrix.shape[0])]
         for d in range(max_parallel_steps + 1)
@@ -248,37 +252,40 @@ def gaussian_elimination_min_parallel_eliminations(
     # create initial matrix
     columns[0, :, :] = matrix.astype(bool)
 
-    s.add(_column_addition_constraint(columns, additions))
+    if max_parallel_steps != 0:
+        s.add(_column_addition_constraint(columns, additions))
 
-    # qubit can be involved in at most one addition at each depth
-    for d in range(max_parallel_steps):
-        for col in range(n_cols):
-            s.add(
-                z3.PbLe(
-                    [(additions[d, col_1, col], 1) for col_1 in range(n_cols) if col != col_1]
-                    + [(additions[d, col, col_2], 1) for col_2 in range(n_cols) if col != col_2],
-                    1,
+        # qubit can be involved in at most one addition at each depth
+        for d in range(max_parallel_steps):
+            for col in range(n_cols):
+                s.add(
+                    z3.PbLe(
+                        [(additions[d, col_1, col], 1) for col_1 in range(n_cols) if col != col_1]
+                        + [(additions[d, col, col_2], 1) for col_2 in range(n_cols) if col != col_2],
+                        1,
+                    )
                 )
-            )
 
-    # if column is not involved in any addition at certain depth, it is the same as the previous column
-    for d in range(1, max_parallel_steps + 1):
-        for col in range(n_cols):
-            s.add(
-                z3.Implies(
-                    z3.Not(
-                        z3.Or(
-                            list(np.delete(additions[d - 1, :, col], [col]))
-                            + list(np.delete(additions[d - 1, col, :], [col]))
-                        )
-                    ),
-                    symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col]),
+        # if column is not involved in any addition at certain depth, it is the same as the previous column
+        for d in range(1, max_parallel_steps + 1):
+            for col in range(n_cols):
+                s.add(
+                    z3.Implies(
+                        z3.Not(
+                            z3.Or(
+                                list(np.delete(additions[d - 1, :, col], [col]))
+                                + list(np.delete(additions[d - 1, col, :], [col]))
+                            )
+                        ),
+                        symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col]),
+                    )
                 )
-            )
 
     s.add(termination_criteria(columns))
 
     if s.check() == z3.sat:
+        if max_parallel_steps == 0:
+            return matrix, []
         m = s.model()
         eliminations = [
             (i, j)
