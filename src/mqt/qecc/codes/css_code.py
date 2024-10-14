@@ -36,7 +36,8 @@ class CSSCode(StabilizerCode):
             self.Hz = np.zeros((0, n), dtype=np.int8)
             self.Lx = np.eye(n, dtype=np.int8)
             self.Lz = np.eye(n, dtype=np.int8)
-            super().__init__([], 1, n=n)
+            triv = StabilizerCode.get_trivial_code(n)
+            super().__init__(triv.generators, triv.distance, triv.x_logicals, triv.z_logicals)
             return
 
         self._check_valid_check_matrices(Hx, Hz)
@@ -173,7 +174,7 @@ class CSSCode(StabilizerCode):
     @classmethod
     def get_trivial_code(cls, n: int) -> CSSCode:
         """Return the trivial code."""
-        return cls(1, None, None, n=n)
+        return CSSCode(1, None, None, n=n)
 
     @staticmethod
     def from_code_name(code_name: str, distance: int | None = None) -> CSSCode:

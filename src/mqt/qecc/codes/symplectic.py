@@ -147,3 +147,7 @@ class SymplecticMatrix:
     def __hash__(self) -> int:
         """Return the hash of the matrix."""
         return hash(self.matrix.tobytes())
+
+    def __len__(self) -> int:
+        """Return the number of rows in the matrix."""
+        return len(self.matrix)

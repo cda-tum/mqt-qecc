@@ -38,12 +38,28 @@ class ConcatenatedCode(StabilizerCode):
 
         self.n = sum(code.n for code in self.inner_codes)
         generators = [self._outer_pauli_to_physical(p) for p in outer_code.generators]
+
+        x_logicals = None
+        z_logicals = None
         if outer_code.x_logicals is not None:
             x_logicals = [self._outer_pauli_to_physical(p) for p in outer_code.x_logicals]
         if outer_code.z_logicals is not None:
             z_logicals = [self._outer_pauli_to_physical(p) for p in outer_code.z_logicals]
+
         d = min(code.distance * outer_code.distance for code in self.inner_codes)
-        super().__init__(generators, d, x_logicals, z_logicals)
+        StabilizerCode.__init__(self, generators, d, x_logicals, z_logicals)
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two concatenated codes are equal."""
+        if not isinstance(other, ConcatenatedCode):
+            return NotImplemented
+        return self.outer_code == other.outer_code and all(
+            c1 == c2 for c1, c2 in zip(self.inner_codes, other.inner_codes)
+        )
+
+    def __hash__(self) -> int:
+        """Compute the hash of the concatenated code."""
+        return hash((self.outer_code, tuple(self.inner_codes)))
 
     def _outer_pauli_to_physical(self, p: Pauli) -> Pauli:
         """Convert a Pauli operator on the outer code to the operator on the concatenated code.
@@ -97,19 +113,18 @@ class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
             outer_code: The outer code.
             inner_codes: The inner code. If a list of codes is provided, the qubits of the outer code are encoded by the different inner codes in the list.
         """
-        self.outer_code = outer_code
-        if isinstance(inner_codes, list):
-            self.inner_codes = inner_codes
-        else:
-            self.inner_codes = [inner_codes] * outer_code.n
-        if not all(code.k == 1 for code in self.inner_codes):
+        # self.outer_code = outer_code
+        if isinstance(inner_codes, CSSCode):
+            inner_codes = [inner_codes] * outer_code.n
+
+        if not all(code.k == 1 for code in inner_codes):
             msg = "The inner codes must be CSS codes with a single logical qubit."
             raise InvalidStabilizerCodeError(msg)
 
-        self.n = sum(code.n for code in self.inner_codes)
+        ConcatenatedCode.__init__(self, outer_code, inner_codes)
         hx = np.array([self._outer_checks_to_physical(check, "X") for check in outer_code.Hx], dtype=np.int8)
         hz = np.array([self._outer_checks_to_physical(check, "Z") for check in outer_code.Hz], dtype=np.int8)
-        d = min(code.distance * outer_code.distance for code in self.inner_codes)
+        d = min(code.distance * outer_code.distance for code in inner_codes)
         CSSCode.__init__(self, d, hx, hz)
 
     def _outer_checks_to_physical(self, check: npt.NDArray[np.int8], operator: str) -> npt.NDArray[np.int8]:
