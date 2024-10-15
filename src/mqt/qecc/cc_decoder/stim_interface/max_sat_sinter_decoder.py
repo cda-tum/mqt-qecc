@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
+class SinterCompiledDecoderMaxSat(CompiledDecoder):
     """MaxSAT decoder instantiation as CompiledDecoder."""
 
     def __init__(self, decoder: MaxSatStim, **kwargs: dict[str, Any]) -> None:
@@ -47,7 +47,7 @@ class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
         if self.measure_convergence:
             self.convergence_cnt += converged_cnt
             self.not_convergence_cnt += not_converged_cnt
-            with open("convergence_rate.txt", "a", encoding=locale.getpreferredencoding(False)) as self.f:
+            with pathlib.Path("convergence_rate.txt").open("a", encoding=locale.getpreferredencoding(False)) as self.f:
                 self.f.write(
                     str(self.d)
                     + " "
@@ -62,32 +62,34 @@ class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
         return predictions
 
 
-class SinterDecoder_MAXSAT(Decoder):
+class SinterDecoderMaxSat(Decoder):
     """Sinter implementation of MaxSAT decoder."""
 
     def __init__(
         self,
-        **maxsat_kwargs,
+        **maxsat_kwargs: Any,  # noqa: ANN401
     ) -> None:
+        """ init sinter decoder with kwargs. """
         self.maxsat_kwargs = maxsat_kwargs
 
     def compile_decoder_for_dem(self, *, dem: stim.DetectorErrorModel) -> CompiledDecoder:
+        """ return sinter comiled decoder initialized with the given DEM. """
         maxsat = MaxSatStim(
             model=dem,
             #            **self.maxsat_kwargs,
         )
-        return SinterCompiledDecoder_MAXSAT(maxsat, **self.maxsat_kwargs)
+        return SinterCompiledDecoderMaxSat(maxsat, **self.maxsat_kwargs)
 
     def decode_via_files(
         self,
         *,
-        num_shots: int,
-        num_dets: int,
-        num_obs: int,
+        num_shots: int, # noqa: ARG002
+        num_dets: int, # noqa: ARG002
+        num_obs: int, # noqa: ARG002
         dem_path: pathlib.Path,
         dets_b8_in_path: pathlib.Path,
         obs_predictions_b8_out_path: pathlib.Path,
-        tmp_dir: pathlib.Path,
+        tmp_dir: pathlib.Path, # noqa: ARG002
     ) -> None:
         """Performs decoding by reading problems from, and writing solutions to, file paths.
 
@@ -139,6 +141,6 @@ class SinterDecoder_MAXSAT(Decoder):
         )
 
 
-def sinter_decoders(**kwargs) -> dict[str, Decoder]:
+def sinter_decoders(**kwargs: Any) -> dict[str, Decoder]:  # noqa: ANN401
     """Return a list of available sinter decoders."""
-    return {"maxsat": SinterDecoder_MAXSAT(**kwargs), "bposd": SinterDecoder_BPOSD()}
+    return {"maxsat": SinterDecoderMaxSat(**kwargs), "bposd": SinterDecoder_BPOSD()}
