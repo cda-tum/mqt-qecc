@@ -14,8 +14,9 @@ from matplotlib import pyplot as plt
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 import operator
-import locale
+
 from scipy.optimize import curve_fit
+
 ler_k = "logical_error_rates"
 ler_eb_k = "logical_error_rate_ebs"
 min_wts_k = "min_wts_logical_err"

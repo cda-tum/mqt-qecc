@@ -110,7 +110,7 @@ class LightsOut:
         start = timer()
         for light, val in enumerate(lights):
             self.complete_parity_constraint(light, self.lights_to_switches[light], val)
-        constr_time = timer() - start
+        timer() - start
         switches: list[int] = []
         if solver_path == "z3":
             # solve the problem
