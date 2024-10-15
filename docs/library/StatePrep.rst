@@ -3,7 +3,7 @@ Fault tolerant state preparation
 
 QECC provides functionality to synthesize and simulate state preparation circuits for logical basis states for arbitrary :math:`[[n, k, d]]` quantum CSS codes.
 
-    .. currentmodule:: mqt.qecc.ft_stateprep
+    .. currentmodule:: mqt.qecc.circuit_synthesis
 
 Non-fault tolerant state preparation circuits can be synthesized using :func:`depth_optimal_prep_circuit`, :func:`gate_optimal_prep_circuit` and :func:`heuristic_prep_circuit`.
 
