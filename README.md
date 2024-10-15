@@ -1,7 +1,9 @@
+[![PyPI](https://img.shields.io/pypi/v/mqt.qecc?logo=pypi&style=flat-square)](https://pypi.org/project/mqt.qecc/)
+![OS](https://img.shields.io/badge/os-linux%20%7C%20macos%20%7C%20windows-blue?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/ci.yml?branch=main&style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/mqt-qecc/actions/workflows/ci.yml)
-[![Python CI](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/python-ci.yml?branch=main&style=flat-square&logo=github&label=python)](https://github.com/cda-tum/mqt-qecc/actions/workflows/python-ci.yml)
-[![Bindings](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/deploy.yml?branch=main&style=flat-square&logo=github&label=packaging)](https://github.com/cda-tum/mqt-qecc/actions/workflows/deploy.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/ci.yml?branch=main&style=flat-square&logo=github&label=ci)](https://github.com/cda-tum/mqt-qecc/actions/workflows/ci.yml)
+[![CD](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/cd.yml?style=flat-square&logo=github&label=cd)](https://github.com/cda-tum/mqt-qecc/actions/workflows/cd.yml)
+[![Documentation](https://img.shields.io/readthedocs/qecc?logo=readthedocs&style=flat-square)](https://mqt.readthedocs.io/projects/qecc)
 [![codecov](https://img.shields.io/codecov/c/github/cda-tum/mqt-qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/mqt-qecc)
 
 <p align="center">
@@ -50,7 +52,7 @@ creating an issue on [GitHub](https://github.com/cda-tum/mqt-qecc/issues).
 
 ## Getting Started
 
-QECC is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux and macOS and supports Python 3.8 to 3.12.
+QECC is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux, macOS, as well as Windows and supports Python 3.9 to 3.13.
 
 ```console
 (venv) $ pip install mqt.qecc
@@ -122,7 +124,7 @@ at [ReadTheDocs](https://mqt.readthedocs.io/projects/qecc).**
 
 ## System Requirements and Building
 
-The implementation is compatible with any C++17 compiler and a minimum CMake version of 3.19.
+The implementation is compatible with any C++17 compiler, a minimum CMake version of 3.19, and Python 3.9+.
 Please refer to the [documentation](https://mqt.readthedocs.io/projects/qecc) on how to build the project.
 
 Building (and running) is continuously tested under Linux and macOS using the
@@ -151,16 +153,6 @@ If you use our tool for your research, we will be thankful if you refer to it by
   L. Berent, L. Burgholzer, and R.
   Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
   in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
-
-## Credits
-
-The contributors to this tool are:
-
-- Lucas Berent
-- Lukas Burgholzer
-- Thomas Grurl
-- Peter-Jan H.S. Derks
-- Timo Hillmann
 
 ## Acknowledgements
 

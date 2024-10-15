@@ -1,20 +1,19 @@
-//
-// Created by lucas on 21/04/2022.
-//
-#ifndef QUNIONFIND_DECODER_HPP
-#define QUNIONFIND_DECODER_HPP
-#include "Code.hpp"
-#include "Codes.hpp"
-#include "TreeNode.hpp"
+#pragma once
 
-#include <chrono>
+#include "Code.hpp"
+#include "Utils.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <nlohmann/json.hpp>
-#include <utility>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
-using json = nlohmann::json;
+using json = nlohmann::basic_json<>;
 
-enum class GrowthVariant {
+enum class GrowthVariant : std::uint8_t {
     AllComponents, // standard growth
     InvalidComponents,
     SingleSmallest,
@@ -41,15 +40,15 @@ enum class GrowthVariant {
     throw std::invalid_argument("Invalid growth variant: " + architecture);
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::AllComponents, "all components"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+NLOHMANN_JSON_SERIALIZE_ENUM(GrowthVariant, {{GrowthVariant::AllComponents, "all components"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays,misc-include-cleaner)
                                              {GrowthVariant::InvalidComponents, "invalid components"},
                                              {GrowthVariant::SingleSmallest, "smallest component only"},
                                              {GrowthVariant::SingleQubitRandom, "single random qubit only"},
                                              {GrowthVariant::SingleRandom, "single random component"}})
 struct DecodingResult {
-    std::size_t              decodingTime       = 0U; // in ms
-    std::vector<std::size_t> estimNodeIdxVector = {};
-    gf2Vec                   estimBoolVector    = {};
+    std::size_t              decodingTime = 0U; // in ms
+    std::vector<std::size_t> estimNodeIdxVector;
+    gf2Vec                   estimBoolVector;
 
     [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{{"decodingTime(ms)", decodingTime},
@@ -94,4 +93,3 @@ public:
     }
     virtual void reset() {};
 };
-#endif // QUNIONFIND_DECODER_HPP

@@ -90,7 +90,7 @@ class AnalogTannergraphDecoder:
     def decode(self, analog_syndrome: NDArray[np.float64]) -> NDArray[np.int32]:
         """Decode a given analog syndrome."""
         self._set_analog_syndrome(analog_syndrome)
-        return self.bposd_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))  # type: ignore[no-any-return]
+        return self.bposd_decoder.decode(simulation_utils.get_binary_from_analog(analog_syndrome))
 
 
 class AtdSimulator:
@@ -161,7 +161,7 @@ class AtdSimulator:
 
         self.bp_params = bp_params
         self.save_interval = kwargs.get("save_interval", 1_000)
-        self.eb_precission = kwargs.get("eb_precission", 1e-1)
+        self.eb_precision = kwargs.get("eb_precision", 1e-1)
         self.input_values = self.__dict__.copy()
 
         self.n = hx.shape[1]
@@ -245,7 +245,7 @@ class AtdSimulator:
                     z_success_cnt,
                     runs,
                     self.code_params,
-                    self.eb_precission,
+                    self.eb_precision,
                 ):
                     print("Result has converged.")  # noqa: T201
                     break

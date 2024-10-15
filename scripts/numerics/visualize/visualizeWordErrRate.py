@@ -15,9 +15,9 @@ def wer() -> None:
     input_filename = ""
     input_filename2 = ""
     input_filename3 = ""
-    fig, ax = plt.subplots(1)
+    _fig, ax = plt.subplots(1)
 
-    with Path(input_filename).open() as f:
+    with Path(input_filename).open(encoding="utf-8") as f:
         data = json.load(f)
     x_data = []
     y_data = []
@@ -29,7 +29,7 @@ def wer() -> None:
     x_dataf = np.array(x_data)[order]
     y_dataf = np.array(y_data)[order]
 
-    with Path(input_filename2).open() as f:
+    with Path(input_filename2).open(encoding="utf-8") as f:
         data2 = json.load(f)
     x_data2 = []
     y_data2 = []
@@ -41,7 +41,7 @@ def wer() -> None:
     x_data2f = np.array(x_data2)[order2]
     y_data2f = np.array(y_data2)[order2]
 
-    with Path(input_filename3).open() as f:
+    with Path(input_filename3).open(encoding="utf-8") as f:
         data3 = json.load(f)
     x_data3 = []
     y_data3 = []
@@ -77,9 +77,9 @@ def wer_comp() -> None:
     plt.rcParams.update({"font.size": 15})
     input_filename = ""
     input_filename2 = ""
-    fig, ax = plt.subplots(1)
+    _fig, ax = plt.subplots(1)
 
-    with Path(input_filename).open() as f:
+    with Path(input_filename).open(encoding="utf-8") as f:
         data = json.load(f)
     x_data = []
     y_data = []
@@ -87,7 +87,7 @@ def wer_comp() -> None:
         x_data.append(float(key))
         y_data.append(data[key])
 
-    with Path(input_filename2).open() as f:
+    with Path(input_filename2).open(encoding="utf-8") as f:
         data2 = json.load(f)
     x_data2 = []
     y_data2 = []

@@ -1,5 +1,9 @@
 [build-system]
-requires = ["scikit-build-core>=0.6.1", "setuptools-scm>=7", "pybind11>=2.12"]
+requires = [
+  "scikit-build-core>=0.10.1",
+  "setuptools-scm>=8.1",
+  "pybind11>=2.13.5",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -10,7 +14,9 @@ authors = [
     { name = "Lucas Berent", email = "lucas.berent@tum.de" },
     { name = "Lukas Burgholzer", email = "lukas.burgholzer@tum.de" },
     { name = "Peter-Jan H.S. Derks", email = "peter-janderks@hotmail.com" },
-    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"}
+    { name = "Timo Hillmann", email = "timo.hillmann@rwth-aachen.de"},
+    { name = "Tom Peham", email = "tom.peham@tum.de" },
+    { name = "Ludwig Schmid", email = "ludwig.s.schmid@tum.de" },
 ]
 keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
 license = { file = "LICENSE" }
@@ -27,43 +33,43 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 5 - Production/Stable",
     "Typing :: Typed",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
-    "z3-solver>=4.11,<4.14",
+    "z3-solver>=4.12",
     "qecsim",
-    "ldpc>=0.1.50",
-    "numpy",
+    "ldpc>=0.1.53",
+    "numpy>=1.26; python_version > '3.11'",
+    "numpy>=1.24; python_version <= '3.11'",
     "qiskit[qasm3-import]>=1.0.0",
-    "qiskit-aer>=0.14.0",
-    "bposd",
-    "numba",
-    "pymatching",
+    "qiskit-aer>=0.15.0",
+    "stim >= 1.13.0",
+    "multiprocess >= 0.70.16",
+    "bposd>=1.6",
+    "numba>=0.59; python_version > '3.11'",
+    "numba>=0.57; python_version <= '3.11'",
+    "pymatching>=2.2.1",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-console-scripts>=1.4", "pytest-mock"]
-coverage = ["mqt.qecc[test]", "pytest-cov"]
+test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
+coverage = ["mqt.qecc[test]", "pytest-cov>=4"]
 docs = [
-    "furo>=2023.08.17",
-    "sphinx",
-    "setuptools-scm>=7",
+    "furo>=2023.9.10",
+    "setuptools-scm>=8.1",
     "sphinxcontrib-bibtex>=2.4.2",
-    "sphinx-copybutton",
-    "sphinx-hoverxref",
-    "pybtex>=0.24",
-    "ipython",
+    "sphinx-copybutton>=0.5",
     "ipykernel",
     "nbsphinx",
-    "sphinxext-opengraph",
+    "sphinxext-opengraph>=0.9",
     "sphinx-autodoc-typehints",
     "qiskit[visualization]",
 ]
@@ -77,29 +83,31 @@ dev = ["mqt.qecc[coverage, docs, visualization]"]
 
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
-Documentation = "https://github.com/cda-tum/mqt-qecc"
+Documentation = "https://mqt.readthedocs.io/projects/qecc"
 Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 
 [tool.scikit-build]
 # Protect the configuration against future changes in scikit-build-core
-minimum-version = "0.6.1"
+minimum-version = "build-system.requires"
 
-# Set the target to build
-cmake.targets = ["pyqecc"]
-
-# Set required CMake and Ninja versions
-cmake.minimum-version = "3.19"
-ninja.minimum-version = "1.10"
-
-# Setuptools-style build caching in a local directory
-build-dir = "build/{wheel_tag}"
-
-# Build stable ABI wheels for CPython 3.12+
-wheel.py-api = "cp312"
+# Set the wheel install directory
+wheel.install-dir = "mqt/qecc"
 
 # Explicitly set the package directory
 wheel.packages = ["src/mqt"]
+
+# Set required Ninja version
+ninja.version = ">=1.10"
+
+# Setuptools-style build caching in a local directory
+build-dir = "build/{wheel_tag}/{build_type}"
+
+# Only build the Python bindings target
+build.targets = ["pyqecc"]
+
+# Only install the Python package component
+install.components = ["mqt-qecc_Python"]
 
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["src/mqt/qecc/_version.py"]
@@ -111,14 +119,6 @@ sdist.exclude = [
     "**/plots",
     "**/test",
     "**/tests",
-    "extern/mqt-core/extern/json/include",
-    "extern/mqt-core/extern/googletest",
-    "extern/mqt-core/extern/boost/config/checks",
-    "extern/mqt-core/extern/boost/config/tools",
-    "extern/mqt-core/extern/boost/multiprecision/config",
-    "extern/mqt-core/extern/boost/multiprecision/example",
-    "extern/mqt-core/extern/boost/multiprecision/performance",
-    "extern/mqt-core/extern/boost/multiprecision/tools"
 ]
 
 [tool.scikit-build.cmake.define]
@@ -126,12 +126,18 @@ BUILD_MQT_QECC_TESTS = "OFF"
 BUILD_MQT_QECC_BINDINGS = "ON"
 ENABLE_IPO = "ON"
 
+[[tool.scikit-build.overrides]]
+if.python-version = ">=3.13"
+if.abi-flags = "t"
+if.platform-system = "win32"
+inherit.cmake.define = "append"
+cmake.define.DISABLE_GIL = "1"
+
 
 [tool.check-sdist]
 sdist-only = ["src/mqt/qecc/_version.py"]
 git-only = [
     "docs/*",
-    "extern/*",
     "examples/*",
     "test/*",
     ".idea/*",
@@ -142,7 +148,7 @@ git-only = [
 write_to = "src/mqt/qecc/_version.py"
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "7.2"
 testpaths = ["test/python"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
@@ -150,15 +156,7 @@ xfail_strict = true
 filterwarnings = [
     "error",
     "ignore:.*pkg_resources.*:DeprecationWarning:",
-    "ignore:.*qiskit.__qiskit_version__.*:DeprecationWarning:qiskit:",
-    "ignore:.*qiskit.utils.algorithm_globals.QiskitAlgorithmGlobals*:DeprecationWarning:qiskit",
-    "ignore:.*Building a flow controller with keyword arguments is going to be deprecated*:PendingDeprecationWarning:qiskit",
-    "ignore:.*qiskit.extensions module is pending deprecation*:PendingDeprecationWarning:qiskit",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
-    'ignore:.*qiskit.utils.parallel*:DeprecationWarning:qiskit',
-    'ignore:.*qiskit.tools.events*:DeprecationWarning:qiskit',
-    'ignore:.*qiskit.qasm*:DeprecationWarning:qiskit',
-    'ignore:.*Qiskit with Python 3.8.*:DeprecationWarning:',
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
 ]
 
@@ -167,18 +165,20 @@ run.source = ["mqt.qecc"]
 report.exclude_also = [
     '\.\.\.',
     'if TYPE_CHECKING:',
+    'raise AssertionError',
+    'raise NotImplementedError',
 ]
 
 [tool.mypy]
-files = ["src/mqt", "test/python"]
+files = ["src/mqt", "test/python", "noxfile.py"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
-python_version = "3.8"
-strict = true
-show_error_codes = true
+python_version = "3.9"
+warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-warn_unreachable = true
+strict = true
+disallow_untyped_defs = false
 explicit_package_bases = true
-pretty = true
+warn_unreachable = true
 exclude = [
     "*/cc_decoder/plotting/*",
     "code_construction*",
@@ -186,26 +186,22 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["qiskit.*", "qecsim.*","qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*"]
+module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*"]
 ignore_missing_imports = true
+
+
+[tool.check-wheel-contents]
+ignore = ["W002"]  # Triggers on __init__.py's and duplicate data files
 
 
 [tool.ruff]
 line-length = 120
-extend-include = ["*.ipynb"]
-src = ["src"]
+namespace-packages = ["mqt"]
 preview = true
 unsafe-fixes = true
 
 [tool.ruff.lint]
-exclude = [
-    "scripts/*",
-    "*/cc_decoder/plotting/*",
-    "*/analog_information_decoding/code_construction/*",
-    "*/analog_information_decoding/utils/data_utils.py",
-
-]
 extend-select = [
     "A",           # flake8-builtins
     "ANN",         # flake8-annotations
@@ -265,11 +261,6 @@ isort.required-imports = ["from __future__ import annotations"]
 "typing.Mapping".msg = "Use collections.abc.Mapping instead."
 "typing.Sequence".msg = "Use collections.abc.Sequence instead."
 "typing.Set".msg = "Use collections.abc.Set instead."
-"typing.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
-"typing_extensions.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
-"typing.assert_never".msg = "Use scikit_build_core._compat.typing.assert_never instead."
-"importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
-"importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 
 [tool.ruff.lint.per-file-ignores]
 "test/python/**" = ["T20", "ANN"]
@@ -281,9 +272,23 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
+"*/cc_decoder/plots.py" = ["T201"]
+"scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+
+[tool.typos]
+[tool.typos.default.extend-words]
+wille = "wille"
+ser = "ser"
+aer = "aer"
+anc = "anc"
+
+
+[tool.repo-review]
+ignore = ["GH200"]
 
 
 [tool.cibuildwheel]
@@ -291,22 +296,29 @@ build = "cp3*"
 skip = "*-musllinux*"
 archs = "auto64"
 test-command = "python -c \"from mqt import qecc\""
-test-skip = "*-macosx_arm64 cp312-*"
-build-frontend = "build"
+test-skip = ["cp313*"] # skip testing on Python 3.13 until our dependencies are ready
+build-frontend = "build[uv]"
+free-threaded-support = true
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
-before-all = [
-    "yum -y install mpfr-devel",
-    "git clone --branch v2.9.0 --depth 1 https://github.com/flintlib/flint2.git",
-    "cd flint2 && ./configure && make -j 3 && make install"
-]
 environment = { DEPLOY = "ON" }
 
 [tool.cibuildwheel.macos]
-archs = "x86_64"
-environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
-before-build = "pip install delvewheel"
-repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel}"
-environment = { CMAKE_GENERATOR = "Ninja" }
+before-build = "uv pip install delvewheel>=1.7.3"
+repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
+environment = { CMAKE_ARGS = "-T ClangCL" }
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
+
+
+[tool.uv]
+reinstall-package = ["mqt.qecc"]

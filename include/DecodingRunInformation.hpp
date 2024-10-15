@@ -1,15 +1,19 @@
-//
-// Created by lucas on 21/06/22.
-//
-#ifndef QUNIONFIND_DECODINGRUNINFORMATION_HPP
-#define QUNIONFIND_DECODINGRUNINFORMATION_HPP
+#pragma once
+
 #include "Decoder.hpp"
+#include "Utils.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
-using json = nlohmann::json;
+using json = nlohmann::basic_json<>;
 
-enum DecodingResultStatus {
+enum DecodingResultStatus : std::uint8_t {
     SUCCESS, // estimated correctly up to stabilizer
     FAILURE  // logical operator introduced
     // FLAGGED_ERROR // not implemented
@@ -25,7 +29,7 @@ enum DecodingResultStatus {
     throw std::invalid_argument("Invalid decoding result status: " + status);
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+NLOHMANN_JSON_SERIALIZE_ENUM(DecodingResultStatus, {{SUCCESS, "success"}, // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays,misc-include-cleaner)
                                                     {FAILURE, "failure"}})
 /**
  * Contains information about a single run of a decoder
@@ -50,8 +54,8 @@ struct DecodingRunInformation {
 
     double               physicalErrR = 0.0;
     std::size_t          codeSize     = 0U;
-    gf2Vec               error        = {};
-    gf2Vec               syndrome     = {};
+    gf2Vec               error;
+    gf2Vec               syndrome;
     DecodingResultStatus status{};
     DecodingResult       result{};
 
@@ -76,7 +80,6 @@ struct DecodingRunInformation {
         return to_json().dump(2U);
     }
     void print() const {
-        std::cout << toString() << std::endl;
+        std::cout << toString() << '\n';
     }
 };
-#endif // QUNIONFIND_DECODINGRUNINFORMATION_HPP

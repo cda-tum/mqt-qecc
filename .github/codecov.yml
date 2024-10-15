@@ -1,5 +1,4 @@
 ignore:
-  - "extern/**/*"
   - "**/python"
   - "test/**/*"
   - "src/mqt/qecc/cc_decoder/plots.py"
@@ -29,11 +28,9 @@ flag_management:
       paths:
         - "include"
         - "src"
-      after_n_builds: 1
     - name: python
       paths:
         - "src/mqt/**/*.py"
-      after_n_builds: 1
       statuses:
         - type: project
           threshold: 0.5%

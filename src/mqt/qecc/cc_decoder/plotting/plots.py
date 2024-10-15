@@ -13,11 +13,9 @@ from matplotlib import pyplot as plt
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
-import locale
 import operator
-
+import locale
 from scipy.optimize import curve_fit
-
 ler_k = "logical_error_rates"
 ler_eb_k = "logical_error_rate_ebs"
 min_wts_k = "min_wts_logical_err"
@@ -35,7 +33,7 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_yscale("log")
     ax.legend()
     ax.set_ylabel("Logical failure rate")
-    ax.set_xlabel(rf"Code distance $\it{d}$")
+    ax.set_xlabel("Code distance $\it\{d\}$")
 
 
 def threshold_fit(
@@ -314,7 +312,7 @@ def generate_plots_comp(results_dir: Path, results_file: Path) -> None:
             idx += 1
         for f in files:
             fp = subdir + "/" + f
-            with Path(fp).open(encoding=locale.getpreferredencoding(False)) as ff:
+            with Path(fp).open(encoding="utf-8") as ff:
                 data.append(json.loads(ff.read()))
 
         metrics: dict[int, dict[str, Any]] = {}

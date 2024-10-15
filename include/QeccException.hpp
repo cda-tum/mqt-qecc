@@ -1,10 +1,7 @@
-//
-// Created by luca on 13/07/22.
-//
+#pragma once
+
 #include <exception>
 #include <string>
-#ifndef QECC_QECCEXCEPTION_HPP
-#define QECC_QECCEXCEPTION_HPP
 
 struct QeccException : public std::exception {
 private:
@@ -19,4 +16,3 @@ public:
         return message.c_str();
     }
 };
-#endif // QECC_QECCEXCEPTION_HPP

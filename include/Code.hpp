@@ -1,18 +1,24 @@
-//
-// Created by lucas on 26/04/2022.
-//
+#pragma once
 
-#ifndef QUNIONFIND_CODE_HPP
-#define QUNIONFIND_CODE_HPP
 #include "QeccException.hpp"
-#include "TreeNode.hpp"
 #include "Utils.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <fstream>
 #include <iostream>
+#include <iterator>
+#include <memory>
+#include <nlohmann/json.hpp>
+#include <sstream>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-using json = nlohmann::json;
+
+using json = nlohmann::basic_json<>;
 
 /**
  * Used as return object in @Code
@@ -25,7 +31,7 @@ struct CodeProperties {
 
 struct ParityCheckMatrix {
     std::unique_ptr<gf2Mat>                                   pcm;
-    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache{};
+    std::unordered_map<std::size_t, std::vector<std::size_t>> nbrCache;
 
     ParityCheckMatrix(const ParityCheckMatrix& m)          = delete;
     ParityCheckMatrix& operator=(const ParityCheckMatrix&) = delete;
@@ -52,7 +58,7 @@ struct ParityCheckMatrix {
             }
             pcm = std::make_unique<gf2Mat>(result);
         } catch (const std::exception& e) {
-            std::cerr << "[PCM::ctor] - error opening file " << filePath << std::endl;
+            std::cerr << "[PCM::ctor] - error opening file " << filePath << '\n';
             throw QeccException(e.what());
         }
         inFile.close();
@@ -65,34 +71,31 @@ struct ParityCheckMatrix {
      * @return a list of node indices of adjacent nodes
      */
     std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
-        std::vector<std::size_t> result;
         if (auto it = nbrCache.find(nodeIdx); it != nbrCache.end()) {
-            result = it->second;
-        } else {
-            if (pcm->empty() || pcm->front().empty()) {
-                std::cerr << "error getting nbrs for node " << nodeIdx << std::endl;
-                throw QeccException("Cannot return neighbours, pcm empty");
-            }
-            const auto               nrChecks = pcm->size();
-            const auto               nrBits   = pcm->front().size();
-            std::vector<std::size_t> res;
-            if (nodeIdx < nrBits) {
-                for (std::size_t i = 0; i < nrChecks; i++) {
-                    if (pcm->at(i).at(nodeIdx)) {
-                        res.emplace_back(nrBits + i);
-                    }
-                }
-            } else {
-                for (std::size_t i = 0; i < nrBits; i++) {
-                    if (pcm->at(nodeIdx - nrBits).at(i)) {
-                        res.emplace_back(i);
-                    }
-                }
-            }
-            const auto ins = nbrCache.try_emplace(nodeIdx, res);
-            result         = ins.first->second;
+            return it->second;
         }
-        return result;
+        if (pcm->empty() || pcm->front().empty()) {
+            std::cerr << "error getting nbrs for node " << nodeIdx << '\n';
+            throw QeccException("Cannot return neighbours, pcm empty");
+        }
+        const auto               nrChecks = pcm->size();
+        const auto               nrBits   = pcm->front().size();
+        std::vector<std::size_t> res;
+        if (nodeIdx < nrBits) {
+            for (std::size_t i = 0; i < nrChecks; i++) {
+                if (pcm->at(i).at(nodeIdx)) {
+                    res.emplace_back(nrBits + i);
+                }
+            }
+        } else {
+            for (std::size_t i = 0; i < nrBits; i++) {
+                if (pcm->at(nodeIdx - nrBits).at(i)) {
+                    res.emplace_back(i);
+                }
+            }
+        }
+        const auto& ins = nbrCache.try_emplace(nodeIdx, res);
+        return ins.first->second;
     }
     [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{
@@ -286,7 +289,7 @@ public:
         auto   nrData   = c.hZ->pcm->front().size();
         auto   dim      = nrChecks + nrData;
         gf2Mat res(dim);
-        os << "hZ: " << std::endl;
+        os << "hZ:\n";
         for (size_t i = 0; i < dim; i++) {
             gf2Vec row(dim);
             if (i < dim - nrChecks) {
@@ -301,7 +304,7 @@ public:
             res.at(i) = row;
         }
         if (c.gethX()) {
-            os << Utils::getStringFrom(res) << "hX: " << std::endl;
+            os << Utils::getStringFrom(res) << "hX:\n";
             for (size_t i = 0; i < dim; i++) {
                 gf2Vec row(dim);
                 if (i < dim - nrChecks) {
@@ -337,4 +340,3 @@ public:
         return this->to_json().dump(2U);
     }
 };
-#endif // QUNIONFIND_CODE_HPP

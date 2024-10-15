@@ -1,4 +1,4 @@
-name-template: "QECC $RESOLVED_VERSION Release"
+name-template: "MQT QECC $RESOLVED_VERSION Release"
 tag-template: "v$RESOLVED_VERSION"
 categories:
   - title: "🚀 Features and Enhancements"
@@ -6,6 +6,7 @@ categories:
       - "feature"
       - "enhancement"
       - "usability"
+      - "refactor"
   - title: "🐛 Bug Fixes"
     labels:
       - "bug"
@@ -13,21 +14,22 @@ categories:
   - title: "📄 Documentation"
     labels:
       - "documentation"
-  - title: "🤖 CI"
-    labels:
-      - "continuous integration"
   - title: "📦 Packaging"
     labels:
       - "packaging"
   - title: "🧹 Code Quality"
     labels:
       - "code quality"
+  - title: "🤖 CI"
+    labels:
+      - "continuous integration"
   - title: "⬆️ Dependencies"
     collapse-after: 5
     labels:
       - "dependencies"
       - "submodules"
       - "github_actions"
+      - "pre-commit"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 change-title-escapes: '\<*_&'
 version-resolver:
@@ -41,10 +43,6 @@ version-resolver:
     labels:
       - "patch"
   default: patch
-autolabeler:
-  - label: "dependencies"
-    title:
-      - "/update pre-commit hooks/i"
 
 template: |
   ## 👀 What Changed

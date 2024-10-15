@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from .color_code import ColorCode, LatticeType
+from ..codes import ColorCode, HexagonalColorCode, LatticeType, SquareOctagonColorCode
 from .comparison import tn_decoder
-from .hexagonal_color_code import HexagonalColorCode
-from .square_octagon_color_code import SquareOctagonColorCode
 
 
 def code_from_string(lattice_type: str, distance: int) -> ColorCode:

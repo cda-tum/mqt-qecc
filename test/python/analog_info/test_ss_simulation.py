@@ -21,37 +21,37 @@ if TYPE_CHECKING:
 from mqt.qecc.analog_information_decoding.utils.data_utils import BpParams
 
 
-@pytest.fixture()
+@pytest.fixture
 def code_params() -> dict[str, int]:
     """Fixture for code params."""
     return {"n": 7, "k": 1, "d": 3}
 
 
-@pytest.fixture()
+@pytest.fixture
 def mcm() -> NDArray[np.int32]:
     """Fixture for meta check matrix."""
     return np.array([[1, 1, 0], [0, 1, 1], [1, 0, 1]]).astype(np.int32)
 
 
-@pytest.fixture()
+@pytest.fixture
 def pcm() -> NDArray[np.int32]:
     """Fixture for parity check matrix."""
     return np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]]).astype(np.int32)
 
 
-@pytest.fixture()
+@pytest.fixture
 def bias() -> NDArray[np.float64]:
     """Fixture for x,y,z bias vector."""
     return np.array([1.0, 1.0, 1.0])
 
 
-@pytest.fixture()
+@pytest.fixture
 def error_rate() -> float:
     """Fixture for error rate."""
     return 0.1
 
 
-@pytest.fixture()
+@pytest.fixture
 def single_stage_analog_simulator(
     error_rate: float,
     pcm: NDArray[np.int32],
@@ -83,7 +83,7 @@ def single_stage_analog_simulator(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def two_stage_simulator(
     error_rate: float,
     pcm: NDArray[np.int32],
