@@ -12,7 +12,6 @@ from scipy.sparse import csc_matrix
 if TYPE_CHECKING:
     import stim
 
-
 def iter_set_xor(set_list: list[set[int]]) -> frozenset[int]:
     """Computes XOR between sets."""
     out: set[int] = set()
@@ -23,8 +22,7 @@ def iter_set_xor(set_list: list[set[int]]) -> frozenset[int]:
 
 
 def dict_to_csc_matrix(elements_dict: dict[int, frozenset[int]], shape: tuple[int, int]) -> csc_matrix:
-    """Constructs a `scipy.sparse.csc_matrix` check matrix from a dictionary `elements_dict` giving the indices of nonzero
-    rows in each column.
+    """Constructs a `scipy.sparse.csc_matrix` check matrix from a dictionary `elements_dict`.
 
     Parameters
     ----------
@@ -61,7 +59,7 @@ class DemMatrices:
     edge_check_matrix: csc_matrix
     edge_observables_matrix: csc_matrix
     hyperedge_to_edge_matrix: csc_matrix
-    priors: NDarray[np.float64]
+    priors: np.ndarray[np.float64]
 
 
 def detector_error_model_to_check_matrices(

@@ -273,6 +273,7 @@ isort.required-imports = ["from __future__ import annotations"]
     "I002", # Allow missing `from __future__ import annotations` import
 ]
 "*/cc_decoder/plotting/**" = ["T20"]
+"*/cc_decoder/plotting/*.ipynb" = ["T", "PTH", "FURB", "PERF", "D"]
 "scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import locale
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import stim
 from sinter import CompiledDecoder, Decoder
@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
     """MaxSAT decoder instantiation as CompiledDecoder."""
 
-    def __init__(self, decoder: MaxSatStim, **kwargs) -> None:
+    def __init__(self, decoder: MaxSatStim, **kwargs:dict[str, Any]) -> None: # noqa: ANN401
+        """ constructor initializing compiled decoder with stim decoder. """
         self.decoder = decoder
 
         if kwargs:
@@ -37,6 +38,7 @@ class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
         *,
         bit_packed_detection_event_data: np.ndarray,
     ) -> np.ndarray:
+        """ deocde bitpacked shots from sinter simulation using batch decoder. """
         predictions, converged_cnt, not_converged_cnt = self.decoder.decode_batch(
             shots=bit_packed_detection_event_data,
             bit_packed_shots=True,
