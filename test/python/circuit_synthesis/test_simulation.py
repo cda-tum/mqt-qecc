@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -108,6 +110,7 @@ def test_non_ft_sim_zero(steane_code: CSSCode, non_ft_steane_zero: QuantumCircui
     assert p_l - tol > lower
 
 
+@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_ft_sim_zero(steane_code: CSSCode, ft_steane_zero: QuantumCircuit) -> None:
     """Test the simulation of a fault-tolerant state preparation circuit for the Steane |0>."""
     tol = 5e-4
@@ -130,6 +133,7 @@ def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircui
     assert p_l - tol > lower
 
 
+@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit) -> None:
     """Test the simulation of a fault-tolerant state preparation circuit for the Steane |0>."""
     tol = 5e-4

@@ -14,7 +14,6 @@
 #include <random>
 #include <set>
 #include <stdexcept>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -44,10 +43,10 @@ void UFDecoder::decode(const gf2Vec& syndrome) {
 }
 
 void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_ptr<ParityCheckMatrix>& pcm) {
-    const auto                                   decodingTimeBegin = std::chrono::high_resolution_clock::now();
-    std::unordered_set<std::size_t>              components; // used to store vertex indices in E set
-    std::vector<std::unordered_set<std::size_t>> invalidComponents;
-    std::unordered_set<std::size_t>              syndr; // vertex indices of syndrome nodes
+    const auto                         decodingTimeBegin = std::chrono::high_resolution_clock::now();
+    std::set<std::size_t>              components; // used to store vertex indices in E set
+    std::vector<std::set<std::size_t>> invalidComponents;
+    std::set<std::size_t>              syndr; // vertex indices of syndrome nodes
     for (std::size_t i = 0; i < syndrome.size(); i++) {
         if (syndrome.at(i)) {
             syndr.insert(getCode()->getN() + i);
@@ -111,10 +110,10 @@ void UFDecoder::doDecode(const std::vector<bool>& syndrome, const std::unique_pt
  * @param syndrome
  * @return
  */
-bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>&        nodeSet,
-                                          const std::unordered_set<std::size_t>&        syndrome,
-                                          std::vector<std::unordered_set<std::size_t>>& invalidComps,
-                                          const std::unique_ptr<ParityCheckMatrix>&     pcm) const {
+bool UFDecoder::containsInvalidComponents(const std::set<std::size_t>&              nodeSet,
+                                          const std::set<std::size_t>&              syndrome,
+                                          std::vector<std::set<std::size_t>>&       invalidComps,
+                                          const std::unique_ptr<ParityCheckMatrix>& pcm) const {
     auto ccomps = getConnectedComps(nodeSet);
     return std::any_of(ccomps.begin(), ccomps.end(), [&](const auto& comp) {
         bool const res = isValidComponent(comp, syndrome, pcm);
@@ -132,8 +131,8 @@ bool UFDecoder::containsInvalidComponents(const std::unordered_set<std::size_t>&
  * @param syndrome
  * @return
  */
-bool UFDecoder::isValidComponent(const std::unordered_set<std::size_t>&    nodeSet,
-                                 const std::unordered_set<std::size_t>&    syndrome,
+bool UFDecoder::isValidComponent(const std::set<std::size_t>&              nodeSet,
+                                 const std::set<std::size_t>&              syndrome,
                                  const std::unique_ptr<ParityCheckMatrix>& pcm) const {
     return !getEstimateForComponent(nodeSet, syndrome, pcm).empty();
 }
@@ -143,12 +142,12 @@ bool UFDecoder::isValidComponent(const std::unordered_set<std::size_t>&    nodeS
  * @param nodeSet
  * @return
  */
-std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered_set<std::size_t>& nodeSet) const {
+std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::set<std::size_t>& nodeSet) const {
     std::vector<std::size_t> res;
 
     for (const auto idx : nodeSet) {
         const auto& nbrs = getCode()->gethZ()->getNbrs(idx);
-        if (std::includes(nodeSet.begin(), nodeSet.end(), nbrs.begin(), nbrs.end()) && idx < getCode()->getN()) {
+        if (idx < getCode()->getN() && std::includes(nodeSet.begin(), nodeSet.end(), nbrs.begin(), nbrs.end())) {
             res.emplace_back(idx);
         }
     }
@@ -164,15 +163,13 @@ std::vector<std::size_t> UFDecoder::computeInteriorBitNodes(const std::unordered
  * @param syndrome
  * @return
  */
-std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::unordered_set<std::size_t>&    nodeSet,
-                                                                   const std::unordered_set<std::size_t>&    syndrome,
-                                                                   const std::unique_ptr<ParityCheckMatrix>& pcm) const {
-    std::unordered_set<std::size_t> res;
-
-    auto intNodes = computeInteriorBitNodes(nodeSet);
-    if (intNodes.empty()) {
-        return std::unordered_set<std::size_t>{};
+std::set<std::size_t> UFDecoder::getEstimateForComponent(const std::set<std::size_t>&              nodeSet,
+                                                         const std::set<std::size_t>&              syndrome,
+                                                         const std::unique_ptr<ParityCheckMatrix>& pcm) const {
+    if (computeInteriorBitNodes(nodeSet).empty()) {
+        return {};
     }
+
     gf2Mat            redHz;
     gf2Vec            redSyndr(0);
     std::vector<bool> used(pcm->pcm->size());
@@ -210,6 +207,8 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
     }
     auto pluDec = PluDecomposition(redHz.size(), redHz.at(0).size(), redHzCsc);
     auto estim  = pluDec.luSolve(redSyndInt); // solves the system redHz*x=redSyndr by x to see if a solution can be found
+
+    std::set<std::size_t> res;
     for (std::size_t i = 0; i < estim.size(); i++) {
         if (estim.at(i) != 0U) {
             res.emplace(i);
@@ -222,7 +221,7 @@ std::unordered_set<std::size_t> UFDecoder::getEstimateForComponent(const std::un
  * Grows the node set by the neighbours of ALL clusters
  * @param comps
  */
-void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
+void UFDecoder::standardGrowth(std::set<std::size_t>& comps) {
     for (auto currCompIt = comps.begin(); currCompIt != comps.end(); currCompIt++) {
         const auto nbrs = getCode()->gethZ()->getNbrs(*currCompIt);
         for (auto n : nbrs) {
@@ -235,10 +234,10 @@ void UFDecoder::standardGrowth(std::unordered_set<std::size_t>& comps) {
  * Grows the node set by the neighbours of the single smallest cluster
  * @param nodeSet
  */
-void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
-    auto                            ccomps = getConnectedComps(nodeSet);
-    std::unordered_set<std::size_t> smallestComponent;
-    std::size_t                     smallestSize = SIZE_MAX;
+void UFDecoder::singleClusterSmallestFirstGrowth(std::set<std::size_t>& nodeSet) {
+    auto                  ccomps = getConnectedComps(nodeSet);
+    std::set<std::size_t> smallestComponent;
+    std::size_t           smallestSize = SIZE_MAX;
     for (const auto& cId : ccomps) {
         if (cId.size() < smallestSize) {
             smallestComponent = cId;
@@ -256,14 +255,14 @@ void UFDecoder::singleClusterSmallestFirstGrowth(std::unordered_set<std::size_t>
  * Grows the node set by the neighbours of a single random cluster
  * @param nodeSet
  */
-void UFDecoder::singleClusterRandomFirstGrowth(std::unordered_set<std::size_t>& nodeSet) {
-    auto                            ccomps = getConnectedComps(nodeSet);
-    std::unordered_set<std::size_t> chosenComponent;
-    std::random_device              rd;
-    std::mt19937                    gen(rd());
-    std::uniform_int_distribution   d(static_cast<std::size_t>(0U), ccomps.size() - 1);
-    const std::size_t               chosenIdx = d(gen);
-    auto                            it        = ccomps.begin();
+void UFDecoder::singleClusterRandomFirstGrowth(std::set<std::size_t>& nodeSet) {
+    auto                          ccomps = getConnectedComps(nodeSet);
+    std::set<std::size_t>         chosenComponent;
+    std::random_device            rd;
+    std::mt19937                  gen(rd());
+    std::uniform_int_distribution d(static_cast<std::size_t>(0U), ccomps.size() - 1);
+    const std::size_t             chosenIdx = d(gen);
+    auto                          it        = ccomps.begin();
     std::advance(it, chosenIdx);
     chosenComponent = *it;
 
@@ -285,14 +284,14 @@ void UFDecoder::reset() {
  * Grows the node set by the neighbours of a single random qubit
  * @param comps
  */
-void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& comps) {
-    auto                            ccomps = getConnectedComps(comps);
-    std::unordered_set<std::size_t> chosenComponent;
-    std::random_device              rd;
-    std::mt19937                    gen(rd());
-    std::uniform_int_distribution   d(static_cast<std::size_t>(0U), ccomps.size());
-    const std::size_t               chosenIdx = d(gen);
-    auto                            it        = ccomps.begin();
+void UFDecoder::singleQubitRandomFirstGrowth(std::set<std::size_t>& comps) {
+    auto                          ccomps = getConnectedComps(comps);
+    std::set<std::size_t>         chosenComponent;
+    std::random_device            rd;
+    std::mt19937                  gen(rd());
+    std::uniform_int_distribution d(static_cast<std::size_t>(0U), ccomps.size());
+    const std::size_t             chosenIdx = d(gen);
+    auto                          it        = ccomps.begin();
     std::advance(it, chosenIdx);
     chosenComponent = *it;
 
@@ -305,15 +304,15 @@ void UFDecoder::singleQubitRandomFirstGrowth(std::unordered_set<std::size_t>& co
  * @param nodes
  * @return
  */
-std::vector<std::unordered_set<std::size_t>>
-UFDecoder::getConnectedComps(const std::unordered_set<std::size_t>& nodes) const {
-    std::unordered_set<std::size_t>              visited;
-    std::vector<std::unordered_set<std::size_t>> res;
+std::vector<std::set<std::size_t>>
+UFDecoder::getConnectedComps(const std::set<std::size_t>& nodes) const {
+    std::set<std::size_t>              visited;
+    std::vector<std::set<std::size_t>> res;
 
     for (auto c : nodes) {
         if (visited.find(c) == visited.end()) {
             visited.insert(c);
-            std::unordered_set<std::size_t> ccomp;
+            std::set<std::size_t> ccomp;
 
             std::queue<std::size_t> stack;
             stack.push(c);

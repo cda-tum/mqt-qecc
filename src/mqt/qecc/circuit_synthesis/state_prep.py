@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict, deque
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,7 +11,6 @@ import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag
-from qiskit.dagcircuit import DAGOutNode
 
 from ..codes import InvalidCSSCodeError
 from .synthesis_utils import (
@@ -33,7 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     import numpy.typing as npt
-    from qiskit import DagCircuit, DAGNode
+    from qiskit import DAGNode
     from qiskit.quantum_info import PauliList
 
     from ..codes import CSSCode
@@ -108,8 +107,9 @@ class StatePrepCircuit:
                 dag.remove_op_node(node)
             fault_list = []
             # propagate every error before a control
-            for node in dag.topological_op_nodes():
-                error = _propagate_error(dag, node, x_errors=x_errors)
+            nodes = list(dag.topological_op_nodes())
+            for i in range(len(nodes)):
+                error = _propagate_error(nodes[i:], dag.num_qubits(), x_errors=x_errors)
                 fault_list.append(error)
             faults = np.array(fault_list, dtype=np.int8)
             faults = np.unique(faults, axis=0)
@@ -143,7 +143,7 @@ class StatePrepCircuit:
 
         # reduce faults by stabilizer
         stabs = self.x_checks if x_errors else self.z_checks
-        faults = _remove_trivial_faults(faults, stabs, self.code, x_errors, num_errors)
+        faults = _remove_trivial_faults(faults, stabs, num_errors)
 
         # remove stabilizer equivalent faults
         if reduce:
@@ -184,7 +184,7 @@ class StatePrepCircuit:
         for num_errors in range(1, self.max_errors + 1):
             fs = fault_sets_unreduced[num_errors]
             assert fs is not None
-            fault_sets[num_errors] = _remove_trivial_faults(fs, stabs, self.code, x_errors, num_errors)
+            fault_sets[num_errors] = _remove_trivial_faults(fs, stabs, num_errors)
         return fault_sets
 
     def _set_max_errors(self) -> None:
@@ -444,21 +444,37 @@ def _verification_circuit(
         [StatePrepCircuit, bool, npt.NDArray[np.int8] | None], list[list[npt.NDArray[np.int8]]]
     ],
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     logging.info("Finding verification stabilizers for the state preparation circuit")
     layers_1 = verification_stabs_fun(sp_circ, sp_circ.zero_state, None)
     measurements_1 = [measurement for layer in layers_1 for measurement in layer]
 
     if full_fault_tolerance:
-        additional_errors = _hook_errors(measurements_1)
-        layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+        if not flag_first_layer:
+            additional_errors = _hook_errors(measurements_1)
+            layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
+        else:
+            layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, None)
         measurements_2 = [measurement for layer in layers_2 for measurement in layer]
     else:
         measurements_2 = []
 
     if sp_circ.zero_state:
-        return _measure_ft_stabs(sp_circ, measurements_2, measurements_1, full_fault_tolerance=full_fault_tolerance)
-    return _measure_ft_stabs(sp_circ, measurements_1, measurements_2, full_fault_tolerance=full_fault_tolerance)
+        return _measure_ft_stabs(
+            sp_circ,
+            measurements_2,
+            measurements_1,
+            full_fault_tolerance=full_fault_tolerance,
+            flag_first_layer=flag_first_layer,
+        )
+    return _measure_ft_stabs(
+        sp_circ,
+        measurements_1,
+        measurements_2,
+        full_fault_tolerance=full_fault_tolerance,
+        flag_first_layer=flag_first_layer,
+    )
 
 
 def gate_optimal_verification_circuit(
@@ -467,6 +483,7 @@ def gate_optimal_verification_circuit(
     max_timeout: int = 3600,
     max_ancillas: int | None = None,
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -480,6 +497,7 @@ def gate_optimal_verification_circuit(
         max_timeout: The maximum time to allow each search to run for.
         max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
         full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
+        flag_first_layer: If True, the first verification layer (verifying X or Z errors) will also be flagged. If False, the potential hook errors introduced by the first layer will be caught by the second layer. This is only relevant if full_fault_tolerance is True.
     """
 
     def verification_stabs_fun(
@@ -491,7 +509,9 @@ def gate_optimal_verification_circuit(
             sp_circ, zero_state, min_timeout, max_timeout, max_ancillas, additional_errors
         )
 
-    return _verification_circuit(sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance)
+    return _verification_circuit(
+        sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance, flag_first_layer=flag_first_layer
+    )
 
 
 def heuristic_verification_circuit(
@@ -499,6 +519,7 @@ def heuristic_verification_circuit(
     max_covering_sets: int = 10000,
     find_coset_leaders: bool = True,
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     """Return a verified state preparation circuit.
 
@@ -509,6 +530,7 @@ def heuristic_verification_circuit(
         max_covering_sets: The maximum number of covering sets to consider.
         find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
         full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
+        flag_first_layer: If True, the first verification layer (verifying X or Z errors) will also be flagged. If False, the potential hook errors introduced by the first layer will be caught by the second layer. This is only relevant if full_fault_tolerance is True.
     """
 
     def verification_stabs_fun(
@@ -518,7 +540,9 @@ def heuristic_verification_circuit(
             sp_circ, zero_state, max_covering_sets, find_coset_leaders, additional_errors
         )
 
-    return _verification_circuit(sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance)
+    return _verification_circuit(
+        sp_circ, verification_stabs_fun, full_fault_tolerance=full_fault_tolerance, flag_first_layer=flag_first_layer
+    )
 
 
 def heuristic_verification_stabilizers(
@@ -709,6 +733,7 @@ def _measure_ft_stabs(
     x_measurements: list[npt.NDArray[np.int8]],
     z_measurements: list[npt.NDArray[np.int8]],
     full_fault_tolerance: bool = True,
+    flag_first_layer: bool = False,
 ) -> QuantumCircuit:
     # Create the verification circuit
     q = QuantumRegister(sp_circ.num_qubits, "q")
@@ -716,11 +741,11 @@ def _measure_ft_stabs(
     measured_circ.compose(sp_circ.circ, inplace=True)
 
     if sp_circ.zero_state:
-        _measure_ft_z(measured_circ, z_measurements, t=sp_circ.max_x_errors)
+        _measure_ft_z(measured_circ, z_measurements, t=sp_circ.max_x_errors, flags=flag_first_layer)
         if full_fault_tolerance:
             _measure_ft_x(measured_circ, x_measurements, flags=True, t=sp_circ.max_x_errors)
     else:
-        _measure_ft_x(measured_circ, x_measurements, t=sp_circ.max_z_errors)
+        _measure_ft_x(measured_circ, x_measurements, t=sp_circ.max_z_errors, flags=flag_first_layer)
         if full_fault_tolerance:
             _measure_ft_z(measured_circ, z_measurements, flags=True, t=sp_circ.max_z_errors)
 
@@ -809,38 +834,35 @@ def _coset_leader(error: npt.NDArray[np.int8], generators: npt.NDArray[np.int8])
     return np.array([bool(m[leader[i]]) for i in range(len(error))]).astype(int)
 
 
-def _propagate_error(dag: DagCircuit, node: DAGNode, x_errors: bool = True) -> PauliList:
-    """Propagates a Pauli error through a circuit beginning from control of node."""
-    control = node.qargs[0]._index if x_errors else node.qargs[1]._index  # noqa: SLF001
-    error: npt.NDArray[np.int8] = np.array([0] * dag.num_qubits(), dtype=np.int8)
-    error[control] = 1
+def _propagate_error(nodes: list[DAGNode], n_qubits: int, x_errors: bool = True) -> PauliList:
+    """Propagates a Pauli error through a circuit beginning from first node.
+
+    Args:
+        nodes: List of nodes in the circuit in topological order.
+        n_qubits: Number of qubits in the circuit.
+        x_errors: If True, propagate X errors. Otherwise, propagate Z errors.
+    """
+    start = nodes[0]
+    error: npt.NDArray[np.int8] = np.array([0] * n_qubits, dtype=np.int8)
+    error[start.qargs[0]._index] = 1  # noqa: SLF001
+    error[start.qargs[1]._index] = 1  # noqa: SLF001
     # propagate error through circuit via bfs
-    q = deque([node])
-    visited: set[DAGNode] = set()
-    while q:
-        node = q.popleft()
-        if node in visited or isinstance(node, DAGOutNode):
-            continue
+    for node in nodes[1:]:
         control = node.qargs[0]._index  # noqa: SLF001
         target = node.qargs[1]._index  # noqa: SLF001
         if x_errors:
             error[target] = (error[target] + error[control]) % 2
         else:
             error[control] = (error[target] + error[control]) % 2
-        for succ in dag.successors(node):
-            q.append(succ)
     return error
 
 
 def _remove_trivial_faults(
-    faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], code: CSSCode, x_errors: bool, num_errors: int
+    faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], num_errors: int
 ) -> npt.NDArray[np.int8]:
     faults = faults.copy()
     logging.info("Removing trivial faults.")
-    d_error = code.x_distance if x_errors else code.z_distance
-    t_error = max((d_error - 1) // 2, 1)
-    t = max((code.distance - 1) // 2, 1)
-    max_w = t_error // t
+    max_w = 1
     for i, fault in enumerate(faults):
         faults[i] = _coset_leader(fault, stabs)
     faults = faults[np.where(np.sum(faults, axis=1) > max_w * num_errors)[0]]
@@ -894,16 +916,16 @@ def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
     return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps)
 
 
-def _hook_errors(stabs: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
+def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
     """Assuming CNOTs are executed in ascending order of qubit index, this function gives all the hook errors of the given stabilizer measurements."""
     errors = []
-    for stab in stabs:
+    for stab in measurements:
+        support = np.where(stab == 1)[0]
         error = stab.copy()
-        for i in range(len(stab)):
-            if stab[i] == 1:
-                error[i] = 0
-                errors.append(error.copy())
-                error[i] = 1
+        for qubit in support[:-1]:
+            error[qubit] = 0
+            errors.append(error.copy())
+
     return np.array(errors)
 
 

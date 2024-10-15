@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2024.3.2"
 nox.options.default_venv_backend = "uv|virtualenv"
 
-nox.options.sessions = ["lint", "tests"]
+nox.options.sessions = ["lint", "tests", "minimums"]
 
-PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12"]
 
 # The following lists all the build requirements for building the package.
 # Note that this includes transitive build dependencies of package dependencies,
@@ -26,10 +26,9 @@ PYTHON_ALL_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13"]
 # and get better caching performance. This only concerns dependencies that are
 # not available via wheels on PyPI (i.e., only as source distributions).
 BUILD_REQUIREMENTS = [
-    "scikit-build-core[pyproject]>=0.10.1",
-    "setuptools_scm>=7",
-    "pybind11>=2.13",
-    "wheel>=0.40",  # transitive dependency of pytest on Windows
+    "scikit-build-core>=0.10.1",
+    "setuptools_scm>=8.1",
+    "pybind11>=2.13.5",
 ]
 
 if os.environ.get("CI", None):
@@ -38,12 +37,11 @@ if os.environ.get("CI", None):
 
 @nox.session(reuse_venv=True)
 def lint(session: nox.Session) -> None:
-    """Lint the Python part of the codebase using pre-commit.
+    """Run the linter."""
+    if shutil.which("pre-commit") is None:
+        session.install("pre-commit")
 
-    Simply execute `nox -rs lint` to run all configured hooks.
-    """
-    session.install("pre-commit")
-    session.run("pre-commit", "run", "--all-files", *session.posargs)
+    session.run("pre-commit", "run", "--all-files", *session.posargs, external=True)
 
 
 def _run_tests(
@@ -54,8 +52,7 @@ def _run_tests(
     extras: Sequence[str] = (),
 ) -> None:
     posargs = list(session.posargs)
-    env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
-
+    env = {}
     if os.environ.get("CI", None) and sys.platform == "win32":
         env["SKBUILD_CMAKE_ARGS"] = "-T ClangCL"
 
@@ -71,7 +68,7 @@ def _run_tests(
 
     session.install(*BUILD_REQUIREMENTS, *install_args, env=env)
     install_arg = f"-ve.[{','.join(_extras)}]"
-    session.install("--no-build-isolation", "--reinstall-package", "mqt.qecc", install_arg, *install_args, env=env)
+    session.install("--no-build-isolation", install_arg, *install_args, env=env)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
@@ -102,18 +99,18 @@ def docs(session: nox.Session) -> None:
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
     session.install(*BUILD_REQUIREMENTS, *extra_installs)
-    session.install("--no-build-isolation", "-ve.[docs]", "--reinstall-package", "mqt.qecc")
+    session.install("--no-build-isolation", "-ve.[docs]")
     session.chdir("docs")
 
     if args.builder == "linkcheck":
-        session.run("sphinx-build", "-b", "linkcheck", "source", "_build/linkcheck", *posargs)
+        session.run("sphinx-build", "-b", "linkcheck", ".", "_build/linkcheck", *posargs)
         return
 
     shared_args = (
         "-n",  # nitpicky mode
         "-T",  # full tracebacks
         f"-b={args.builder}",
-        "source",
+        ".",
         f"_build/{args.builder}",
         *posargs,
     )

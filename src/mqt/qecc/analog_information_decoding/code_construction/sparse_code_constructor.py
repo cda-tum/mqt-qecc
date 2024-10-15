@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # noqa: S404
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -153,7 +153,7 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
     run_compute_distances(codename)
     _, n = hx.shape
     code_k = n - mod2.rank(hx) - mod2.rank(hz)
-    with Path(f"/codes/generated_codes/{codename}/info.txt").open() as f:
+    with Path(f"/codes/generated_codes/{codename}/info.txt").open(encoding="utf-8") as f:
         code_dict: dict[str, Any] = dict(
             line[: line.rfind("#")].split(" = ") for line in f if not line.startswith("#") and line.strip()
         )
@@ -163,7 +163,7 @@ def _compute_distances(hx: NDArray[np.int32], hz: NDArray[np.int32], codename: s
     code_dict["dX"] = int(code_dict["dX"])
     code_dict["dZ"] = int(code_dict["dZ"])
 
-    with Path(f"/codes/generated_codes/{codename}/code_params.txt").open("w") as file:
+    with Path(f"/codes/generated_codes/{codename}/code_params.txt").open("w", encoding="utf-8") as file:
         file.write(json.dumps(code_dict))
 
 
@@ -175,7 +175,7 @@ def _store_code_params(hx: csr_matrix, hz: csr_matrix, codename: str) -> None:
     code_k = n - mod2.rank(hx) - mod2.rank(hz)
     code_dict["n"] = n
     code_dict["k"] = code_k
-    with Path(f"/codes/generated_codes/{codename}/code_params.txt").open("w") as file:
+    with Path(f"/codes/generated_codes/{codename}/code_params.txt").open("w", encoding="utf-8") as file:
         file.write(json.dumps(code_dict))
 
 

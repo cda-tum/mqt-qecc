@@ -71,34 +71,31 @@ struct ParityCheckMatrix {
      * @return a list of node indices of adjacent nodes
      */
     std::vector<std::size_t> getNbrs(const std::size_t& nodeIdx) {
-        std::vector<std::size_t> result;
         if (auto it = nbrCache.find(nodeIdx); it != nbrCache.end()) {
-            result = it->second;
-        } else {
-            if (pcm->empty() || pcm->front().empty()) {
-                std::cerr << "error getting nbrs for node " << nodeIdx << '\n';
-                throw QeccException("Cannot return neighbours, pcm empty");
-            }
-            const auto               nrChecks = pcm->size();
-            const auto               nrBits   = pcm->front().size();
-            std::vector<std::size_t> res;
-            if (nodeIdx < nrBits) {
-                for (std::size_t i = 0; i < nrChecks; i++) {
-                    if (pcm->at(i).at(nodeIdx)) {
-                        res.emplace_back(nrBits + i);
-                    }
-                }
-            } else {
-                for (std::size_t i = 0; i < nrBits; i++) {
-                    if (pcm->at(nodeIdx - nrBits).at(i)) {
-                        res.emplace_back(i);
-                    }
-                }
-            }
-            const auto ins = nbrCache.try_emplace(nodeIdx, res);
-            result         = ins.first->second;
+            return it->second;
         }
-        return result;
+        if (pcm->empty() || pcm->front().empty()) {
+            std::cerr << "error getting nbrs for node " << nodeIdx << '\n';
+            throw QeccException("Cannot return neighbours, pcm empty");
+        }
+        const auto               nrChecks = pcm->size();
+        const auto               nrBits   = pcm->front().size();
+        std::vector<std::size_t> res;
+        if (nodeIdx < nrBits) {
+            for (std::size_t i = 0; i < nrChecks; i++) {
+                if (pcm->at(i).at(nodeIdx)) {
+                    res.emplace_back(nrBits + i);
+                }
+            }
+        } else {
+            for (std::size_t i = 0; i < nrBits; i++) {
+                if (pcm->at(nodeIdx - nrBits).at(i)) {
+                    res.emplace_back(i);
+                }
+            }
+        }
+        const auto& ins = nbrCache.try_emplace(nodeIdx, res);
+        return ins.first->second;
     }
     [[nodiscard]] json to_json() const { // NOLINT(readability-identifier-naming)
         return json{

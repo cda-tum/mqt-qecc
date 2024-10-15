@@ -23,7 +23,7 @@ nr_samples: int = 1
 nr_runs: int = 1
 per: float = 0.01
 
-with Path(outpath).open("w") as outfile:
+with Path(outpath).open("w", encoding="utf-8") as outfile:
     for code_path in codes:
         sample_sum = 0.0
         for _ in range(nr_samples):

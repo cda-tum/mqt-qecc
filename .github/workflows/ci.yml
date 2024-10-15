@@ -14,31 +14,37 @@ concurrency:
 jobs:
   change-detection:
     name: 🔍 Change
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.3
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.4
 
   cpp-tests:
     name: 🇨‌ Test
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-cpp-tests)
-    uses: ./.github/workflows/reusable-cpp-ci.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-ci.yml@v1.4
 
   cpp-linter:
     name: 🇨‌ Lint
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-linter.yml@v1.3
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-linter.yml@v1.4
 
   python-tests:
     name: 🐍 Test
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-python-tests)
-    uses: ./.github/workflows/reusable-python-ci.yml
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-ci.yml@v1.4
 
   code-ql:
     name: 📝 CodeQL
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-code-ql)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-code-ql.yml@v1.3
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-code-ql.yml@v1.4
+
+  cd:
+    name: 🚀 CD
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-cd)
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.4
 
   required-checks-pass: # This job does nothing and is only used for branch protection
     name: 🚦 Check
@@ -49,6 +55,7 @@ jobs:
       - cpp-linter
       - python-tests
       - code-ql
+      - cd
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
@@ -70,5 +77,9 @@ jobs:
             ${{
               fromJSON(needs.change-detection.outputs.run-code-ql)
               && '' || 'code-ql,'
+            }}
+            ${{
+              fromJSON(needs.change-detection.outputs.run-cd)
+              && '' || 'cd,'
             }}
           jobs: ${{ toJSON(needs) }}

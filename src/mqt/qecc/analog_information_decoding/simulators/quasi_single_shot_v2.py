@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from bposd import bposd_decoder
+from ldpc.osd import bposd_decoder
 from pymatching import Matching
 
 from ..utils.data_utils import BpParams, _check_convergence

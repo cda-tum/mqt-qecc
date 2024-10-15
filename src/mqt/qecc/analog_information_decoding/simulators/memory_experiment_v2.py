@@ -87,9 +87,9 @@ def decode_multiround(
     last_round: bool = False,
     check_block_size: int = 0,
     sigma: float = 0.0,
-    h3d: NDArray[np.int32] | None = None,  # needed for matching decoder
+    h3d: csr_matrix | None = None,  # needed for matching decoder
     decoding_method: str = "bposd",  # bposd or matching
-) -> tuple[Any, NDArray[np.int32], NDArray[np.float64], int]:
+) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.float64], int]:
     """Overlapping window decoding.
 
     First, we compute the difference syndrome from the recorded syndrome of each measurement round for all measurement
