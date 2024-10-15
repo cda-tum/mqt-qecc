@@ -102,14 +102,10 @@ class CSSCode(StabilizerCode):
 
     def get_x_syndrome(self, error: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Compute the x syndrome of the error."""
-        if self.Hx is None:
-            return np.empty((0, error.shape[0]), dtype=np.int8)
         return self.Hx @ error % 2
 
     def get_z_syndrome(self, error: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Compute the z syndrome of the error."""
-        if self.Hz is None:
-            return np.empty((0, error.shape[0]), dtype=np.int8)
         return self.Hz @ error % 2
 
     def check_if_logical_x_error(self, residual: npt.NDArray[np.int8]) -> bool:
@@ -118,21 +114,19 @@ class CSSCode(StabilizerCode):
 
     def check_if_x_stabilizer(self, pauli: npt.NDArray[np.int8]) -> bool:
         """Check if the Pauli is a stabilizer."""
-        assert self.Hx is not None
         return bool(mod2.rank(np.vstack((self.Hx, pauli))) == mod2.rank(self.Hx))
 
     def check_if_logical_z_error(self, residual: npt.NDArray[np.int8]) -> bool:
         """Check if the residual is a logical error."""
-        return bool((self.Lx @ residual % 2 == 1).any())
+        return (self.Hx.shape[0] != 0) and bool((self.Lx @ residual % 2 == 1).any())
 
     def check_if_z_stabilizer(self, pauli: npt.NDArray[np.int8]) -> bool:
         """Check if the Pauli is a stabilizer."""
-        assert self.Hz is not None
-        return bool(mod2.rank(np.vstack((self.Hz, pauli))) == mod2.rank(self.Hz))
+        return (self.Hz.shape[0] != 0) and bool(mod2.rank(np.vstack((self.Hz, pauli))) == mod2.rank(self.Hz))
 
     def stabilizer_eq_x_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
         """Check if two X errors are in the same coset."""
-        if self.Hx is None:
+        if self.Hx.shape[0] == 0:
             return bool(np.array_equal(error_1, error_2))
         m1 = np.vstack([self.Hx, error_1])
         m2 = np.vstack([self.Hx, error_2])
@@ -141,7 +135,7 @@ class CSSCode(StabilizerCode):
 
     def stabilizer_eq_z_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
         """Check if two Z errors are in the same coset."""
-        if self.Hz is None:
+        if self.Hz.shape[0] == 0:
             return bool(np.array_equal(error_1, error_2))
         m1 = np.vstack([self.Hz, error_1])
         m2 = np.vstack([self.Hz, error_2])
@@ -150,8 +144,6 @@ class CSSCode(StabilizerCode):
 
     def is_self_dual(self) -> bool:
         """Check if the code is self-dual."""
-        if self.Hx is None or self.Hz is None:
-            return False
         return bool(
             self.Hx.shape[0] == self.Hz.shape[0] and mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, self.Hz]))
         )
@@ -159,10 +151,6 @@ class CSSCode(StabilizerCode):
     @staticmethod
     def _check_valid_check_matrices(Hx: npt.NDArray[np.int8] | None, Hz: npt.NDArray[np.int8] | None) -> None:  # noqa: N803
         """Check if the code is a valid CSS code."""
-        if Hx is None and Hz is None:
-            msg = "At least one of the check matrices must be provided"
-            raise InvalidCSSCodeError(msg)
-
         if Hx is not None and Hz is not None:
             if Hx.shape[1] != Hz.shape[1]:
                 msg = "Check matrices must have the same number of columns"

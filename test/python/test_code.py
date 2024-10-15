@@ -54,6 +54,44 @@ def test_pauli() -> None:
         p1[3]
 
 
+def test_symplectic() -> None:
+    """Test the SymplecticMatrix and SymplecticVector classes."""
+    ones = SymplecticVector.ones(3)
+    zeros = SymplecticVector.zeros(3)
+    assert ones - ones == zeros
+    assert ones + ones == zeros
+
+    v = SymplecticVector(np.array([1, 0, 0, 0, 0, 1]))
+    w = SymplecticVector(np.array([0, 1, 0, 0, 0, 1]))
+    assert w + v == v + w
+    assert w - v == -v + w
+
+    obj = "abc"
+    assert v != obj
+
+    assert v @ w == 0
+    u = SymplecticVector(np.array([0, 0, 1, 0, 0, 0]))
+    assert v @ u == 1
+
+    eye = SymplecticMatrix.identity(3)
+    zero_mat = SymplecticMatrix.zeros(6, 3)
+    assert eye + eye == zero_mat
+    assert eye - eye == zero_mat
+
+    vs = [v.vector, w.vector, u.vector, ones.vector, zeros.vector, v.vector]
+    m = SymplecticMatrix(np.array(vs))
+    assert eye @ m.transpose() == m
+    assert m @ eye == m
+
+    for i, row in enumerate(m):
+        assert np.array_equal(row, vs[i])
+
+    assert m != obj
+    assert len(m) == 6
+    assert m.shape == (6, 6)
+    assert m.n == 3
+
+
 def test_stabilizer_tableau() -> None:
     """Test the StabilizerTableau class."""
     with pytest.raises(InvalidPauliError):
@@ -80,12 +118,13 @@ def test_stabilizer_tableau() -> None:
     assert t1 != t4
 
     assert t1 == [Pauli.from_pauli_string("XIZ"), Pauli.from_pauli_string("ZIX"), Pauli.from_pauli_string("IZX")]
+    assert len(t1) == 3
 
 
 @pytest.fixture
 def rep_code_checks() -> tuple[npt.NDArray[np.int8] | None, npt.NDArray[np.int8] | None]:
     """Return the parity check matrices for the repetition code."""
-    hx = np.array([[1, 1, 0], [0, 0, 1]])
+    hx = np.array([[1, 1, 0], [0, 1, 1]])
     hz = None
     return hx, hz
 
@@ -201,6 +240,35 @@ def test_errors(steane_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.i
     assert not code.check_if_logical_z_error((e1 + e4) % 2)
     assert code.stabilizer_eq_x_error(e1, e4)
     assert code.stabilizer_eq_z_error(e1, e4)
+
+
+def test_rep_code(rep_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) -> None:
+    """Test utility functions and correctness of the repetition code."""
+    hx, hz = rep_code_checks
+    code = CSSCode(distance=1, Hx=hx, Hz=hz)
+    assert code.n == 3
+    assert code.k == 1
+    assert code.distance == 1
+    assert not code.is_self_dual()
+
+    e1 = np.array([1, 0, 0], dtype=np.int8)
+    e2 = np.array([0, 1, 0], dtype=np.int8)
+    e3 = np.array([0, 0, 1], dtype=np.int8)
+    assert np.array_equal(code.get_x_syndrome(e1), np.array([1, 0]))
+    assert np.array_equal(code.get_x_syndrome(e2), np.array([1, 1]))
+    assert np.array_equal(code.get_x_syndrome(e3), np.array([0, 1]))
+
+    assert code.get_z_syndrome(e1).size == 0
+
+    assert code.check_if_logical_z_error((e1 + e2 + e3) % 2)
+    assert not code.check_if_x_stabilizer((e1 + e2 + e3) % 2)
+    assert code.check_if_x_stabilizer((e1 + e2) % 2)
+    assert not code.check_if_z_stabilizer((e1 + e2 + e3) % 2)
+    assert not code.check_if_z_stabilizer((e1 + e3) % 2)
+
+    assert code.stabilizer_eq_x_error(e1, (e1 + e2 + e3) % 2)
+    assert not code.stabilizer_eq_z_error(e1, (e1 + e2 + e3) % 2)
+    assert code.stabilizer_eq_z_error(e1, e1)
 
 
 def test_steane(steane_code_checks: tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]) -> None:

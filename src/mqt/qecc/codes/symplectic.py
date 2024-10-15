@@ -40,6 +40,10 @@ class SymplecticVector:
         """Subtract two symplectic vectors."""
         return SymplecticVector((self.vector - other.vector) % 2)
 
+    def __neg__(self) -> SymplecticVector:
+        """Negate the vector."""
+        return SymplecticVector(-self.vector)
+
     def __matmul__(self, other: SymplecticVector) -> int:
         """Compute the symplectic inner product."""
         assert self.n == other.n, "Vectors must be of the same length."
@@ -79,6 +83,10 @@ class SymplecticMatrix:
         self.matrix = matrix
         self.n = matrix.shape[1] // 2
         self.shape = matrix.shape
+
+    def transpose(self) -> SymplecticMatrix:
+        """Return the transpose of the matrix."""
+        return SymplecticMatrix(self.matrix.T)
 
     @classmethod
     def zeros(cls, n_rows: int, n: int) -> SymplecticMatrix:
