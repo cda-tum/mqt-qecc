@@ -1,4 +1,5 @@
-""" Sinter integration of the maxsat decoder. """
+"""Sinter integration of the maxsat decoder."""
+
 from __future__ import annotations
 
 import locale
@@ -17,7 +18,8 @@ if TYPE_CHECKING:
 
 
 class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
-    """ MaxSAT decoder instantiation as CompiledDecoder. """
+    """MaxSAT decoder instantiation as CompiledDecoder."""
+
     def __init__(self, decoder: MaxSatStim, **kwargs) -> None:
         self.decoder = decoder
 
@@ -59,7 +61,8 @@ class SinterCompiledDecoder_MAXSAT(CompiledDecoder):
 
 
 class SinterDecoder_MAXSAT(Decoder):
-    """ Sinter implementation of MaxSAT decoder. """
+    """Sinter implementation of MaxSAT decoder."""
+
     def __init__(
         self,
         **maxsat_kwargs,
@@ -135,5 +138,5 @@ class SinterDecoder_MAXSAT(Decoder):
 
 
 def sinter_decoders(**kwargs) -> dict[str, Decoder]:
-    """ return a list of available sinter decoders. """
+    """Return a list of available sinter decoders."""
     return {"maxsat": SinterDecoder_MAXSAT(**kwargs), "bposd": SinterDecoder_BPOSD()}
