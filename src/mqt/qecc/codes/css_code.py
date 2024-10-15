@@ -175,6 +175,7 @@ class CSSCode(StabilizerCode):
         - [[12, 2, 4]] Carbon Code (\"Carbon\")
         - [[9, 1, 3]] rotated surface code (\"Surface, 3\"), also default when no distance is given
         - [[25, 1, 5]] rotated surface code (\"Surface, 5\")
+        - [[15, 7, 3]] Hamming code (\"Hamming\")
         - [[23, 1, 7]] golay code (\"Golay\")
 
         Args:
@@ -190,6 +191,7 @@ class CSSCode(StabilizerCode):
             "surface_5": prefix / "rotated_surface_d5/",
             "golay": prefix / "golay/",
             "carbon": prefix / "carbon/",
+            "hamming": prefix / "hamming_15/",
         }
 
         distances = {
@@ -200,6 +202,7 @@ class CSSCode(StabilizerCode):
             "surface_3": (3, 3),
             "surface_5": (5, 5),
             "carbon": (4, 4),
+            "hamming": (3, 3),
         }  # X, Z distances
 
         code_name = code_name.lower()
