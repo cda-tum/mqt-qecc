@@ -12,6 +12,7 @@ from scipy.sparse import csc_matrix
 if TYPE_CHECKING:
     import stim
 
+
 def iter_set_xor(set_list: list[set[int]]) -> frozenset[int]:
     """Computes XOR between sets."""
     out: set[int] = set()

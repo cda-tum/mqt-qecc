@@ -197,7 +197,7 @@ def generate_plots(results_dir: Path, results_file: Path) -> None:
 
 
 def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
-    """ generate plots for TN decoder """
+    """Generate plots for TN decoder."""
     # read in all generated data
     data = []
     for file in results_dir.glob("*.json"):
@@ -234,7 +234,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     for code, xys in sorted(code_to_xys.items()):
         ax[1][0].plot(*zip(*xys), "x-", label=f"d={code}")
     ax[1][0].set_xlabel("Physical error rate")
-    ax[1][0].set_ylabel("Average time per run (µs)") # noqa: RUF001
+    ax[1][0].set_ylabel("Average time per run (µs)")  # noqa: RUF001
     ax[1][0].legend()
     ax[1][0].set_ylim(0, 300000)
 
@@ -254,7 +254,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
         ax[1][1].plot(ds, data["t"], label="p=" + str(p))
 
     ax[1][1].set_xlabel("Distance")
-    ax[1][1].set_ylabel("Average time per run (µs)") # noqa: RUF001
+    ax[1][1].set_ylabel("Average time per run (µs)")  # noqa: RUF001
     ax[1][1].legend()
     ax[1][1].set_yscale("log")
     ax[1][1].set_xticks(ds)
