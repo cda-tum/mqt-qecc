@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import itertools as it
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import stim
+
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
 
 def neighbors(perm: NDArray[int]) -> list[NDArray[int]]:
     """Return the neighbors of a lattice point in the 2D color code."""
@@ -49,7 +51,7 @@ def gen_pcm_and_logical(distance: int) -> tuple[NDArray[bool], set[int]]:
     return (parity_check_matrix, logical_operator)
 
 
-def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool, error_probability: float) -> Any: # noqa: ANN401
+def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool, error_probability: float) -> Any:  # noqa: ANN401
     """Add one round of checks to the circuit."""
     for check in pcm:
         if error_probability == 0:
@@ -75,7 +77,7 @@ def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool, error
 
 def gen_stim_circuit_memory_experiment(
     pcm: NDArray[int], logical_operator: NDArray[int], distance: int, error_probability: float
-) -> Any: # noqa: ANN401
+) -> Any:  # noqa: ANN401
     """Generate a stim circuit for a memory experiment on the 2D color code."""
     data_qubits = range(len(pcm[0]))
     circuit = stim.Circuit()

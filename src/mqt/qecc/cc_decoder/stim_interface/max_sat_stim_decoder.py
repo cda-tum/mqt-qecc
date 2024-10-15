@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -10,8 +10,9 @@ from mqt.qecc.cc_decoder.stim_interface.dem_to_matrices import detector_error_mo
 if TYPE_CHECKING:
     import stim
 
+
 class MaxSatStim:
-    def __init__(self, model: stim.DetectorErrorModel, timeout:int=1000) -> None:
+    def __init__(self, model: stim.DetectorErrorModel, timeout: int = 1000) -> None:
         """Class for decoding stim circuits using the LightsOut MaxSAT decoder.
         Parameters.
         ----------
@@ -26,9 +27,9 @@ class MaxSatStim:
         self.observables = self._matrices.observables_matrix
         self.problem.preconstruct_z3_instance(weights=[self.weight_function(p) for p in self._matrices.priors])
 
-    def check_matrix_to_adj_lists(self, check_matrix: Any) -> tuple[dict, dict]: # noqa: ANN401
-        qtf:dict[int,List[int]] = {}
-        ftq:dict[int,List[int]] = {}
+    def check_matrix_to_adj_lists(self, check_matrix: Any) -> tuple[dict, dict]:  # noqa: ANN401
+        qtf: dict[int, list[int]] = {}
+        ftq: dict[int, list[int]] = {}
         for row in range(check_matrix.shape[0]):
             for col in range(check_matrix.shape[1]):
                 if check_matrix[row, col] == 1:
@@ -40,10 +41,10 @@ class MaxSatStim:
                     ftq[row].append(col)
         return qtf, ftq
 
-    def weight_function(self, x:np.float64) -> np.float64:
+    def weight_function(self, x: np.float64) -> np.float64:
         return np.log((1 - x) / x)
 
-    def decode(self, syndrome: np.ndarray[np.int]) -> (np.ndarray[np.int], bool):
+    def decode(self, syndrome: np.ndarray[int]) -> (np.ndarray[int], bool):
         """Decode the syndrome and return a prediction of which observables were flipped.
 
         Parameters
@@ -67,11 +68,11 @@ class MaxSatStim:
 
     def decode_batch(
         self,
-        shots: np.ndarray[np.int],
+        shots: np.ndarray[int],
         *,
         bit_packed_shots: bool = False,
         bit_packed_predictions: bool = False,
-    ) -> (np.ndarray[np.int], np.int, np.int):
+    ) -> (np.ndarray[int], int, int):
         """Decode a batch of shots of syndrome data. This is just a helper method, equivalent to iterating over each
         shot and calling `BPOSD.decode` on it.
 

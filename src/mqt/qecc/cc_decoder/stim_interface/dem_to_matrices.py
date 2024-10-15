@@ -2,18 +2,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.sparse import csc_matrix
 
 if TYPE_CHECKING:
     import stim
-    from numpy.typing import NDArray
 
 
 def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
-    out:Set[int] = set()
+    out: set[int] = set()
     for x in set_list:
         s = set(x)
         out = (out - s) | (s - out)
