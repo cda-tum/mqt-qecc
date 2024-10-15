@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import locale
+import pathlib
 from typing import TYPE_CHECKING, Any
 
 import stim
@@ -12,8 +13,6 @@ from stimbposd import SinterDecoder_BPOSD
 from mqt.qecc.cc_decoder.stim_interface.max_sat_stim_decoder import MaxSatStim
 
 if TYPE_CHECKING:
-    import pathlib
-
     import numpy as np
 
 
@@ -69,11 +68,11 @@ class SinterDecoderMaxSat(Decoder):
         self,
         **maxsat_kwargs: Any,  # noqa: ANN401
     ) -> None:
-        """ init sinter decoder with kwargs. """
+        """Init sinter decoder with kwargs."""
         self.maxsat_kwargs = maxsat_kwargs
 
     def compile_decoder_for_dem(self, *, dem: stim.DetectorErrorModel) -> CompiledDecoder:
-        """ return sinter comiled decoder initialized with the given DEM. """
+        """Return sinter compiled decoder initialized with the given DEM."""
         maxsat = MaxSatStim(
             model=dem,
             #            **self.maxsat_kwargs,
@@ -83,13 +82,13 @@ class SinterDecoderMaxSat(Decoder):
     def decode_via_files(
         self,
         *,
-        num_shots: int, # noqa: ARG002
-        num_dets: int, # noqa: ARG002
-        num_obs: int, # noqa: ARG002
+        num_shots: int,  # noqa: ARG002
+        num_dets: int,  # noqa: ARG002
+        num_obs: int,  # noqa: ARG002
         dem_path: pathlib.Path,
         dets_b8_in_path: pathlib.Path,
         obs_predictions_b8_out_path: pathlib.Path,
-        tmp_dir: pathlib.Path, # noqa: ARG002
+        tmp_dir: pathlib.Path,  # noqa: ARG002
     ) -> None:
         """Performs decoding by reading problems from, and writing solutions to, file paths.
 

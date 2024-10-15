@@ -1,4 +1,5 @@
-""" Implementation of the Stim decoder for the MaxSat algorithm. """
+"""Implementation of the Stim decoder for the MaxSat algorithm."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -13,7 +14,8 @@ if TYPE_CHECKING:
 
 
 class MaxSatStim:
-    """ MaxSat stim decoder implementation. """
+    """MaxSat stim decoder implementation."""
+
     def __init__(self, model: stim.DetectorErrorModel) -> None:
         """Class for decoding stim circuits using the LightsOut MaxSAT decoder.
 
@@ -32,7 +34,7 @@ class MaxSatStim:
 
     @staticmethod
     def check_matrix_to_adj_lists(check_matrix: Any) -> tuple[dict, dict]:  # noqa: ANN401
-        """ converts a check matrix to two adjacency lists. """
+        """Converts a check matrix to two adjacency lists."""
         qtf: dict[int, list[int]] = {}
         ftq: dict[int, list[int]] = {}
         for row in range(check_matrix.shape[0]):
@@ -47,7 +49,7 @@ class MaxSatStim:
         return qtf, ftq
 
     def weight_function(self, x: np.float64) -> np.float64:
-        """ return log likelihood weighting. """
+        """Return log likelihood weighting."""
         return np.log((1 - x) / x)
 
     def decode(self, syndrome: np.ndarray[int]) -> (np.ndarray[int], bool):
