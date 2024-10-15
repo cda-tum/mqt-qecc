@@ -1,8 +1,9 @@
+""" contains functionality to convert a detector error model to check matrices. """
 # Author: Oscar Higgott https://github.com/oscarhiggott/stimbposd/blob/main/src/stimbposd/dem_to_matrices.py
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -11,7 +12,8 @@ if TYPE_CHECKING:
     import stim
 
 
-def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
+def iter_set_xor(set_list: list[Set[int]]) -> frozenset[int]:
+    """ computes XOR between sets """
     out: set[int] = set()
     for x in set_list:
         s = set(x)
@@ -51,6 +53,7 @@ def dict_to_csc_matrix(elements_dict: dict[int, frozenset[int]], shape: tuple[in
 
 @dataclass
 class DemMatrices:
+    """ Class capturing the check matrices associated to a DEM. """
     check_matrix: csc_matrix
     observables_matrix: csc_matrix
     edge_check_matrix: csc_matrix
