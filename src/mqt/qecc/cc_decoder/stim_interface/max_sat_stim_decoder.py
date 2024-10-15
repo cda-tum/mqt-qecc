@@ -48,7 +48,8 @@ class MaxSatStim:
                     ftq[row].append(col)
         return qtf, ftq
 
-    def weight_function(self, x: np.float64) -> np.float64:
+    @staticmethod
+    def weight_function(x: np.float64) -> np.float64:
         """Return log likelihood weighting."""
         return np.log((1 - x) / x)
 
@@ -81,8 +82,7 @@ class MaxSatStim:
         bit_packed_shots: bool = False,
         bit_packed_predictions: bool = False,
     ) -> (np.ndarray[int], int, int):
-        """Decode a batch of shots of syndrome data. This is just a helper method, equivalent to iterating over each
-        shot and calling `BPOSD.decode` on it.
+        """Decode a batch of shots of syndrome data by iterating over each shot.
 
         Parameters
         ----------
