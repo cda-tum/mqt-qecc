@@ -491,21 +491,6 @@ def optimal_elimination(
     return reduced, eliminations
 
 
-def w_flag_pattern(w: int) -> list[int]:
-    """Return the w-flag construction from https://arxiv.org/abs/1708.02246.
-
-    Args:
-        w: The number of w-flags to construct.
-
-    Returns:
-        The w-flag pattern.
-    """
-    s1 = [2 * j + 2 for j in reversed(range((w - 4) // 2))]
-    s2 = [w - 3, 0]
-    s3 = [2 * j + 1 for j in reversed(range((w - 4) // 2))]
-    return s1 + s2 + s3 + [w - 2]
-
-
 def _ancilla_cnot(qc: QuantumCircuit, qubit: Qubit | AncillaQubit, ancilla: AncillaQubit, z_measurement: bool) -> None:
     if z_measurement:
         qc.cx(qubit, ancilla)
@@ -688,9 +673,10 @@ def measure_two_flagged(
             _flag_init(qc, flag_reg[flags], z_measurement)
             _ancilla_cnot(qc, flag_reg[flags], ancilla, z_measurement)
         if cnots >= 7 and cnots % 2 == 1:
-            _ancilla_cnot(qc, flag_reg[flags - 1], ancilla, z_measurement)
-            _flag_measure(qc, flag_reg[flags - 1], meas_reg[flags - 1], z_measurement)
-        flags += 1
+            _ancilla_cnot(qc, flag_reg[flags - 2], ancilla, z_measurement)
+            _flag_measure(qc, flag_reg[flags - 2], meas_reg[flags - 2], z_measurement)
+        if cnots % 2 == 0 and cnots < len(stab) - 2:
+            flags += 1
 
     _ancilla_cnot(qc, flag_reg[0], ancilla, z_measurement)
     _flag_measure(qc, flag_reg[0], meas_reg[0], z_measurement)

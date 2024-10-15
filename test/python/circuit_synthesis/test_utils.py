@@ -16,6 +16,7 @@ from mqt.qecc.circuit_synthesis.synthesis_utils import (
     gaussian_elimination_min_parallel_eliminations,
     measure_flagged,
     measure_one_flagged,
+    measure_stab_unflagged,
     measure_two_flagged,
     qiskit_to_stim_circuit,
 )
@@ -123,7 +124,13 @@ def weight_8_x_measurement() -> MeasurementTest:
 @pytest.fixture
 def weight_9_z_measurement() -> MeasurementTest:
     """Return a measurement test for a weight 8 stabilizer."""
-    return _make_measurement_test(100, [7, 6, 5, 4, 3, 2, 1, 0], 1, True)
+    return _make_measurement_test(100, [7, 6, 5, 4, 3, 2, 1, 0], 2, True)
+
+
+@pytest.fixture
+def weight_16_x_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 16 stabilizer."""
+    return _make_measurement_test(16, [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 2, False)
 
 
 @pytest.mark.parametrize("test_vals", ["identity_matrix", "full_matrix"])
@@ -203,6 +210,7 @@ def test_one_flag_measurements(test: MeasurementTest, request):  # type: ignore[
         "weight_6_z_measurement",
         "weight_8_x_measurement",
         "weight_9_z_measurement",
+        "weight_16_x_measurement",
     ],
 )
 def test_two_flag(test: MeasurementTest, request):  # type: ignore[no-untyped-def]
@@ -215,6 +223,7 @@ def test_two_flag(test: MeasurementTest, request):  # type: ignore[no-untyped-de
     z_measurement = fixture.z_measurement
 
     measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+    print(qc.draw())
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
 
 
@@ -240,4 +249,28 @@ def test_flag_measurements(test: MeasurementTest, request) -> None:  # type: ign
     z_measurement = fixture.z_measurement
 
     measure_flagged(qc, stab, ancilla, measurement_bit, t, z_measurement)
+    assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
+
+
+@pytest.mark.parametrize(
+    "test",
+    [
+        "weight_4_z",
+        "weight_4_z_6q",
+        "weight_4_x",
+        "weight_6_z_measurement",
+        "weight_8_x_measurement",
+        "weight_9_z_measurement",
+    ],
+)
+def test_unflagged_measurements(test: MeasurementTest, request) -> None:  # type: ignore[no-untyped-def]
+    """Test flag measurement circuits."""
+    fixture = request.getfixturevalue(test)
+    qc = fixture.qc
+    stab = fixture.stab
+    ancilla = fixture.ancilla
+    measurement_bit = fixture.measurement_bit
+    z_measurement = fixture.z_measurement
+
+    measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
