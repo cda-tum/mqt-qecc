@@ -272,7 +272,7 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"*/cc_decoder/plots.py" = ["T201"]
+"*/cc_decoder/plotting/**" = ["T201"]
 "scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
