@@ -98,7 +98,7 @@ class LightsOut:
         assert self.switch_vars is not None
         return sum(1 for var in self.switch_vars if model[var])
 
-    def solve(self, lights: list[bool], solver_path: str = "z3") -> tuple[list[int], bool, float, float]:
+    def solve(self, lights: list[bool], solver_path: str = "z3") -> tuple[list[int], bool, float]:
         """Solve the lights-out problem for a given pattern.
 
         Assumes that the z3 instance has already been pre-constructed.

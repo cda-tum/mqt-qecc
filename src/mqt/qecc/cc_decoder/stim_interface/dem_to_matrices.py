@@ -2,17 +2,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
 import numpy as np
 from scipy.sparse import csc_matrix
 
 if TYPE_CHECKING:
     import stim
+    from numpy.typing import NDArray
 
 
 def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
-    out = set()
+    out:Set[int] = set()
     for x in set_list:
         s = set(x)
         out = (out - s) | (s - out)
@@ -56,7 +57,7 @@ class DemMatrices:
     edge_check_matrix: csc_matrix
     edge_observables_matrix: csc_matrix
     hyperedge_to_edge_matrix: csc_matrix
-    priors: np.ndarray
+    priors: NDarray[np.float64]
 
 
 def detector_error_model_to_check_matrices(

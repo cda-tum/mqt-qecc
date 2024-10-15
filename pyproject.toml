@@ -180,7 +180,7 @@ disallow_untyped_defs = false
 explicit_package_bases = true
 warn_unreachable = true
 exclude = [
-    "*/cc_decoder/plotting/*",
+    "*/cc_decoder/plotting/**",
     "code_construction*",
     "^data_utils\\.py$"
 ]
