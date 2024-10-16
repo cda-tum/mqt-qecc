@@ -62,7 +62,7 @@ class LightsOut:
         constraint = Xor(self.switch_vars[indices[0]], helper_vars[0]) == val
         self.optimizer.add(simplify(constraint))
 
-    def preconstruct_z3_instance(self, weights: np.NDArray[float]) -> None:
+    def preconstruct_z3_instance(self, weights: np.NDArray[float] = None) -> None:
         """Preconstruct the z3 instance for the lights-out problem.
 
         Creates all necessary variables, adds the known parts of the parity constraints.
@@ -79,8 +79,12 @@ class LightsOut:
                     self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches))]
             self.preconstruct_parity_constraint(light, switches)
 
-        for idx, switch in enumerate(self.switch_vars):
-            self.optimizer.add_soft(Not(switch), weights[idx])
+        if weights is not None and len(weights) > 0:
+            for idx, switch in enumerate(self.switch_vars):
+                self.optimizer.add_soft(Not(switch), weights[idx])
+        else:
+            for idx, switch in enumerate(self.switch_vars):
+                self.optimizer.add_soft(Not(switch))
 
     def validate_model(self, model: ModelRef, lights: list[bool]) -> bool:
         """Validate the model by checking if pressing the switches turns off all lights."""
@@ -136,7 +140,7 @@ class LightsOut:
             # Note: This merely calls the solver. It does not interpret the output.
             #       This is just to measure the time it takes to solve the problem.
             with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
-                "a+", encoding=locale.getpreferredencoding(False)
+                    "a+", encoding=locale.getpreferredencoding(False)
             ) as out:
                 start = timer()
                 subprocess.run([solver_path, wcnf], stdout=out, check=False)  # noqa: S603
@@ -204,12 +208,12 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
 
 
 def run(
-    lattice_type: str,
-    distance: int,
-    error_rate: float,
-    nr_sims: int = 10000,
-    results_dir: str = "./results_maxsat",
-    solver: str = "z3",
+        lattice_type: str,
+        distance: int,
+        error_rate: float,
+        nr_sims: int = 10000,
+        results_dir: str = "./results_maxsat",
+        solver: str = "z3",
 ) -> None:
     """Run the decoding simulation for a given distance and error rate."""
     code = code_from_string(lattice_type, distance)
