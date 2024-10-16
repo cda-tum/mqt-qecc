@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, FrozenSet, Dict, Set
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -13,22 +13,22 @@ if TYPE_CHECKING:
     import stim
 
 
-def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
+def iter_set_xor(set_list: List[List[int]]) -> FrozenSet[int]:
     """Computes XOR between sets."""
-    out: set[int] = set()
+    out: Set[int] = set()
     for x in set_list:
         s = set(x)
         out = (out - s) | (s - out)
     return frozenset(out)
 
 
-def dict_to_csc_matrix(elements_dict: dict[int, frozenset[int]], shape: tuple[int, int]) -> csc_matrix:
+def dict_to_csc_matrix(elements_dict: Dict[int, FrozenSet[int]], shape: tuple[int, int]) -> csc_matrix:
     """Constructs a `scipy.sparse.csc_matrix` check matrix from a dictionary `elements_dict`.
 
     Parameters
     ----------
-    elements_dict : dict[int, frozenset[int]]
-        A dictionary giving the indices of nonzero rows in each column. `elements_dict[i]` is a frozenset of ints
+    elements_dict : Dict[int, FrozenSet[int]]
+        A dictionary giving the indices of nonzero rows in each column. `elements_dict[i]` is a FrozenSet of ints
         giving the indices of nonzero rows in column `i`.
     shape : Tuple[int, int]
         The dimensions of the matrix to be returned
@@ -82,14 +82,14 @@ def detector_error_model_to_check_matrices(
     DemMatrices
         A collection of matrices representing the stim DetectorErrorModel
     """
-    hyperedge_ids: dict[frozenset[int], int] = {}
-    edge_ids: dict[frozenset[int], int] = {}
-    hyperedge_obs_map: dict[int, frozenset[int]] = {}
-    edge_obs_map: dict[int, frozenset[int]] = {}
-    priors_dict: dict[int, float] = {}
-    hyperedge_to_edge: dict[int, frozenset[int]] = {}
+    hyperedge_ids: Dict[FrozenSet[int], int] = {}
+    edge_ids: Dict[FrozenSet[int], int] = {}
+    hyperedge_obs_map: Dict[int, FrozenSet[int]] = {}
+    edge_obs_map: Dict[int, FrozenSet[int]] = {}
+    priors_dict: Dict[int, float] = {}
+    hyperedge_to_edge: Dict[int, FrozenSet[int]] = {}
 
-    def handle_error(prob: float, detectors: list[list[int]], observables: list[list[int]]) -> None:
+    def handle_error(prob: float, detectors: List[List[int]], observables: List[List[int]]) -> None:
         hyperedge_dets = iter_set_xor(detectors)
         hyperedge_obs = iter_set_xor(observables)
 
@@ -109,7 +109,7 @@ def detector_error_model_to_check_matrices(
                 if not allow_undecomposed_hyperedges:
                     msg = (
                         "A hyperedge error mechanism was found that was not decomposed into edges. "
-                        "This can happen if you do not set `decompose_errors=True` as required when "
+                        "This can happen if you do not Set `decompose_errors=True` as required when "
                         "calling `circuit.detector_error_model`."
                     )
                     raise ValueError(msg)
@@ -126,8 +126,8 @@ def detector_error_model_to_check_matrices(
 
     for instruction in dem.flattened():
         if instruction.type == "error":
-            dets: list[list[int]] = [[]]
-            frames: list[list[int]] = [[]]
+            dets: List[List[int]] = [[]]
+            frames: List[List[int]] = [[]]
             t: stim.DemTarget
             p = instruction.args_copy()[0]
             for t in instruction.targets_copy():
