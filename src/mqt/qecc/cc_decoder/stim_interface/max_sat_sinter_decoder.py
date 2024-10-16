@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import locale
 import pathlib
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import stim
 from sinter import CompiledDecoder, Decoder
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class SinterCompiledDecoderMaxSat(CompiledDecoder):
     """MaxSAT decoder instantiation as CompiledDecoder."""
 
-    def __init__(self, decoder: MaxSatStim, **kwargs: Dict[str, Any]) -> None:
+    def __init__(self, decoder: MaxSatStim, **kwargs: dict[str, Any]) -> None:
         """Constructor initializing compiled decoder with stim decoder."""
         self.decoder = decoder
 
@@ -140,6 +140,6 @@ class SinterDecoderMaxSat(Decoder):
         )
 
 
-def sinter_decoders(**kwargs: Any) -> Dict[str, Decoder]:  # noqa: ANN401
+def sinter_decoders(**kwargs: Any) -> dict[str, Decoder]:  # noqa: ANN401
     """Return a list of available sinter decoders."""
     return {"maxsat": SinterDecoderMaxSat(**kwargs), "bposd": SinterDecoder_BPOSD()}
