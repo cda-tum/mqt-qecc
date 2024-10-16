@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 import numpy as np
 
-from mqt.qecc.cc_decoder.max_sat_decoder import LightsOut
-from mqt.qecc.cc_decoder.stim_interface.dem_to_matrices import detector_error_model_to_check_matrices
+from ..decoder import LightsOut
+from ..stim_interface.dem_to_matrices import detector_error_model_to_check_matrices
 
 if TYPE_CHECKING:
     import stim

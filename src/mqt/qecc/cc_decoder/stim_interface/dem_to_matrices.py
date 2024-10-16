@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
-import numpy.typing
 from scipy.sparse import csc_matrix
 
 if TYPE_CHECKING:
