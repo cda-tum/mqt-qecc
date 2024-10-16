@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -82,7 +82,7 @@ class MaxSatStim:
         *,
         bit_packed_shots: bool = False,
         bit_packed_predictions: bool = False,
-    ) -> Tuple[NDArray[int], int, int]:
+    ) -> tuple[NDArray[int], int, int]:
         """Decode a batch of shots of syndrome data by iterating over each shot.
 
         Parameters
