@@ -140,7 +140,7 @@ class LightsOut:
             # Note: This merely calls the solver. It does not interpret the output.
             #       This is just to measure the time it takes to solve the problem.
             with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
-                    "a+", encoding=locale.getpreferredencoding(False)
+                "a+", encoding=locale.getpreferredencoding(False)
             ) as out:
                 start = timer()
                 subprocess.run([solver_path, wcnf], stdout=out, check=False)  # noqa: S603
@@ -208,12 +208,12 @@ def simulate_error_rate(code: ColorCode, error_rate: float, nr_sims: int, solver
 
 
 def run(
-        lattice_type: str,
-        distance: int,
-        error_rate: float,
-        nr_sims: int = 10000,
-        results_dir: str = "./results_maxsat",
-        solver: str = "z3",
+    lattice_type: str,
+    distance: int,
+    error_rate: float,
+    nr_sims: int = 10000,
+    results_dir: str = "./results_maxsat",
+    solver: str = "z3",
 ) -> None:
     """Run the decoding simulation for a given distance and error rate."""
     code = code_from_string(lattice_type, distance)
