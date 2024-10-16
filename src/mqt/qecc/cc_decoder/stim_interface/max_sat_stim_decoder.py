@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -33,7 +33,7 @@ class MaxSatStim:
         self.problem.preconstruct_z3_instance(weights=[self.weight_function(p) for p in self._matrices.priors])
 
     @staticmethod
-    def check_matrix_to_adj_lists(check_matrix: Any) -> Tuple[dict, dict]:  # noqa: ANN401
+    def check_matrix_to_adj_lists(check_matrix: Any) -> tuple[dict, dict]:  # noqa: ANN401
         """Converts a check matrix to two adjacency lists."""
         qtf: Dict[int, List[int]] = {}
         ftq: Dict[int, List[int]] = {}
