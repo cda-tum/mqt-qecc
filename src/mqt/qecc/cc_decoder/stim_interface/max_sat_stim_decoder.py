@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Tuple
 
 import numpy as np
 
@@ -54,7 +54,7 @@ class MaxSatStim:
         """Return log likelihood weighting."""
         return np.log((1 - x) / x)
 
-    def decode(self, syndrome: NDArray[int]) -> tuple[NDArray[int], bool]:
+    def decode(self, syndrome: NDArray[int]) -> tuple[NDArray[int], int]:
         """Decode the syndrome and return a prediction of which observables were flipped.
 
         Parameters
@@ -82,7 +82,7 @@ class MaxSatStim:
         *,
         bit_packed_shots: bool = False,
         bit_packed_predictions: bool = False,
-    ) -> (NDArray[int], int, int):
+    ) -> Tuple[NDArray[int], int, int]:
         """Decode a batch of shots of syndrome data by iterating over each shot.
 
         Parameters

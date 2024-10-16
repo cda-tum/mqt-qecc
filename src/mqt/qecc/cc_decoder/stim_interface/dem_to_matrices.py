@@ -12,6 +12,7 @@ from scipy.sparse import csc_matrix
 
 if TYPE_CHECKING:
     import stim
+    from numpy.typing import NDArray
 
 
 def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
@@ -61,7 +62,7 @@ class DemMatrices:
     edge_check_matrix: csc_matrix
     edge_observables_matrix: csc_matrix
     hyperedge_to_edge_matrix: csc_matrix
-    priors: np.NDArray[np.float64]
+    priors: NDArray[np.float64]
 
 
 def detector_error_model_to_check_matrices(
