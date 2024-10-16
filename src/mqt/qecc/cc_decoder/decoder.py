@@ -83,8 +83,8 @@ class LightsOut:
             for idx, switch in enumerate(self.switch_vars):
                 self.optimizer.add_soft(Not(switch), weights[idx])
         else:
-            for idx, switch in enumerate(self.switch_vars):
-                self.optimizer.add_soft(Not(switch))
+            for _, switchh in enumerate(self.switch_vars):
+                self.optimizer.add_soft(Not(switchh))
 
     def validate_model(self, model: ModelRef, lights: list[bool]) -> bool:
         """Validate the model by checking if pressing the switches turns off all lights."""

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     import stim
 
 
-def iter_set_xor(set_list: list[set[int]]) -> frozenset[int]:
+def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
     """Computes XOR between sets."""
     out: set[int] = set()
     for x in set_list:
@@ -60,7 +60,7 @@ class DemMatrices:
     edge_check_matrix: csc_matrix
     edge_observables_matrix: csc_matrix
     hyperedge_to_edge_matrix: csc_matrix
-    priors: np.ndarray[np.float64]
+    priors: np.NDarray[np.float64]
 
 
 def detector_error_model_to_check_matrices(
