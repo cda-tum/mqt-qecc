@@ -1,11 +1,8 @@
 """Implementation of the Stim decoder for the MaxSat algorithm."""
 
 from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
-
+from typing import TYPE_CHECKING, Any, Dict, List
 import numpy as np
-
 from mqt.qecc.cc_decoder.max_sat_decoder import LightsOut
 from mqt.qecc.cc_decoder.stim_interface.dem_to_matrices import detector_error_model_to_check_matrices
 
