@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools as it
-from typing import TYPE_CHECKING, Any, List, Tuple, Set
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import stim
@@ -23,7 +23,7 @@ def neighbors(perm: NDArray[int]) -> NDArray[NDArray[NDArray[int]]]:
     return np.asarray((node_sw, node_se, node_e, node_ne, node_nw, node_w))
 
 
-def gen_pcm_and_logical(distance: int) -> Tuple[NDArray[bool], Set[int]]:
+def gen_pcm_and_logical(distance: int) -> tuple[NDArray[bool], set[int]]:
     """Generate the parity check matrix and logical operator for the 2D color code."""
     lattice_points_to_qubit_index, ancilla_qubit_to_lattice_points = {}, {}
     qubit_count, ancilla_qubit_count = 0, 0
@@ -51,8 +51,7 @@ def gen_pcm_and_logical(distance: int) -> Tuple[NDArray[bool], Set[int]]:
     return (parity_check_matrix, logical_operator)
 
 
-def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool,
-                         error_probability: float) -> Any:  # noqa: ANN401
+def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool, error_probability: float) -> Any:  # noqa: ANN401
     """Add one round of checks to the circuit."""
     for check in pcm:
         if error_probability == 0:
@@ -77,7 +76,7 @@ def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool,
 
 
 def gen_stim_circuit_memory_experiment(
-        pcm: NDArray[int], logical_operator: NDArray[int], distance: int, error_probability: float
+    pcm: NDArray[int], logical_operator: NDArray[int], distance: int, error_probability: float
 ) -> Any:  # noqa: ANN401
     """Generate a stim circuit for a memory experiment on the 2D color code."""
     data_qubits = range(len(pcm[0]))
