@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, FrozenSet, Dict, Set
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -13,16 +13,16 @@ if TYPE_CHECKING:
     import stim
 
 
-def iter_set_xor(set_list: List[List[int]]) -> FrozenSet[int]:
+def iter_set_xor(set_list: list[list[int]]) -> frozenset[int]:
     """Computes XOR between sets."""
-    out: Set[int] = set()
+    out: set[int] = set()
     for x in set_list:
         s = set(x)
         out = (out - s) | (s - out)
     return frozenset(out)
 
 
-def dict_to_csc_matrix(elements_dict: Dict[int, FrozenSet[int]], shape: tuple[int, int]) -> csc_matrix:
+def dict_to_csc_matrix(elements_dict: dict[int, frozenset[int]], shape: tuple[int, int]) -> csc_matrix:
     """Constructs a `scipy.sparse.csc_matrix` check matrix from a dictionary `elements_dict`.
 
     Parameters
@@ -82,14 +82,14 @@ def detector_error_model_to_check_matrices(
     DemMatrices
         A collection of matrices representing the stim DetectorErrorModel
     """
-    hyperedge_ids: Dict[FrozenSet[int], int] = {}
-    edge_ids: Dict[FrozenSet[int], int] = {}
-    hyperedge_obs_map: Dict[int, FrozenSet[int]] = {}
-    edge_obs_map: Dict[int, FrozenSet[int]] = {}
-    priors_dict: Dict[int, float] = {}
-    hyperedge_to_edge: Dict[int, FrozenSet[int]] = {}
+    hyperedge_ids: dict[frozenset[int], int] = {}
+    edge_ids: dict[frozenset[int], int] = {}
+    hyperedge_obs_map: dict[int, frozenset[int]] = {}
+    edge_obs_map: dict[int, frozenset[int]] = {}
+    priors_dict: dict[int, float] = {}
+    hyperedge_to_edge: dict[int, frozenset[int]] = {}
 
-    def handle_error(prob: float, detectors: List[List[int]], observables: List[List[int]]) -> None:
+    def handle_error(prob: float, detectors: list[list[int]], observables: list[list[int]]) -> None:
         hyperedge_dets = iter_set_xor(detectors)
         hyperedge_obs = iter_set_xor(observables)
 
@@ -126,8 +126,8 @@ def detector_error_model_to_check_matrices(
 
     for instruction in dem.flattened():
         if instruction.type == "error":
-            dets: List[List[int]] = [[]]
-            frames: List[List[int]] = [[]]
+            dets: list[list[int]] = [[]]
+            frames: list[list[int]] = [[]]
             t: stim.DemTarget
             p = instruction.args_copy()[0]
             for t in instruction.targets_copy():
