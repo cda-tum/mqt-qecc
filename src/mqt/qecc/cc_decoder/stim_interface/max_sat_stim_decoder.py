@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -12,6 +12,7 @@ from mqt.qecc.cc_decoder.stim_interface.dem_to_matrices import detector_error_mo
 if TYPE_CHECKING:
     import stim
     from numpy.typing import NDArray
+
 
 class MaxSatStim:
     """MaxSat stim decoder implementation."""
@@ -53,7 +54,7 @@ class MaxSatStim:
         """Return log likelihood weighting."""
         return np.log((1 - x) / x)
 
-    def decode(self, syndrome: NDArray[int]) -> Tuple[NDArray[int], bool]:
+    def decode(self, syndrome: NDArray[int]) -> tuple[NDArray[int], bool]:
         """Decode the syndrome and return a prediction of which observables were flipped.
 
         Parameters

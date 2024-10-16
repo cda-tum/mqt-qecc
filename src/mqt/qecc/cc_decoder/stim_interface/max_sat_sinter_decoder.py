@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
+
 class SinterCompiledDecoderMaxSat(CompiledDecoder):
     """MaxSAT decoder instantiation as CompiledDecoder."""
 
