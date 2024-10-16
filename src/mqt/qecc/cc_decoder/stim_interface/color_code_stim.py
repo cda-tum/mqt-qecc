@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools as it
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List, Tuple, Set
 
 import numpy as np
 import stim
@@ -12,18 +12,18 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def neighbors(perm: NDArray[int]) -> list[NDArray[int]]:
+def neighbors(perm: NDArray[int]) -> NDArray[NDArray[NDArray[int]]]:
     """Return the neighbors of a lattice point in the 2D color code."""
-    node_sw = (perm[0] + 1, perm[1], perm[2] - 1)
-    node_se = (perm[0], perm[1] + 1, perm[2] - 1)
-    node_e = (perm[0] - 1, perm[1] + 1, perm[2])
-    node_ne = (perm[0] - 1, perm[1], perm[2] + 1)
-    node_nw = (perm[0], perm[1] - 1, perm[2] + 1)
-    node_w = (perm[0] + 1, perm[1] - 1, perm[2])
-    return [node_sw, node_se, node_e, node_ne, node_nw, node_w]
+    node_sw = np.array((perm[0] + 1, perm[1], perm[2] - 1))
+    node_se = np.array((perm[0], perm[1] + 1, perm[2] - 1))
+    node_e = np.array((perm[0] - 1, perm[1] + 1, perm[2]))
+    node_ne = np.array((perm[0] - 1, perm[1], perm[2] + 1))
+    node_nw = np.array((perm[0], perm[1] - 1, perm[2] + 1))
+    node_w = np.array((perm[0] + 1, perm[1] - 1, perm[2]))
+    return np.asarray((node_sw, node_se, node_e, node_ne, node_nw, node_w))
 
 
-def gen_pcm_and_logical(distance: int) -> tuple[NDArray[bool], set[int]]:
+def gen_pcm_and_logical(distance: int) -> Tuple[NDArray[bool], Set[int]]:
     """Generate the parity check matrix and logical operator for the 2D color code."""
     lattice_points_to_qubit_index, ancilla_qubit_to_lattice_points = {}, {}
     qubit_count, ancilla_qubit_count = 0, 0
@@ -51,7 +51,8 @@ def gen_pcm_and_logical(distance: int) -> tuple[NDArray[bool], set[int]]:
     return (parity_check_matrix, logical_operator)
 
 
-def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool, error_probability: float) -> Any:  # noqa: ANN401
+def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool,
+                         error_probability: float) -> Any:  # noqa: ANN401
     """Add one round of checks to the circuit."""
     for check in pcm:
         if error_probability == 0:
@@ -76,7 +77,7 @@ def add_checks_one_round(pcm: NDArray[int], circuit: Any, detectors: bool, error
 
 
 def gen_stim_circuit_memory_experiment(
-    pcm: NDArray[int], logical_operator: NDArray[int], distance: int, error_probability: float
+        pcm: NDArray[int], logical_operator: NDArray[int], distance: int, error_probability: float
 ) -> Any:  # noqa: ANN401
     """Generate a stim circuit for a memory experiment on the 2D color code."""
     data_qubits = range(len(pcm[0]))
