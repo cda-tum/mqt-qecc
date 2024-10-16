@@ -123,15 +123,17 @@ class LightsOut:
             solve_time = timer() - start
             if str(result) != "sat":
                 self.optimizer.pop()
-                return ([0 for var in self.switch_vars], False, solve_time)
+                res_string = [0 for var in self.switch_vars] if self.switch_vars is not None else []
+                return (res_string, False, solve_time)
 
             # validate the model
             model = self.optimizer.model()
             if self.validate_model(model, lights) is False:
                 self.optimizer.pop()
-
                 assert self.validate_model(model, lights), "Model is invalid"
-                return ([0 for var in self.switch_vars], False, solve_time)
+                res_string = [0 for var in self.switch_vars] if self.switch_vars is not None else []
+                return (res_string, False, solve_time)
+
             assert self.switch_vars is not None
             switches = [1 if model[var] else 0 for var in self.switch_vars]
         else:

@@ -184,7 +184,7 @@ exclude = [
     "plotting*",
     "code_construction*",
     "^data_utils\\.py$",
-    "run_color_code_phenomenological_noise*"
+    "^run_color_code_phenomenological_noise*"
 ]
 
 [[tool.mypy.overrides]]
