@@ -38,10 +38,10 @@ class SinterCompiledDecoderMaxSat(CompiledDecoder):
         bit_packed_detection_event_data: np.NDarray[np.NDarray[np.uint8]],
     ) -> np.NDarray[np.uint8]:
         """Decode bitpacked shots from sinter simulation using batch decoder."""
-        preDictions, converged_cnt, not_converged_cnt = self.decoder.decode_batch(
+        predictions, converged_cnt, not_converged_cnt = self.decoder.decode_batch(
             shots=bit_packed_detection_event_data,
             bit_packed_shots=True,
-            bit_packed_preDictions=True,
+            bit_packed_predictions=True,
         )
         if self.measure_convergence:
             self.convergence_cnt += converged_cnt
@@ -58,7 +58,7 @@ class SinterCompiledDecoderMaxSat(CompiledDecoder):
                     + "\n"
                 )
 
-        return preDictions
+        return predictions
 
 
 class SinterDecoderMaxSat(Decoder):
@@ -87,7 +87,7 @@ class SinterDecoderMaxSat(Decoder):
         num_obs: int,  # noqa: ARG002
         dem_path: pathlib.Path,
         dets_b8_in_path: pathlib.Path,
-        obs_preDictions_b8_out_path: pathlib.Path,
+        obs_predictions_b8_out_path: pathlib.Path,
         tmp_dir: pathlib.Path,  # noqa: ARG002
     ) -> None:
         """Performs decoding by reading problems from, and writing solutions to, file paths.
@@ -109,8 +109,8 @@ class SinterDecoderMaxSat(Decoder):
                 https://github.com/quantumlib/Stim/blob/main/doc/result_formats.md ). The
                 number of detection events per shot is available via the `num_dets`
                 argument or via the detector error model at `dem_path`.
-            obs_preDictions_b8_out_path: The file path that decoder preDictions must be
-                written to. The preDictions must be written in b8 format (see
+            obs_predictions_b8_out_path: The file path that decoder predictions must be
+                written to. The predictions must be written in b8 format (see
                 https://github.com/quantumlib/Stim/blob/main/doc/result_formats.md ). The
                 number of observables per shot is available via the `num_obs` argument or
                 via the detector error model at `dem_path`.
@@ -131,10 +131,10 @@ class SinterDecoderMaxSat(Decoder):
             num_detectors=dem.num_detectors,
             bit_packed=False,
         )
-        preDictions, _, _ = max_sat.decode_batch(shots)
+        predictions, _, _ = max_sat.decode_batch(shots)
         stim.write_shot_data_file(
-            data=preDictions,
-            path=obs_preDictions_b8_out_path,
+            data=predictions,
+            path=obs_predictions_b8_out_path,
             format="b8",
             num_observables=dem.num_observables,
         )
