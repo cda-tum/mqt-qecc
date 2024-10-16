@@ -1,8 +1,11 @@
 """Implementation of the Stim decoder for the MaxSat algorithm."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Dict, List
+
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
+
 from mqt.qecc.cc_decoder.max_sat_decoder import LightsOut
 from mqt.qecc.cc_decoder.stim_interface.dem_to_matrices import detector_error_model_to_check_matrices
 
@@ -32,8 +35,8 @@ class MaxSatStim:
     @staticmethod
     def check_matrix_to_adj_lists(check_matrix: Any) -> tuple[dict, dict]:  # noqa: ANN401
         """Converts a check matrix to two adjacency lists."""
-        qtf: Dict[int, List[int]] = {}
-        ftq: Dict[int, List[int]] = {}
+        qtf: dict[int, list[int]] = {}
+        ftq: dict[int, list[int]] = {}
         for row in range(check_matrix.shape[0]):
             for col in range(check_matrix.shape[1]):
                 if check_matrix[row, col] == 1:
