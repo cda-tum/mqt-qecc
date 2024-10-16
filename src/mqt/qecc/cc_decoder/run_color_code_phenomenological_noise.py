@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 import sinter
 
-from mqt.qecc.cc_decoder.stim_interface.color_code_stim import gen_pcm_and_logical, gen_stim_circuit_memory_experiment
-from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import sinter_decoders
+from ..cc_decoder.stim_interface.color_code_stim import gen_pcm_and_logical, gen_stim_circuit_memory_experiment
+from ..cc_decoder.stim_interface.max_sat_sinter_decoder import sinter_decoders
 
 
-def generate_example_tasks() -> None:
+def generate_example_tasks() -> Any: # noqa: ANN401
     """Generate example stim tasks."""
     for p in np.arange(0.001, 0.03, 0.001):
         for d in [3, 4, 5]:

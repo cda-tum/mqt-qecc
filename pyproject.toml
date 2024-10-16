@@ -181,7 +181,7 @@ disallow_untyped_defs = false
 explicit_package_bases = true
 warn_unreachable = true
 exclude = [
-    "plotting*",
+    "plotting/*",
     "code_construction*",
     "^data_utils\\.py$",
     "^run_color_code_phenomenological_noise*"
