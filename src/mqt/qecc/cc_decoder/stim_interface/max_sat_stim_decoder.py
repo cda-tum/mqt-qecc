@@ -53,19 +53,19 @@ class MaxSatStim:
         """Return log likelihood weighting."""
         return np.log((1 - x) / x)
 
-    def decode(self, syndrome: np.NDarray[int]) -> (np.NDarray[int], bool):
+    def decode(self, syndrome: np.NDArray[int]) -> (np.NDArray[int], bool):
         """Decode the syndrome and return a prediction of which observables were flipped.
 
         Parameters
         ----------
-        syndrome : np.NDarray
+        syndrome : np.NDArray
             A single shot of syndrome data. This should be a binary array with a length equal to the
             number of detectors in the `stim.Circuit` or `stim.DetectorErrorModel`. E.g. the syndrome might be
             one row of shot data sampled from a `stim.CompiledDetectorSampler`.
 
         Returns:
         -------
-        np.NDarray
+        np.NDArray
             A binary numpy array `predictions` which predicts which observables were flipped.
             Its length is equal to the number of observables in the `stim.Circuit` or `stim.DetectorErrorModel`.
             `predictions[i]` is 1 if the decoder predicts observable `i` was flipped and 0 otherwise.
@@ -77,22 +77,22 @@ class MaxSatStim:
 
     def decode_batch(
         self,
-        shots: np.NDarray[int],
+        shots: np.NDArray[int],
         *,
         bit_packed_shots: bool = False,
         bit_packed_predictions: bool = False,
-    ) -> (np.NDarray[int], int, int):
+    ) -> (np.NDArray[int], int, int):
         """Decode a batch of shots of syndrome data by iterating over each shot.
 
         Parameters
         ----------
-        shots : np.NDarray
+        shots : np.NDArray
             A binary numpy array of dtype `np.uint8` or `bool` with shape `(num_shots, num_detectors)`, where
             here `num_shots` is the number of shots and `num_detectors` is the number of detectors in the `stim.Circuit` or `stim.DetectorErrorModel`.
 
         Returns:
         -------
-        np.NDarray
+        np.NDArray
             A 2D numpy array `predictions` of dtype bool, where `predictions[i, :]` is the output of
             `self.decode(shots[i, :])`.
         """

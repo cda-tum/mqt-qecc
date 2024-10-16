@@ -60,7 +60,7 @@ class DemMatrices:
     edge_check_matrix: csc_matrix
     edge_observables_matrix: csc_matrix
     hyperedge_to_edge_matrix: csc_matrix
-    priors: np.NDarray[np.float64]
+    priors: np.NDArray[np.float64]
 
 
 def detector_error_model_to_check_matrices(
