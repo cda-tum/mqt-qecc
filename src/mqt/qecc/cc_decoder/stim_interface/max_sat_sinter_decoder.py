@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class SinterCompiledDecoderMaxSat(CompiledDecoder):
+class SinterCompiledDecoderMaxSat(CompiledDecoder): # noqa: ANN401
     """MaxSAT decoder instantiation as CompiledDecoder."""
 
     def __init__(self, decoder: MaxSatStim, **kwargs: dict[str, Any]) -> None:
@@ -62,7 +62,7 @@ class SinterCompiledDecoderMaxSat(CompiledDecoder):
         return predictions
 
 
-class SinterDecoderMaxSat(Decoder):
+class SinterDecoderMaxSat(Decoder):  # noqa: ANN401
     """Sinter implementation of MaxSAT decoder."""
 
     def __init__(
