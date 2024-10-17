@@ -1,7 +1,8 @@
 ignore:
   - "**/python"
   - "test/**/*"
-  - "src/mqt/qecc/cc_decoder/plots.py"
+  - "src/mqt/qecc/cc_decoder/plotting/*"
+  - "src/mqt/qecc/cc_decoder/run_color_code_phenomenological_noise.py"
   - "src/mqt/qecc/analog_information_decoding/utils/data_utils.py"
   - "src/mqt/qecc/analog_information_decoding/code_construction/*"
 
