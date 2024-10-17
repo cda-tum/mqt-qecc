@@ -186,12 +186,12 @@ exclude = [
     "^plots\\.py$",
     "code_construction*",
     "^data_utils\\.py$",
-    "^run\\_color\\_code\\_phenomenological\\_noise\\.py$"
+    "^run\\_color\\_code\\_phenomenological\\_noise\\.py$",
 ]
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "stimbposd.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "stimbposd.*", "sinter.*"]
 ignore_missing_imports = true
 
 
