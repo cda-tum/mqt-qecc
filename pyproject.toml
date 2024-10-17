@@ -181,12 +181,12 @@ disallow_untyped_defs = false
 explicit_package_bases = true
 warn_unreachable = true
 exclude = [
-    "^plot_convergence_rate\\.ipynb$",
-    "^plot_pseudothresholds.\\ipnyb$",
+    "^plot\\_convergence\\_rate\\.ipynb$",
+    "^plot\\_pseudothresholds.\\ipnyb$",
     "^plots\\.py$",
     "code_construction*",
     "^data_utils\\.py$",
-    "^run_color_code_phenomenological_noise\\.py$"
+    "^run\\_color\\_code\\_phenomenological\\_noise\\.py$"
 ]
 
 [[tool.mypy.overrides]]
