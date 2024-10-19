@@ -33,7 +33,7 @@ repos:
 
   # Clean jupyter notebooks
   - repo: https://github.com/srstevenson/nb-clean
-    rev: 3.3.0
+    rev: 4.0.1
     hooks:
       - id: nb-clean
         args:
