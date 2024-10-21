@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import multiprocess
 import numpy as np
+import rustworkx as rx
 import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -192,6 +193,108 @@ class StatePrepCircuit:
         self.z_fault_sets: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
         self.x_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
         self.z_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
+
+
+def heuristic_prep_circuit_constrained(
+    code: CSSCode,
+    coupling_map: rx.PyGraph,
+    mapping: dict[int, int],
+    optimize_depth: bool = True,
+    zero_state: bool = True,
+) -> StatePrepCircuit:
+    """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
+
+    Args:
+        code: The CSS code to prepare the state for.
+        coupling_map: The coupling map of the device to run the circuit on.
+        mapping: The mapping of the qubits of the code to the qubits of the device.
+        optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
+        zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+    """
+    logging.info("Starting heuristic state preparation.")
+    if code.Hx is None or code.Hz is None:
+        msg = "The code must have both X and Z stabilizers defined."
+        raise InvalidCSSCodeError(msg)
+
+    coupling_map = coupling_map.copy()
+    n_graph = coupling_map.num_nodes()
+    if code.n > n_graph:
+        msg = "The number of qubits in the code must be less than or equal to the number of qubits in the coupling map."
+        raise InvalidCSSCodeError(msg)
+
+    checks = code.Hx.copy() if zero_state else code.Hz.copy()
+    rank = mod2.rank(checks)
+    checks = np.pad(checks, ((0, 0), (0, n_graph - code.n)), mode="constant", constant_values=0)
+
+    # map ancillas to available qubits
+    free_qubits = set(range(n_graph)) - set(mapping.values())
+    for q in range(code.n, n_graph):
+        mapping[q] = free_qubits.pop()
+
+    # reorder checks according to mapping
+    checks = checks[:, [mapping[q] for q in range(code.n)]]
+    cnots: list[tuple[int, int]] = []
+
+    while np.sum(checks) != rank:
+        # choose highest weight check
+        check_idx = np.argmax(np.sum(checks, axis=1))
+        check = checks[check_idx]
+        tree = rx.steiner_tree(coupling_map, _support(check))
+        cnots.extend(_steiner_down(checks, check_idx, tree))
+
+
+def _steiner_down(checks, root, tree):
+    check = checks[root]
+    nodes = tree.nodes()
+    cnots = []
+    # determine which tree nodes have a 0 in check
+    zeros = np.where(check == 0)[0]
+    zeros = [node for node in zeros if node in nodes]
+
+    # fill in the zeros with cnots along the tree
+    while zeros:
+        used_nodes = set()
+        visited = set()
+        # bfs traversal of the tree
+        stack = [root]
+        while stack:
+            node = stack.pop(0)
+            visited.add(node)
+            if node in zeros:
+                # find neighbor that has a one
+                neighbors = tree.neighbors(node)
+                for neighbor in neighbors:
+                    if neighbor in used_nodes or neighbor in zeros:
+                        continue
+                    cnots.append((neighbor, node))
+                    checks[:, node] += checks[:, neighbor]
+                    used_nodes.add(neighbor)
+                    used_nodes.add(node)
+                    zeros.remove(node)
+                    break
+
+            for neighbor in tree.neighbors(node):
+                if neighbor not in visited:
+                    stack.append(neighbor)
+
+        # remove all ones by adding cnots from parent to child along the tree using post-order traversal
+        visited = set()
+        postorder_list = []
+        stack = [(root, None)]
+        while stack:
+            node, parent = stack.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            if parent is not None:
+                postorder_list.append((parent, node))
+            for neighbor in tree.neighbors(node):
+                if neighbor not in visited:
+                    stack.append((neighbor, node))
+        postorder_list.reverse()
+        cnots.extend(postorder_list)
+
+    return cnots
 
 
 def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True) -> StatePrepCircuit:
@@ -1632,3 +1735,8 @@ def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int
             errors.append(error.copy())
 
     return np.array(errors)
+
+
+def _support(check: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+    """Return the support of a binary vector."""
+    return np.where(check == 1)[0]
