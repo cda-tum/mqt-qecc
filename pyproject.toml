@@ -56,6 +56,7 @@ dependencies = [
     "numba>=0.59; python_version > '3.11'",
     "numba>=0.57; python_version <= '3.11'",
     "pymatching>=2.2.1",
+    "stimbposd"
 ]
 dynamic = ["version"]
 
@@ -180,13 +181,17 @@ disallow_untyped_defs = false
 explicit_package_bases = true
 warn_unreachable = true
 exclude = [
+    "^plot\\_convergence\\_rate\\.ipynb$",
+    "^plot\\_pseudothresholds.\\ipnyb$",
+    "^plots\\.py$",
     "code_construction*",
-    "^data_utils\\.py$"
+    "^data_utils\\.py$",
+    "^run\\_color\\_code\\_phenomenological\\_noise\\.py$",
 ]
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "stimbposd.*", "sinter.*"]
 ignore_missing_imports = true
 
 
@@ -271,7 +276,8 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"*/cc_decoder/plots.py" = ["T201"]
+"*/cc_decoder/plotting/**" = ["T20"]
+"*/cc_decoder/plotting/*.ipynb" = ["T", "PTH", "FURB", "PERF", "D"]
 "scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
