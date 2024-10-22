@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from ldpc import mod2
 from qiskit.quantum_info import Clifford
+import rustworkx as rx
 
 from mqt.qecc import CSSCode
 from mqt.qecc.codes import SquareOctagonColorCode
@@ -20,8 +21,10 @@ from mqt.qecc.ft_stateprep import (
     gate_optimal_verification_stabilizers,
     heuristic_prep_circuit,
     heuristic_verification_circuit,
-    heuristic_verification_stabilizers,
+    heuristic_verification_stabilizers
 )
+
+from mqt.qecc.ft_stateprep.state_prep import steiner_down
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -409,3 +412,40 @@ def test_error_detection_code() -> None:
 
     assert circ_ver_detection.num_qubits > circ_ver_correction.num_qubits
     assert circ_ver_detection.num_nonlocal_gates() > circ_ver_correction.num_nonlocal_gates()
+
+
+class TestConnectivityConstraints:
+    """Test state prep with connectivity constraints."""
+    @pytest.fixture
+    def linear_nn(self, request) -> rx.PyGraph:
+        """Return a linear nearest-neighbor graph."""
+        n = request.param
+        return rx.generators.grid_graph(n, 1)
+    
+    @pytest.fixture
+    def square_nn(self, request) -> rx.PyGraph:
+        """Return a square nearest-neighbor graph."""
+        n = request.param
+        return rx.generators.grid_graph(n, n)
+
+    def get_trivial_mapping(self, coupling_map: rx.PyGraph) -> dict[int, int]:
+        """Return a trivial map for a given coupling map."""
+        return {v: v for v in coupling_map.nodes()}
+
+    def get_random_mapping(self, coupling_map: rx.PyGraph) -> dict[int, int]:
+        """Return a random map for a given coupling map."""
+        return {v: np.random.choice(list(coupling_map.nodes())) for v in coupling_map.nodes()}
+
+    @pytest.mark.parametrize("linear_nn", [2, 3, 4], indirect=True)
+    def test_steiner_down_linear(self, linear_nn: rx.PyGraph) -> None:
+        """Test that the Steiner down function works for linear connectivity."""
+        # pick random pivot
+        pivot = np.random.choice(linear_nn.num_nodes())
+        row = 0
+        # mapping = self.get_trivial_mapping(linear_nn)
+        checks = np.ones((1, linear_nn.num_nodes()), dtype=np.int8)
+        steiner_down(checks, pivot, row, linear_nn) # architecture itself is a steiner tree over the nodes
+        assert np.all(checks[0, pivot] == 1)
+        assert np.all(checks[0, pivot+1:] == 0)
+        assert np.all(checks[0, :pivot] == 0)
+        
