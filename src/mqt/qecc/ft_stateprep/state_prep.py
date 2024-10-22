@@ -216,7 +216,7 @@ def heuristic_prep_circuit_constrained(
         msg = "The code must have both X and Z stabilizers defined."
         raise InvalidCSSCodeError(msg)
 
-    coupling_map = coupling_map.copy()
+    # coupling_map = coupling_map.copy()
     n_graph = coupling_map.num_nodes()
     if code.n > n_graph:
         msg = "The number of qubits in the code must be less than or equal to the number of qubits in the coupling map."
@@ -231,21 +231,59 @@ def heuristic_prep_circuit_constrained(
     for q in range(code.n, n_graph):
         mapping[q] = free_qubits.pop()
 
-    # reorder checks according to mapping
-    checks = checks[:, [mapping[q] for q in range(code.n)]]
+    checks = checks[:, [mapping[q] for q in range(n_graph)]]
     cnots: list[tuple[int, int]] = []
 
-    while np.sum(checks) != rank:
-        # choose highest weight check
-        check_idx = np.argmax(np.sum(checks, axis=1))
-        check = checks[check_idx]
-        tree = rx.steiner_tree(coupling_map, _support(check))
-        cnots.extend(_steiner_down(checks, check_idx, tree))
+    # before doing the steiner tree method, greedily eliminate as many 1s as possible
+    # try CNOTs that eliminate more than one 1 first
+    # for i in range(n_graph):
+    #     for j in range(n_graph):
+    #         if i == j or j not in coupling_map.neighbors(i):
+    #             continue
+    #         sum = (checks[:, i] + checks[:, j]) % 2
+    #         if np.sum(sum) < np.sum(checks[:, j]):
+    #             cnots.append((i, j))
+    #             checks[:, j] = sum
 
 
-def _steiner_down(checks, root, tree):
-    check = checks[root]
-    nodes = tree.nodes()
+    # make lower triangular up to permutation
+    for i in range(rank):
+        # find pivot element
+        pivot = None
+        for j in range(i, code.n):
+            if checks[i, j] == 1:
+                pivot = j
+                break
+        if pivot is None:
+            continue
+        check = checks[i]
+        tree = rx.steiner_tree(coupling_map, _support(check), lambda _: 1)
+        cnots.extend(steiner_down(checks, pivot, i, tree))
+        # remove root from graph
+        coupling_map.remove_node(pivot)
+        checks[:, pivot] = 0
+        checks[i, pivot] = 1
+        # check if graph is connected
+        if not rx.is_connected(coupling_map):
+            raise ValueError("The coupling map must be connected.") # TODO handle this case
+
+    circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state) # TODO: mapping
+    return StatePrepCircuit(circ, code, zero_state)
+
+
+def steiner_down(checks: npt.NDArray[np.int8], root: int, check_idx: int, tree: rx.PyGraph) -> list[tuple[int, int]]:
+    """Eliminate ones to the right of the pivot element in the check matrix using a Steiner tree.
+
+    Args:
+        checks: The check matrix.
+        root: The pivot element and root of the Steiner tree.
+        tree: The Steiner tree.
+
+    Returns:
+        A list of CNOTs (column ops) that eliminate the ones to the right of the pivot element.
+    """
+    check = checks[check_idx]
+    nodes = tree.node_indices()
     cnots = []
     # determine which tree nodes have a 0 in check
     zeros = np.where(check == 0)[0]
@@ -262,37 +300,39 @@ def _steiner_down(checks, root, tree):
             visited.add(node)
             if node in zeros:
                 # find neighbor that has a one
-                neighbors = tree.neighbors(node)
-                for neighbor in neighbors:
-                    if neighbor in used_nodes or neighbor in zeros:
-                        continue
-                    cnots.append((neighbor, node))
-                    checks[:, node] += checks[:, neighbor]
-                    used_nodes.add(neighbor)
-                    used_nodes.add(node)
-                    zeros.remove(node)
-                    break
+                neighbors = [neighbor for neighbor in tree.neighbors(node) if neighbor not in used_nodes and neighbor not in zeros]
+                # get neighbor that adds the least number of ones to the entire check matrix
+                scores = [np.sum((checks[:, neighbor] + checks[:, node]) % 2) for neighbor in neighbors]
+                neighbor = neighbors[np.argmin(scores)]
+                cnots.append((neighbor, node))
+                checks[:, node] = (checks[:, neighbor] + checks[:, node]) % 2
+                used_nodes.add(neighbor)
+                used_nodes.add(node)
+                zeros.remove(node)
+                break
 
             for neighbor in tree.neighbors(node):
                 if neighbor not in visited:
                     stack.append(neighbor)
 
         # remove all ones by adding cnots from parent to child along the tree using post-order traversal
-        visited = set()
-        postorder_list = []
-        stack = [(root, None)]
-        while stack:
-            node, parent = stack.pop()
-            if node in visited:
-                continue
-            visited.add(node)
-            if parent is not None:
-                postorder_list.append((parent, node))
-            for neighbor in tree.neighbors(node):
-                if neighbor not in visited:
-                    stack.append((neighbor, node))
-        postorder_list.reverse()
-        cnots.extend(postorder_list)
+    visited = set()
+    postorder_list = []
+    stack = [(root, None)]
+    while stack:
+        node, parent = stack.pop()
+        if node in visited:
+            continue
+        visited.add(node)
+        if parent is not None:
+            postorder_list.append((parent, node))
+        for neighbor in tree.neighbors(node):
+            if neighbor not in visited:
+                stack.append((neighbor, node))
+    postorder_list.reverse()
+    for i, j in postorder_list:
+        checks[:, j] = (checks[:, i] + checks[:, j]) % 2
+    cnots.extend(postorder_list)
 
     return cnots
 
