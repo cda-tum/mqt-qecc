@@ -228,7 +228,7 @@ def heuristic_prep_circuit_constrained(
 
     # map ancillas to available qubits
     free_qubits = set(range(n_graph)) - set(mapping.values())
-    for q in range(code.n, n_graph):
+    for q in range(len(mapping), n_graph):
         mapping[q] = free_qubits.pop()
 
     checks = checks[:, [mapping[q] for q in range(n_graph)]]
@@ -403,25 +403,39 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
 
 
 def _generate_circ_with_bounded_depth(
-    checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True
+        checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True, coupling_map: rx.PyGraph | None = None
 ) -> QuantumCircuit | None:
     assert max_depth > 0, "max_depth should be greater than 0"
+    s = z3.Solver()
+
+    if coupling_map is not None:
+        checks, mapping = _create_mapping(checks, coupling_map, s)
+
+    n_cols = checks.shape[1]
     columns = np.array([
-        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(checks.shape[1])] for i in range(checks.shape[0])]
+        [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(n_cols)] for i in range(checks.shape[0])]
         for d in range(max_depth + 1)
     ])
 
     additions = np.array([
-        [[z3.Bool(f"add_{d}_{i}_{j}") for j in range(checks.shape[1])] for i in range(checks.shape[1])]
+        [[z3.Bool(f"add_{d}_{i}_{j}") for j in range(n_cols)] for i in range(n_cols)]
         for d in range(max_depth)
     ])
-    n_cols = checks.shape[1]
-    s = z3.Solver()
+
 
     # create initial matrix
-    columns[0, :, :] = checks.astype(bool)
+    if coupling_map is not None:
+        s.add(_permute_matrix(checks, mapping, columns[0, :, :]))
 
-    s.add(_column_addition_constraint(columns, additions))
+        for ctrl in range(n_cols):
+            for tgt in range(n_cols):
+                if ctrl not in coupling_map.neighbors(tgt):
+                    for d in range(max_depth):
+                        s.add(z3.Not(additions[d, ctrl, tgt]))
+    else:
+        columns[0, :, :] = checks.astype(bool)
+
+    s.add(_column_addition_constraint(columns, additions, coupling_map))
 
     # qubit can be involved in at most one addition at each depth
     for d in range(max_depth):
@@ -462,18 +476,23 @@ def _generate_circ_with_bounded_depth(
         ]
 
         checks = np.array([
-            [bool(m[columns[max_depth, i, j]]) for j in range(checks.shape[1])] for i in range(checks.shape[0])
-        ])
-
+            [bool(m[columns[max_depth, i, j]]) for j in range(n_cols)] for i in range(checks.shape[0])
+        ]).astype(int)
+        map = {i: j for i in range(len(mapping)) for j in range(len(mapping[0])) if m[mapping[i][j]]}
         return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
 
     return None
 
 
 def _generate_circ_with_bounded_gates(
-    checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True
+        checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True, coupling_map: rx.PyGraph | None = None
 ) -> QuantumCircuit | None:
     """Find the gate optimal circuit for a given check matrix and maximum depth."""
+    s = z3.Solver()
+
+    if coupling_map is not None:
+        checks, mapping = _create_mapping(checks, coupling_map, s)
+
     n = checks.shape[1]
     columns = np.array([
         [[z3.Bool(f"x_{d}_{i}_{j}") for j in range(n)] for i in range(checks.shape[0])] for d in range(max_cnots + 1)
@@ -481,7 +500,6 @@ def _generate_circ_with_bounded_gates(
     n_bits = int(np.ceil(np.log2(n)))
     targets = [z3.BitVec(f"target_{d}", n_bits) for d in range(max_cnots)]
     controls = [z3.BitVec(f"control_{d}", n_bits) for d in range(max_cnots)]
-    s = z3.Solver()
 
     additions = np.array([
         [[z3.And(controls[d] == col_1, targets[d] == col_2) for col_2 in range(n)] for col_1 in range(n)]
@@ -489,8 +507,18 @@ def _generate_circ_with_bounded_gates(
     ])
 
     # create initial matrix
-    columns[0, :, :] = checks.astype(bool)
-    s.add(_column_addition_constraint(columns, additions))
+    if coupling_map is not None:
+        s.add(_permute_matrix(checks, mapping, columns[0, :, :]))
+
+        for ctrl in range(n):
+            for tgt in range(n):
+                if ctrl not in coupling_map.neighbors(tgt):
+                    for d in range(max_cnots):
+                        s.add(z3.Not(additions[d, ctrl, tgt]))
+    else:
+        columns[0, :, :] = checks.astype(bool)
+
+    s.add(_column_addition_constraint(columns, additions, coupling_map))
 
     for d in range(1, max_cnots + 1):
         # qubit cannot be control and target at the same time
@@ -508,7 +536,7 @@ def _generate_circ_with_bounded_gates(
             s.add(z3.Implies(targets[d - 1] != col, _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
 
     # assert that final check matrix has n-checks.shape[0] zero columns
-    s.add(_final_matrix_constraint(columns))
+    s.add(_final_matrix_constraint(columns, mod2.rank(checks)))
 
     if s.check() == z3.sat:
         m = s.model()
@@ -516,7 +544,8 @@ def _generate_circ_with_bounded_gates(
         checks = np.array([
             [bool(m[columns[max_cnots][i][j]]) for j in range(n)] for i in range(checks.shape[0])
         ]).astype(int)
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
+        map = {i: j for i in range(len(mapping)) for j in range(len(mapping[0])) if m[mapping[i][j]]}
+        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)# , map
 
     return None
 
@@ -529,6 +558,7 @@ def _optimal_circuit(
     max_param: int = 10,
     min_timeout: int = 1,
     max_timeout: int = 3600,
+    coupling_map: rx.PyGraph | None = None,
 ) -> StatePrepCircuit | None:
     """Synthesize a state preparation circuit for a CSS code that minimizes the circuit w.r.t. some metric param according to prep_func.
 
@@ -540,6 +570,7 @@ def _optimal_circuit(
         max_param: maximum parameter to reach
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
+        coupling_map: coupling map of the device
     """
     if code.Hx is None or code.Hz is None:
         msg = "Code must have both X and Z stabilizers defined."
@@ -547,7 +578,7 @@ def _optimal_circuit(
     checks = code.Hx if zero_state else code.Hz
 
     def fun(param: int) -> QuantumCircuit | None:
-        return prep_func(checks, param, zero_state)
+        return prep_func(checks, param, zero_state, coupling_map=coupling_map)
 
     res = iterative_search_with_timeout(
         fun,
@@ -586,6 +617,7 @@ def depth_optimal_prep_circuit(
     max_depth: int = 10,
     min_timeout: int = 1,
     max_timeout: int = 3600,
+    coupling_map: rx.PyGraph | None = None
 ) -> StatePrepCircuit | None:
     """Synthesize a state preparation circuit for a CSS code that minimizes the circuit depth.
 
@@ -598,7 +630,7 @@ def depth_optimal_prep_circuit(
         max_timeout: maximum timeout to reach
     """
     return _optimal_circuit(
-        code, _generate_circ_with_bounded_depth, zero_state, min_depth, max_depth, min_timeout, max_timeout
+        code, _generate_circ_with_bounded_depth, zero_state, min_depth, max_depth, min_timeout, max_timeout, coupling_map
     )
 
 
@@ -609,6 +641,7 @@ def gate_optimal_prep_circuit(
     max_gates: int = 10,
     min_timeout: int = 1,
     max_timeout: int = 3600,
+        coupling_map: rx.PyGraph | None = None
 ) -> StatePrepCircuit | None:
     """Synthesize a state preparation circuit for a CSS code that minimizes the number of gates.
 
@@ -619,9 +652,10 @@ def gate_optimal_prep_circuit(
         max_gates: maximum number of gates to reach
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
+        coupling_map: coupling map for a device
     """
     return _optimal_circuit(
-        code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout
+        code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout, coupling_map
     )
 
 
@@ -1298,6 +1332,7 @@ def _symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.B
 def _column_addition_constraint(
     columns: npt.NDArray[z3.BoolRef | bool],
     col_add_vars: npt.NDArray[z3.BoolRef],
+    coupling_map: rx.PyGraph | None = None,
 ) -> z3.BoolRef:
     assert len(columns.shape) == 3
     max_depth = col_add_vars.shape[0]
@@ -1307,6 +1342,8 @@ def _column_addition_constraint(
     for d in range(1, max_depth + 1):
         for col_1 in range(n_cols):
             for col_2 in range(col_1 + 1, n_cols):
+                if coupling_map and col_1 not in coupling_map.neighbors(col_2):
+                    continue
                 col_sum = _symbolic_vector_add(columns[d - 1, :, col_1], columns[d - 1, :, col_2])
 
                 # encode col_2 += col_1
@@ -1332,11 +1369,13 @@ def _column_addition_constraint(
     return z3.And(constraints)
 
 
-def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+def _final_matrix_constraint(columns: npt.NDArray[z3.BoolRef | bool], rank: int | None = None) -> z3.BoolRef:
+    if rank is None:
+        rank = columns.shape[1]
     assert len(columns.shape) == 3
     return z3.PbEq(
         [(z3.Not(z3.Or(list(columns[-1, :, col]))), 1) for col in range(columns.shape[2])],
-        columns.shape[2] - columns.shape[1],
+        columns.shape[2] - rank,
     )
 
 
@@ -1780,3 +1819,32 @@ def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int
 def _support(check: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
     """Return the support of a binary vector."""
     return np.where(check == 1)[0]
+
+
+def _permute_matrix(checks:npt.NDArray[np.int8], mapping: list[list[z3.Bool]], permuted_matrix: npt.NDArray[z3.BoolRef | bool]) -> list[z3.BoolRef]:
+    """Permute the rows of a matrix according to a mapping."""
+    constraints = []
+    for i in range(len(mapping)):
+        for j in range(len(mapping[i])):
+            constraints.append(z3.Implies(mapping[i][j], z3.And([permuted_matrix[row, j] == bool(checks[row, i]) for row in range(len(permuted_matrix))]))) # or other way around?
+    return constraints
+
+
+def _mapping_consistent(mapping: list[list[z3.Bool]]) -> list[z3.BoolRef]:
+    """Return constraints that enforce the mapping to be consistent."""
+    constraints = []
+    for i in range(len(mapping)):
+        constraints.append(z3.PbEq([(mapping[i][j], 1) for j in range(len(mapping[i]))], 1))
+
+    for j in range(len(mapping[0])):
+        constraints.append(z3.PbLe([(mapping[i][j], 1) for i in range(len(mapping))], 1))
+    return constraints
+
+
+def _create_mapping(checks: npt.NDArray[np.int8], coupling_map: rx.PyGraph, s: z3.Solver) -> tuple[z3.npt.NDArray[np.int8], list[list[z3.Bool]]]:
+    # pad checks with zeros
+    checks = np.pad(checks, ((0, 0), (0, coupling_map.num_nodes() - checks.shape[1])), mode="constant")
+    # define mapping variables: q_i_j = 1 if qubit i is mapped to node j
+    mapping = [[z3.Bool(f"q_{i}_{j}") for j in range(coupling_map.num_nodes())] for i in range(checks.shape[1])]
+    s.add(_mapping_consistent(mapping))
+    return checks, mapping
