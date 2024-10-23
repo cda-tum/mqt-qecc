@@ -205,7 +205,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
             data.append(json.loads(f.read()))
 
     # prepare code to per,ler map and print
-    code_to_xys = {} # type: ignore[var-annotated]
+    code_to_xys = {}  # type: ignore[var-annotated]
     for run in data:
         xys = code_to_xys.setdefault(run["n_k_d"][-1], [])
         xys.append((run["physical_error_rate"], run["logical_failure_rate"]))
@@ -239,7 +239,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     ax[1][0].set_ylim(0, 300000)
 
     ds = []
-    p_data = {} # type: ignore[var-annotated]
+    p_data = {}  # type: ignore[var-annotated]
     pers = [0.051, 0.081, 0.111]  # 0.001, 0.021,
     for d, data in sorted(code_to_xys.items()):
         ds.append(d)
@@ -251,7 +251,7 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
                 p_data[p]["t"].append(t)
 
     for p, data in sorted(p_data.items()):
-        ax[1][1].plot(ds, data["t"], label="p=" + str(p)) # type: ignore[call-overload]
+        ax[1][1].plot(ds, data["t"], label="p=" + str(p))  # type: ignore[call-overload]
 
     ax[1][1].set_xlabel("Distance")
     ax[1][1].set_ylabel("Average time per run (µs)")  # noqa: RUF001
@@ -264,8 +264,8 @@ def generate_plots_tn(results_dir: Path, results_file: Path) -> None:
     for file in results_dir.glob("*.json"):
         with file.open() as f:
             data.append(json.loads(f.read()))
-    metrics = {} # type: ignore[var-annotated]
-    per_metrics = {} # type: ignore[var-annotated]
+    metrics = {}  # type: ignore[var-annotated]
+    per_metrics = {}  # type: ignore[var-annotated]
 
     # save plot as vector graphic
     for result in data:
