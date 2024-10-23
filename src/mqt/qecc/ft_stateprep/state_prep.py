@@ -32,7 +32,13 @@ class StatePrepCircuit:
     """Represents a state preparation circuit for a CSS code."""
 
     def __init__(
-        self, circ: QuantumCircuit, code: CSSCode, zero_state: bool = True, error_detection_code: bool = False
+        self,
+        circ: QuantumCircuit,
+        code: CSSCode,
+        zero_state: bool = True,
+        error_detection_code: bool = False,
+        coupling_map: rx.PyGraph | None = None,
+        mapping: dict[int, int] | None = None,
     ) -> None:
         """Initialize a state preparation circuit.
 
@@ -41,10 +47,14 @@ class StatePrepCircuit:
             code: The CSS code to prepare the state for.
             zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
             error_detection_code: If True, prepare the state for error detection. This ensures that when computing the fault set of the circuit, up to d//2 errors errors can occur in the circuit.
+            coupling_map: The coupling map of the device.
+            mapping: The mapping of the qubits in the circuit to the qubits in the device.
         """
         self.circ = circ
         self.code = code
         self.zero_state = zero_state
+        self.coupling_map = coupling_map
+        self.mapping = mapping
 
         if code.Hx is None or code.Hz is None:
             msg = "The CSS code must have both X and Z checks."
@@ -199,7 +209,6 @@ def heuristic_prep_circuit_constrained(
     code: CSSCode,
     coupling_map: rx.PyGraph,
     mapping: dict[int, int],
-    optimize_depth: bool = True,
     zero_state: bool = True,
 ) -> StatePrepCircuit:
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
@@ -234,18 +243,6 @@ def heuristic_prep_circuit_constrained(
     checks = checks[:, [mapping[q] for q in range(n_graph)]]
     cnots: list[tuple[int, int]] = []
 
-    # before doing the steiner tree method, greedily eliminate as many 1s as possible
-    # try CNOTs that eliminate more than one 1 first
-    # for i in range(n_graph):
-    #     for j in range(n_graph):
-    #         if i == j or j not in coupling_map.neighbors(i):
-    #             continue
-    #         sum = (checks[:, i] + checks[:, j]) % 2
-    #         if np.sum(sum) < np.sum(checks[:, j]):
-    #             cnots.append((i, j))
-    #             checks[:, j] = sum
-
-
     # make lower triangular up to permutation
     for i in range(rank):
         # find pivot element
@@ -265,10 +262,11 @@ def heuristic_prep_circuit_constrained(
         checks[i, pivot] = 1
         # check if graph is connected
         if not rx.is_connected(coupling_map):
-            raise ValueError("The coupling map must be connected.") # TODO handle this case
+            msg = "The coupling map must be connected."
+            raise ValueError(msg)  # TODO handle this case
 
-    circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state) # TODO: mapping
-    return StatePrepCircuit(circ, code, zero_state)
+    circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state)  # TODO: mapping
+    return StatePrepCircuit(circ, code, zero_state, coupling_map=coupling_map, mapping=mapping)
 
 
 def steiner_down(checks: npt.NDArray[np.int8], root: int, check_idx: int, tree: rx.PyGraph) -> list[tuple[int, int]]:
@@ -277,6 +275,7 @@ def steiner_down(checks: npt.NDArray[np.int8], root: int, check_idx: int, tree: 
     Args:
         checks: The check matrix.
         root: The pivot element and root of the Steiner tree.
+        check_idx: The row index of the check in the check matrix.
         tree: The Steiner tree.
 
     Returns:
@@ -294,15 +293,19 @@ def steiner_down(checks: npt.NDArray[np.int8], root: int, check_idx: int, tree: 
         used_nodes = set()
         visited = set()
         # bfs traversal of the tree
-        stack = [root]
-        while stack:
-            node = stack.pop(0)
+        bfs_stack = [root]
+        while bfs_stack:
+            node = bfs_stack.pop(0)
             visited.add(node)
             if node in zeros:
                 # find neighbor that has a one
-                neighbors = [neighbor for neighbor in tree.neighbors(node) if neighbor not in used_nodes and neighbor not in zeros]
+                neighbors = [
+                    neighbor
+                    for neighbor in tree.neighbors(node)
+                    if neighbor not in used_nodes and neighbor not in zeros
+                ]
                 # get neighbor that adds the least number of ones to the entire check matrix
-                scores = [np.sum((checks[:, neighbor] + checks[:, node]) % 2) for neighbor in neighbors]
+                scores: list[np.int8] = [np.sum((checks[:, neighbor] + checks[:, node]) % 2) for neighbor in neighbors]
                 neighbor = neighbors[np.argmin(scores)]
                 cnots.append((neighbor, node))
                 checks[:, node] = (checks[:, neighbor] + checks[:, node]) % 2
@@ -311,14 +314,12 @@ def steiner_down(checks: npt.NDArray[np.int8], root: int, check_idx: int, tree: 
                 zeros.remove(node)
                 break
 
-            for neighbor in tree.neighbors(node):
-                if neighbor not in visited:
-                    stack.append(neighbor)
+            bfs_stack.extend([neighbor for neighbor in tree.neighbors(node) if neighbor not in visited])
 
-        # remove all ones by adding cnots from parent to child along the tree using post-order traversal
+    # remove all ones by adding cnots from parent to child along the tree using post-order traversal
     visited = set()
     postorder_list = []
-    stack = [(root, None)]
+    stack: list[tuple[int, int | None]] = [(root, None)]
     while stack:
         node, parent = stack.pop()
         if node in visited:
@@ -326,9 +327,7 @@ def steiner_down(checks: npt.NDArray[np.int8], root: int, check_idx: int, tree: 
         visited.add(node)
         if parent is not None:
             postorder_list.append((parent, node))
-        for neighbor in tree.neighbors(node):
-            if neighbor not in visited:
-                stack.append((neighbor, node))
+        stack.extend([(neighbor, node) for neighbor in tree.neighbors(node) if neighbor not in visited])
     postorder_list.reverse()
     for i, j in postorder_list:
         checks[:, j] = (checks[:, i] + checks[:, j]) % 2
@@ -403,8 +402,8 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
 
 
 def _generate_circ_with_bounded_depth(
-        checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True, coupling_map: rx.PyGraph | None = None
-) -> QuantumCircuit | None:
+    checks: npt.NDArray[np.int8], max_depth: int, zero_state: bool = True, coupling_map: rx.PyGraph | None = None
+) -> QuantumCircuit | None | tuple[QuantumCircuit, dict[int, int]]:
     assert max_depth > 0, "max_depth should be greater than 0"
     s = z3.Solver()
 
@@ -418,10 +417,8 @@ def _generate_circ_with_bounded_depth(
     ])
 
     additions = np.array([
-        [[z3.Bool(f"add_{d}_{i}_{j}") for j in range(n_cols)] for i in range(n_cols)]
-        for d in range(max_depth)
+        [[z3.Bool(f"add_{d}_{i}_{j}") for j in range(n_cols)] for i in range(n_cols)] for d in range(max_depth)
     ])
-
 
     # create initial matrix
     if coupling_map is not None:
@@ -478,15 +475,19 @@ def _generate_circ_with_bounded_depth(
         checks = np.array([
             [bool(m[columns[max_depth, i, j]]) for j in range(n_cols)] for i in range(checks.shape[0])
         ]).astype(int)
-        map = {i: j for i in range(len(mapping)) for j in range(len(mapping[0])) if m[mapping[i][j]]}
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
+
+        circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
+        if coupling_map is not None:
+            qubit_mapping = {i: j for i in range(len(mapping)) for j in range(len(mapping[0])) if m[mapping[i][j]]}
+            return circ, qubit_mapping
+        return circ
 
     return None
 
 
 def _generate_circ_with_bounded_gates(
-        checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True, coupling_map: rx.PyGraph | None = None
-) -> QuantumCircuit | None:
+    checks: npt.NDArray[np.int8], max_cnots: int, zero_state: bool = True, coupling_map: rx.PyGraph | None = None
+) -> QuantumCircuit | None | tuple[QuantumCircuit, dict[int, int]]:
     """Find the gate optimal circuit for a given check matrix and maximum depth."""
     s = z3.Solver()
 
@@ -544,15 +545,18 @@ def _generate_circ_with_bounded_gates(
         checks = np.array([
             [bool(m[columns[max_cnots][i][j]]) for j in range(n)] for i in range(checks.shape[0])
         ]).astype(int)
-        map = {i: j for i in range(len(mapping)) for j in range(len(mapping[0])) if m[mapping[i][j]]}
-        return _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)# , map
+        circ = _build_circuit_from_list_and_checks(cnots, checks, zero_state=zero_state)
+        if coupling_map is not None:
+            qubit_mapping = {i: j for i in range(len(mapping)) for j in range(len(mapping[0])) if m[mapping[i][j]]}
+            return circ, qubit_mapping
+        return circ
 
     return None
 
 
 def _optimal_circuit(
     code: CSSCode,
-    prep_func: Callable[[npt.NDArray[np.int8], int, bool], QuantumCircuit | None],
+    prep_func: Callable[[npt.NDArray[np.int8], int, bool, rx.PyGraph | None], QuantumCircuit | None],
     zero_state: bool = True,
     min_param: int = 1,
     max_param: int = 10,
@@ -578,7 +582,7 @@ def _optimal_circuit(
     checks = code.Hx if zero_state else code.Hz
 
     def fun(param: int) -> QuantumCircuit | None:
-        return prep_func(checks, param, zero_state, coupling_map=coupling_map)
+        return prep_func(checks, param, zero_state, coupling_map)
 
     res = iterative_search_with_timeout(
         fun,
@@ -588,9 +592,16 @@ def _optimal_circuit(
         max_timeout,
     )
 
+    mapping = None
+
     if res is None:
         return None
-    circ, curr_param = res
+    if coupling_map is None:
+        assert len(res) == 2
+        circ, curr_param = res
+    else:
+        assert len(res) == 3
+        circ, mapping, curr_param = res
     if circ is None:
         return None
 
@@ -603,11 +614,15 @@ def _optimal_circuit(
         opt_res = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
-        circ = opt_res
+        if coupling_map is None:
+            circ = opt_res
+        else:
+            assert not isinstance(opt_res, str)
+            circ, mapping = opt_res
         curr_param -= 1
 
     logging.info(f"Optimal param: {curr_param}")
-    return StatePrepCircuit(circ, code, zero_state)
+    return StatePrepCircuit(circ, code, zero_state, coupling_map=coupling_map, mapping=mapping)
 
 
 def depth_optimal_prep_circuit(
@@ -617,7 +632,7 @@ def depth_optimal_prep_circuit(
     max_depth: int = 10,
     min_timeout: int = 1,
     max_timeout: int = 3600,
-    coupling_map: rx.PyGraph | None = None
+    coupling_map: rx.PyGraph | None = None,
 ) -> StatePrepCircuit | None:
     """Synthesize a state preparation circuit for a CSS code that minimizes the circuit depth.
 
@@ -628,9 +643,17 @@ def depth_optimal_prep_circuit(
         max_depth: maximum depth to reach
         min_timeout: minimum timeout to start with
         max_timeout: maximum timeout to reach
+        coupling_map: coupling map of the device
     """
     return _optimal_circuit(
-        code, _generate_circ_with_bounded_depth, zero_state, min_depth, max_depth, min_timeout, max_timeout, coupling_map
+        code,
+        _generate_circ_with_bounded_depth,
+        zero_state,
+        min_depth,
+        max_depth,
+        min_timeout,
+        max_timeout,
+        coupling_map,
     )
 
 
@@ -641,7 +664,7 @@ def gate_optimal_prep_circuit(
     max_gates: int = 10,
     min_timeout: int = 1,
     max_timeout: int = 3600,
-        coupling_map: rx.PyGraph | None = None
+    coupling_map: rx.PyGraph | None = None,
 ) -> StatePrepCircuit | None:
     """Synthesize a state preparation circuit for a CSS code that minimizes the number of gates.
 
@@ -655,7 +678,14 @@ def gate_optimal_prep_circuit(
         coupling_map: coupling map for a device
     """
     return _optimal_circuit(
-        code, _generate_circ_with_bounded_gates, zero_state, min_gates, max_gates, min_timeout, max_timeout, coupling_map
+        code,
+        _generate_circ_with_bounded_gates,
+        zero_state,
+        min_gates,
+        max_gates,
+        min_timeout,
+        max_timeout,
+        coupling_map,
     )
 
 
@@ -713,7 +743,7 @@ def iterative_search_with_timeout(
     max_timeout: int,
     param_factor: float = 2,
     timeout_factor: float = 2,
-) -> None | tuple[None | QuantumCircuit, int]:
+) -> None | tuple[None | QuantumCircuit, int] | tuple[None | QuantumCircuit, dict[int, int], int]:
     """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
 
     Args:
@@ -817,6 +847,10 @@ def gate_optimal_verification_stabilizers(
             logging.info(f"No verification stabilizers found for {num_errors} errors")
             layers[num_errors - 1] = []
             continue
+        assert isinstance(res, tuple)
+        assert isinstance(res[0], QuantumCircuit | None)
+        assert isinstance(res[1], int)
+        assert len(res) == 2
         measurements, num_cnots = res
         if measurements is None or (isinstance(measurements, str) and measurements == "timeout"):
             logging.info(f"No verification stabilizers found for {num_errors} errors")
@@ -1821,27 +1855,34 @@ def _support(check: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
     return np.where(check == 1)[0]
 
 
-def _permute_matrix(checks:npt.NDArray[np.int8], mapping: list[list[z3.Bool]], permuted_matrix: npt.NDArray[z3.BoolRef | bool]) -> list[z3.BoolRef]:
+def _permute_matrix(
+    checks: npt.NDArray[np.int8], mapping: list[list[z3.Bool]], permuted_matrix: npt.NDArray[z3.BoolRef | bool]
+) -> list[z3.BoolRef]:
     """Permute the rows of a matrix according to a mapping."""
     constraints = []
     for i in range(len(mapping)):
-        for j in range(len(mapping[i])):
-            constraints.append(z3.Implies(mapping[i][j], z3.And([permuted_matrix[row, j] == bool(checks[row, i]) for row in range(len(permuted_matrix))]))) # or other way around?
+        constraints.extend([
+            z3.Implies(
+                mapping[i][j],
+                z3.And([permuted_matrix[row, j] == bool(checks[row, i]) for row in range(len(permuted_matrix))]),
+            )
+            for j in range(len(mapping[i]))
+        ])
     return constraints
 
 
 def _mapping_consistent(mapping: list[list[z3.Bool]]) -> list[z3.BoolRef]:
     """Return constraints that enforce the mapping to be consistent."""
-    constraints = []
-    for i in range(len(mapping)):
-        constraints.append(z3.PbEq([(mapping[i][j], 1) for j in range(len(mapping[i]))], 1))
+    constraints = [z3.PbEq([(mapping[i][j], 1) for j in range(len(mapping[i]))], 1) for i in range(len(mapping))]
 
-    for j in range(len(mapping[0])):
-        constraints.append(z3.PbLe([(mapping[i][j], 1) for i in range(len(mapping))], 1))
+    constraints.extend([z3.PbLe([(mapping[i][j], 1) for i in range(len(mapping))], 1) for j in range(len(mapping[0]))])
+
     return constraints
 
 
-def _create_mapping(checks: npt.NDArray[np.int8], coupling_map: rx.PyGraph, s: z3.Solver) -> tuple[z3.npt.NDArray[np.int8], list[list[z3.Bool]]]:
+def _create_mapping(
+    checks: npt.NDArray[np.int8], coupling_map: rx.PyGraph, s: z3.Solver
+) -> tuple[z3.npt.NDArray[np.int8], list[list[z3.Bool]]]:
     # pad checks with zeros
     checks = np.pad(checks, ((0, 0), (0, coupling_map.num_nodes() - checks.shape[1])), mode="constant")
     # define mapping variables: q_i_j = 1 if qubit i is mapped to node j
