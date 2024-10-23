@@ -597,11 +597,11 @@ def _optimal_circuit(
     if res is None:
         return None
     if coupling_map is None:
-        assert len(res) == 2
         circ, curr_param = res
     else:
-        assert len(res) == 3
-        circ, mapping, curr_param = res
+        circ_and_mapping, curr_param = res
+        assert circ_and_mapping is not None
+        circ, mapping = circ_and_mapping
     if circ is None:
         return None
 
@@ -743,7 +743,7 @@ def iterative_search_with_timeout(
     max_timeout: int,
     param_factor: float = 2,
     timeout_factor: float = 2,
-) -> None | tuple[None | QuantumCircuit, int] | tuple[None | QuantumCircuit, dict[int, int], int]:
+) -> None | tuple[None | QuantumCircuit, int] | tuple[tuple[None | QuantumCircuit, dict[int, int]], int]:
     """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
 
     Args:
@@ -898,6 +898,7 @@ def gate_optimal_verification_stabilizers(
             num_anc -= 1
             measurements = anc_opt
         logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
+        assert isinstance(measurements, list)
         layers[num_errors - 1] = measurements
 
     return layers

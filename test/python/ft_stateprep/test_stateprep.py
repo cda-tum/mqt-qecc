@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
+import rustworkx as rx
 from ldpc import mod2
 from qiskit.quantum_info import Clifford
-import rustworkx as rx
 
 from mqt.qecc import CSSCode
 from mqt.qecc.codes import SquareOctagonColorCode
@@ -21,9 +21,8 @@ from mqt.qecc.ft_stateprep import (
     gate_optimal_verification_stabilizers,
     heuristic_prep_circuit,
     heuristic_verification_circuit,
-    heuristic_verification_stabilizers
+    heuristic_verification_stabilizers,
 )
-
 from mqt.qecc.ft_stateprep.state_prep import steiner_down
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -416,36 +415,112 @@ def test_error_detection_code() -> None:
 
 class TestConnectivityConstraints:
     """Test state prep with connectivity constraints."""
+
     @pytest.fixture
-    def linear_nn(self, request) -> rx.PyGraph:
+    def linear_nn(self, request) -> rx.PyGraph:  # type: ignore[no-untyped-def] # noqa: PLR6301
         """Return a linear nearest-neighbor graph."""
         n = request.param
         return rx.generators.grid_graph(n, 1)
-    
+
     @pytest.fixture
-    def square_nn(self, request) -> rx.PyGraph:
+    def square_nn(self, request) -> rx.PyGraph:  # type: ignore[no-untyped-def] # noqa: PLR6301
         """Return a square nearest-neighbor graph."""
         n = request.param
         return rx.generators.grid_graph(n, n)
 
-    def get_trivial_mapping(self, coupling_map: rx.PyGraph) -> dict[int, int]:
+    def get_trivial_mapping(self, coupling_map: rx.PyGraph) -> dict[int, int]:  # noqa: PLR6301
         """Return a trivial map for a given coupling map."""
         return {v: v for v in coupling_map.nodes()}
 
-    def get_random_mapping(self, coupling_map: rx.PyGraph) -> dict[int, int]:
+    def get_random_mapping(self, coupling_map: rx.PyGraph) -> dict[int, int]:  # noqa: PLR6301
         """Return a random map for a given coupling map."""
-        return {v: np.random.choice(list(coupling_map.nodes())) for v in coupling_map.nodes()}
+        rng = np.random.default_rng()
+        return {v: rng.choice(list(coupling_map.nodes())) for v in coupling_map.nodes()}
+
+    @staticmethod
+    def unmap_check_matrix(
+        checks: npt.NDArray[np.int8], mapping: dict[int, int], data_qubits: list[int]
+    ) -> npt.NDArray[np.int8]:
+        """Revert mapping on the columns of the check matrix."""
+        indices = [mapping[i] for i in range(checks.shape[1])]
+        checks_unmapped = checks[:, indices]
+        # remove zeros
+        return checks_unmapped[:, : len(data_qubits)]
 
     @pytest.mark.parametrize("linear_nn", [2, 3, 4], indirect=True)
-    def test_steiner_down_linear(self, linear_nn: rx.PyGraph) -> None:
+    def test_steiner_down_linear(self, linear_nn: rx.PyGraph) -> None:  # noqa: PLR6301
         """Test that the Steiner down function works for linear connectivity."""
         # pick random pivot
-        pivot = np.random.choice(linear_nn.num_nodes())
+        rng = np.random.default_rng()
+        pivot = rng.choice(list(range(linear_nn.num_nodes())))
         row = 0
         # mapping = self.get_trivial_mapping(linear_nn)
         checks = np.ones((1, linear_nn.num_nodes()), dtype=np.int8)
-        steiner_down(checks, pivot, row, linear_nn) # architecture itself is a steiner tree over the nodes
+        steiner_down(checks, pivot, row, linear_nn)  # architecture itself is a steiner tree over the nodes
         assert np.all(checks[0, pivot] == 1)
-        assert np.all(checks[0, pivot+1:] == 0)
+        assert np.all(checks[0, pivot + 1 :] == 0)
         assert np.all(checks[0, :pivot] == 0)
-        
+
+    @pytest.mark.parametrize("linear_nn", [4, 5, 6], indirect=True)
+    def test_gate_optimal_prep_linear(self, linear_nn: rx.PyGraph) -> None:  # noqa: PLR6301
+        """Test gate-optimal state preparation synthesis on linear NN architecture."""
+        code = CSSCode(2, np.array([[1, 1, 1, 1]]), np.array([[1, 1, 1, 1]]))
+        qc_prep = gate_optimal_prep_circuit(code, coupling_map=linear_nn)
+
+        assert qc_prep is not None
+
+        x, z = get_stabs(qc_prep.circ)
+
+        assert x.shape[1] == linear_nn.num_nodes()
+        assert z.shape[1] == linear_nn.num_nodes()
+
+        n_anc = linear_nn.num_nodes() - code.n
+
+        ancillas = np.where(np.sum(x, axis=0) == 0)[0]
+        data_qubits = np.where(np.sum(x, axis=0) != 0)[0]
+
+        assert len(ancillas) == n_anc
+        # ancillas have single-qubit Zs as stabilizers
+        assert np.all(np.sum(z[:, ancillas], axis=0) == 1)
+
+        mapping = qc_prep.mapping
+        assert mapping is not None
+        x_unmapped = TestConnectivityConstraints.unmap_check_matrix(x, mapping, data_qubits)
+        assert eq_span(x_unmapped, code.Hx)
+
+        z_unmapped = TestConnectivityConstraints.unmap_check_matrix(z, mapping, data_qubits)
+        # remove ancilla_rows
+        z_unmapped = z_unmapped[np.where(np.sum(z_unmapped, axis=1) != 0)]
+        assert eq_span(z_unmapped, np.vstack((code.Hz, code.Lz)))
+
+    @pytest.mark.parametrize("linear_nn", [4, 5, 6], indirect=True)
+    def test_depth_optimal_prep_linear(self, linear_nn: rx.PyGraph) -> None:  # noqa: PLR6301
+        """Test depth-optimal state preparation synthesis on linear NN architecture."""
+        code = CSSCode(2, np.array([[1, 1, 1, 1]]), np.array([[1, 1, 1, 1]]))
+        qc_prep = depth_optimal_prep_circuit(code, coupling_map=linear_nn)
+
+        assert qc_prep is not None
+
+        x, z = get_stabs(qc_prep.circ)
+
+        assert x.shape[1] == linear_nn.num_nodes()
+        assert z.shape[1] == linear_nn.num_nodes()
+
+        n_anc = linear_nn.num_nodes() - code.n
+
+        ancillas = np.where(np.sum(x, axis=0) == 0)[0]
+        data_qubits = np.where(np.sum(x, axis=0) != 0)[0]
+
+        assert len(ancillas) == n_anc
+        # ancillas have single-qubit Zs as stabilizers
+        assert np.all(np.sum(z[:, ancillas], axis=0) == 1)
+
+        mapping = qc_prep.mapping
+        assert mapping is not None
+        x_unmapped = TestConnectivityConstraints.unmap_check_matrix(x, mapping, data_qubits)
+        assert eq_span(x_unmapped, code.Hx)
+
+        z_unmapped = TestConnectivityConstraints.unmap_check_matrix(z, mapping, data_qubits)
+        # remove ancilla_rows
+        z_unmapped = z_unmapped[np.where(np.sum(z_unmapped, axis=1) != 0)]
+        assert eq_span(z_unmapped, np.vstack((code.Hz, code.Lz)))
