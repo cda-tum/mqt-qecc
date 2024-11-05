@@ -132,7 +132,7 @@ class StatePrepCircuit:
 
         # reduce faults by stabilizer
         stabs = self.x_checks if x_errors else self.z_checks
-        faults = _remove_trivial_faults(faults, stabs, self.code, x_errors, num_errors)
+        faults = _remove_trivial_faults(faults, stabs, num_errors)
 
         # remove stabilizer equivalent faults
         if reduce:
@@ -173,7 +173,7 @@ class StatePrepCircuit:
         for num_errors in range(1, self.max_errors + 1):
             fs = fault_sets_unreduced[num_errors]
             assert fs is not None
-            fault_sets[num_errors] = _remove_trivial_faults(fs, stabs, self.code, x_errors, num_errors)
+            fault_sets[num_errors] = _remove_trivial_faults(fs, stabs, num_errors)
         return fault_sets
 
     def _set_max_errors(self) -> None:
@@ -1307,14 +1307,11 @@ def _propagate_error(nodes: list[DAGNode], n_qubits: int, x_errors: bool = True)
 
 
 def _remove_trivial_faults(
-    faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], code: CSSCode, x_errors: bool, num_errors: int
+    faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], num_errors: int
 ) -> npt.NDArray[np.int8]:
     faults = faults.copy()
     logging.info("Removing trivial faults.")
-    d_error = code.x_distance if x_errors else code.z_distance
-    t_error = max((d_error - 1) // 2, 1)
-    t = max((code.distance - 1) // 2, 1)
-    max_w = t_error // t
+    max_w = 1
     for i, fault in enumerate(faults):
         faults[i] = _coset_leader(fault, stabs)
     faults = faults[np.where(np.sum(faults, axis=1) > max_w * num_errors)[0]]

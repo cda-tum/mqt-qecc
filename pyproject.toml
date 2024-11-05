@@ -44,7 +44,6 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "z3-solver>=4.12",
-    "z3-solver<4.13; sys_platform == 'darwin' and 'x86_64' in platform_machine", # z3 4.13 wheels on x86 macOS are broken
     "qecsim",
     "ldpc>=0.1.53",
     "numpy>=1.26; python_version > '3.11'",
@@ -98,14 +97,14 @@ minimum-version = "build-system.requires"
 # Set the wheel install directory
 wheel.install-dir = "mqt/qecc"
 
+# Explicitly set the package directory
+wheel.packages = ["src/mqt"]
+
 # Set required Ninja version
 ninja.version = ">=1.10"
 
 # Setuptools-style build caching in a local directory
-build-dir = "build/{build_type}"
-
-# Explicitly set the package directory
-wheel.packages = ["src/mqt"]
+build-dir = "build/{wheel_tag}/{build_type}"
 
 # Only build the Python bindings target
 build.targets = ["pyqecc"]
@@ -293,6 +292,10 @@ aer = "aer"
 anc = "anc"
 
 
+[tool.repo-review]
+ignore = ["GH200"]
+
+
 [tool.cibuildwheel]
 build = "cp3*"
 skip = "*-musllinux*"
@@ -315,7 +318,11 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 [tool.cibuildwheel.windows]
 before-build = "uv pip install delvewheel>=1.7.3"
 repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
-environment = { CMAKE_ARGS = "-T ClangCL", SKBUILD_CMAKE_ARGS="--fresh" }
+environment = { CMAKE_ARGS = "-T ClangCL" }
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 
 [tool.uv]
