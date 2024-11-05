@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 # Simulation parameters
 err_params = {"q": [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]}
 err_model = noise.E1_1
-shots_dss = 1000
+shots_dss = 2000
 p_max = {"q": 0.01}
 L = 3
 
