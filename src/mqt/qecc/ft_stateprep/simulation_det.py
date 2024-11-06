@@ -404,7 +404,7 @@ def qiskit_to_qsample(qiskit_circuit: QuantumCircuit) -> qs.Circuit:
     custom_circuit = [{"init": set(range(qiskit_circuit.num_qubits))}]
     for circ_instruction in qiskit_circuit.data:
         qargs = circ_instruction.qubits
-        instruction = circ_instruction[0]
+        instruction = circ_instruction.operation
         gate_name = instruction.name.upper()
         if gate_name == "CX":
             gate_name = "CNOT"
