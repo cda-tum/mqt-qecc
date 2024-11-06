@@ -165,6 +165,7 @@ filterwarnings = [
     'ignore::DeprecationWarning:.*(simpleeval).*',
     'ignore::RuntimeWarning:.*(qsample).*',
     'ignore:.*invalid escape sequence.*::.*qsample.*', # See https://github.com/cda-tum/mqt-qao/issues/3
+    'ignore:.*invalid escape sequence.*::.*latextools.*', # See https://github.com/cda-tum/mqt-qao/issues/3
 ]
 
 [tool.coverage]
