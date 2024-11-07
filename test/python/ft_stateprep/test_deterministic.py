@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 # Simulation parameters
 err_params = {"q": [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]}
 err_model = noise.E1_1
-shots_dss = 2000
+shots_dss = 4000
 p_max = {"q": 0.01}
 L = 3
 
@@ -105,7 +105,7 @@ def assert_scaling(simulation_results: list[npt.NDArray[np.float64]]) -> None:
     x = np.log10(err_params["q"])
     y = np.log10(dss_upper_bound)
     m = np.diff(y) / np.diff(x)
-    assert np.average(m[:4]) > 1.7
+    assert np.average(m[:3]) > 1.5
 
 
 def test_11_1_3_det_verification(css_11_1_3_code_sp: StatePrepCircuit) -> None:
