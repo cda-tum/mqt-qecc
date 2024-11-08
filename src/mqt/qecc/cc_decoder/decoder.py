@@ -38,19 +38,17 @@ class LightsOut:
         Adds all constraint to the optimizer that are independent of the value of the light.
         """
         helper_vars = self.helper_vars[light]
+        if len(indices) == 1:
+            # nothing to preconstruct for a single switch
+            return
+
         assert self.switch_vars is not None
-        if len(helper_vars) > 1:
-            # Xor(switch1, helper1) == helper0, Xor(switch2, helper2) == helper1, ...
-            for i in range(1, len(indices) - 1):
-                constraint = Xor(self.switch_vars[indices[i]], helper_vars[i]) == helper_vars[i - 1]
-                self.optimizer.add(simplify(constraint))
-            # switchN-1 == helperN-1
-            constraint = self.switch_vars[indices[-1]] == helper_vars[-1]
+        for i in range(1, len(indices) - 1):
+            constraint = Xor(self.switch_vars[indices[i]], helper_vars[i]) == helper_vars[i - 1]
             self.optimizer.add(simplify(constraint))
-        else:
-            assert len(indices) == 1
-            constraint = Xor(self.switch_vars[indices[0]], False) == helper_vars[0]
-            self.optimizer.add(simplify(constraint))
+
+        constraint = self.switch_vars[indices[-1]] == helper_vars[-1]
+        self.optimizer.add(simplify(constraint))
 
     def complete_parity_constraint(self, light: int, indices: list[int], val: bool) -> None:
         """Completes the parity constraints for a light.
@@ -59,7 +57,10 @@ class LightsOut:
         """
         helper_vars = self.helper_vars[light]
         assert self.switch_vars is not None
-        constraint = Xor(self.switch_vars[indices[0]], helper_vars[0]) == val
+        if len(indices) == 1:
+            constraint = self.switch_vars[indices[0]] == val
+        else:
+            constraint = Xor(self.switch_vars[indices[0]], helper_vars[0]) == val
         self.optimizer.add(simplify(constraint))
 
     def preconstruct_z3_instance(self, weights: npt.NDArray[float] = None) -> None:
@@ -73,18 +74,15 @@ class LightsOut:
 
         for light, switches in self.lights_to_switches.items():
             if light not in self.helper_vars:
-                if len(switches) > 1:
-                    self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches) - 1)]
-                else:
-                    self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches))]
+                self.helper_vars[light] = [Bool(f"helper_{light}_{i}") for i in range(len(switches) - 1)]
             self.preconstruct_parity_constraint(light, switches)
 
         if weights is not None and len(weights) > 0:
-            for idx, switch in enumerate(self.switch_vars):
-                self.optimizer.add_soft(Not(switch), weights[idx])
+            for switch, weight in zip(self.switch_vars, weights):
+                self.optimizer.add_soft(Not(switch), weight)
         else:
-            for _, switchh in enumerate(self.switch_vars):
-                self.optimizer.add_soft(Not(switchh))
+            for switch in self.switch_vars:
+                self.optimizer.add_soft(Not(switch))
 
     def validate_model(self, model: ModelRef, lights: list[bool]) -> bool:
         """Validate the model by checking if pressing the switches turns off all lights."""
@@ -102,19 +100,17 @@ class LightsOut:
         assert self.switch_vars is not None
         return sum(1 for var in self.switch_vars if model[var])
 
-    def solve(self, lights: list[bool], solver_path: str = "z3") -> tuple[list[int], bool, float]:
+    def solve(self, lights: list[bool], solver_path: str = "z3", timeout: int = 1800) -> tuple[list[int], bool, float]:
         """Solve the lights-out problem for a given pattern.
 
         Assumes that the z3 instance has already been pre-constructed.
         """
         # push a new context to the optimizer
         self.optimizer.push()
-        self.optimizer.set("timeout", 1500)
+        self.optimizer.set("timeout", timeout)
         # add the problem specific constraints
-        start = timer()
         for light, val in enumerate(lights):
             self.complete_parity_constraint(light, self.lights_to_switches[light], val)
-        timer() - start
         switches: list[int] = []
         if solver_path == "z3":
             # solve the problem
@@ -123,16 +119,15 @@ class LightsOut:
             solve_time = timer() - start
             if str(result) != "sat":
                 self.optimizer.pop()
-                res_string = [0 for var in self.switch_vars] if self.switch_vars is not None else []
-                return (res_string, False, solve_time)
+                res_string = [0] * len(self.switch_vars) if self.switch_vars is not None else []
+                return res_string, False, solve_time
 
             # validate the model
             model = self.optimizer.model()
             if self.validate_model(model, lights) is False:
                 self.optimizer.pop()
-                assert self.validate_model(model, lights), "Model is invalid"
-                res_string = [0 for var in self.switch_vars] if self.switch_vars is not None else []
-                return (res_string, False, solve_time)
+                res_string = [0] * len(self.switch_vars) if self.switch_vars is not None else []
+                return res_string, False, solve_time
 
             assert self.switch_vars is not None
             switches = [1 if model[var] else 0 for var in self.switch_vars]
