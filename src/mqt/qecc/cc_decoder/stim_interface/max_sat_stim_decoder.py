@@ -31,7 +31,9 @@ class MaxSatStim:
         qtf, ftq = self.check_matrix_to_adj_lists(self._matrices.check_matrix)
         self.problem = LightsOut(ftq, qtf)
         self.observables = self._matrices.observables_matrix
-        self.problem.preconstruct_z3_instance(weights=[self.weight_function(p) for p in self._matrices.priors])
+        self.problem.preconstruct_z3_instance(
+            weights=np.array([self.weight_function(p) for p in self._matrices.priors])
+        )
 
     @staticmethod
     def check_matrix_to_adj_lists(check_matrix: Any) -> tuple[dict[int, list[int]], dict[int, list[int]]]:  # noqa: ANN401
