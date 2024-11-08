@@ -161,11 +161,10 @@ filterwarnings = [
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
-    'ignore::SyntaxWarning:.*(latextools).*',
     'ignore::DeprecationWarning:.*(simpleeval).*',
     'ignore::RuntimeWarning:.*(qsample).*',
-    'ignore:.*invalid escape sequence.*::.*qsample.*', # See https://github.com/cda-tum/mqt-qao/issues/3
-    'ignore:.*invalid escape sequence.*::.*latextools.*', # See https://github.com/cda-tum/mqt-qao/issues/3
+    'ignore:.*invalid escape sequence.*::.*qsample.*',
+    'ignore:.*invalid escape sequence.*::.*latextools.*',
 ]
 
 [tool.coverage]

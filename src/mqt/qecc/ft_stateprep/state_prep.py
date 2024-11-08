@@ -425,7 +425,6 @@ def _optimal_circuit(
     while True:
         logging.info(f"Trying param {curr_param - 1}")
         opt_res: QuantumCircuit | str | None = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
-        # not None or str
         if opt_res and not (isinstance(opt_res, str) and opt_res == "timeout"):
             circ = opt_res
             curr_param -= 1
@@ -544,7 +543,7 @@ def iterative_search_with_timeout(
     max_timeout: int,
     param_factor: float = 2,
     timeout_factor: float = 2,
-) -> tuple[None | T, int]:
+) -> tuple[T | None, int]:
     """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
 
     Args:
@@ -607,6 +606,7 @@ def gate_optimal_verification_stabilizers(
             max_timeout,
             max_ancillas,
             additional_faults,
+            return_all_solutions=False,
         )
     ]
 
