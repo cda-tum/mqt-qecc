@@ -10,7 +10,7 @@ import stim
 from sinter import CompiledDecoder, Decoder
 from stimbposd import SinterDecoder_BPOSD
 
-from ..stim_interface.max_sat_stim_decoder import MaxSatStim
+from .max_sat_stim_decoder import MaxSatStim
 
 if TYPE_CHECKING:
     import numpy as np

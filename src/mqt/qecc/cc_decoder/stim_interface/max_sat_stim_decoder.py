@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from ..decoder import LightsOut
-from ..stim_interface.dem_to_matrices import detector_error_model_to_check_matrices
+from .dem_to_matrices import detector_error_model_to_check_matrices
 
 if TYPE_CHECKING:
     import stim
