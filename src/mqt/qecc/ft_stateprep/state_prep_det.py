@@ -12,15 +12,15 @@ from ldpc import mod2
 
 from .state_prep import (
     StatePrepCircuit,
-    _coset_leader,
-    _hook_errors,
-    _odd_overlap,
-    _run_with_timeout,
-    _symbolic_vector_eq,
-    _vars_to_stab,
     all_gate_optimal_verification_stabilizers,
+    coset_leader,
+    get_hook_errors,
     heuristic_verification_stabilizers,
     iterative_search_with_timeout,
+    odd_overlap,
+    run_with_timeout,
+    symbolic_vector_eq,
+    vars_to_stab,
 )
 
 logger = logging.getLogger(__name__)
@@ -282,7 +282,7 @@ class DeterministicVerificationHelper:
                     self._layers[layer_idx][verify_idx].hook_corrections = [{}] * len(verify.stabs)
                     continue
                 for stab_idx, stab in enumerate(verify.stabs):
-                    hook_errors = list(_hook_errors([stab]))
+                    hook_errors = list(get_hook_errors([stab]))
                     if self._trivial_hook_errors(hook_errors, self.code, not x_error):
                         continue
 
@@ -343,7 +343,7 @@ class DeterministicVerificationHelper:
                 zero_state=not self.state_prep.zero_state,
             )
             for stab_idx, stab in enumerate(verify_2.stabs):
-                hook_errors_2 = list(_hook_errors([stab]))
+                hook_errors_2 = list(get_hook_errors([stab]))
                 if self._trivial_hook_errors(hook_errors_2, self.code, self.state_prep.zero_state):
                     verify_2_list[verify_2_idx].hook_corrections[stab_idx] = {}
                 else:
@@ -379,7 +379,7 @@ class DeterministicVerificationHelper:
                 verify_new.hook_corrections[idx] = {
                     1: deterministic_correction_single_outcome(
                         self.state_prep,
-                        _hook_errors([verify.stabs[idx]]),
+                        get_hook_errors([verify.stabs[idx]]),
                         min_timeout=min_timeout,
                         max_timeout=max_timeout,
                         max_ancillas=max_ancillas,
@@ -410,7 +410,7 @@ class DeterministicVerificationHelper:
             #     not self._trivial_hook_errors(_hook_errors([stab]), self.code, not x_errors) for stab in stabs
             # ]
             stabs_flagged_all = [
-                not self._trivial_hook_errors(_hook_errors([stab]), self.code, not self.layer_x_errors[0])
+                not self._trivial_hook_errors(get_hook_errors([stab]), self.code, not self.layer_x_errors[0])
                 for stab in verify.stabs
             ]
             # stabs_flagged_all = [True if hook else False for hook in verify.hook_corrections]
@@ -429,7 +429,7 @@ class DeterministicVerificationHelper:
                 hook_errors = np.empty((0, self.num_qubits), dtype=np.int8)
                 for idx, flag in enumerate(stabs_flagged):
                     if not flag:
-                        hook_errors = np.vstack((hook_errors, _hook_errors([verify.stabs[idx]])))
+                        hook_errors = np.vstack((hook_errors, get_hook_errors([verify.stabs[idx]])))
                 if self._trivial_hook_errors(hook_errors, self.code, not self.state_prep.zero_state):
                     continue
                 # hook errors require different verification in second layer
@@ -686,7 +686,7 @@ def deterministic_correction_single_outcome(
 
     while num_anc > 1:
         logger.info(f"Trying to reduce the number of ancillas to {num_anc - 1}.")
-        det_verify: Recovery | str | None = _run_with_timeout(_func, num_anc - 1, timeout=max_timeout)
+        det_verify: Recovery | str | None = run_with_timeout(_func, num_anc - 1, timeout=max_timeout)
         if det_verify and not isinstance(det_verify, str):
             optimal_det_verify = det_verify
             num_anc -= 1
@@ -704,7 +704,7 @@ def deterministic_correction_single_outcome(
         num_cnots = np.sum([np.sum(m) for m in optimal_det_verify[0]])
 
         logger.info(f"Trying to reduce the number of CNOTs to {num_cnots - 1}.")
-        det_verify = _run_with_timeout(min_cnot_func, num_cnots - 1, timeout=max_timeout)
+        det_verify = run_with_timeout(min_cnot_func, num_cnots - 1, timeout=max_timeout)
         if det_verify and not isinstance(det_verify, str):
             optimal_det_verify = det_verify
             num_cnots -= 1
@@ -733,11 +733,11 @@ def correction_stabilizers(
     # Measurements are written as sums of generators
     # The variables indicate which generators are non-zero in the sum
     measurement_vars = [[z3.Bool(f"m_{anc}_{i}") for i in range(n_gens)] for anc in range(num_anc)]
-    measurement_stabs = [_vars_to_stab(vars_, gens) for vars_ in measurement_vars]
+    measurement_stabs = [vars_to_stab(vars_, gens) for vars_ in measurement_vars]
 
     # create "stabilizer degree of freedom" variables
     free_var = [[z3.Bool(f"free_{e}_{g}") for g in range(n_corr_gens)] for e in range(n_errors)]
-    free_stabs = [_vars_to_stab(vars_, correction_gens) for vars_ in free_var]
+    free_stabs = [vars_to_stab(vars_, correction_gens) for vars_ in free_var]
 
     # correction variables for each possible deterministic verification outcome
     corrections = [[z3.Bool(f"c_{anc}_{i}") for i in range(n_qubits)] for anc in range(2**num_anc)]
@@ -746,11 +746,11 @@ def correction_stabilizers(
 
     # for each error, the pattern is computed and the corresponding correction is applied
     for idx_error, error in enumerate(fault_set):
-        error_pattern = [_odd_overlap(measurement, error) for measurement in measurement_stabs]
+        error_pattern = [odd_overlap(measurement, error) for measurement in measurement_stabs]
         for det_pattern, correction in enumerate(corrections):
             det_pattern_bool = _int_to_bool_array(det_pattern, num_anc)
             # check if error triggers the pattern
-            triggered = _symbolic_vector_eq(error_pattern, det_pattern_bool)
+            triggered = symbolic_vector_eq(error_pattern, det_pattern_bool)
             # constraint: weight(error + correction + arbitrary free stabilizer) <= 1
             final_error = [
                 z3.Xor(correction[i] if error[i] == 0 else z3.Not(correction[i]), free_stabs[idx_error][i])
@@ -797,7 +797,7 @@ def _extract_measurement_and_correction(
         if np.sum(actual_correction) == 0:
             actual_corrections[outcome] = actual_correction
         else:
-            actual_corrections[outcome] = _coset_leader(actual_correction, np.array(correction_gens))
+            actual_corrections[outcome] = coset_leader(actual_correction, np.array(correction_gens))
     return actual_measurements, actual_corrections
 
 

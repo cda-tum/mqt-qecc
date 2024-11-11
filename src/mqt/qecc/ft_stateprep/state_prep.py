@@ -302,7 +302,7 @@ def _generate_circ_with_bounded_depth(
                             + list(np.delete(additions[d - 1, col, :], [col]))
                         )
                     ),
-                    _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col]),
+                    symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col]),
                 )
             )
 
@@ -362,7 +362,7 @@ def _generate_circ_with_bounded_gates(
     # if column is not involved in any addition at certain depth, it is the same as the previous column
     for d in range(1, max_cnots + 1):
         for col in range(n):
-            s.add(z3.Implies(targets[d - 1] != col, _symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
+            s.add(z3.Implies(targets[d - 1] != col, symbolic_vector_eq(columns[d, :, col], columns[d - 1, :, col])))
 
     # assert that final check matrix has n-checks.shape[0] zero columns
     s.add(_final_matrix_constraint(columns))
@@ -424,7 +424,7 @@ def _optimal_circuit(
     logging.info("Trying to minimize param")
     while True:
         logging.info(f"Trying param {curr_param - 1}")
-        opt_res: QuantumCircuit | str | None = _run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
+        opt_res: QuantumCircuit | str | None = run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res and not (isinstance(opt_res, str) and opt_res == "timeout"):
             circ = opt_res
             curr_param -= 1
@@ -509,7 +509,7 @@ def _build_circuit_from_list_and_checks(
 S = TypeVar("S")
 
 
-def _run_with_timeout(func: Callable[[Any], S | None], *args: Any, timeout: int = 10) -> S | str | None:  # noqa: ANN401
+def run_with_timeout(func: Callable[[Any], S | None], *args: Any, timeout: int = 10) -> S | str | None:  # noqa: ANN401
     """Run a function with a timeout.
 
     If the function does not complete within the timeout, return None.
@@ -560,7 +560,7 @@ def iterative_search_with_timeout(
     while curr_timeout <= max_timeout:
         while curr_param <= max_param:
             logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
-            res = _run_with_timeout(fun, curr_param, timeout=curr_timeout)
+            res = run_with_timeout(fun, curr_param, timeout=curr_timeout)
             if res is not None and (not isinstance(res, str) or res != "timeout"):
                 return cast(T, res), curr_param
             if curr_param == max_param:
@@ -700,7 +700,7 @@ def all_gate_optimal_verification_stabilizers(
         while num_cnots - 1 > 0:
             logging.info(f"Trying {num_cnots - 1} CNOTs")
 
-            cnot_opt = _run_with_timeout(
+            cnot_opt = run_with_timeout(
                 search_cnots,
                 num_cnots - 1,
                 timeout=max_timeout,
@@ -720,7 +720,7 @@ def all_gate_optimal_verification_stabilizers(
             def search_anc(num_anc: int) -> list[npt.NDArray[np.int8]] | None:
                 return verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors)  # noqa: B023
 
-            anc_opt = _run_with_timeout(
+            anc_opt = run_with_timeout(
                 search_anc,
                 num_anc - 1,
                 timeout=max_timeout,
@@ -758,7 +758,7 @@ def _verification_circuit(
 
     if full_fault_tolerance:
         if not flag_first_layer:
-            additional_errors = _hook_errors(measurements_1)
+            additional_errors = get_hook_errors(measurements_1)
             layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, additional_errors)
         else:
             layers_2 = verification_stabs_fun(sp_circ, not sp_circ.zero_state, None)
@@ -987,7 +987,7 @@ def _heuristic_layer(
         logging.info("Finding coset leaders.")
         measurements = []
         for c in cover:
-            leaders = [_coset_leader(m, non_candidate_checks) for m in mapping[c]]
+            leaders = [coset_leader(m, non_candidate_checks) for m in mapping[c]]
             leaders.sort(key=np.sum)
             measurements.append(leaders[0])
     else:
@@ -1058,9 +1058,10 @@ def _measure_ft_stabs(
     return measured_circ
 
 
-def _vars_to_stab(
+def vars_to_stab(
     measurement: list[z3.BoolRef | bool], generators: npt.NDArray[np.int8]
 ) -> npt.NDArray[z3.BoolRef | bool]:
+    """Compute the stabilizer measured giving the generators and the measurement variables."""
     measurement_stab = _symbolic_scalar_mult(generators[0], measurement[0])
     for i, scalar in enumerate(measurement[1:]):
         measurement_stab = _symbolic_vector_add(measurement_stab, _symbolic_scalar_mult(generators[i + 1], scalar))
@@ -1117,12 +1118,12 @@ def all_verification_stabilizers(
     measurement_vars = [[z3.Bool(f"m_{anc}_{i}") for i in range(n_gens)] for anc in range(num_anc)]
     solver = z3.Solver()
 
-    measurement_stabs = [_vars_to_stab(vars_, gens) for vars_ in measurement_vars]
+    measurement_stabs = [vars_to_stab(vars_, gens) for vars_ in measurement_vars]
 
     # assert that each error is detected
     solver.add(
         z3.And([
-            z3.PbGe([(_odd_overlap(measurement, error), 1) for measurement in measurement_stabs], 1)
+            z3.PbGe([(odd_overlap(measurement, error), 1) for measurement in measurement_stabs], 1)
             for error in fault_set
         ])
     )
@@ -1155,16 +1156,17 @@ def all_verification_stabilizers(
     return None
 
 
-def _coset_leader(error: npt.NDArray[np.int8], generators: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+def coset_leader(error: npt.NDArray[np.int8], generators: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+    """Compute the coset leader of an error given a set of generators."""
     if len(generators) == 0:
         return error
     s = z3.Optimize()
     leader = [z3.Bool(f"e_{i}") for i in range(len(error))]
     coeff = [z3.Bool(f"c_{i}") for i in range(len(generators))]
 
-    g = _vars_to_stab(coeff, generators)
+    g = vars_to_stab(coeff, generators)
 
-    s.add(_symbolic_vector_eq(np.array(leader), _symbolic_vector_add(error.astype(bool), g)))
+    s.add(symbolic_vector_eq(np.array(leader), _symbolic_vector_add(error.astype(bool), g)))
     s.minimize(z3.Sum(leader))
 
     s.check()  # always SAT
@@ -1206,14 +1208,14 @@ def _symbolic_vector_add(
     return np.array(v_new)
 
 
-def _odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
+def odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
     """Return True if the overlap of symbolic vector with constant vector is odd."""
     if np.array_equal(v_con, np.zeros(len(v_con), dtype=np.int8)):
         return z3.BoolVal(False)
     return z3.PbEq([(v_sym[i], 1) for i, c in enumerate(v_con) if c == 1], 1)
 
 
-def _symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
+def symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
     """Return assertion that two symbolic vectors should be equal."""
     constraints = [False for _ in v1]
 
@@ -1262,8 +1264,8 @@ def _column_addition_constraint(
                 add_col1_to_col2 = z3.Implies(
                     col_add_vars[d - 1, col_1, col_2],
                     z3.And(
-                        _symbolic_vector_eq(columns[d, :, col_2], col_sum),
-                        _symbolic_vector_eq(columns[d, :, col_1], columns[d - 1, :, col_1]),
+                        symbolic_vector_eq(columns[d, :, col_2], col_sum),
+                        symbolic_vector_eq(columns[d, :, col_1], columns[d - 1, :, col_1]),
                     ),
                 )
 
@@ -1271,8 +1273,8 @@ def _column_addition_constraint(
                 add_col2_to_col1 = z3.Implies(
                     col_add_vars[d - 1, col_2, col_1],
                     z3.And(
-                        _symbolic_vector_eq(columns[d, :, col_1], col_sum),
-                        _symbolic_vector_eq(columns[d, :, col_2], columns[d - 1, :, col_2]),
+                        symbolic_vector_eq(columns[d, :, col_1], col_sum),
+                        symbolic_vector_eq(columns[d, :, col_2], columns[d - 1, :, col_2]),
                     ),
                 )
 
@@ -1319,7 +1321,7 @@ def _remove_trivial_faults(
     logging.info("Removing trivial faults.")
     max_w = 1
     for i, fault in enumerate(faults):
-        faults[i] = _coset_leader(fault, stabs)
+        faults[i] = coset_leader(fault, stabs)
     faults = faults[np.where(np.sum(faults, axis=1) > max_w * num_errors)[0]]
 
     # unique faults
@@ -1713,7 +1715,7 @@ def measure_flagged_8(
     qc.measure(ancilla, measurement_bit)
 
 
-def _hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
+def get_hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:
     """Assuming CNOTs are executed in ascending order of qubit index, this function gives all the hook errors of the given stabilizer measurements."""
     errors = []
     for stab in measurements:
