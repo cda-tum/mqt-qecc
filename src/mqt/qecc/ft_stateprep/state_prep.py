@@ -1209,25 +1209,31 @@ def _symbolic_vector_add(
 def _odd_overlap(v_sym: npt.NDArray[z3.BoolRef | bool], v_con: npt.NDArray[np.int8]) -> z3.BoolRef:
     """Return True if the overlap of symbolic vector with constant vector is odd."""
     if np.array_equal(v_con, np.zeros(len(v_con), dtype=np.int8)):
-        return False
+        return z3.BoolVal(False)
     return z3.PbEq([(v_sym[i], 1) for i, c in enumerate(v_con) if c == 1], 1)
 
 
 def _symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.BoolRef | bool]) -> z3.BoolRef:
     """Return assertion that two symbolic vectors should be equal."""
     constraints = [False for _ in v1]
+
+    def convert_bools(vector: npt.NDArray[z3.BoolRef | bool]) -> list[z3.BoolRef | bool]:
+        vector = [True if z3.is_true(x) else x for x in vector]
+        vector = [False if z3.is_false(x) else x for x in vector]
+        return [bool(x) if isinstance(x, (bool, np.bool_)) else x for x in vector]  # type: ignore[redundant-expr]
+
+    v1 = convert_bools(v1)
+    v2 = convert_bools(v2)
+
     for i in range(len(v1)):
         # If one of the elements is a bool, we can simplify the expression
-        v1_i_is_bool = isinstance(v1[i], (bool, np.bool_))
-        v2_i_is_bool = isinstance(v2[i], (bool, np.bool_))
-        if v1_i_is_bool:
+        if isinstance(v1[i], bool):
             v1[i] = bool(v1[i])
             if v1[i]:
                 constraints[i] = v2[i]
             else:
-                constraints[i] = z3.Not(v2[i]) if not v2_i_is_bool else not v2[i]
-
-        elif v2_i_is_bool:
+                constraints[i] = z3.Not(v2[i]) if not isinstance(v2[i], bool) else not v2[i]
+        elif isinstance(v2[i], bool):
             v2[i] = bool(v2[i])
             if v2[i]:
                 constraints[i] = v1[i]
