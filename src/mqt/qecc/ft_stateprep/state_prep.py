@@ -18,7 +18,7 @@ from ..codes import InvalidCSSCodeError
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     import numpy.typing as npt
     from qiskit import AncillaQubit, ClBit, DAGNode, Qubit
@@ -1219,10 +1219,11 @@ def symbolic_vector_eq(v1: npt.NDArray[z3.BoolRef | bool], v2: npt.NDArray[z3.Bo
     """Return assertion that two symbolic vectors should be equal."""
     constraints = [False for _ in v1]
 
-    def convert_bools(vector: npt.NDArray[z3.BoolRef | bool]) -> list[z3.BoolRef | bool]:
-        vector = [True if z3.is_true(x) else x for x in vector]
-        vector = [False if z3.is_false(x) else x for x in vector]
-        return [bool(x) if isinstance(x, (bool, np.bool_)) else x for x in vector]  # type: ignore[redundant-expr]
+    def convert_bools(vector: Iterable[z3.BoolRef | bool | np.bool_]) -> list[z3.BoolRef | bool]:
+        return [
+            True if z3.is_true(v) else False if z3.is_false(v) else v if isinstance(v, z3.BoolRef) else bool(v)
+            for v in vector
+        ]
 
     v1 = convert_bools(v1)
     v2 = convert_bools(v2)
