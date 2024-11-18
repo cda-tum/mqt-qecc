@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 
 import stim
 from sinter import CompiledDecoder, Decoder
-from stimbposd import SinterDecoder_BPOSD
 
 from .max_sat_stim_decoder import MaxSatStim
 
@@ -143,4 +142,4 @@ class SinterDecoderMaxSat(Decoder):  # type: ignore[misc]
 
 def sinter_decoders(**kwargs: Any) -> dict[str, Decoder]:  # noqa: ANN401
     """Return a list of available sinter decoders."""
-    return {"maxsat": SinterDecoderMaxSat(**kwargs), "bposd": SinterDecoder_BPOSD()}
+    return {"maxsat": SinterDecoderMaxSat(**kwargs)}

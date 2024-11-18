@@ -36,7 +36,7 @@ def main() -> None:
         max_shots=10_000,
         max_errors=500,
         tasks=generate_example_tasks(),
-        decoders=["maxsat", "bposd"],
+        decoders=["maxsat"],
         custom_decoders=sinter_decoders(),
         print_progress=True,
         save_resume_filepath="pseudothreshold_plot.csv",
