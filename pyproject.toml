@@ -180,12 +180,8 @@ disallow_untyped_defs = false
 explicit_package_bases = true
 warn_unreachable = true
 exclude = [
-    "^plot\\_convergence\\_rate\\.ipynb$",
-    "^plot\\_pseudothresholds.\\ipnyb$",
-    "^plots\\.py$",
     "code_construction*",
     "^data_utils\\.py$",
-    "^run\\_color\\_code\\_phenomenological\\_noise\\.py$",
 ]
 
 [[tool.mypy.overrides]]
@@ -275,8 +271,6 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"*/cc_decoder/plotting/**" = ["T20"]
-"*/cc_decoder/plotting/*.ipynb" = ["T", "PTH", "FURB", "PERF", "D"]
 "scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]

@@ -45,8 +45,9 @@ def gen_pcm_and_logical(distance: int) -> tuple[NDArray[bool], set[int]]:
 
     for ancilla_qubit, lattice_point in ancilla_qubit_to_lattice_points.items():
         for neighbor in neighbors(lattice_point):
-            if neighbor in lattice_points_to_qubit_index:
-                qubit = lattice_points_to_qubit_index[neighbor]
+            neighbour_tpl = tuple(neighbor)
+            if neighbour_tpl in lattice_points_to_qubit_index:
+                qubit = lattice_points_to_qubit_index[neighbour_tpl]
                 parity_check_matrix[ancilla_qubit, qubit] = True
     return (parity_check_matrix, logical_operator)
 
