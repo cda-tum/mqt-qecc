@@ -123,7 +123,6 @@ class SinterDecoderMaxSat(Decoder):  # type: ignore[misc]
         dem = stim.DetectorErrorModel.from_file(dem_path)
         max_sat = MaxSatStim(
             model=dem,
-            **self.maxsat_kwargs,
         )
         shots = stim.read_shot_data_file(
             path=dets_b8_in_path,
