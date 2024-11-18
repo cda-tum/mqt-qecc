@@ -105,11 +105,3 @@ def gen_stim_circuit_memory_experiment(
     circuit.append("OBSERVABLE_INCLUDE", [stim.target_rec(-1)], (0))
 
     return circuit
-
-if __name__ == '__main__':
-    circuit = stim.Circuit()
-    pcm = np.array([[True, True, False, True, True, False, False],
-                    [False, True, True, False, True, True, False],
-                    [False, False, False, True, True, True, True]]).astype(int)
-    logical = np.array([2,5,6])
-    print(gen_stim_circuit_memory_experiment(pcm, logical,3, 0.5))

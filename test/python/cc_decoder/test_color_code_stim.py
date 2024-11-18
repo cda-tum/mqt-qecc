@@ -30,13 +30,12 @@ def test_gen_pcm_and_logical(hamming_code) -> None:
 
 def test_neighbours() -> None:
     input_perm = np.array([1, 2, 3])
-    expected = [[2, 2, 2],
-                [1, 3, 2],
-                [0, 3, 3],
-                [0, 2, 4],
-                [1, 1, 4],
-                [2, 1, 3]]
-
+    expected = np.array([[2, 2, 2],
+                         [1, 3, 2],
+                         [0, 3, 3],
+                         [0, 2, 4],
+                         [1, 1, 4],
+                         [2, 1, 3]])
     assert array_equal(expected, neighbors(input_perm))
 
 
