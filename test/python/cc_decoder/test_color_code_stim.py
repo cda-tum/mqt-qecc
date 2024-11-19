@@ -1,4 +1,5 @@
-""" tests for the color code stim decoder main functionality """
+"""tests for the color code stim decoder main functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -20,7 +21,7 @@ from mqt.qecc.cc_decoder.stim_interface.color_code_stim import (
 
 @pytest.fixture
 def hamming_code() -> NDArray[bool]:
-    """ return hamming code parity check matrix. """
+    """Return hamming code parity check matrix."""
     return np.array([
         [True, True, False, True, True, False, False],
         [False, True, True, False, True, True, False],
@@ -28,8 +29,8 @@ def hamming_code() -> NDArray[bool]:
     ])
 
 
-def test_gen_pcm_and_logical(hamming_code:NDArray[bool]) -> None:
-    """ test parity check matrix and logical matrix generation"""
+def test_gen_pcm_and_logical(hamming_code: NDArray[bool]) -> None:
+    """Test parity check matrix and logical matrix generation."""
     distance = 3
     expected_logicals = {2, 5, 6}
 
@@ -40,14 +41,14 @@ def test_gen_pcm_and_logical(hamming_code:NDArray[bool]) -> None:
 
 
 def test_neighbours() -> None:
-    """ test neighbour computation for color code grid. """
+    """Test neighbour computation for color code grid."""
     input_perm = np.array([1, 2, 3])
     expected = np.array([[2, 2, 2], [1, 3, 2], [0, 3, 3], [0, 2, 4], [1, 1, 4], [2, 1, 3]])
     assert array_equal(expected, neighbors(input_perm))
 
 
-def test_add_checks_one_round(hamming_code:NDArray[bool]) -> None:
-    """ test stim circuit generation for one stabilizer round """
+def test_add_checks_one_round(hamming_code: NDArray[bool]) -> None:
+    """Test stim circuit generation for one stabilizer round."""
     expected_circuit = stim.Circuit()
     circuit = stim.Circuit()
     expected_circuit.append_from_stim_program_text("MPP Z0*Z1*Z3*Z4")
@@ -56,8 +57,8 @@ def test_add_checks_one_round(hamming_code:NDArray[bool]) -> None:
     assert expected_circuit == add_checks_one_round(hamming_code, circuit, False, 0)
 
 
-def test_gen_stim_memory_experiment(hamming_code:NDArray[bool]) -> None:
-    """ test generation of stim circuit for a memory experiment. """
+def test_gen_stim_memory_experiment(hamming_code: NDArray[bool]) -> None:
+    """Test generation of stim circuit for a memory experiment."""
     expected_circuit = stim.Circuit()
     stim.Circuit()
     expected_circuit.append_from_stim_program_text("R 0 1 2 3 4 5 6")
