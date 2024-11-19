@@ -8,10 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sinter
 
-from mqt.qecc.cc_decoder.stim_interface.color_code_stim import gen_pcm_and_logical, \
-    gen_stim_circuit_memory_experiment
+from mqt.qecc.cc_decoder.stim_interface.color_code_stim import gen_pcm_and_logical, gen_stim_circuit_memory_experiment
 from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import sinter_decoders
-
 
 # from mqt.qecc.cc_decoder.stim_interface.color_code_stim import gen_pcm_and_logical, gen_stim_circuit_memory_experiment
 # from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import sinter_decoders

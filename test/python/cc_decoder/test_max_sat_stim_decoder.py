@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import stim
-from numpy.core.numeric import array_equal
-from numpy.ma.testutils import assert_equal
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -13,14 +13,16 @@ from mqt.qecc.cc_decoder.stim_interface.max_sat_stim_decoder import MaxSatStim
 
 @pytest.fixture
 def hamming_code() -> NDArray[bool]:
-    return np.array([[True, True, False, True, True, False, False],
-                     [False, True, True, False, True, True, False],
-                     [False, False, False, True, True, True, True]])
+    return np.array([
+        [True, True, False, True, True, False, False],
+        [False, True, True, False, True, True, False],
+        [False, False, False, True, True, True, True],
+    ])
 
 
 @pytest.fixture
 def detector_error_model() -> stim.DetectorErrorModel:
-    return stim.DetectorErrorModel('''
+    return stim.DetectorErrorModel("""
         error(0.5) D0 D1 D2
         error(0.5) D0 D1 L0
         error(0.5) D0 D2
@@ -320,12 +322,12 @@ def detector_error_model() -> stim.DetectorErrorModel:
         error(0.5) D7 D10
         error(0.5) D7 L0
         error(0.5) D8
-        error(0.5) D8 D11''')
+        error(0.5) D8 D11""")
 
 
 @pytest.fixture
 def detector_error_model() -> stim.DetectorErrorModel:
-    return stim.DetectorErrorModel('''
+    return stim.DetectorErrorModel("""
         error(0.5) D0 D1 D2
         error(0.5) D0 D1 L0
         error(0.5) D0 D2
@@ -625,7 +627,7 @@ def detector_error_model() -> stim.DetectorErrorModel:
         error(0.5) D7 D10
         error(0.5) D7 L0
         error(0.5) D8
-        error(0.5) D8 D11''')
+        error(0.5) D8 D11""")
 
 
 def test_check_matrix_to_adj_lists(hamming_code) -> None:
@@ -638,12 +640,10 @@ def test_check_matrix_to_adj_lists(hamming_code) -> None:
 
 def test_decode_batch(detector_error_model) -> None:
     shots = np.array([[0, 0]]).astype(np.uint8)
-    bit_packed_shots = True
-    bit_packed_predictions = True
     maxsatstim = MaxSatStim(detector_error_model)
-    res_pred, res_conv, res_not_cong_cnt = maxsatstim.decode_batch(shots=shots,
-                                                                   bit_packed_shots=True,
-                                                                   bit_packed_predictions=True)
+    res_pred, res_conv, res_not_cong_cnt = maxsatstim.decode_batch(
+        shots=shots, bit_packed_shots=True, bit_packed_predictions=True
+    )
     assert len(res_pred) == 1
     assert res_conv == 1
     assert res_not_cong_cnt == 0
