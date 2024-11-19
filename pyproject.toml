@@ -56,6 +56,9 @@ dependencies = [
     "numba>=0.59; python_version > '3.11'",
     "numba>=0.57; python_version <= '3.11'",
     "pymatching>=2.2.1",
+    "qsample>=0.0.2",
+    "urllib3>=1.26.20,<2.0", # Required by qsample
+    "fastcore>=1.7.10" # Required by qsample (to be removed)
 ]
 dynamic = ["version"]
 
@@ -158,6 +161,10 @@ filterwarnings = [
     "ignore:.*pkg_resources.*:DeprecationWarning:",
     "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
     'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
+    'ignore::DeprecationWarning:.*(simpleeval).*',
+    'ignore::RuntimeWarning:.*(qsample).*',
+    'ignore:.*invalid escape sequence.*::.*qsample.*',
+    'ignore:.*invalid escape sequence.*::.*latextools.*',
 ]
 
 [tool.coverage]
@@ -186,7 +193,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "sinter.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "sinter.*", "qsample.*", "pandas.*"]
 ignore_missing_imports = true
 
 
