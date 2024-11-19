@@ -1,3 +1,4 @@
+""" testing detector error model (dem) to check matries glue code. """
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,6 +18,7 @@ from mqt.qecc.cc_decoder.stim_interface.dem_to_matrices import (
 
 @pytest.fixture
 def dem_matrix() -> NDArray[NDArray[int]]:
+    """ return detector error model matrix for d=3 color code. """
     return np.array([
         [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -35,6 +37,7 @@ def dem_matrix() -> NDArray[NDArray[int]]:
 
 @pytest.fixture
 def hyperedges() -> dict[int, frozenset[int]]:
+    """ return adjacency dict of hyperedges for d=3 color code dem. """
     return {
         0: frozenset({0, 1, 2}),
         1: frozenset({0, 1}),
@@ -71,11 +74,13 @@ def hyperedges() -> dict[int, frozenset[int]]:
 
 @pytest.fixture
 def hypergraph_shape() -> tuple[int, int]:
+    """ return hypergraph shape for d=3 color code dem. """
     return (12, 30)
 
 
 @pytest.fixture
 def priors() -> NDArray[np.float32]:
+    """ return list of priors for dem errors. """
     return np.array([
         0.5,
         0.5,
@@ -112,6 +117,7 @@ def priors() -> NDArray[np.float32]:
 
 @pytest.fixture
 def hyperedge_to_edge_matrix() -> NDArray[NDArray[np.int32]]:
+    """ return hyperedge to edge matrix for dem. """
     return np.array([
         [
             0,
@@ -982,11 +988,13 @@ def hyperedge_to_edge_matrix() -> NDArray[NDArray[np.int32]]:
 
 @pytest.fixture
 def edge_obsbl_matrix() -> NDArray[NDArray[np.int32]]:
+    """ return the edge observable matrix. """
     return np.array([[1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]])
 
 
 @pytest.fixture
 def edge_check_matrix() -> NDArray[NDArray.np.int32]:
+    """ return the edge adjacency matrix. """
     return np.array([
         [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1005,11 +1013,13 @@ def edge_check_matrix() -> NDArray[NDArray.np.int32]:
 
 @pytest.fixture
 def obsble_matrix() -> NDArray[NDArray[np.int32]]:
+    """ return the observable matrix"""
     return np.array([[0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]])
 
 
 @pytest.fixture
 def hamming_code() -> NDArray[bool]:
+    """ return hamming code check matrix. """
     return np.array([
         [True, True, False, True, True, False, False],
         [False, True, True, False, True, True, False],
@@ -1019,6 +1029,7 @@ def hamming_code() -> NDArray[bool]:
 
 @pytest.fixture
 def detector_error_model() -> stim.DetectorErrorModel:
+    """ return d=3 color code dem. """
     return stim.DetectorErrorModel("""
         error(0.5) D0 D1 D2
         error(0.5) D0 D1 L0
@@ -1323,21 +1334,23 @@ def detector_error_model() -> stim.DetectorErrorModel:
 
 
 def test_dict_to_csc_matrix(
-    hypergraph_shape, hyperedges: dict[int, frozenset[int]], dem_matrix: NDArray[NDArray[int]]
+    hypergraph_shape:Tuple[int,int], hyperedges: dict[int, frozenset[int]], dem_matrix: NDArray[NDArray[int]]
 ) -> None:
+    """ test the dictionary to sparse matrix function. """
     result = dict_to_csc_matrix(hyperedges, hypergraph_shape).todense()
     assert array_equal(result, dem_matrix)
 
 
 def test_detector_error_model_to_check_matrices(
-    detector_error_model,
-    priors,
-    dem_matrix,
-    obsble_matrix,
-    edge_check_matrix,
-    edge_obsbl_matrix,
-    hyperedge_to_edge_matrix,
+    detector_error_model:stim.DetectorErrorModel,
+    priors:NDArray[np.float32],
+    dem_matrix:NDArray[NDArray[int]],
+    obsble_matrix:NDArray[NDArray[int]],
+    edge_check_matrix:NDArray[NDArray[int]],
+    edge_obsbl_matrix:NDArray[NDArray[int]],
+    hyperedge_to_edge_matrix:NDArray[NDArray[int]],
 ) -> None:
+    """ test dem to check matrices function. """
     result = detector_error_model_to_check_matrices(detector_error_model, True)
     assert array_equal(result.priors, priors)
     assert array_equal(result.check_matrix.todense(), dem_matrix)

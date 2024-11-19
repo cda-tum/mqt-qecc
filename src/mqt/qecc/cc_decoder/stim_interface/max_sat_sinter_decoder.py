@@ -79,7 +79,7 @@ class SinterDecoderMaxSat(Decoder):  # type: ignore[misc]
         )
         return SinterCompiledDecoderMaxSat(maxsat, **self.maxsat_kwargs)
 
-    def decode_via_files(
+    def decode_via_files( # noqa: PLR6301
         self,
         *,
         num_shots: int,  # noqa: ARG002
