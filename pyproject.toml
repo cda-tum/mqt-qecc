@@ -278,7 +278,7 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"scripts/**" = ["T201"]
+"scripts/**" = ["T201","PTH", "FURB", "PERF"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
