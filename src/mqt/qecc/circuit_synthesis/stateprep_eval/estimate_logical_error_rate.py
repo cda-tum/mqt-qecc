@@ -93,8 +93,7 @@ def main() -> None:
     sim = NoisyNDFTStatePrepSimulator(
         qc, code=code, p=args.p_error, zero_state=args.zero_state, parallel_gates=not args.no_parallel_gates
     )
-    res = sim.logical_error_rate(min_errors=args.n_errors)
-    print(",".join([str(x) for x in res]))  # noqa: T201
+    sim.logical_error_rate(min_errors=args.n_errors)
 
 
 if __name__ == "__main__":
