@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -1335,7 +1335,7 @@ def detector_error_model() -> stim.DetectorErrorModel:
 
 
 def test_dict_to_csc_matrix(
-    hypergraph_shape: Tuple[int, int], hyperedges: dict[int, frozenset[int]], dem_matrix: NDArray[NDArray[int]]
+    hypergraph_shape: tuple[int, int], hyperedges: dict[int, frozenset[int]], dem_matrix: NDArray[NDArray[int]]
 ) -> None:
     """Test the dictionary to sparse matrix function."""
     result = dict_to_csc_matrix(hyperedges, hypergraph_shape).todense()
