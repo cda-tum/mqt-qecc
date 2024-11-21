@@ -75,6 +75,25 @@ class StatePrepCircuit:
         self.x_checks = code.Hx.copy() if zero_state else np.vstack((code.Lx.copy(), code.Hx.copy()))
         self.z_checks = code.Hz.copy() if not zero_state else np.vstack((code.Lz.copy(), code.Hz.copy()))
 
+        if mapping is not None:
+            assert coupling_map is not None
+            n_anc = coupling_map.num_nodes() - self.code.n
+            self.x_checks = np.pad(self.x_checks, ((0, 0), (0, n_anc)))
+            self.z_checks = np.pad(self.z_checks, ((0, 0), (0, n_anc)))
+            if zero_state:
+                self.z_checks = np.pad(self.z_checks, ((0, n_anc), (0, 0)))
+                self.z_checks[-n_anc:, -n_anc:] = np.eye(n_anc, dtype=np.int8)
+            else:
+                self.x_checks = np.pad(self.x_checks, ((0, n_anc), (0, 0)))
+                self.x_checks[-n_anc:, -n_anc:] = np.eye(n_anc, dtype=np.int8)
+
+            # revert mapping
+            assert mapping is not None
+            reversed_mapping = {v: k for k, v in mapping.items()}
+            mapped_indices = np.array([reversed_mapping[i] for i in range(coupling_map.num_nodes())])
+            self.x_checks = self.x_checks[:, mapped_indices]
+            self.z_checks = self.z_checks[:, mapped_indices]
+
         self.num_qubits = circ.num_qubits
 
         self.error_detection_code = error_detection_code
