@@ -5,10 +5,12 @@ from __future__ import annotations
 import functools
 import logging
 import operator
+from itertools import repeat
 from typing import TYPE_CHECKING
 
 import numpy as np
 import z3
+from ldpc import mod2
 
 from ..codes import InvalidCSSCodeError
 from .synthesis_utils import build_css_circuit_from_cnot_list, heuristic_gaussian_elimination, optimal_elimination
@@ -97,10 +99,13 @@ def gate_optimal_encoding_circuit(
     assert checks is not None
     n_checks = checks.shape[0]
     checks_and_logicals = np.vstack((checks, logicals))
+    rank = mod2.rank(checks_and_logicals)
     termination_criteria = functools.partial(
         _final_matrix_constraint_partially_full_reduction,
         full_reduction_rows=list(range(checks.shape[0], checks.shape[0] + logicals.shape[0])),
+        rank=rank,
     )
+
     res = optimal_elimination(
         checks_and_logicals,
         termination_criteria,
@@ -142,9 +147,11 @@ def depth_optimal_encoding_circuit(
     assert checks is not None
     n_checks = checks.shape[0]
     checks_and_logicals = np.vstack((checks, logicals))
+    rank = mod2.rank(checks_and_logicals)
     termination_criteria = functools.partial(
         _final_matrix_constraint_partially_full_reduction,
         full_reduction_rows=list(range(checks.shape[0], checks.shape[0] + logicals.shape[0])),
+        rank=rank,
     )
     res = optimal_elimination(
         checks_and_logicals,
@@ -176,7 +183,7 @@ def _get_matrix_with_fewest_checks(code: CSSCode) -> tuple[npt.NDArray[np.int8],
 
 
 def _final_matrix_constraint_partially_full_reduction(
-    columns: npt.NDArray[z3.BoolRef | bool], full_reduction_rows: list[int]
+    columns: npt.NDArray[z3.BoolRef | bool], full_reduction_rows: list[int], rank: int
 ) -> z3.BoolRef:
     assert len(columns.shape) == 3
 
@@ -192,7 +199,7 @@ def _final_matrix_constraint_partially_full_reduction(
     # assert that the partial_reduction_rows are partially reduced, i.e. there are at least columns.shape[2] - (columns.shape[1] - len(full_reduction_rows)) non-zero columns
     partially_reduced = z3.PbEq(
         [(z3.Not(z3.Or(list(columns[-1, partial_reduction_rows, col]))), 1) for col in range(columns.shape[2])],
-        columns.shape[2] - (columns.shape[1] - len(full_reduction_rows)),
+        columns.shape[2] - (rank - len(full_reduction_rows)),
     )
 
     # assert that there is no overlap between the full_reduction_rows and the partial_reduction_rows
@@ -201,6 +208,12 @@ def _final_matrix_constraint_partially_full_reduction(
         has_entry_partial = z3.Or(list(columns[-1, partial_reduction_rows, col]))
         has_entry_full = z3.Or(list(columns[-1, full_reduction_rows, col]))
         overlap_constraints.append(z3.Not(z3.And(has_entry_partial, has_entry_full)))
+
+    # assert that the full_reduction_rows are fully reduced
+    fully_reduced = z3.PbEq(
+        [(z3.PbEq(list(zip(columns[-1, full_reduction_rows, col], repeat(1)))), 1) for col in range(columns.shape[2])],
+        len(full_reduction_rows),
+    )
 
     return z3.And(fully_reduced, partially_reduced, z3.And(overlap_constraints))
 
