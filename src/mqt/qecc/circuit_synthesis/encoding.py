@@ -5,7 +5,6 @@ from __future__ import annotations
 import functools
 import logging
 import operator
-from itertools import repeat
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -187,13 +186,6 @@ def _final_matrix_constraint_partially_full_reduction(
 ) -> z3.BoolRef:
     assert len(columns.shape) == 3
 
-    at_least_n_row_columns = z3.PbEq(
-        [(z3.Or(list(columns[-1, full_reduction_rows, col])), 1) for col in range(columns.shape[2])],
-        len(full_reduction_rows),
-    )
-
-    fully_reduced = z3.And(at_least_n_row_columns)
-
     partial_reduction_rows = list(set(range(columns.shape[1])) - set(full_reduction_rows))
 
     # assert that the partial_reduction_rows are partially reduced, i.e. there are at least columns.shape[2] - (columns.shape[1] - len(full_reduction_rows)) non-zero columns
@@ -211,7 +203,10 @@ def _final_matrix_constraint_partially_full_reduction(
 
     # assert that the full_reduction_rows are fully reduced
     fully_reduced = z3.PbEq(
-        [(z3.PbEq(list(zip(columns[-1, full_reduction_rows, col], repeat(1)))), 1) for col in range(columns.shape[2])],
+        [
+            (z3.PbEq([(columns[-1, row, col], 1) for col in range(columns.shape[2])], 1), 1)
+            for row in full_reduction_rows
+        ],
         len(full_reduction_rows),
     )
 
