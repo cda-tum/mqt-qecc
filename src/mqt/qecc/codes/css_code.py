@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from ldpc import mod2
 
+from .pauli import StabilizerTableau
 from .stabilizer_code import StabilizerCode
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,8 +25,21 @@ class CSSCode(StabilizerCode):
         Hz: npt.NDArray[np.int8] | None = None,  # noqa: N803
         x_distance: int | None = None,
         z_distance: int | None = None,
+        n: int | None = None,
     ) -> None:
         """Initialize the code."""
+        if Hx is None and Hz is None:
+            if n is None:
+                msg = "If no check matrices are provided, the code size must be specified."
+                raise InvalidCSSCodeError(msg)
+            self.Hx = np.zeros((0, n), dtype=np.int8)
+            self.Hz = np.zeros((0, n), dtype=np.int8)
+            self.Lx = np.eye(n, dtype=np.int8)
+            self.Lz = np.eye(n, dtype=np.int8)
+            triv = StabilizerCode.get_trivial_code(n)
+            super().__init__(triv.generators, triv.distance, triv.x_logicals, triv.z_logicals)
+            return
+
         self._check_valid_check_matrices(Hx, Hz)
 
         if Hx is None:
@@ -46,8 +60,8 @@ class CSSCode(StabilizerCode):
 
         x_padded = np.hstack([self.Hx, z_padding])
         z_padded = np.hstack([x_padding, self.Hz])
-        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0], 1), dtype=np.int8)
-        super().__init__(np.hstack((np.vstack((x_padded, z_padded)), phases)), distance)
+        phases = np.zeros((x_padded.shape[0] + z_padded.shape[0]), dtype=np.int8)
+        super().__init__(StabilizerTableau(np.vstack((x_padded, z_padded)), phases), distance)
 
         self.distance = distance
         self.x_distance = x_distance if x_distance is not None else distance
@@ -88,14 +102,10 @@ class CSSCode(StabilizerCode):
 
     def get_x_syndrome(self, error: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Compute the x syndrome of the error."""
-        if self.Hx is None:
-            return np.empty((0, error.shape[0]), dtype=np.int8)
         return self.Hx @ error % 2
 
     def get_z_syndrome(self, error: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Compute the z syndrome of the error."""
-        if self.Hz is None:
-            return np.empty((0, error.shape[0]), dtype=np.int8)
         return self.Hz @ error % 2
 
     def check_if_logical_x_error(self, residual: npt.NDArray[np.int8]) -> bool:
@@ -104,21 +114,19 @@ class CSSCode(StabilizerCode):
 
     def check_if_x_stabilizer(self, pauli: npt.NDArray[np.int8]) -> bool:
         """Check if the Pauli is a stabilizer."""
-        assert self.Hx is not None
         return bool(mod2.rank(np.vstack((self.Hx, pauli))) == mod2.rank(self.Hx))
 
     def check_if_logical_z_error(self, residual: npt.NDArray[np.int8]) -> bool:
         """Check if the residual is a logical error."""
-        return bool((self.Lx @ residual % 2 == 1).any())
+        return (self.Hx.shape[0] != 0) and bool((self.Lx @ residual % 2 == 1).any())
 
     def check_if_z_stabilizer(self, pauli: npt.NDArray[np.int8]) -> bool:
         """Check if the Pauli is a stabilizer."""
-        assert self.Hz is not None
-        return bool(mod2.rank(np.vstack((self.Hz, pauli))) == mod2.rank(self.Hz))
+        return (self.Hz.shape[0] != 0) and bool(mod2.rank(np.vstack((self.Hz, pauli))) == mod2.rank(self.Hz))
 
     def stabilizer_eq_x_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
         """Check if two X errors are in the same coset."""
-        if self.Hx is None:
+        if self.Hx.shape[0] == 0:
             return bool(np.array_equal(error_1, error_2))
         m1 = np.vstack([self.Hx, error_1])
         m2 = np.vstack([self.Hx, error_2])
@@ -127,7 +135,7 @@ class CSSCode(StabilizerCode):
 
     def stabilizer_eq_z_error(self, error_1: npt.NDArray[np.int8], error_2: npt.NDArray[np.int8]) -> bool:
         """Check if two Z errors are in the same coset."""
-        if self.Hz is None:
+        if self.Hz.shape[0] == 0:
             return bool(np.array_equal(error_1, error_2))
         m1 = np.vstack([self.Hz, error_1])
         m2 = np.vstack([self.Hz, error_2])
@@ -136,8 +144,6 @@ class CSSCode(StabilizerCode):
 
     def is_self_dual(self) -> bool:
         """Check if the code is self-dual."""
-        if self.Hx is None or self.Hz is None:
-            return False
         return bool(
             self.Hx.shape[0] == self.Hz.shape[0] and mod2.rank(self.Hx) == mod2.rank(np.vstack([self.Hx, self.Hz]))
         )
@@ -145,10 +151,6 @@ class CSSCode(StabilizerCode):
     @staticmethod
     def _check_valid_check_matrices(Hx: npt.NDArray[np.int8] | None, Hz: npt.NDArray[np.int8] | None) -> None:  # noqa: N803
         """Check if the code is a valid CSS code."""
-        if Hx is None and Hz is None:
-            msg = "At least one of the check matrices must be provided"
-            raise InvalidCSSCodeError(msg)
-
         if Hx is not None and Hz is not None:
             if Hx.shape[1] != Hz.shape[1]:
                 msg = "Check matrices must have the same number of columns"
@@ -157,6 +159,11 @@ class CSSCode(StabilizerCode):
                 msg = "The check matrices must be orthogonal"
                 raise InvalidCSSCodeError(msg)
 
+    @classmethod
+    def get_trivial_code(cls, n: int) -> CSSCode:
+        """Return the trivial code."""
+        return CSSCode(1, None, None, n=n)
+
     @staticmethod
     def from_code_name(code_name: str, distance: int | None = None) -> CSSCode:
         r"""Return CSSCode object for a known code.
@@ -164,11 +171,11 @@ class CSSCode(StabilizerCode):
         The following codes are supported:
         - [[7, 1, 3]] Steane (\"Steane\")
         - [[15, 1, 3]] tetrahedral code (\"Tetrahedral\")
-        - [[15, 7, 3]] Hamming code (\"Hamming\")
         - [[9, 1, 3]] Shore code (\"Shor\")
         - [[12, 2, 4]] Carbon Code (\"Carbon\")
         - [[9, 1, 3]] rotated surface code (\"Surface, 3\"), also default when no distance is given
         - [[25, 1, 5]] rotated surface code (\"Surface, 5\")
+        - [[15, 7, 3]] Hamming code (\"Hamming\")
         - [[23, 1, 7]] golay code (\"Golay\")
 
         Args:
@@ -179,23 +186,23 @@ class CSSCode(StabilizerCode):
         paths = {
             "steane": prefix / "steane/",
             "tetrahedral": prefix / "tetrahedral/",
-            "hamming": prefix / "hamming/",
             "shor": prefix / "shor/",
             "surface_3": prefix / "rotated_surface_d3/",
             "surface_5": prefix / "rotated_surface_d5/",
             "golay": prefix / "golay/",
             "carbon": prefix / "carbon/",
+            "hamming": prefix / "hamming_15/",
         }
 
         distances = {
             "steane": (3, 3),
             "tetrahedral": (7, 3),
-            "hamming": (3, 3),
             "shor": (3, 3),
             "golay": (7, 7),
             "surface_3": (3, 3),
             "surface_5": (5, 5),
             "carbon": (4, 4),
+            "hamming": (3, 3),
         }  # X, Z distances
 
         code_name = code_name.lower()
