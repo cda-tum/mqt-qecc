@@ -16,3 +16,4 @@ Library
     SamplePauliError
     LightsOutDecoder
     StatePrep
+    Encoders
