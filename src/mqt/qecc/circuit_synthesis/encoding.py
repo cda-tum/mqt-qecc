@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def heuristic_encoding_circuit(
-    code: CSSCode, optimize_depth: bool = True, balance_checks: bool = True
+    code: CSSCode, optimize_depth: bool = True, balance_checks: bool = False
 ) -> QuantumCircuit:
     """Synthesize an encoding circuit for the given CSS code using a heuristic greedy search.
 
