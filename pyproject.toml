@@ -58,7 +58,8 @@ dependencies = [
     "pymatching>=2.2.1",
     "qsample>=0.0.2",
     "urllib3>=1.26.20,<2.0", # Required by qsample
-    "fastcore>=1.7.10" # Required by qsample (to be removed)
+    "fastcore>=1.7.10", # Required by qsample (to be removed)
+    "pyzx>=0.8.0"
 ]
 dynamic = ["version"]
 
@@ -193,7 +194,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*", "pyzx.*"]
 ignore_missing_imports = true
 
 
