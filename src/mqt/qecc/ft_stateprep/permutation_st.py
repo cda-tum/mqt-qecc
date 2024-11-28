@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
-def get_stean_prep_circ() -> QuantumCircuit:
+def get_steane_prep_circ() -> QuantumCircuit:
     """Function that builds up a state preparation circuit for the Steane code."""
     circ = QuantumCircuit(7)
     circ.h(0)
@@ -33,10 +33,10 @@ def get_stean_prep_circ() -> QuantumCircuit:
 def get_steane_css_object() -> CSSCode:
     """Return the Steane Code as CSS object."""
     distance: int = 3
-    hx : npt.NDArray[np.int8] = np.array([[1,1,1,1,0,0,0],
-                                          [0,1,1,0,1,1,0],
-                                         [0,0,1,1,0,6,7]])
-    hz : npt.NDArray[np.int8] = np.array([[1,1,1,1,0,0,0],
-                                          [0,1,1,0,1,1,0],
-                                         [0,0,1,1,0,6,7]])
+    hx : npt.NDArray[np.int8] = np.array([[0,0,0,1,1,1,1],
+                                          [0,1,1,0,0,1,1],
+                                         [1,0,1,0,1,0,1]])
+    hz : npt.NDArray[np.int8] = np.array([[0,0,0,1,1,1,1],
+                                          [0,1,1,0,0,1,1],
+                                         [1,0,1,0,1,0,1]])
     return CSSCode(distance, hx, hz, distance, distance)
