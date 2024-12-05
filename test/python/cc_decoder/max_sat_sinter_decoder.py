@@ -1,15 +1,13 @@
 """tests for the color code stim decoder main functionality."""
 
 from __future__ import annotations
-import pytest
-from mqt.qecc.cc_decoder.stim_interface.max_sat_stim_decoder import MaxSatStim
-import numpy as np
-from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import SinterCompiledDecoderMaxSat
-from numpy.core.numeric import array_equal
 
+import numpy as np
+import pytest
 import stim
 
-from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import SinterDecoderMaxSat
+from mqt.qecc.cc_decoder.stim_interface.max_sat_sinter_decoder import SinterCompiledDecoderMaxSat, SinterDecoderMaxSat
+from mqt.qecc.cc_decoder.stim_interface.max_sat_stim_decoder import MaxSatStim
 
 
 @pytest.fixture
@@ -317,8 +315,9 @@ def detector_error_model() -> stim.DetectorErrorModel:
         error(0.5) D8
         error(0.5) D8 D11""")
 
-def test_decode_shots_bit_packed(detector_error_model:stim.DetectorErrorModel) -> None:
-    bit_packed_shots = np.array([[0,0]]).astype(np.uint8)
+
+def test_decode_shots_bit_packed(detector_error_model: stim.DetectorErrorModel) -> None:
+    bit_packed_shots = np.array([[0, 0]]).astype(np.uint8)
     max_sat_stim = MaxSatStim(detector_error_model)
     sinter_decoder = SinterCompiledDecoderMaxSat(max_sat_stim)
     result = sinter_decoder.decode_shots_bit_packed(bit_packed_shots)
@@ -326,10 +325,11 @@ def test_decode_shots_bit_packed(detector_error_model:stim.DetectorErrorModel) -
     assert len(result) == 1
     assert result[0][0] == 1 or result[0][0]
 
-def test_decode_via_files(detector_error_model:stim.DetectorErrorModel) -> None:
+
+def test_decode_via_files(detector_error_model: stim.DetectorErrorModel) -> None:
     decoder = SinterDecoderMaxSat()
     result = decoder.compile_decoder_for_dem(detector_error_model)
     assert result.decoder is not None
     assert result.decoder.num_detectors == detector_error_model.num_detectors
-    assert result.decoder.observables.shape == (1,30)
+    assert result.decoder.observables.shape == (1, 30)
     assert len(result.decoder.problem.helper_vars) == detector_error_model.num_detectors
