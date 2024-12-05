@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 import stim
 from sinter import CompiledDecoder, Decoder
 
-from .max_sat_stim_decoder import MaxSatStim
+from mqt.qecc.cc_decoder.stim_interface.max_sat_stim_decoder import MaxSatStim
 
 if TYPE_CHECKING:
     import numpy as np
@@ -34,7 +34,6 @@ class SinterCompiledDecoderMaxSat(CompiledDecoder):  # type: ignore[misc]
 
     def decode_shots_bit_packed(
         self,
-        *,
         bit_packed_detection_event_data: NDArray[NDArray[np.uint8]],
     ) -> NDArray[np.uint8]:
         """Decode bitpacked shots from sinter simulation using batch decoder."""
@@ -71,7 +70,7 @@ class SinterDecoderMaxSat(Decoder):  # type: ignore[misc]
         """Init sinter decoder with kwargs."""
         self.maxsat_kwargs = maxsat_kwargs
 
-    def compile_decoder_for_dem(self, *, dem: stim.DetectorErrorModel) -> CompiledDecoder:
+    def compile_decoder_for_dem(self, dem: stim.DetectorErrorModel) -> CompiledDecoder:
         """Return sinter compiled decoder initialized with the given DEM."""
         maxsat = MaxSatStim(
             model=dem,
@@ -81,7 +80,6 @@ class SinterDecoderMaxSat(Decoder):  # type: ignore[misc]
 
     def decode_via_files(  # noqa: PLR6301
         self,
-        *,
         num_shots: int,  # noqa: ARG002
         num_dets: int,  # noqa: ARG002
         num_obs: int,  # noqa: ARG002
