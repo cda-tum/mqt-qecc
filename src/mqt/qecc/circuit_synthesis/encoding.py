@@ -36,7 +36,7 @@ def heuristic_encoding_circuit(
     Returns:
         The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
     """
-    logging.info("Starting encoding circuit synthesis.")
+    logger.info("Starting encoding circuit synthesis.")
 
     checks, logicals, use_x_checks = _get_matrix_with_fewest_checks(code)
     n_checks = checks.shape[0]
@@ -93,7 +93,7 @@ def gate_optimal_encoding_circuit(
     Returns:
         The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
     """
-    logging.info("Starting optimal encoding circuit synthesis.")
+    logger.info("Starting optimal encoding circuit synthesis.")
     checks, logicals, use_x_checks = _get_matrix_with_fewest_checks(code)
     assert checks is not None
     n_checks = checks.shape[0]
@@ -141,7 +141,7 @@ def depth_optimal_encoding_circuit(
     Returns:
         The synthesized encoding circuit and the qubits that are used to encode the logical qubits.
     """
-    logging.info("Starting optimal encoding circuit synthesis.")
+    logger.info("Starting optimal encoding circuit synthesis.")
     checks, logicals, use_x_checks = _get_matrix_with_fewest_checks(code)
     assert checks is not None
     n_checks = checks.shape[0]

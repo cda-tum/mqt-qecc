@@ -184,7 +184,7 @@ class StabilizerTableau:
 
     def __len__(self) -> int:
         """Return the number of Paulis in the tableau."""
-        return int(len(self.tableau))
+        return len(self.tableau)
 
     def all_commute(self, other: StabilizerTableau) -> bool:
         """Check if all Pauli operators in this stabilizer tableau commute with all Pauli operators in another stabilizer tableau."""

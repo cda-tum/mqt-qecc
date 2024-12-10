@@ -603,7 +603,7 @@ def deterministic_correction(
     for verify_outcome_int in range(1, 2**num_and_stabs):
         verify_outcome = _int_to_int8_array(verify_outcome_int, num_and_stabs)
         logger.info(
-            f"Computing deterministic verification for non-det outcome {verify_outcome}: {verify_outcome_int}/{2** num_and_stabs - 1}"
+            f"Computing deterministic verification for non-det outcome {verify_outcome}: {verify_outcome_int}/{2**num_and_stabs - 1}"
         )
 
         # only consider errors that triggered the verification pattern
