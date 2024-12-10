@@ -19,6 +19,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from ..codes import CSSCode
 
+logger = logging.getLogger(__name__)
+
 
 class NoisyNDFTStatePrepSimulator:
     """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
@@ -245,8 +247,7 @@ class NoisyNDFTStatePrepSimulator:
         while i <= int(np.ceil(shots / batch)) or at_least_min_errors:
             num_logical_errors_batch, discarded_batch = self._simulate_batch(batch)
 
-            logging.log(
-                logging.INFO,
+            logger.info(
                 f"Batch {i}: {num_logical_errors_batch} logical errors and {discarded_batch} discarded shots. {batch - discarded_batch} shots used.",
             )
             p_l_batch = num_logical_errors_batch / (batch - discarded_batch) if discarded_batch != batch else 0.0
