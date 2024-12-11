@@ -258,19 +258,19 @@ def merge_datasets(datasets: list[dict[str, Any]]) -> dict[str, Any]:
     return merged_data
 
 
-def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
+def _merge_datasets_x(datasets_: list[dict[str, Any]]) -> dict[str, Any]:
     """Merges a list of dictionaries into a single dictionary.
 
     The values for the fields "nr_runs", "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
 
     Args:
-        datasets (List[Dict[str, Any]]): A list of dictionaries to be merged.
+        datasets_ (List[Dict[str, Any]]): A list of dictionaries to be merged.
 
     Returns:
         Dict[str, Any]: A dictionary containing the merged data.
     """
     # remove datasets that do not contain x_success_cnt
-    datasets = [data for data in _datasets if "x_success_cnt" in data]
+    datasets = [data for data in datasets_ if "x_success_cnt" in data]
 
     if not datasets:
         return {}
@@ -305,19 +305,19 @@ def _merge_datasets_x(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
     return merged_data
 
 
-def _merge_datasets_z(_datasets: list[dict[str, Any]]) -> dict[str, Any]:
+def _merge_datasets_z(datasets_: list[dict[str, Any]]) -> dict[str, Any]:
     """Merges a list of dictionaries into a single dictionary. The values for the fields "nr_runs".
 
     "x_success_cnt" and "z_success_cnt" are extracted from each dictionary and added together.
 
     Args:
-        datasets (List[Dict[str, Any]]): A list of dictionaries to be merged.
+        datasets_ (List[Dict[str, Any]]): A list of dictionaries to be merged.
 
     Returns:
         Dict[str, Any]: A dictionary containing the merged data.
     """
     # remove datasets that do not contain z_success_cnt
-    datasets = [data for data in _datasets if "z_success_cnt" in data]
+    datasets = [data for data in datasets_ if "z_success_cnt" in data]
 
     if not datasets:
         return {}

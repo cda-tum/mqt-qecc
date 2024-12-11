@@ -61,13 +61,13 @@ def _run_tests(
     if shutil.which("ninja") is None:
         session.install("ninja")
 
-    _extras = ["test", *extras]
+    extras_ = ["test", *extras]
     if "--cov" in posargs:
-        _extras.append("coverage")
+        extras_.append("coverage")
         posargs.append("--cov-config=pyproject.toml")
 
     session.install(*BUILD_REQUIREMENTS, *install_args, env=env)
-    install_arg = f"-ve.[{','.join(_extras)}]"
+    install_arg = f"-ve.[{','.join(extras_)}]"
     session.install("--no-build-isolation", install_arg, *install_args, env=env)
     session.run("pytest", *run_args, *posargs, env=env)
 

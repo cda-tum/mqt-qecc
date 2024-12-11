@@ -48,7 +48,7 @@ def threshold_fit(
     """Compute standard fit function for the threshold."""
     p, ell = variables
     expr = (p - pth) * (ell ** (1 / mu))
-    return cast(float, b0 + b1 * expr + b2 * (expr**2))
+    return cast("float", b0 + b1 * expr + b2 * (expr**2))
 
 
 def calculate_threshold(
