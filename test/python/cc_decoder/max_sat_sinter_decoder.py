@@ -317,6 +317,7 @@ def detector_error_model() -> stim.DetectorErrorModel:
 
 
 def test_decode_shots_bit_packed(detector_error_model: stim.DetectorErrorModel) -> None:
+    """ test bit packed shot decoding """
     bit_packed_shots = np.array([[0, 0]]).astype(np.uint8)
     max_sat_stim = MaxSatStim(detector_error_model)
     sinter_decoder = SinterCompiledDecoderMaxSat(max_sat_stim)
@@ -327,6 +328,7 @@ def test_decode_shots_bit_packed(detector_error_model: stim.DetectorErrorModel) 
 
 
 def test_decode_via_files(detector_error_model: stim.DetectorErrorModel) -> None:
+    """ test via file decoding """
     decoder = SinterDecoderMaxSat()
     result = decoder.compile_decoder_for_dem(detector_error_model)
     assert result.decoder is not None
