@@ -54,7 +54,7 @@ class MaxSatStim:
     @staticmethod
     def weight_function(x: np.float64) -> np.float64:
         """Return log likelihood weighting."""
-        return np.log((1 - x) / x)
+        return np.log([(1 - x) / x])[0].astype(np.float64)
 
     def decode(self, syndrome: NDArray[int]) -> tuple[NDArray[int], int]:
         """Decode the syndrome and return a prediction of which observables were flipped.
