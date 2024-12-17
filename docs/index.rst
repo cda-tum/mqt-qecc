@@ -28,6 +28,7 @@ please let us know at our :doc:`Support <Support>` page or by reaching out to us
     LightsOutDecoder
     EccFramework
     StatePrep
+    Encoders
     Publications
 
  .. toctree::

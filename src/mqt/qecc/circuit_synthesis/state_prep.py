@@ -132,7 +132,7 @@ class StatePrepCircuit:
             return faults
 
         if num_errors == 1:
-            logging.info("Computing fault set for 1 error.")
+            logger.info("Computing fault set for 1 error.")
             dag = circuit_to_dag(self.circ)
             for node in dag.front_layer():  # remove hadamards
                 dag.remove_op_node(node)
@@ -152,7 +152,7 @@ class StatePrepCircuit:
                 non_propagated_single_errors = np.eye(self.num_qubits, dtype=np.int8)
                 self.z_fault_sets_unreduced[1] = np.vstack((faults, non_propagated_single_errors))
         else:
-            logging.info(f"Computing fault set for {num_errors} errors.")
+            logger.info(f"Computing fault set for {num_errors} errors.")
             self.compute_fault_set(num_errors - 1, x_errors, reduce=reduce)
             if x_errors:
                 faults = self.x_fault_sets_unreduced[num_errors - 1]
@@ -178,7 +178,7 @@ class StatePrepCircuit:
 
         # remove stabilizer equivalent faults
         if reduce:
-            logging.info("Removing stabilizer equivalent faults.")
+            logger.info("Removing stabilizer equivalent faults.")
             faults = _remove_stabilizer_equivalent_faults(faults, stabs)
         if x_errors:
             self.x_fault_sets[num_errors] = faults
@@ -220,7 +220,7 @@ class StatePrepCircuit:
 
     def _set_max_errors(self) -> None:
         if self.code.distance == 2:
-            logging.warning("Code distance is 2, assuming error detection code.")
+            logger.warning("Code distance is 2, assuming error detection code.")
             self.error_detection_code = True
 
         self.max_errors = (self.code.distance - 1) // 2 if not self.error_detection_code else self.code.distance // 2
@@ -251,7 +251,7 @@ def heuristic_prep_circuit_constrained(
         optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
         zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
     """
-    logging.info("Starting heuristic state preparation.")
+    logger.info("Starting heuristic state preparation.")
     if code.Hx is None or code.Hz is None:
         msg = "The code must have both X and Z stabilizers defined."
         raise InvalidCSSCodeError(msg)
@@ -388,7 +388,7 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
         optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
         zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
     """
-    logging.info("Starting heuristic state preparation.")
+    logger.info("Starting heuristic state preparation.")
     if code.Hx is None or code.Hz is None:
         msg = "The code must have both X and Z stabilizers defined."
         raise InvalidCSSCodeError(msg)
@@ -560,12 +560,12 @@ def all_gate_optimal_verification_stabilizers(
 
     # Find the optimal circuit for every number of errors in the preparation circuit
     for num_errors in range(1, max_errors + 1):
-        logging.info(f"Finding verification stabilizers for {num_errors} errors")
+        logger.info(f"Finding verification stabilizers for {num_errors} errors")
         faults = fault_sets[num_errors]
         assert faults is not None
 
         if len(faults) == 0:
-            logging.info(f"No non-trivial faults for {num_errors} errors")
+            logger.info(f"No non-trivial faults for {num_errors} errors")
             layers[num_errors - 1] = []
             continue
         # Start with maximal number of ancillas
@@ -575,7 +575,7 @@ def all_gate_optimal_verification_stabilizers(
         min_cnots: int = np.min(np.sum(checks, axis=1))
         max_cnots: int = np.sum(checks)
 
-        logging.info(
+        logger.info(
             f"Finding verification stabilizers for {num_errors} errors with {min_cnots} to {max_cnots} CNOTs using {num_anc} ancillas"
         )
 
@@ -596,21 +596,21 @@ def all_gate_optimal_verification_stabilizers(
             measurements = None
 
         if measurements is None:
-            logging.info(f"No verification stabilizers found for {num_errors} errors")
+            logger.info(f"No verification stabilizers found for {num_errors} errors")
             return []  # No solution found
 
-        logging.info(f"Found verification stabilizers for {num_errors} errors with {num_cnots} CNOTs")
+        logger.info(f"Found verification stabilizers for {num_errors} errors with {num_cnots} CNOTs")
         # If any measurements are unused we can reduce the number of ancillas at least by that
         measurements = [m for m in measurements if np.any(m)]
         num_anc = len(measurements)
         # Iterate backwards to find the minimal number of cnots
-        logging.info(f"Finding minimal number of CNOTs for {num_errors} errors")
+        logger.info(f"Finding minimal number of CNOTs for {num_errors} errors")
 
         def search_cnots(num_cnots: int) -> list[npt.NDArray[np.int8]] | None:
             return verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors)  # noqa: B023
 
         while num_cnots - 1 > 0:
-            logging.info(f"Trying {num_cnots - 1} CNOTs")
+            logger.info(f"Trying {num_cnots - 1} CNOTs")
 
             cnot_opt = run_with_timeout(
                 search_cnots,
@@ -622,12 +622,12 @@ def all_gate_optimal_verification_stabilizers(
                 measurements = cnot_opt
             else:
                 break
-        logging.info(f"Minimal number of CNOTs for {num_errors} errors is: {num_cnots}")
+        logger.info(f"Minimal number of CNOTs for {num_errors} errors is: {num_cnots}")
 
         # If the number of CNOTs is minimal, we can reduce the number of ancillas
-        logging.info(f"Finding minimal number of ancillas for {num_errors} errors")
+        logger.info(f"Finding minimal number of ancillas for {num_errors} errors")
         while num_anc - 1 > 0:
-            logging.info(f"Trying {num_anc - 1} ancillas")
+            logger.info(f"Trying {num_anc - 1} ancillas")
 
             def search_anc(num_anc: int) -> list[npt.NDArray[np.int8]] | None:
                 return verification_stabilizers(sp_circ, faults, num_anc, num_cnots, x_errors=x_errors)  # noqa: B023
@@ -642,7 +642,7 @@ def all_gate_optimal_verification_stabilizers(
                 measurements = anc_opt
             else:
                 break
-        logging.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
+        logger.info(f"Minimal number of ancillas for {num_errors} errors is: {num_anc}")
         if not return_all_solutions:
             layers[num_errors - 1] = [measurements]
         else:
@@ -664,7 +664,7 @@ def _verification_circuit(
     full_fault_tolerance: bool = True,
     flag_first_layer: bool = False,
 ) -> QuantumCircuit:
-    logging.info("Finding verification stabilizers for the state preparation circuit")
+    logger.info("Finding verification stabilizers for the state preparation circuit")
     layers_1 = verification_stabs_fun(sp_circ, sp_circ.zero_state, None)
     measurements_1 = [measurement for layer in layers_1 for measurement in layer]
 
@@ -779,7 +779,7 @@ def heuristic_verification_stabilizers(
         find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
         additional_faults: Faults to verify in addition to the faults propagating in the state preparation circuit.
     """
-    logging.info("Finding verification stabilizers using heuristic method")
+    logger.info("Finding verification stabilizers using heuristic method")
     max_errors = sp_circ.max_errors
     layers: list[list[npt.NDArray[np.int8]]] = [[] for _ in range(max_errors)]
     sp_circ.compute_fault_sets()
@@ -792,10 +792,10 @@ def heuristic_verification_stabilizers(
     )
     orthogonal_checks = sp_circ.z_checks if x_errors else sp_circ.x_checks
     for num_errors in range(1, max_errors + 1):
-        logging.info(f"Finding verification stabilizers for {num_errors} errors")
+        logger.info(f"Finding verification stabilizers for {num_errors} errors")
         faults = fault_sets[num_errors]
         assert faults is not None
-        logging.info(f"There are {len(faults)} faults")
+        logger.info(f"There are {len(faults)} faults")
         if len(faults) == 0:
             layers[num_errors - 1] = []
             continue
@@ -855,16 +855,16 @@ def _heuristic_layer(
     candidate_checks = checks[candidates]
     non_candidate_checks = checks[non_candidates]
 
-    logging.info("Converting Stabilizer Checks to covering sets")
+    logger.info("Converting Stabilizer Checks to covering sets")
     candidate_sets_ordered = [(_covers(s, faults), s, i) for i, s in enumerate(candidate_checks)]
     mapping = defaultdict(list)
     for cand, _, i in candidate_sets_ordered:
         mapping[cand].append(candidate_checks[i])
     candidate_sets = {cand for cand, _, _ in candidate_sets_ordered}
 
-    logging.info("Finding initial set cover")
+    logger.info("Finding initial set cover")
     cover = _set_cover(len(faults), candidate_sets, mapping)
-    logging.info(f"Initial set cover has {len(cover)} sets")
+    logger.info(f"Initial set cover has {len(cover)} sets")
 
     def cost(cover: set[frozenset[int]]) -> tuple[int, int]:
         cost1 = len(cover)
@@ -881,7 +881,7 @@ def _heuristic_layer(
         # add all symmetric differences to candidates
         candidate_sets = _extend_covering_sets(candidate_sets, max_covering_sets, mapping)
         new_cover = _set_cover(len(faults), candidate_sets, mapping)
-        logging.info(f"New Covering set has {len(new_cover)} sets")
+        logger.info(f"New Covering set has {len(new_cover)} sets")
         new_cost1 = len(new_cover)
         new_cost2 = sum(np.sum(mapping[stab]) for stab in new_cover)
         if new_cost1 < cost1 or (new_cost1 == cost1 and new_cost2 < cost2):
@@ -894,9 +894,9 @@ def _heuristic_layer(
         prev_candidates = candidate_sets
 
     # reduce stabilizers in cover
-    logging.info(f"Found covering set of size {len(cover)}.")
+    logger.info(f"Found covering set of size {len(cover)}.")
     if find_coset_leaders and len(non_candidates) > 0:
-        logging.info("Finding coset leaders.")
+        logger.info("Finding coset leaders.")
         measurements = []
         for c in cover:
             leaders = [coset_leader(m, non_candidate_checks) for m in mapping[c]]
@@ -1113,7 +1113,7 @@ def _remove_trivial_faults(
     faults: npt.NDArray[np.int8], stabs: npt.NDArray[np.int8], num_errors: int
 ) -> npt.NDArray[np.int8]:
     faults = faults.copy()
-    logging.info("Removing trivial faults.")
+    logger.info("Removing trivial faults.")
     max_w = 1
     for i, fault in enumerate(faults):
         faults[i] = coset_leader(fault, stabs)
@@ -1131,7 +1131,7 @@ def _remove_stabilizer_equivalent_faults(
     stabilizers = stabilizers.copy()
     removed = set()
 
-    logging.debug(f"Removing stabilizer equivalent faults from {len(faults)} faults.")
+    logger.debug(f"Removing stabilizer equivalent faults from {len(faults)} faults.")
     for i, f1 in enumerate(faults):
         if i in removed:
             continue
@@ -1148,7 +1148,7 @@ def _remove_stabilizer_equivalent_faults(
             if mod2.rank(stabs_ext2) == mod2.rank(stabs_ext1):
                 removed.add(j + i + 1)
 
-    logging.debug(f"Removed {len(removed)} stabilizer equivalent faults.")
+    logger.debug(f"Removed {len(removed)} stabilizer equivalent faults.")
     indices = list(set(range(len(faults))) - removed)
     if len(indices) == 0:
         return np.array([])

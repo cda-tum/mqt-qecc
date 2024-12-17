@@ -120,7 +120,7 @@ def test_heuristic_prep_consistent(code: CSSCode, request) -> None:  # type: ign
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
 def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
@@ -140,7 +140,7 @@ def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: 
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
 def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
@@ -159,7 +159,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
     assert eq_span(np.vstack((code.Hz, code.Lz)), z)
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
 def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Test synthesis of the plus state."""
@@ -227,7 +227,7 @@ def test_plus_state_heuristic(code: CSSCode, request) -> None:  # type: ignore[n
         assert not np.array_equal(z, x_zero)
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_optimal_steane_verification_circuit(steane_code_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification circuit for the Steane code is correct."""
     circ = steane_code_sp
@@ -281,7 +281,7 @@ def test_heuristic_steane_verification_circuit(steane_code_sp: StatePrepCircuit)
     assert circ_ver.depth() == np.sum(ver_stabs) + circ.circ.depth() + 1  # 1 for the measurement
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification is also correct for higher distance.
 
@@ -355,7 +355,7 @@ def test_not_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     assert circ_ver.num_nonlocal_gates() == n_cnots + circ.circ.num_nonlocal_gates()
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification is also correct for higher distance.
 
@@ -383,7 +383,7 @@ def test_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     assert circ_ver_full_ft.depth() > circ_ver_x_ft.depth()
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_error_detection_code() -> None:
     """Test that different circuits are obtained when using an error detection code."""
     code = CSSCode.from_code_name("carbon")

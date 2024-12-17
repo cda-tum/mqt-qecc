@@ -53,7 +53,7 @@ def iterative_search_with_timeout(
     max_timeout: int,
     param_factor: float = 2,
     timeout_factor: float = 2,
-) -> None | tuple[None | QuantumCircuit, int]:
+) -> tuple[QuantumCircuit | None, int] | None:
     """Geometrically increases the parameter and timeout until a result is found or the maximum timeout is reached.
 
     Args:
@@ -69,7 +69,7 @@ def iterative_search_with_timeout(
     curr_param = min_param
     while curr_timeout <= max_timeout:
         while curr_param <= max_param:
-            logging.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
+            logger.info(f"Running iterative search with param={curr_param} and timeout={curr_timeout}")
             res = run_with_timeout(fun, curr_param, timeout=curr_timeout)
             if res is not None and (not isinstance(res, str) or res != "timeout"):
                 return res, curr_param
@@ -123,7 +123,7 @@ def heuristic_gaussian_elimination(
         costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
         if np.all(costs_unused >= 0) or len(used_columns) == matrix.shape[1]:  # no more reductions possible
             if used_columns == []:  # local minimum => get out by making matrix triangular
-                logging.warning("Local minimum reached. Making matrix triangular.")
+                logger.warning("Local minimum reached. Making matrix triangular.")
                 matrix = mod2.row_echelon(matrix, full=True)[0]
                 costs = np.array([
                     [np.sum((matrix[:, i] + matrix[:, j]) % 2) for j in range(matrix.shape[1])]
@@ -160,8 +160,8 @@ def gaussian_elimination_min_column_ops(
     coupling_map: rx.PyGraph | None = None,
 ) -> (
     tuple[npt.NDArray[np.int8], list[tuple[int, int]]]
-    | None
     | tuple[npt.NDArray[np.int8], list[tuple[int, int]], dict[int, int]]
+    | None
 ):
     """Perform Gaussian elimination on the column space of a matrix using at most `max_eliminations` eliminations.
 
@@ -253,8 +253,8 @@ def gaussian_elimination_min_parallel_eliminations(
     coupling_map: rx.PyGraph | None = None,
 ) -> (
     tuple[npt.NDArray[np.int8], list[tuple[int, int]]]
-    | None
     | tuple[npt.NDArray[np.int8], list[tuple[int, int]], dict[int, int]]
+    | None
 ):
     """Perform Gaussian elimination on the column space of a matrix using at most `max_parallel_steps` parallel column elimination steps.
 
@@ -539,12 +539,12 @@ def optimal_elimination(
             return None
         reduced, eliminations, mapping = reduced_and_mapping
 
-    logging.info(f"Solution found with param {curr_param}")
+    logger.info(f"Solution found with param {curr_param}")
     # Solving a SAT instance is much faster than proving unsat in this case
     # so we iterate backwards until we find an unsat instance or hit a timeout
-    logging.info("Trying to minimize param")
+    logger.info("Trying to minimize param")
     while True:
-        logging.info(f"Trying param {curr_param - 1}")
+        logger.info(f"Trying param {curr_param - 1}")
         opt_res = run_with_timeout(fun, curr_param - 1, timeout=max_timeout)
         if opt_res is None or (isinstance(opt_res, str) and opt_res == "timeout"):
             break
@@ -556,7 +556,7 @@ def optimal_elimination(
             reduced, eliminations, mapping = opt_res
         curr_param -= 1
 
-    logging.info(f"Optimal param: {curr_param}")
+    logger.info(f"Optimal param: {curr_param}")
     return reduced, eliminations, mapping
 
 
