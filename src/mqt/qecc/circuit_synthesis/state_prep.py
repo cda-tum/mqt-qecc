@@ -82,10 +82,12 @@ class StatePrepCircuit:
             self.z_checks = np.pad(self.z_checks, ((0, 0), (0, n_anc)))
             if zero_state:
                 self.z_checks = np.pad(self.z_checks, ((0, n_anc), (0, 0)))
-                self.z_checks[-n_anc:, -n_anc:] = np.eye(n_anc, dtype=np.int8)
+                if n_anc > 0:
+                    self.z_checks[-n_anc:, -n_anc:] = np.eye(n_anc, dtype=np.int8)
             else:
                 self.x_checks = np.pad(self.x_checks, ((0, n_anc), (0, 0)))
-                self.x_checks[-n_anc:, -n_anc:] = np.eye(n_anc, dtype=np.int8)
+                if n_anc > 0:
+                    self.x_checks[-n_anc:, -n_anc:] = np.eye(n_anc, dtype=np.int8)
 
             # revert mapping
             assert mapping is not None
