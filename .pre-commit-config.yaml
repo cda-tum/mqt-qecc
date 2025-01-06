@@ -87,7 +87,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/crate-ci/typos
-    rev: v1.29.4
+    rev: dictgen-v0.3.1
     hooks:
       - id: typos
 
