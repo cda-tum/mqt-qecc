@@ -118,7 +118,7 @@ class NoisyDFTStatePrepSimulator:
             self.decoder.generate_z_lut()
 
         # create protocol
-        self.protocol = qs.Protocol()
+        self.protocol = qs.Protocol(fault_tolerant=True)
         self._create_det_protocol(state_prep_circuit, verifications, code)
 
     def _create_det_protocol(
