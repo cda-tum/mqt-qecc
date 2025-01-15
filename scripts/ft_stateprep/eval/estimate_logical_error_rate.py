@@ -29,7 +29,7 @@ def main() -> None:
         help="Code for which to estimate logical error rate. Available codes: " + ", ".join(available_codes),
     )
     parser.add_argument("-p", "--p_error", type=float, help="Physical error rate")
-    parser.add_argument("-p_idle", "--p_idle", type=float, default=None, help="Idling error rate")
+    parser.add_argument("-p_idle_factor", "--p_idle_factor", type=float, default=0.01, help="Idling error rate")
     parser.add_argument("--zero_state", default=True, action="store_true", help="Synthesize logical |0> state.")
     parser.add_argument(
         "--plus_state", default=False, dest="zero_state", action="store_false", help="Synthesize logical |+> state."
@@ -95,7 +95,7 @@ def main() -> None:
         qc,
         code=code,
         p=args.p_error,
-        p_idle=args.p_idle,
+        p_idle=args.p_idle_factor * args.p_error,
         zero_state=args.zero_state,
         parallel_gates=not args.no_parallel_gates,
     )
