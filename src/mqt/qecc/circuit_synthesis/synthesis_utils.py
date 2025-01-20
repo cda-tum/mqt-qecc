@@ -575,13 +575,20 @@ def measure_flagged(
         measure_two_flagged_4(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 6 and t == 2:
-        measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
+    if w == 6:
+        if t == 2:
+            measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
+            return
+        measure_w_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 8 and t == 2:
-        measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
+    if w == 8:
+        if t == 2:
+            measure_two_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
+            return
+        if t == 3:
+            measure_three_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
+            return
 
     if t == 2:
         measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
@@ -644,7 +651,7 @@ def measure_two_flagged(
         measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
         return
     if len(stab) == 8:
-        measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
+        measure_two_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
     n_flags = (len(stab) + 1) // 2 - 1
@@ -796,7 +803,59 @@ def measure_flagged_6(
     qc.measure(ancilla, measurement_bit)
 
 
-def measure_flagged_8(
+def measure_w_flagged_6(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+) -> None:
+    """Measure a 6-flagged stabilizer using an optimized scheme."""
+    assert len(stab) == 6
+    flag = AncillaRegister(3)
+    meas = ClassicalRegister(3)
+
+    qc.add_register(flag)
+    qc.add_register(meas)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[0], z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[1], z_measurement)
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
+
+    _flag_init(qc, flag[2], z_measurement)
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+    _flag_measure(qc, flag[0], meas[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+    _flag_measure(qc, flag[2], meas[2], z_measurement)
+
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+    _flag_measure(qc, flag[1], meas[1], z_measurement)
+
+    _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+
+    if not z_measurement:
+        qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_two_flagged_8(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
@@ -842,6 +901,65 @@ def measure_flagged_8(
 
     _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
     _flag_measure(qc, flag[1], meas[1], z_measurement)
+
+    _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
+
+    if not z_measurement:
+        qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_three_flagged_8(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+) -> None:
+    """Measure an 8-flagged stabilizer using an optimized scheme."""
+    assert len(stab) == 8
+    flag = AncillaRegister(4)
+    meas = ClassicalRegister(4)
+    qc.add_register(flag)
+    qc.add_register(meas)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+        _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[0], z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+
+    _flag_init(qc, flag[1], z_measurement)
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
+
+    _flag_init(qc, flag[2], z_measurement)
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
+
+    _flag_init(qc, flag[3], z_measurement)
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+    _flag_measure(qc, flag[0], meas[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+    _flag_measure(qc, flag[2], meas[2], z_measurement)
+
+    _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[6], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+    _flag_measure(qc, flag[1], meas[1], z_measurement)
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+    _flag_measure(qc, flag[3], meas[3], z_measurement)
 
     _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
 

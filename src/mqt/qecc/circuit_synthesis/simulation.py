@@ -135,7 +135,7 @@ class NoisyNDFTStatePrepSimulator:
                     ctrls.append(qubit)
                     if initialized[qubit]:
                         stim_circuit.append_operation("H", [qubit])
-                        # stim_circuit.append_operation("DEPOLARIZE1", [qubit], [2 * self.p / 3])
+                        stim_circuit.append_operation("DEPOLARIZE1", [qubit], [self.p])
                         if not self.parallel_gates:
                             idle_error([qubit])
                         else:
