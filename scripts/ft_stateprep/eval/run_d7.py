@@ -1,0 +1,40 @@
+"""Estimate logical error rate for d=7 square-octagon color code zero state preparation circuit for a given physical error rate."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from qiskit import QuantumCircuit
+
+from mqt.qecc.circuit_synthesis import (
+    NoisyNDFTStatePrepSimulator,
+    gate_optimal_prep_circuit,
+    gate_optimal_verification_circuit,
+    heuristic_prep_circuit,
+    heuristic_verification_circuit,
+    naive_verification_circuit,
+)
+import pickle
+from mqt.qecc.codes import HexagonalColorCode, SquareOctagonColorCode
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Estimate logical error rate for CSS state preparation circuits")
+    parser.add_argument("-p", "--p_error", type=float, help="Physical error rate")
+    parser.add_argument("-p_idle_factor", "--p_idle_factor", type=float, default=0.01, help="Idling error rate")
+    parser.add_argument("--naive_ver", default=False, action="store_true", help="Use naive verification")
+    parser.add_argument("-n", "--n_errors", type=int, default=500, help="Number of errors to sample")
+
+    args = parser.parse_args()
+    code = SquareOctagonColorCode(7)
+    prefix = (Path(__file__) / "../circuits/").resolve()
+    circ_name = "zero_ft_heuristic_mixed.qasm" if not args.naive_ver else "zero_ft_naive.qasm"
+    qc = QuantumCircuit.from_qasm_file(prefix / circ_name)
+
+    lut_path = (Path(__file__) / "../luts/")
+    with open(lut_path / "decoder_488_7.pickle", "rb") as f:
+        lut = pickle.load(f)
+    sim = NoisyNDFTStatePrepSimulator(qc, code, lut=lut, p=args.p_error, p_idle=args.p_idle_factor*args.p_error)
+    res = sim.logical_error_rate(min_errors=args.n_errors)
+    print(",".join([str(x) for x in res]))
+        
