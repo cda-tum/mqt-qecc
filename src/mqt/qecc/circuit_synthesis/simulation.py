@@ -33,6 +33,7 @@ class NoisyNDFTStatePrepSimulator:
         p_idle: float | None = None,
         zero_state: bool = True,
         parallel_gates: bool = True,
+        decoder: LutDecoder | None = None,
     ) -> None:
         """Initialize the simulator.
 
@@ -43,6 +44,7 @@ class NoisyNDFTStatePrepSimulator:
             p_idle: Idling error rate. If None, it is set to p.
             zero_state: Whether thezero state is prepared or nor.
             parallel_gates: Whether to allow for parallel execution of gates.
+            decoder: The decoder to use.
         """
         if code.Hx is None or code.Hz is None:
             msg = "The code must have both X and Z checks."
@@ -64,7 +66,10 @@ class NoisyNDFTStatePrepSimulator:
         self.parallel_gates = parallel_gates
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
-        self.decoder = LutDecoder(code)
+        if decoder is None:
+            self.decoder = LutDecoder(code)
+        else:
+            self.decoder = decoder
         self.set_p(p, p_idle)
 
     def set_p(self, p: float, p_idle: float | None = None) -> None:
@@ -403,16 +408,27 @@ class LutDecoder:
         """
         n_qubits = checks.shape[1]
 
-        syndromes = defaultdict(list)
         lut: dict[bytes, npt.NDArray[np.int8]] = {}
+        syndrome_weights = {}
+
         for i in range(2**n_qubits):
+            if i % 100000000 == 0:
+                print(i)
             state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
             syndrome = checks @ state % 2
-            syndromes[syndrome.astype(np.int8).tobytes()].append(state)
+            syndrome_bytes = syndrome.astype(np.int8).tobytes()
+            val = syndrome_weights.get(syndrome_bytes)
+            weight = state.sum()
+            if val is None:
+                syndrome_weights[syndrome_bytes] = (state, weight)
+                continue
+            _, w = val
+            
+            if weight < w:
+                syndrome_weights[syndrome_bytes] = (state, weight)
 
-        # Sort according to weight
-        for key, v in syndromes.items():
-            lut[key] = np.array(min(v, key=np.sum))
+        for key, v in syndrome_weights.items():
+            lut[key] = np.array(v[0])
 
         return lut
 
