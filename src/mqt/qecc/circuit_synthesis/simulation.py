@@ -412,8 +412,6 @@ class LutDecoder:
         syndrome_weights = {}
 
         for i in range(2**n_qubits):
-            if i % 100000000 == 0:
-                print(i)
             state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
             syndrome = checks @ state % 2
             syndrome_bytes = syndrome.astype(np.int8).tobytes()

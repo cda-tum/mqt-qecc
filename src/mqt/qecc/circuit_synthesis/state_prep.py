@@ -987,7 +987,7 @@ def _remove_stabilizer_equivalent_faults(
     return faults[indices]
 
 
-def naive_verification_circuit(sp_circ: StatePrepCircuit, flag_first_layer:Bool=True) -> QuantumCircuit:
+def naive_verification_circuit(sp_circ: StatePrepCircuit, flag_first_layer:bool=True) -> QuantumCircuit:
     """Naive verification circuit for a state preparation circuit."""
     if sp_circ.code.Hx is None or sp_circ.code.Hz is None:
         msg = "Code must have stabilizers defined."
