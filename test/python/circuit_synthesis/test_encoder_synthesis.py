@@ -108,7 +108,7 @@ def test_heuristic_encoding_consistent(code: CSSCode, request) -> None:  # type:
     _assert_correct_encoding_circuit(encoder, encoding_qubits, code)
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
 def test_gate_optimal_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that `gate_optimal_encoding_circuit` returns a valid circuit with the correct stabilizers."""
@@ -120,7 +120,7 @@ def test_gate_optimal_encoding_consistent(code: CSSCode, request) -> None:  # ty
     _assert_correct_encoding_circuit(encoder, encoding_qubits, code)
 
 
-@pytest.mark.skipif(os.environ.get("CI", False) and sys.platform == "win32", reason="Too slow for CI on Windows")
+@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 @pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
 def test_depth_optimal_encoding_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that `gate_optimal_encoding_circuit` returns a valid circuit with the correct stabilizers."""
