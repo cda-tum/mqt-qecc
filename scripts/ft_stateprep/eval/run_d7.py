@@ -32,7 +32,7 @@ def main() -> None:
         lut = pickle.load(f)
     sim = NoisyNDFTStatePrepSimulator(qc, code, decoder=lut, p=args.p_error, p_idle=args.p_idle_factor * args.p_error)
     res = sim.logical_error_rate(min_errors=args.n_errors)
-    print(",".join([str(x) for x in [args.p, *res]]))
+    print(",".join([str(x) for x in [args.p_error, *res]]))
 
 
 if __name__ == "__main__":
