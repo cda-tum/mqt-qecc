@@ -17,7 +17,7 @@ jobs:
   # whether the workflow is triggered from a PR, a push to main, or a release, respectively.
   python-packaging:
     name: 🐍 Packaging
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.5
+    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.7
     with:
       # Do not include local version information on pushes to main to facilitate TestPyPI uploads.
       no-local-version: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
