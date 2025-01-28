@@ -251,6 +251,7 @@ ignore = [
     "PLC0415", # Import should be at top of file
     "PT004",   # Incorrect, just usefixtures instead.
     "S101",    # Use of assert detected
+    "T201",    # avoid removing print statements
 ]
 isort.required-imports = ["from __future__ import annotations"]
 
