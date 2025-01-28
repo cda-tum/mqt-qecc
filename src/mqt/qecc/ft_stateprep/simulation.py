@@ -30,6 +30,7 @@ class NoisyNDFTStatePrepSimulator:
         p: float,
         zero_state: bool = True,
         parallel_gates: bool = True,
+        check_logical_0: bool = False,
     ) -> None:
         """Initialize the simulator.
 
@@ -39,6 +40,7 @@ class NoisyNDFTStatePrepSimulator:
             p: The error rate.
             zero_state: Whether thezero state is prepared or nor.
             parallel_gates: Whether to allow for parallel execution of gates.
+            check_logical_0: Whether to check flag measurements or the logical state
         """
         if code.Hx is None or code.Hz is None:
             msg = "The code must have both X and Z checks."
@@ -60,6 +62,7 @@ class NoisyNDFTStatePrepSimulator:
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
         self.decoder = LutDecoder(code)
+        self.check_logical_0 = check_logical_0
         self.set_p(p)
 
     def set_p(self, p: float) -> None:
@@ -270,7 +273,14 @@ class NoisyNDFTStatePrepSimulator:
 
         # Filter events where the verification circuit flagged
         verification_measurements = self.x_verification_measurements + self.z_verification_measurements
-        index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
+        if self.check_logical_0:
+            # Compute dot products for all rows
+            dot_products = np.dot(detection_events[:, verification_measurements], self.code.Hx.T) %2
+
+            # Find rows where all dot products are zero
+            index_array = np.where(np.all(dot_products == 0, axis=1))[0]
+        else:
+            index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
         filtered_events = detection_events[index_array].astype(np.int8)
 
         if len(filtered_events) == 0:  # All events were discarded
