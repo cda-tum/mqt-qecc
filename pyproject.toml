@@ -56,6 +56,9 @@ dependencies = [
     "numba>=0.59; python_version > '3.11'",
     "numba>=0.57; python_version <= '3.11'",
     "pymatching>=2.2.1",
+    "qsample>=0.0.2",
+    "urllib3>=1.26.20", # Required by qsample (to be removed)
+    "fastcore>=1.7.10" # Required by qsample (to be removed)
 ]
 dynamic = ["version"]
 
@@ -154,10 +157,20 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
-    "error",
-    "ignore:.*pkg_resources.*:DeprecationWarning:",
-    "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
-    'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
+  "error",
+  "ignore:.*pkg_resources.*:DeprecationWarning:",
+  "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
+  'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
+  'ignore::DeprecationWarning:.*(simpleeval).*',
+  'ignore::RuntimeWarning:.*(qsample).*',
+  'ignore:.*invalid escape sequence.*::.*qsample.*',
+  'ignore:.*invalid escape sequence.*::.*latextools.*',
+  # Qiskit 1.3 deprecations
+  'ignore:.*``qiskit.dagcircuit.dagcircuit.DAGCircuit.*`` is deprecated as of qiskit 1.3.0.*:DeprecationWarning:',
+  'ignore:.*``qiskit.circuit.instruction.Instruction.condition`` is deprecated as of qiskit 1.3.0.*:DeprecationWarning:',
+  'ignore:.*Conditioned gates in qasm2 will be loaded as an IfElseOp starting in Qiskit 2.0.*:FutureWarning:',
+  'ignore:.*``qiskit.circuit.singleton.*`` is deprecated as of qiskit 1.3.0.*:DeprecationWarning:',
+  'ignore:.*``qiskit.circuit.instruction.Instruction.c_if.*`` is deprecated as of qiskit 1.3.0.*:DeprecationWarning:',
 ]
 
 [tool.coverage]
@@ -186,7 +199,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
 ignore_missing_imports = true
 
 
@@ -236,20 +249,17 @@ extend-select = [
     "SLOT",        # flake8-slots
     "SIM",         # flake8-simplify
     "T20",         # flake8-print
-    "TCH",         # flake8-type-checking
+    "TC",          # flake8-type-checking
     "TID251",      # flake8-tidy-imports.banned-api
     "TRY",         # tryceratops
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
 ]
 ignore = [
-    "ANN101",  # Missing type annotation for `self` in method
-    "ANN102",  # Missing type annotation for `cls` in classmethod
     "ISC001",  # Conflicts with formatter
     "PLR09",   # Too many <...>
     "PLR2004", # Magic value used in comparison
     "PLC0415", # Import should be at top of file
-    "PT004",   # Incorrect, just usefixtures instead.
     "S101",    # Use of assert detected
     "T201",    # avoid removing print statements
 ]
@@ -298,7 +308,7 @@ archs = "auto64"
 test-command = "python -c \"from mqt import qecc\""
 test-skip = ["cp313*"] # skip testing on Python 3.13 until our dependencies are ready
 build-frontend = "build[uv]"
-free-threaded-support = true
+enable = ["cpython-freethreading"]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 manylinux-ppc64le-image = "manylinux_2_28"
