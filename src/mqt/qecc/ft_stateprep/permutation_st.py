@@ -30,6 +30,33 @@ def get_steane_prep_circ() -> QuantumCircuit:
     circ.cx(5,6)
     return circ
 
+def get_steane_prep_circ_twice() -> QuantumCircuit:
+    """Function that builds up a state preparation circuit for the Steane code."""
+    circ = QuantumCircuit(14)
+    circ.h(0)
+    circ.h(1)
+    circ.h(3)
+    circ.cx(0,6)
+    circ.cx(1,2)
+    circ.cx(3,5)
+    circ.cx(0,4)
+    circ.cx(1,5)
+    circ.cx(0,2)
+    circ.cx(3,4)
+    circ.cx(5,6)
+    circ.h(7)
+    circ.h(8)
+    circ.h(10)
+    circ.cx(7,13)
+    circ.cx(8,9)
+    circ.cx(10,12)
+    circ.cx(7,11)
+    circ.cx(8,12)
+    circ.cx(7,9)
+    circ.cx(10,11)
+    circ.cx(12,13)
+    return circ
+
 def get_steane_css_object() -> CSSCode:
     """Return the Steane Code as CSS object."""
     distance: int = 3
