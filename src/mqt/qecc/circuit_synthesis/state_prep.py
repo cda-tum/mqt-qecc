@@ -104,7 +104,8 @@ class StatePrepCircuit:
             logger.info("Computing fault set for 1 error.")
             dag = circuit_to_dag(self.circ)
             for node in dag.front_layer():  # remove hadamards
-                dag.remove_op_node(node)
+                if node.name == "h":
+                    dag.remove_op_node(node)
             fault_list = []
             # propagate every error before a control
             nodes = list(dag.topological_op_nodes())
