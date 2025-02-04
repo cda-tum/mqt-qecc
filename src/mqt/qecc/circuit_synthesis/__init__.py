@@ -17,6 +17,7 @@ from .state_prep import (
     naive_verification_circuit,
 )
 from .state_prep_det import DeterministicVerification, DeterministicVerificationHelper
+from .syndrome_extraction import OptimalSyndromeExtractionEncoder
 from .synthesis_utils import qiskit_to_stim_circuit
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "LutDecoder",
     "NoisyDFTStatePrepSimulator",
     "NoisyNDFTStatePrepSimulator",
+    "OptimalSyndromeExtractionEncoder",
     "StatePrepCircuit",
     "depth_optimal_encoding_circuit",
     "depth_optimal_prep_circuit",
