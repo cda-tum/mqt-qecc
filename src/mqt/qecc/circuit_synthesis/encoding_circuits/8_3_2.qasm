@@ -1,4 +1,4 @@
-# Encoding qubits: 2, 3, 5
+# Encoding qubits: 0, 1, 3
 
 OPENQASM 2.0;
 include "qelib1.inc";
