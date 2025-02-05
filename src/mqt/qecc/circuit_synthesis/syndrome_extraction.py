@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from ..codes import CSSCode
 
 
-class OptimalSyndromeExtractionEncoder:
-    """Encoder instance for optimal synthesis of decoding circuits for a CSS code.
+class DepthOptimalSyndromeExtractionEncoder:
+    """Encoder instance for optimal synthesis of syndrome extraction circuits for a CSS code.
 
     Attributes:
         solver (z3.Solver): The z3 solver instance.
@@ -256,3 +256,86 @@ class OptimalSyndromeExtractionEncoder:
             circuit.measure(anc, c)
 
         return circuit
+
+
+class FlagOptimalSyndromeExtractionEncoder:
+    """Encoder instance for synthesis of stabilizer measurements with the minimum number of flags."""
+
+    def __init__(self, w: int, max_flags: int, t: int) -> None:
+        """Construct encoder instance for synthesis of stabilizer measurements with the minimum number of flags.
+
+        Args:
+            w (int): Weight of the Stabilizer.
+            max_flags (int): Maximum number of flags allowed.
+            t (int): Number of errors the circuit should be resilient against.
+        """
+        self.w = w
+        self.max_flags = max_flags
+        self.solver = z3.Solver()
+        self.t = t
+        self.hook_weights = list(range((w + 1) // 2)) + list(range((w + 1) // 2, -1, -1))
+
+        # create variables
+        self.flag_starts = [z3.Int(f"flag_start_{i}") for i in range(max_flags)]
+        self.flag_ends = [z3.Int(f"flag_end_{i}") for i in range(max_flags)]
+        self.covered = [[z3.Bool(f"covered_{i}_{j}") for j in range(w + 1)] for i in range(max_flags)]
+
+        def _encode_constraints(self) -> None:
+            """Build SMT Instance."""
+            # All flags must start before they end
+            for flag in range(max_flags):
+                self.solver.add(self._flag_interval_constraint(flag))
+
+            # Encode covering constraint in helper variables
+            for location in range(w + 1):
+                for flag in range(max_flags):
+                    self.solver.add(self.covered[flag][location] == self._cover_constraint(flag, location))
+
+            # Every location must be covered at least min(hook_weight[location], t) times
+            for location in range(w + 1):
+                self.solver.add(self._n_covered_constraint(location))
+
+            # If a location can introduce a hook error of weight >= 3 the next 3 locations must be covered by overlapping flags
+            for location in range(3, w - 3):
+                self.solver.add(self._three_location_constraint(location))
+
+        def solve(self):
+            """Solve the problem."""
+            self._encode_constraints()
+
+            result = self.solver.check()
+            if result != z3.sat:
+                return result
+
+            return str(result)
+
+        def _flag_cover_constraint(self, flag: int, location: int):
+            """All locations strictly between start and end are covered by the flag."""
+            return self.flag_starts[flag] < location < self.flag_ends[flag]
+
+        def _flag_interval_constraint(self, flag):
+            """Flag must start before it ends."""
+            return self.flag_starts[flag] + 2 < self.flag_ends[flag]
+
+        def _n_covered_constraint(self, location):
+            """Cover location at least min(hook_weight[location], t) times."""
+            return z3.PbGe(
+                [(self.covered[flag][location], 1) for flag in range(max_flags)], min(self.hook_weights[location], t)
+            )
+
+        def _three_location_constraint(self, location):
+            """There must be an overlapping start-end pair within the next 3 locations."""
+            constraints = []
+            for f1 in range(max_flags):
+                for f2 in range(max_flags):
+                    if f1 == f2:
+                        continue
+                    pair_constraints = [
+                        z3.And(
+                            self.flag_starts[f1] < l, self.flag_ends[f2] > l, self.flag_ends[f1] >= self.flag_starts[f2]
+                        )
+                        for l in range(location, location + 3)
+                    ]
+                    location_covered = z3.Or(self.covered[f1][location], self.covered[f2][location])
+                constraints.append(z3.And(location_covered, z3.Or(pair_constraints)))
+            return z3.Or(constraints)
