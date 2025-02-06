@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import numpy as np
+import stim
 import z3
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 
@@ -261,24 +262,82 @@ class DepthOptimalSyndromeExtractionEncoder:
 class FlagOptimalSyndromeExtractionEncoder:
     """Encoder instance for synthesis of stabilizer measurements with the minimum number of flags."""
 
-    def __init__(self, w: int, max_flags: int, t: int) -> None:
+    def __init__(self, w: int, max_flags: int, t: int, unique_flags: bool = True) -> None:
         """Construct encoder instance for synthesis of stabilizer measurements with the minimum number of flags.
 
         Args:
             w (int): Weight of the Stabilizer.
             max_flags (int): Maximum number of flags allowed.
             t (int): Number of errors the circuit should be resilient against.
+            unique_flags (bool): If True, flags are required to be placed at unique locations, i.e. no two CNOTs are placed between CNOTs of the measurement itself.
         """
         self.w = w
         self.max_flags = max_flags
         self.solver = z3.Solver()
         self.t = t
+        self.unique_flags = unique_flags
+
         self.hook_weights = list(range((w + 1) // 2)) + list(range((w + 1) // 2, -1, -1))
 
         # create variables
         self.flag_starts = [z3.Int(f"flag_start_{i}") for i in range(max_flags)]
         self.flag_ends = [z3.Int(f"flag_end_{i}") for i in range(max_flags)]
         self.covered = [[z3.Bool(f"covered_{i}_{j}") for j in range(w + 1)] for i in range(max_flags)]
+        self.solved = False
+
+    def solve(self):
+        """Solve the problem."""
+        self._encode_constraints()
+
+        result = self.solver.check()
+        if result != z3.sat:
+            self.solved = False
+
+        self.solved = True
+        return str(result)
+
+    def get_stim_circuit(self, x_measurement: bool = False) -> stim.Circuit:
+        """Return the stabilizer measurement circuit."""
+        if not self.solved:
+            msg = "No solution available. Call solve() first."
+            raise ValueError(msg)
+
+        circ = stim.Circuit()
+        location = 0
+        measurement_ancilla = self.w
+        flag_ancillas = [self.w + i for i in range(1, self.max_flags + 1)]
+        measurement_basis = "Z" if not x_measurement else "X"
+        ortho_basis = "X" if not x_measurement else "Z"
+        circ.append_operation("R" + measurement_basis, measurement_ancilla)
+        circ.append_operation("R" + ortho_basis, flag_ancillas)
+        # TODO what if locations not unique?
+        m = self.solver.model()
+        loc_to_flag = [None for _ in range(self.w + 1)]
+        for flag in range(self.max_flags):
+            loc_to_flag[m.eval(self.flag_starts[flag]).as_long()] = flag
+            loc_to_flag[m.eval(self.flag_ends[flag]).as_long()] = flag
+
+        for location in range(self.w):
+            flag = loc_to_flag[location]
+            if flag is not None:
+                cnot = [flag_ancillas[flag], measurement_ancilla]
+                if x_measurement:
+                    cnot.reverse()
+                circ.append_operation("CX", cnot)
+            cnot = [location, measurement_ancilla]
+            if x_measurement:
+                cnot.reverse()
+            circ.append_operation("CX", cnot)
+        flag = loc_to_flag[self.w]
+        if flag is not None:
+            cnot = [flag_ancillas[flag], measurement_ancilla]
+            if x_measurement:
+                cnot.reverse()
+            circ.append_operation("CX", cnot)
+
+        circ.append("MR" + measurement_basis, measurement_ancilla)
+        circ.append("MR" + ortho_basis, flag_ancillas)
+        return circ
 
     def _encode_constraints(self) -> None:
         """Build SMT Instance."""
@@ -299,21 +358,14 @@ class FlagOptimalSyndromeExtractionEncoder:
         for location in range(3, self.w - 2):
             self.solver.add(self._three_location_constraint(location))
 
-        for f1 in range(self.max_flags):
-            for f2 in range(self.max_flags):
-                if f1 == f2:
-                    continue
-                self.solver.add(self.flag_starts[f1] != self.fl)
-
-    def solve(self):
-        """Solve the problem."""
-        self._encode_constraints()
-
-        result = self.solver.check()
-        if result != z3.sat:
-            return result
-
-        return str(result)
+        if self.unique_flags:
+            # Experiment: Unique flag locations
+            for f1 in range(self.max_flags):
+                for f2 in range(self.max_flags):
+                    if f1 == f2:
+                        continue
+                    self.solver.add(self.flag_starts[f1] != self.flag_starts[f2])
+                    self.solver.add(self.flag_ends[f1] != self.flag_ends[f2])
 
     def _flag_cover_constraint(self, flag: int, location: int):
         """All locations strictly between start and end are covered by the flag."""
@@ -321,13 +373,15 @@ class FlagOptimalSyndromeExtractionEncoder:
 
     def _flag_interval_constraint(self, flag):
         """Flag must start before it ends."""
-        return self.flag_starts[flag] + 2 < self.flag_ends[flag]
+        return z3.And(
+            self.flag_starts[flag] + 2 < self.flag_ends[flag], self.flag_starts[flag] > 0, self.flag_ends[flag] < self.w
+        )
 
     def _n_covered_constraint(self, location):
         """Cover location at least min(hook_weight[location], t) times."""
         return z3.PbGe(
             [(self.covered[flag][location], 1) for flag in range(self.max_flags)],
-            min(self.hook_weights[location] - 1, self.t - 1),
+            min(self.hook_weights[location] - 1, self.t),
         )
 
     def _three_location_constraint(self, location):
@@ -338,8 +392,14 @@ class FlagOptimalSyndromeExtractionEncoder:
                 if f1 == f2:
                     continue
                 pair_constraints = [
-                    z3.And(self.flag_starts[f1] < l, self.flag_ends[f2] > l, self.flag_ends[f1] >= self.flag_starts[f2])
-                    for l in range(location, location + 3)
+                    z3.And(
+                        z3.Or(
+                            z3.And(self.flag_starts[f1] == l, self.flag_ends[f2] > l),
+                            z3.And(self.flag_ends[f2] == l, self.flag_starts[f1] < l),
+                        ),
+                        self.flag_ends[f1] >= self.flag_starts[f2],
+                    )
+                    for l in range(location, location + 2)
                 ]
                 location_covered = z3.Or(self.covered[f1][location], self.covered[f2][location])
             constraints.append(z3.And(location_covered, z3.Or(pair_constraints)))
