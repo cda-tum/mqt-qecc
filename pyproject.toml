@@ -45,7 +45,7 @@ requires-python = ">=3.9"
 dependencies = [
     "z3-solver>=4.12",
     "qecsim",
-    "ldpc>=0.1.53,<2",  # temporary upper cap due to failures seen with ldpc v2
+    "ldpc>=2.2.8,<3",  # temporary upper cap due to failures seen with ldpc v2
     "numpy>=1.26; python_version > '3.11'",
     "numpy>=1.24; python_version <= '3.11'",
     "qiskit[qasm3-import]>=1.0.0",
