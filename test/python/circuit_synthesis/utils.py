@@ -59,7 +59,7 @@ def get_stabs_css(qc: QuantumCircuit) -> tuple[npt.NDArray[np.int_], npt.NDArray
     Args:
         qc: The quantum circuit.
 
-    returns:
+    Returns:
         x: The X stabilizers.
         z: The Z stabilizers.
 
