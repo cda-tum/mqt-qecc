@@ -158,9 +158,9 @@ class StabilizerTableau:
         return cls.from_paulis(paulis)
 
     @classmethod
-    def empty(cls, n: int) -> StabilizerTableau:
-        """Create a new empty stabilizer tableau."""
-        return cls(SymplecticMatrix.empty(n), np.zeros(0, dtype=np.int8))
+    def identity(cls, n: int) -> StabilizerTableau:
+        """Create a new identity stabilizer tableau."""
+        return cls(SymplecticMatrix.identity(n), np.zeros(0, dtype=np.int8))
 
     def __eq__(self, other: object) -> bool:
         """Check if two stabilizer tableaus are equal."""
