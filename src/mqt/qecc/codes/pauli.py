@@ -263,6 +263,18 @@ class StabilizerTableau:
         self.phase += self.tableau[:, qubit] * self.tableau[:, qubit + self.n] % 2
         self.tableau[:, qubit + self.n] = (self.tableau[:, qubit + self.n] + self.tableau[:, qubit]) % 2
 
+    def apply_x(self, qubit) -> None:
+        """Apply the X gate to the stabilizer tableau."""
+        self.phase = (self.phase + self.tableau[:, qubit]) % 2
+
+    def apply_z(self, qubit) -> None:
+        """Apply the Z gate to the stabilizer tableau."""
+        self.phase = (self.phase + self.tableau[:, qubit + self.n]) % 2
+
+    def apply_y(self, qubit) -> None:
+        """Apply the Y gate to the stabilizer tableau."""
+        self.phase = (self.phase + self.tableau[:, qubit] + self.tableau[:, qubit + self.n])
+
     def copy(self) -> StabilizerTableau:
         """Return a copy of the stabilizer tableau."""
         return StabilizerTableau(self.tableau.copy(), self.phase.copy())
