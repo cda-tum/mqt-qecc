@@ -226,37 +226,29 @@ class DepthOptimalSyndromeExtractionEncoder:
             raise ValueError(msg)
         return self._circuit
 
-    def _extract_circuit(self):
-        q = QuantumRegister(len(self.qubit_variables), "q")
-        x_c = ClassicalRegister(self.n_xchecks, "x_c")
-        z_c = ClassicalRegister(self.n_zchecks, "z_c")
-        x_anc = AncillaRegister(self.n_xchecks, "x")
-        z_anc = AncillaRegister(self.n_zchecks, "z")
-        circuit = QuantumCircuit(q, x_c, z_c, x_anc, z_anc)
+    def _extract_circuit(self) -> stim.Circuit:
+        circ = stim.Circuit()
+        data_qubits = list(range(len(self.qubit_variables)))
+        x_anc = list(len(data_qubits) + i for i in range(self.n_xchecks))
+        z_anc = list(len(data_qubits) + len(x_anc) + i for i in range(self.n_zchecks))
 
-        # hadamard gates for the x-checks
-        for anc in x_anc:
-            circuit.h(anc)
+        circ.append_operation("RX", x_anc)
+        circ.append_operation("R", z_anc)
 
         for t in range(self.T):
             for qubit in range(self.x_checks.shape[1]):
                 for i, check in enumerate(self.x_checks):
                     if check[qubit] == 1 and self.solver.model()[self.x_vars[i][qubit][t]]:
-                        circuit.cx(x_anc[i], q[qubit])
+                        circ.append_operation("CX", [x_anc[i], qubit])
 
                 for i, check in enumerate(self.z_checks):
                     if check[qubit] == 1 and self.solver.model()[self.z_vars[i][qubit][t]]:
-                        circuit.cx(q[qubit], z_anc[i])
+                        circ.append_operation("CX", [qubit, z_anc[i], qubit])
 
-        # measurements
-        for anc, c in zip(x_anc, x_c):
-            circuit.h(anc)
-            circuit.measure(anc, c)
+        circ.append_operation("MRX", x_anc)
+        circ.append_operation("MR", z_anc)
 
-        for anc, c in zip(z_anc, z_c):
-            circuit.measure(anc, c)
-
-        return circuit
+        return circ
 
 
 class FlagOptimalSyndromeExtractionEncoder:
