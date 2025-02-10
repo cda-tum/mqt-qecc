@@ -33,21 +33,6 @@ class StabilizerCode:
             x_logicals: The logical X-operators.
             n: The number of qubits in the code. If not given, it is inferred from the stabilizer generators.
         """
-        # if len(generators) == 0:
-        #     if n is None:
-        #         raise ValueError("Number of qubits must be given if no stabilizer generators are given.")
-        #     if z_logicals is None or x_logicals is None:
-        #         t = StabilizerCode.get_trivial_code(n)
-        #         print(type(self))
-        #         self.n = n
-        #         self.x_logicals = t.x_logicals
-        #         self.z_logicals = t.z_logicals
-        #         self.k = t.k
-        #         self.generators = t.generators
-        #         self.symplectic = t.symplectic
-        #         self.distance = t.distance
-        #         self._check_code_correct()
-
         self.generators = self.get_generators(generators, n)
         self.symplectic = self.generators.tableau.matrix
 
