@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import stim
 import z3
-from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -229,8 +228,8 @@ class DepthOptimalSyndromeExtractionEncoder:
     def _extract_circuit(self) -> stim.Circuit:
         circ = stim.Circuit()
         data_qubits = list(range(len(self.qubit_variables)))
-        x_anc = list(len(data_qubits) + i for i in range(self.n_xchecks))
-        z_anc = list(len(data_qubits) + len(x_anc) + i for i in range(self.n_zchecks))
+        x_anc = [len(data_qubits) + i for i in range(self.n_xchecks)]
+        z_anc = [len(data_qubits) + len(x_anc) + i for i in range(self.n_zchecks)]
 
         circ.append_operation("RX", x_anc)
         circ.append_operation("R", z_anc)
@@ -288,7 +287,7 @@ class FlagOptimalSyndromeExtractionEncoder:
         self.solved = True
         return str(result)
 
-    def get_stim_circuit(self, x_measurement: bool = False) -> stim.Circuit:
+    def get_stim_circuit(self, x_measurement: bool = False, with_ticks=False) -> stim.Circuit:
         """Return the stabilizer measurement circuit."""
         if not self.solved:
             msg = "No solution available. Call solve() first."
@@ -302,34 +301,81 @@ class FlagOptimalSyndromeExtractionEncoder:
         ortho_basis = "X" if not x_measurement else "Z"
         circ.append_operation("R" + measurement_basis, measurement_ancilla)
         circ.append_operation("R" + ortho_basis, flag_ancillas)
-        # TODO what if locations not unique?
+        if with_ticks:
+            circ.append_operation("Tick")
         m = self.solver.model()
-        loc_to_flag = [None for _ in range(self.w + 1)]
+        loc_to_flag = [[] for _ in range(self.w + 1)]
         for flag in range(self.max_flags):
-            loc_to_flag[m.eval(self.flag_starts[flag]).as_long()] = flag
-            loc_to_flag[m.eval(self.flag_ends[flag]).as_long()] = flag
+            loc_to_flag[m.eval(self.flag_starts[flag]).as_long()].append(flag)
+            loc_to_flag[m.eval(self.flag_ends[flag]).as_long()].append(flag)
 
         for location in range(self.w):
-            flag = loc_to_flag[location]
-            if flag is not None:
+            flags = loc_to_flag[location]
+            for flag in flags:
                 cnot = [flag_ancillas[flag], measurement_ancilla]
                 if x_measurement:
                     cnot.reverse()
                 circ.append_operation("CX", cnot)
+                if with_ticks:
+                    circ.append_operation("Tick")
             cnot = [location, measurement_ancilla]
             if x_measurement:
                 cnot.reverse()
             circ.append_operation("CX", cnot)
-        flag = loc_to_flag[self.w]
+            if with_ticks:
+                circ.append_operation("Tick")
+        flags = loc_to_flag[self.w]
         if flag is not None:
-            cnot = [flag_ancillas[flag], measurement_ancilla]
-            if x_measurement:
-                cnot.reverse()
-            circ.append_operation("CX", cnot)
+            for flag in flags:
+                cnot = [flag_ancillas[flag], measurement_ancilla]
+                if x_measurement:
+                    cnot.reverse()
+                circ.append_operation("CX", cnot)
+                if with_ticks:
+                    circ.append_operation("Tick")
 
         circ.append("MR" + measurement_basis, measurement_ancilla)
         circ.append("MR" + ortho_basis, flag_ancillas)
         return circ
+
+    def verify_ft_t(self, circ=None, t=None) -> tuple[bool, str]:
+        """Verify that circuit is FT up to t faults by brute-force checking.
+
+        Returns:
+            bool: True if the circuit is FT up to t faults.
+            str: The error mechanism if the circuit is not FT up to t faults.
+        """
+        if circ is None:  # TODO remove
+            circ = self.get_stim_circuit(with_ticks=True)
+        if t is None:
+            t = self.t
+        n = circ.num_qubits
+        errors = []
+        for location in range(7, len(circ) - 6):  # first 3 operations are resets and tick
+            error = np.zeros(circ.num_qubits, dtype=np.int8)
+            error[self.w] = 1
+            for op in circ[location:]:
+                if op.name != "CX":
+                    continue
+                propagation_target = op.targets_copy()[0].qubit_value
+                error[propagation_target] = (error[propagation_target] + 1) % 2
+            errors.append(error)
+
+        single_faults = np.array(errors)
+        combined_faults = single_faults
+        for i in range(t):
+            if i > 0:
+                # combine faults
+                combined_faults = (combined_faults[:, np.newaxis, :] + single_faults).reshape(-1, n) % 2
+
+            for fault in combined_faults:
+                data_weight = sum(fault[: self.w])
+                data_weight = min(data_weight, self.w - data_weight)
+                flag_weight = np.sum(fault[-self.max_flags :])
+                if data_weight - i - 1 > flag_weight and flag_weight <= t - i - 1:
+                    return False, "NOT FT"
+
+        return True, "FT"
 
     def _encode_constraints(self) -> None:
         """Build SMT Instance."""
@@ -347,8 +393,9 @@ class FlagOptimalSyndromeExtractionEncoder:
             self.solver.add(self._n_covered_constraint(location))
 
         # If a location can introduce a hook error of weight >= 3 the next 3 locations must be covered by overlapping flags
-        for location in range(3, self.w - 2):
-            self.solver.add(self._three_location_constraint(location))
+        if self.t > 1:
+            for location in range(2, self.w - 1):
+                self.solver.add(self._three_location_constraint(location))
 
         if self.unique_flags:
             # Experiment: Unique flag locations
@@ -366,7 +413,9 @@ class FlagOptimalSyndromeExtractionEncoder:
     def _flag_interval_constraint(self, flag):
         """Flag must start before it ends."""
         return z3.And(
-            self.flag_starts[flag] + 2 < self.flag_ends[flag], self.flag_starts[flag] > 0, self.flag_ends[flag] < self.w
+            self.flag_starts[flag] + 2 <= self.flag_ends[flag],
+            self.flag_starts[flag] > 0,
+            self.flag_ends[flag] < self.w,
         )
 
     def _n_covered_constraint(self, location):
@@ -394,5 +443,5 @@ class FlagOptimalSyndromeExtractionEncoder:
                     for l in range(location, location + 2)
                 ]
                 location_covered = z3.Or(self.covered[f1][location], self.covered[f2][location])
-            constraints.append(z3.And(location_covered, z3.Or(pair_constraints)))
+                constraints.append(z3.And(location_covered, z3.Or(pair_constraints)))
         return z3.Or(constraints)
