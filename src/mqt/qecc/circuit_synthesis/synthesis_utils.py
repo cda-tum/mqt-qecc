@@ -12,6 +12,7 @@ import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit
 from stim import Circuit
+from sympy.combinatorics import Permutation, PermutationGroup
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -148,8 +149,23 @@ def heuristic_gaussian_elimination(
         costs[j, :] = new_weights - np.sum(matrix, axis=0)
         costs[:, j] = new_weights - np.sum(matrix[:, j])
         np.fill_diagonal(costs, 1)
+        print(f"Use column {i} to eliminate column {j}")
+        print("Matrix after elimination:\n", matrix)
 
     return matrix, eliminations
+
+def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation]:
+    """Based on the generators of the permutation group find the whole permutation group.
+
+    Args:
+        group_generators: A list of generators of the permutation group. Each generator is given as a list of integers describing the permutation. E.g. for a S7 generator: [0, 3, 2, 1, 6, 5, 4]
+
+    returns:
+        Returns a list of Permutation object coming form sympy.combinatorics.
+    """
+    group_generators = [Permutation(generator) for generator in group_generators]
+    g = PermutationGroup(group_generators)
+    return list(g.generate())
 
 
 def gaussian_elimination_min_column_ops(
