@@ -207,6 +207,62 @@ class StabilizerTableau:
         """Convert the stabilizer tableau to a binary matrix."""
         return np.hstack((self.tableau.matrix, self.phase[..., np.newaxis]))
 
+    def apply_h(self, qubit) -> None:
+        """Apply the Hadamard gate to the stabilizer tableau.
+
+        Args:
+            qubit: The index of the qubit to apply the Hadamard gate to.
+        """
+        self.phase += self.tableau[:, qubit] * self.tableau[:, qubit + self.n] % 2
+        self.tableau[:, [qubit, qubit + self.n]] = self.tableau[:, [qubit + self.n, qubit]]
+
+    def apply_cx(self, ctrl, tar) -> None:
+        """Apply the CNOT gate to the stabilizer tableau.
+
+        Args:
+            ctrl: The index of the control qubit.
+            tar: The index of the target qubit.
+        """
+        self.phase = (
+            self.phase
+            + self.tableau[:, ctrl]
+            * self.tableau[:, tar + self.n]
+            * (self.tableau[:, tar] + self.tableau[:, ctrl + self.n] * 1)
+        ) % 2
+        self.tableau[:, tar] = (self.tableau[:, tar] + self.tableau[:, ctrl]) % 2
+        self.tableau[:, ctrl + self.n] = (self.tableau[:, tar + self.n] + self.tableau[:, ctrl + self.n]) % 2
+
+    def apply_cz(self, ctrl, tar) -> None:
+        """Apply the CZ gate to the stabilizer tableau.
+
+        Args:
+            ctrl: The index of the control qubit.
+            tar: The index of the target qubit.
+        """
+        self.apply_h(tar)
+        self.apply_cx(ctrl, tar)
+        self.apply_h(tar)
+
+    def apply_swap(self, q1, q2) -> None:
+        """Apply the SWAP gate to the stabilizer tableau.
+
+        Args:
+            q1: The index of the first qubit.
+            q2: The index of the second qubit.
+        """
+        self.apply_cx(q1, q2)
+        self.apply_cx(q2, q1)
+        self.apply_cx(q1, q2)
+
+    def apply_s(self, qubit) -> None:
+        """Apply the S gate to the stabilizer tableau.
+
+        Args:
+            qubit: The index of the qubit to apply the S gate to.
+        """
+        self.phase += self.tableau[:, qubit] * self.tableau[:, qubit + self.n] % 2
+        self.tableau[:, qubit + self.n] = (self.tableau[:, qubit + self.n] + self.tableau[:, qubit]) % 2
+
 
 def is_pauli_string(p: str) -> bool:
     """Check if a string is a valid Pauli string."""
