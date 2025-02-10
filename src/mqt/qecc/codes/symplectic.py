@@ -22,6 +22,10 @@ class SymplecticVector:
         self.vector = vector
         self.n = vector.shape[0] // 2
 
+    def copy(self) -> SymplecticVector:
+        """Return a copy of the vector."""
+        return SymplecticVector(self.vector.copy())
+
     @classmethod
     def zeros(cls, n: int) -> SymplecticVector:
         """Create a zero vector of length n."""
@@ -87,6 +91,10 @@ class SymplecticMatrix:
     def transpose(self) -> SymplecticMatrix:
         """Return the transpose of the matrix."""
         return SymplecticMatrix(self.matrix.T)
+
+    def copy(self) -> SymplecticMatrix:
+        """Return a copy of the matrix."""
+        return SymplecticMatrix(self.matrix.copy())
 
     @classmethod
     def zeros(cls, n_rows: int, n: int) -> SymplecticMatrix:

@@ -263,6 +263,10 @@ class StabilizerTableau:
         self.phase += self.tableau[:, qubit] * self.tableau[:, qubit + self.n] % 2
         self.tableau[:, qubit + self.n] = (self.tableau[:, qubit + self.n] + self.tableau[:, qubit]) % 2
 
+    def copy(self) -> StabilizerTableau:
+        """Return a copy of the stabilizer tableau."""
+        return StabilizerTableau(self.tableau.copy(), self.phase.copy())
+
 
 def is_pauli_string(p: str) -> bool:
     """Check if a string is a valid Pauli string."""
