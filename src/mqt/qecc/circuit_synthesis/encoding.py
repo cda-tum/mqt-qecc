@@ -304,11 +304,7 @@ def depth_optimal_encoding_circuit_non_css(
                 pass
         # extract circuit
         qc = QuantumCircuit(n)
-        final_tableau_x = np.array([
-            [bool(m[stab_x[-1][i, q]]) for q in range(n)] for i in range(code.n - code.k)
-        ]).astype(int)
-        [[m[stab_z[-1][i, q]] for i in range(code.n - code.k)] for q in range(n)]
-        # check where hadamards need to be applied
+
         for t in range(max_depth):
             for q1 in range(n):
                 if m[sqgs[t][q1]] == 1:
@@ -322,12 +318,19 @@ def depth_optimal_encoding_circuit_non_css(
                         qc.cx(q1, q2)
                     if q2 > q1 and m[czs[t][q1][q2]]:
                         qc.cz(q1, q2)
-            qc.barrier()
 
-        first_layer_hadamards = np.where(np.array(final_tableau_x).sum(axis=0) == 1)[0]
+        # check where hadamards need to be applied
+        final_tableau_x = np.array([
+            [bool(m[stab_x[-1][i, q]]) for q in range(n)] for i in range(code.n - code.k)
+        ]).astype(int)
+        first_layer_hadamards = np.where(np.array(final_tableau_x).sum(axis=0) >= 1)[0]
         if len(first_layer_hadamards) > 0:
             qc.h(first_layer_hadamards)
-        return qc.inverse()
+        # figure out messaging qubits
+        final_logicals_x = np.array([[bool(m[log_x_x[-1][i, q]]) for q in range(n)] for i in range(code.k)]).astype(int)
+        encoding_qubits = np.where(final_logicals_x.sum(axis=0) == 1)[0]
+        return qc.inverse(), encoding_qubits
+
     return "UNSAT"
 
 
