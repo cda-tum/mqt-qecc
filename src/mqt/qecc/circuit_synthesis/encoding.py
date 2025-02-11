@@ -82,11 +82,21 @@ def heuristic_encoding_circuit(
 
 def depth_optimal_encoding_circuit_non_css(
     code: StabilizerCode,
-    min_depth: int = 1,
-    max_depth: int = 10,
-    min_timeout: int = 1,
-    max_timeout: int = 3600,
-) -> QuantumCircuit:
+    max_depth: int,
+    max_two_qubit_gates: int | None = None,
+    exact_two_qubit_count: bool = False,
+) -> tuple[QuantumCircuit, int]:
+    """Synthesize an encoding circuit for the given stabilizer code with at most `max_depth` depth.
+
+    Args:
+         code: The stabilizer code to synthesize the encoding circuit for.
+         max_depth: The maximum depth of the circuit.
+         max_two_qubit_gates: The maximum number of two-qubit gates in the circuit. If None, no limit is set.
+         exact_two_qubit_count: Whether the number of two-qubit gates should be exactly `max_two_qubit_gates`.
+
+    Returns:
+         A tuple containing the synthesized encoding circuit and the qubits that are used to encode the logical qubits.
+    """
     n = code.n
     stabs = code.symplectic
     z_logicals = code.z_logicals.tableau.matrix
@@ -105,7 +115,7 @@ def depth_optimal_encoding_circuit_non_css(
 
     # create variables
     sqgs = [
-        [z3.BitVec(f"sqg_{t}_{q}", 3) for q in range(n)] for t in range(max_depth)
+        [z3.BitVec(f"sqg_{t}_{q}", bit_width) for q in range(n)] for t in range(max_depth)
     ]  # I=0, H=1, S=2, SqrtX = 3, CXCtrl=4, CXTar=5, CZ=6|7
     czs = [[{q2: z3.Bool(f"cz_{t}_{q1}_{q2}") for q2 in range(q1 + 1, n)} for q1 in range(n)] for t in range(max_depth)]
     cxs = [[[z3.Bool(f"cx_{t}_{q1}_{q2}") for q2 in range(n)] for q1 in range(n)] for t in range(max_depth)]
@@ -153,15 +163,10 @@ def depth_optimal_encoding_circuit_non_css(
             is_tar = z3.Or(tqgs_q1_tar)
             tqgs_q1_ctrl + tqgs_q1_tar
             tqgs_q1_ctrl + tqgs_q1_tar + tqgs_q1_cz
-            # # if a single_qubit_gate is applied, then no two_qubit_gate can be applied
-            # s.add(z3.Implies(z3.Or(tqgs_q1), sqgs[t][q1] == z3.BitVecVal(0, 2)))
-
             # if a gate is not a single-qubit gate, then the appropriate variables must be set
             s.add(z3.Implies(sqgs[t][q1] == CXCTRL, z3.Or(tqgs_q1_ctrl)))
             s.add(z3.Implies(sqgs[t][q1] == CXTAR, z3.Or(tqgs_q1_tar)))
             s.add(z3.Implies(sqgs[t][q1] == CZ | sqgs[t][q1] == CZ2, z3.Or(tqgs_q1_cz)))
-            # if a two-qubit gate is applied it must either be a CZ or a CX
-            # tqgs_q1 = z3.Not(z3.And(z3.Or(tqgs_q1_cz), z3.Or(is_tar, is_ctrl)))
             # a qubit can be either control or target, not both
             s.add(z3.Not(z3.And(is_ctrl, is_tar)))
             # a qubit can be the control of at most one CNOT
@@ -170,6 +175,35 @@ def depth_optimal_encoding_circuit_non_css(
             s.add(z3.PbLe([(cxs[t][q2][q1], 1) for q2 in range(n)], 1))
             # a qubit can be involved in at most one CZ
             s.add(z3.PbLe([(cz, 1) for cz in tqgs_q1_cz], 1))
+
+    # at most max_two_qubit_gates two-qubit gates
+    if max_two_qubit_gates is not None:
+        if not exact_two_qubit_count:
+            s.add(
+                z3.PbLe(
+                    [(z3.Or(sqgs[t][q] == CXCTRL, sqgs[t][q] == CZ), 1) for q in range(n) for t in range(max_depth)],
+                    max_two_qubit_gates,
+                )
+            )
+            s.add(
+                z3.PbLe(
+                    [(z3.Or(sqgs[t][q] == CXTAR, sqgs[t][q] == CZ2), 1) for q in range(n) for t in range(max_depth)],
+                    max_two_qubit_gates,
+                )
+            )
+        else:
+            s.add(
+                z3.PbEq(
+                    [(z3.Or(sqgs[t][q] == CXCTRL, sqgs[t][q] == CZ), 1) for q in range(n) for t in range(max_depth)],
+                    max_two_qubit_gates,
+                )
+            )
+            s.add(
+                z3.PbEq(
+                    [(z3.Or(sqgs[t][q] == CXTAR, sqgs[t][q] == CZ2), 1) for q in range(n) for t in range(max_depth)],
+                    max_two_qubit_gates,
+                )
+            )
 
     # gate constraints
     tableaus_x = [np.vstack((stab_x[t], log_x_x[t], log_z_x[t])) for t in range(max_depth + 1)]
@@ -258,20 +292,88 @@ def depth_optimal_encoding_circuit_non_css(
                         ),
                     )
                 )  # CZ
-    # final matrix constraints
 
-    # for the stabilizers, we only require that the final tableau is full rank
-    # qubit_reduced = [z3.Not(z3.Or(
-    #     z3.Or(
-    #         [stab_x[-1][i, q] for i in range(code.n-code.k)]
-    #     ),
-    #     z3.Or(
-    #         [stab_z[-1][i, q] for i in range(code.n-code.k)]
-    #     )
-    # ))
-    #                  for q in range(n)
-    #                  ]
-    # s.add(z3.PbEq([(qubit_reduced[q], 1) for q in range(n)], code.k))
+    # symmetry breaking
+    # gate symmetry
+    for t in range(1, max_depth):
+        for q in range(n):
+            # no two single-qubit gates in a row
+            is_sqg_t = z3.Or(sqgs[t][q] == HADAMARD, sqgs[t][q] == SGATE, sqgs[t][q] == SQRTX)
+            is_sqg_t_minus_1 = z3.Or(sqgs[t - 1][q] == HADAMARD, sqgs[t - 1][q] == SGATE, sqgs[t - 1][q] == SQRTX)
+            s.add(z3.Implies(is_sqg_t, z3.Not(is_sqg_t_minus_1)))
+
+            # if an idling qubit is followed by a single-qubit gate, the gate could be applied first, USUALLY MAKES IT WORSE
+            # s.add(z3.Implies(sqgs[t-1][q] == IDENTITY, z3.Not(is_sqg_t)))
+
+        for q1 in range(n):
+            for q2 in range(q1 + 1, n):
+                # the same two-qubit gate can't be applied in a row
+                s.add(z3.Implies(cxs[t][q1][q2], z3.Not(cxs[t - 1][q1][q2])))
+                s.add(z3.Implies(cxs[t][q2][q1], z3.Not(cxs[t - 1][q2][q1])))
+                s.add(z3.Implies(czs[t][q1][q2], z3.Not(czs[t - 1][q1][q2])))
+
+    for t in range(2, max_depth):
+        for q1 in range(n):
+            # A two-qubit gate cant be sandwhiched by commuting gates
+            tqgs_q1_cz = list(czs[t][q1].values()) + [czs[t][q2][q1] for q2 in range(q1)]
+            s.add(
+                z3.Not(
+                    z3.And(
+                        sqgs[t - 2][q1] == SGATE, z3.Or(z3.Or(cxs[t - 1][q1]), z3.Or(tqgs_q1_cz)), sqgs[t][q1] == SGATE
+                    )
+                )
+            )
+            s.add(
+                z3.Not(
+                    z3.And(
+                        sqgs[t - 2][q1] == SQRTX, z3.Or([cxs[t - 1][q2][q1] for q2 in range(n)]), sqgs[t][q1] == SQRTX
+                    )
+                )
+            )
+
+            # CZ gates can't be sandwhiched by hadamards on either qubit
+            s.add(z3.Not(z3.And(sqgs[t - 2][q1] == HADAMARD, z3.Or(tqgs_q1_cz), sqgs[t][q1] == HADAMARD)))
+
+            # The target of a CNOT can't be sandwhiched by hadamards
+            s.add(
+                z3.Not(
+                    z3.And(
+                        sqgs[t - 2][q1] == HADAMARD,
+                        z3.Or([cxs[t - 1][q2][q1] for q2 in range(n)]),
+                        sqgs[t][q1] == HADAMARD,
+                    )
+                )
+            )
+
+            # A two-qubit gate can't be sandwhiched by hadamards on all qubits
+            for q2 in range(n):
+                s.add(
+                    z3.Not(
+                        z3.And(
+                            sqgs[t - 2][q1] == HADAMARD,
+                            sqgs[t - 2][q2] == HADAMARD,
+                            cxs[t - 1][q1][q2],
+                            sqgs[t][q1] == HADAMARD,
+                            sqgs[t][q2] == HADAMARD,
+                        )
+                    )
+                )
+
+    # tableau symmetry, SEEMS TO MAKE IT WORSE
+    for t in range(1, max_depth + 1):
+        # no two rows can be the same
+        for i in range(tableaus_x[t].shape[0]):
+            for j in range(i + 1, tableaus_x[t].shape[0]):
+                s.add(
+                    z3.Not(
+                        z3.And(
+                            symbolic_vector_eq(tableaus_x[t][i], tableaus_x[t][j]),
+                            symbolic_vector_eq(tableaus_z[t][i], tableaus_z[t][j]),
+                        )
+                    )
+                )
+
+    # final matrix constraints
     s.add(
         z3.PbEq(
             [(z3.Or([stab_z[-1][i, q] for i in range(code.n - code.k)]), 1) for q in range(n)]
@@ -296,12 +398,7 @@ def depth_optimal_encoding_circuit_non_css(
     # solve
     if s.check() == z3.sat:
         m = s.model()
-        # print last tableau
-        for t in range(1, max_depth + 1):
-            for _i in range(n - code.k):
-                pass
-            for _i in range(code.k):
-                pass
+
         # extract circuit
         qc = QuantumCircuit(n)
 
@@ -318,6 +415,7 @@ def depth_optimal_encoding_circuit_non_css(
                         qc.cx(q1, q2)
                     if q2 > q1 and m[czs[t][q1][q2]]:
                         qc.cz(q1, q2)
+            qc.barrier()
 
         # check where hadamards need to be applied
         final_tableau_x = np.array([
