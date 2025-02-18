@@ -1,4 +1,4 @@
-# Encoding qubits: 0, 1
+# Messaging qubits: 0, 1
 
 OPENQASM 2.0;
 include "qelib1.inc";
