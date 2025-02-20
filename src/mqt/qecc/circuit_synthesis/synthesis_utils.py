@@ -871,6 +871,9 @@ def qiskit_to_stim_circuit(qc: QuantumCircuit) -> Circuit:
         elif op == "cx":
             target = qc.find_bit(gate.qubits[1])[0]
             stim_circuit.append_operation("CX", [qubit, target])
+        elif op == "cz":
+            target = qc.find_bit(gate.qubits[1])[0]
+            stim_circuit.append_operation("CZ", [qubit, target])
         else:
             msg = f"Unsupported gate: {op}"
             raise ValueError(msg)
