@@ -97,7 +97,7 @@ def heuristic_gaussian_elimination(
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     matrix = matrix.copy()
@@ -149,8 +149,6 @@ def heuristic_gaussian_elimination(
         costs[j, :] = new_weights - np.sum(matrix, axis=0)
         costs[:, j] = new_weights - np.sum(matrix[:, j])
         np.fill_diagonal(costs, 1)
-        print(f"Use column {i} to eliminate column {j}")
-        print("Matrix after elimination:\n", matrix)
 
     return matrix, eliminations
 
@@ -160,7 +158,7 @@ def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation
     Args:
         group_generators: A list of generators of the permutation group. Each generator is given as a list of integers describing the permutation. E.g. for a S7 generator: [0, 3, 2, 1, 6, 5, 4]
 
-    returns:
+    Returns:
         Returns a list of Permutation object coming form sympy.combinatorics.
     """
     group_generators = [Permutation(generator) for generator in group_generators]
@@ -182,7 +180,7 @@ def gaussian_elimination_min_column_ops(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_eliminations: The maximum number of eliminations to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     n = matrix.shape[1]
@@ -251,7 +249,7 @@ def gaussian_elimination_min_parallel_eliminations(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_parallel_steps: The maximum number of parallel elimination steps to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     columns = np.array([
