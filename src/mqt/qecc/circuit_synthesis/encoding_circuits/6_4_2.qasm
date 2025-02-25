@@ -1,4 +1,4 @@
-# Messaging qubits: 0, 1, 3, 5
+// Messaging qubits: 0, 1, 3, 5
 
 OPENQASM 2.0;
 include "qelib1.inc";

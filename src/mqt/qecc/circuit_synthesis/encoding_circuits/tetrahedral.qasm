@@ -1,4 +1,4 @@
-# Encoding Qubits: 8
+// Encoding Qubits: 8
 OPENQASM 2.0;
 include "qelib1.inc";
 qreg q[15];
