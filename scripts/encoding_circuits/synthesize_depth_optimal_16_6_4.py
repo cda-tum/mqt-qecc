@@ -27,9 +27,8 @@ code = CSSCode(4, h, h)
 code.Lz = l
 code.Lx = l[[1, 0, 3, 2, 5, 4]]
 
-qc, enc = depth_optimal_encoding_circuit(code, min_depth=4, max_depth=8, min_timeout=300, max_timeout=7200)
+qc = depth_optimal_encoding_circuit(code, min_depth=4, max_depth=8, min_timeout=300, max_timeout=7200)
 
 qc_str = qasm2.dumps(qc)
 with open("16_6_4_optimal.qasm", "w", encoding="utf-8") as f:
-    f.write(str(list(enc)))
     f.write(qc_str)
