@@ -30,5 +30,5 @@ hamming_code.Lz = logicals
 qc = depth_optimal_encoding_circuit(hamming_code, min_depth=5, max_depth=14, min_timeout=300, max_timeout=7200)
 
 qc_str = qasm2.dumps(qc)
-with open("hamming_depth_optimal.qasm", "w", encoding="utf-8") as f:
-    f.write(qc_str)
+
+print(qc_str)
