@@ -85,7 +85,7 @@ def iterative_search_with_timeout(
 
 
 def heuristic_gaussian_elimination(
-    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True
+    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True, penalty_cols: list[int] | None = None
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
     """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
 
@@ -100,9 +100,12 @@ def heuristic_gaussian_elimination(
     Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
+    if penalty_cols is None:
+        penalty_cols = []
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
-
+    print(f"initial check matrix:\n{matrix}")
+    print("----------------------------------")
     def is_reduced() -> bool:
         return bool(len(np.where(np.all(matrix == 0, axis=0))[0]) == matrix.shape[1] - rank)
 
@@ -112,6 +115,10 @@ def heuristic_gaussian_elimination(
 
     costs -= np.sum(matrix, axis=0)
     np.fill_diagonal(costs, 1)
+    # NOTE: set the penalty terms to be higher than 0 to be ignored.
+    for i in penalty_cols:
+        for j in penalty_cols:
+            costs[i][j] = 1
 
     used_columns = []  # type: list[np.int_]
     eliminations = []  # type: list[tuple[int, int]]
@@ -132,10 +139,12 @@ def heuristic_gaussian_elimination(
                 costs -= np.sum(matrix, axis=0)
                 np.fill_diagonal(costs, 1)
             else:  # try to move onto the next layer
+                print("\nUsed COLUMN reset\n")
                 used_columns = []
             continue
 
         i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
+        print(f"eliminate column {j} with column {i}")
         eliminations.append((int(i), int(j)))
 
         if parallel_elimination:
@@ -146,9 +155,14 @@ def heuristic_gaussian_elimination(
         matrix[:, j] = (matrix[:, i] + matrix[:, j]) % 2
         # update costs
         new_weights = np.sum((matrix[:, j][:, np.newaxis] + matrix) % 2, axis=0)
+        print(f"new weights:\n{new_weights}")
+        print(f"cost matrix before update:\n{costs}")
         costs[j, :] = new_weights - np.sum(matrix, axis=0)
         costs[:, j] = new_weights - np.sum(matrix[:, j])
+        print(f"cost matrix after update:\n{costs}")
         np.fill_diagonal(costs, 1)
+        print(f"matrix after elimination:\n{matrix}")
+        print("----------------------------------")
 
     return matrix, eliminations
 
