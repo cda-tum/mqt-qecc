@@ -152,6 +152,7 @@ def heuristic_gaussian_elimination(
 
     return matrix, eliminations
 
+
 def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation]:
     """Based on the generators of the permutation group find the whole permutation group.
 

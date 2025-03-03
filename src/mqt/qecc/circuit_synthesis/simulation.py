@@ -276,7 +276,7 @@ class NoisyNDFTStatePrepSimulator:
         verification_measurements = self.x_verification_measurements + self.z_verification_measurements
         if self.check_logical_0:
             # Compute dot products for all rows
-            dot_products = np.dot(detection_events[:, verification_measurements], self.code.Hx.T) %2
+            dot_products = np.dot(detection_events[:, verification_measurements], self.code.Hx.T) % 2
 
             # Find rows where all dot products are zero
             index_array = np.where(np.all(dot_products == 0, axis=1))[0]

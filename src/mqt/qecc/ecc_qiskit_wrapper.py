@@ -81,7 +81,7 @@ def print_simulation_results(result: Result, n_shots: int, threshold_probability
         # Print all results > threshold_probability
         if summarized_counts[result_id] / n_shots > threshold_probability or printed_results == 0:
             result_string = str(result_id)
-            print("State |" + result_string + "> probability " + str(summarized_counts[result_id] / n_shots))  # noqa: T201
+            print("State |" + result_string + "> probability " + str(summarized_counts[result_id] / n_shots))
             printed_results += 1
             if printed_results == 1000:
                 break
@@ -154,7 +154,7 @@ def main() -> None:
     ecc_frequency = args.fq
     ecc_export_filename = args.e
     if forced_simulator is not None and "stabilizer" in forced_simulator and "A" in error_channels:
-        print(  # noqa: T201
+        print(
             'Warning: Non-unitary errors (such as for example amplitude damping ("A")) are not suitable for simulation '
             "with a stabilizer based simulator and may cause an error during the simulation."
         )
@@ -168,7 +168,7 @@ def main() -> None:
     circ = load(open_qasm_file)
 
     if not any(gate.operation.name == "measure" for gate in circ.data):
-        print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")  # noqa: T201
+        print("Warning: No measurement gates found in the circuit. Adding measurement gates to all qubits.")
         circ.measure_all()
 
     # Initializing the quantum circuit
@@ -178,13 +178,13 @@ def main() -> None:
         circ = loads(result["circ"])
 
     if ecc_export_filename is not None:
-        print("Exporting circuit to: " + str(ecc_export_filename))  # noqa: T201
+        print("Exporting circuit to: " + str(ecc_export_filename))
         with pathlib.Path(ecc_export_filename).open("w", encoding=locale.getpreferredencoding(False)) as f:
             dump(circ, f)
         return
 
     size = circ.num_qubits
-    print(  # noqa: T201
+    print(
         "_____Trying to simulate with "
         + str(error_channels)
         + " (prob="
