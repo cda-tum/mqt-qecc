@@ -220,7 +220,7 @@ def _build_state_prep_circuit_from_back(
     return build_css_circuit_from_cnot_list(checks.shape[1], cnots, list(hadamards))
 
 
-def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True) -> StatePrepCircuit:
+def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True, penalty_cols: list[int] | None = None) -> StatePrepCircuit:
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
 
     Args:
@@ -228,6 +228,8 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
         optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
         zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
     """
+    if penalty_cols is None:
+        penalty_cols = []
     logger.info("Starting heuristic state preparation.")
     if code.Hx is None or code.Hz is None:
         msg = "The code must have both X and Z stabilizers defined."
@@ -235,7 +237,7 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
 
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
-    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
+    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth, penalty_cols=penalty_cols)
 
     circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
@@ -264,6 +266,7 @@ def fs_disjunct_spc(
     assert checks is not None
     checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
     # NOTE: everything above is code duplication from heuristic_prep_circuit()
+    # could this be simplified but then we would need an intermediate return of checks, cnots
 
     permutation_group = get_permutation_group(group_generators=automorph_generators)
     # BUG: I have those prints since the stateprep circuit below gives another fault set than the one
