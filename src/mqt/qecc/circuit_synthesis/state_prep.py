@@ -282,20 +282,23 @@ def fs_disjunct_spc(
         fault_set_1 = fault_set_1[np.where(fault_set_1.sum(axis=1) > 3)]
         fault_set_2 = fault_set_2[np.where(fault_set_2.sum(axis=1) > 3)]
 
-    # HACK: Overlap search has 3 nested for loops, check for improvement
-    overlapping_faults: list[npt.NDArray[np.int8]] = []
-    perm_overlap: dict[Permutation, list[npt.NDArray[np.int8]]] = {}
     original_faults = fault_set_1
-    print(f"fault set 1: \n{fault_set_1}")
     if stateprepcirc.code.distance == 7:
         original_faults = np.vstack(fault_set_1, fault_set_2)
-        print(f"fault set 2: \n{fault_set_2}")
-    print(f"comparison fault set: \n{original_faults}")
+    return overlap_search(code=code, fs_2b_permuted=fault_set_1, comp_faults=original_faults, permutation_group=permutation_group)
+
+
+def overlap_search(code: CSSCode, fs_2b_permuted: npt.NDArray[np.int8], comp_faults: npt.NDArray[np.int8], permutation_group: list[Permutation]) -> dict[Permutation, list[npt.NDArray[np.int8]]]:
+    # HACK: Overlap search has 3 nested for loops, check for improvment
+    overlapping_faults : list[npt.NDArray[np.int8]] = []
+    perm_overlap: dict[Permutation, list[npt.NDArray[np.int8]]] = {}
+    print(f"fault set to be permuted:\n{fs_2b_permuted}")
+    print(f"comparison fault set:\n{comp_faults}")
     for perm in permutation_group:
-        perm_fs = fault_set_1[:, perm.array_form]
+        perm_fs = fs_2b_permuted[:, perm.array_form]
         for pf in perm_fs:
-            for ff in original_faults:
-                if code.stabilizer_eq_x_error(pf, ff):
+            for ff in comp_faults:
+                if code.stabilizer_eq_x_error(pf,ff):
                     # FIX: without this print statement append gets changed to extend on save
                     print(f"permutation: {perm}")
                     print(f"stabilizer equivalent error: \n{pf}(permuted) and \n{ff}(not permuted)")
