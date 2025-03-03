@@ -106,6 +106,7 @@ def heuristic_gaussian_elimination(
     rank = mod2.rank(matrix)
     print(f"initial check matrix:\n{matrix}")
     print("----------------------------------")
+
     def is_reduced() -> bool:
         return bool(len(np.where(np.all(matrix == 0, axis=0))[0]) == matrix.shape[1] - rank)
 

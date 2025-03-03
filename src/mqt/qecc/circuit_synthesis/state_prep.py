@@ -220,7 +220,9 @@ def _build_state_prep_circuit_from_back(
     return build_css_circuit_from_cnot_list(checks.shape[1], cnots, list(hadamards))
 
 
-def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_state: bool = True, penalty_cols: list[int] | None = None) -> StatePrepCircuit:
+def heuristic_prep_circuit(
+    code: CSSCode, optimize_depth: bool = True, zero_state: bool = True, penalty_cols: list[int] | None = None
+) -> StatePrepCircuit:
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
 
     Args:
@@ -237,7 +239,9 @@ def heuristic_prep_circuit(code: CSSCode, optimize_depth: bool = True, zero_stat
 
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
-    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth, penalty_cols=penalty_cols)
+    checks, cnots = heuristic_gaussian_elimination(
+        checks, parallel_elimination=optimize_depth, penalty_cols=penalty_cols
+    )
 
     circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
@@ -288,12 +292,19 @@ def fs_disjunct_spc(
     original_faults = fault_set_1
     if stateprepcirc.code.distance == 7:
         original_faults = np.vstack(fault_set_1, fault_set_2)
-    return overlap_search(code=code, fs_2b_permuted=fault_set_1, comp_faults=original_faults, permutation_group=permutation_group)
+    return overlap_search(
+        code=code, fs_2b_permuted=fault_set_1, comp_faults=original_faults, permutation_group=permutation_group
+    )
 
 
-def overlap_search(code: CSSCode, fs_2b_permuted: npt.NDArray[np.int8], comp_faults: npt.NDArray[np.int8], permutation_group: list[Permutation]) -> dict[Permutation, list[npt.NDArray[np.int8]]]:
-    # HACK: Overlap search has 3 nested for loops, check for improvment
-    overlapping_faults : list[npt.NDArray[np.int8]] = []
+def overlap_search(
+    code: CSSCode,
+    fs_2b_permuted: npt.NDArray[np.int8],
+    comp_faults: npt.NDArray[np.int8],
+    permutation_group: list[Permutation],
+) -> dict[Permutation, list[npt.NDArray[np.int8]]]:
+    # HACK: Overlap search has 3 nested for loops, check for improvement
+    overlapping_faults: list[npt.NDArray[np.int8]] = []
     perm_overlap: dict[Permutation, list[npt.NDArray[np.int8]]] = {}
     print(f"fault set to be permuted:\n{fs_2b_permuted}")
     print(f"comparison fault set:\n{comp_faults}")
@@ -301,7 +312,7 @@ def overlap_search(code: CSSCode, fs_2b_permuted: npt.NDArray[np.int8], comp_fau
         perm_fs = fs_2b_permuted[:, perm.array_form]
         for pf in perm_fs:
             for ff in comp_faults:
-                if code.stabilizer_eq_x_error(pf,ff):
+                if code.stabilizer_eq_x_error(pf, ff):
                     # FIX: without this print statement append gets changed to extend on save
                     print(f"permutation: {perm}")
                     print(f"stabilizer equivalent error: \n{pf}(permuted) and \n{ff}(not permuted)")
