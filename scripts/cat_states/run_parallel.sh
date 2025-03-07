@@ -7,7 +7,7 @@ declare -a p=("0.001" "0.002" "0.003" "0.004" "0.005" "0.006" "0.007" "0.008" "0
 echo "p; rar; errors; errors_errors" > "$1.csv"
 
 run_and_write() {
-    local res=$(python estimate_logical_error_rate.py ${@:2:$#-2} "-p" "${@: -1}")
+    local res=$(python estimate_error_rate.py ${@:2:$#-2} "-p" "${@: -1}")
     local line="${@: -1} ${res}"
     (flock -e 200 echo $line >> "$1.csv") 200>lock
 }
