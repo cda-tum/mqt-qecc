@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import stim
 from qiskit import QuantumCircuit, QuantumRegister
 
 
@@ -33,3 +34,23 @@ def reorder_qubits(circ: QuantumCircuit, qubit_mapping: dict[int, int]) -> Quant
         new_circuit.append(instruction, new_qubits, clbits)
 
     return new_circuit
+
+
+def relabel_qubits(circ: stim.Circuit, qubit_mapping: dict[int, int] | int) -> stim.Circuit:
+    """Relabels the qubits in a stim circuit based on the given mapping.
+
+    Parameters:
+        circ (stim.Circuit): The original stim circuit.
+        qubit_mapping (dict[int, int] | int): Either a dictionary mapping original qubit indices to new qubit indices or a constant offset to add to all qubit indices.
+
+    Returns:
+        stim.Circuit: A new stim circuit with qubits relabeled.
+    """
+    new_circ = stim.Circuit()
+    for op in circ:
+        if isinstance(qubit_mapping, dict):
+            relabelled_qubits = [qubit_mapping[q.value] for q in op.targets_copy()]
+        else:
+            relabelled_qubits = [q.value + qubit_mapping for q in op.targets_copy()]
+        new_circ.append(op.name, relabelled_qubits)
+    return new_circ
