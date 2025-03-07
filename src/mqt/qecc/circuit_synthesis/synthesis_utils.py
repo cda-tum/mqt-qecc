@@ -20,6 +20,8 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import AncillaQubit, ClBit, Qubit
 
+    from mqt.qecc.circuit_synthesis.state_prep import StatePrepCircuit
+
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,7 @@ def heuristic_gaussian_elimination(
     Args:
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
+        penalty_cols: indices of qubits whose CNOT connection shall occur earlier in the circuit
 
     Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
@@ -180,6 +183,83 @@ def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation
     group_generators = [Permutation(generator) for generator in group_generators]
     g = PermutationGroup(group_generators)
     return list(g.generate())
+
+
+def check_mutually_disjointness_spcs(
+    c_spcs: list[StatePrepCircuit], p_spcs: list[StatePrepCircuit]
+) -> list[StatePrepCircuit]:
+    """Check if potential SPCs have mutually disjoint fault set with all current SPCs.
+
+    Take list of SPCs with already mutually disjoint fault sets and another list of potential candidates for new SPCs that
+    have a mutually disjoint fault set with all current SPCs.
+
+    Args:
+        c_spcs: current SPCs that are already mutually disjoint in terms of fault sets
+        p_spcs: potential SPCs that shall be tested for mutually disjointness against the current set
+    """
+    i = 0
+    while i < len(p_spcs):
+        pspc = p_spcs[i]
+        px_fs, pz_fs = get_fs_based_on_d(pspc)
+
+        # Check against *all* existing and newly added elements in c_spcs
+        for _spc in c_spcs:
+            # NOTE: for distance 5 and 7 we only compare against the 1 error fault set.
+            # This might need adjustments for different distances.
+            x_fs = _spc.compute_fault_set()
+            z_fs = _spc.compute_fault_set(x_errors=False)
+            if _spc.check_fs_overlap(x_fs, px_fs) or _spc.check_fs_overlap(z_fs, pz_fs):
+                break  # Stop checking if there's an overlap
+        else:  # No overlap found, so add pspc
+            c_spcs.append(pspc)
+
+        i += 1  # Move to next element in p_spcs
+    return c_spcs
+
+
+def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
+    """Get fault sets based on the code distance.
+
+    Only the faults sets that are of interest for the fault tolerant state preparation are being returned.
+    Supported are code distance 5 and 7.
+
+    Args:
+        spc: State Prep Circiut of which the fault set is to be returned.
+
+    Returns:
+        tuple: first entry the x fault set and second entry the z fault set.
+    """
+
+    def compute_fault_sets(level: int = 1) -> tuple[npt.NDArray[np.int8]]:
+        """Helper function to compute fault sets at a given level."""
+        spc.compute_fault_set(level)
+        spc.compute_fault_set(level, x_errors=False)
+        return spc.x_fault_sets[level], spc.z_fault_sets[level]
+
+    def filter_fault_set(fault_set: npt.NDArray[np.int8], threshold: int) -> npt.NDArray[np.int8]:
+        """Filter fault sets based on a sum threshold."""
+        return fault_set[np.where(fault_set.sum(axis=1) > threshold)]
+
+    fault_set_x_1, fault_set_z_1 = compute_fault_sets(1)
+
+    if spc.code.distance == 5:
+        return filter_fault_set(fault_set_x_1, 2), filter_fault_set(fault_set_z_1, 2)
+
+    if spc.code.distance == 7:
+        fault_set_x_2, fault_set_z_2 = compute_fault_sets(2)
+        return (
+            np.vstack([
+                filter_fault_set(fault_set_x_1, 3),
+                filter_fault_set(fault_set_x_2, 3),
+            ]),
+            np.vstack([
+                filter_fault_set(fault_set_z_1, 3),
+                filter_fault_set(fault_set_z_2, 3),
+            ]),
+        )
+
+    msg = f"Unsupported code distance: {spc.code.distance}"
+    raise ValueError(msg)
 
 
 def gaussian_elimination_min_column_ops(
