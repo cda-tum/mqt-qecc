@@ -306,18 +306,25 @@ class NoisyNDFTStatePrepSimulator:
         )  # number of non-commuting corrected states
         return num_logical_errors, num_discarded
 
-    def plot_state_prep(self, ps: list[float], min_errors: int = 500, name: str | None = None) -> None:
+    def plot_state_prep(
+        self,
+        ps: list[float],
+        min_errors: int = 500,
+        name: str | None = None,
+        p_idle_factor: float = 1.0,
+    ) -> None:
         """Plot the logical error rate and accaptence rate as a function of the physical error rate.
 
         Args:
             ps: The physical error rates to plot.
             min_errors: The minimum number of errors to find before stopping.
             name: The name of the plot.
+            p_idle_factor: Factor to scale the idling error rate depending on ps.
         """
         p_ls = []
         r_as = []
         for p in ps:
-            self.set_p(p)
+            self.set_p(p, p_idle_factor * p)
             p_l, r_a, _num_logical_errors, _num_shots = self.logical_error_rate(min_errors=min_errors)
             p_ls.append(p_l)
             r_as.append(r_a)
