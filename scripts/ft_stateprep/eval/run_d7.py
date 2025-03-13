@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import pickle
+import pickle  # noqa: S403
 from pathlib import Path
 
 from qiskit import QuantumCircuit
@@ -15,6 +15,7 @@ from mqt.qecc.codes import SquareOctagonColorCode
 
 
 def main() -> None:
+    """Run the simulation."""
     parser = argparse.ArgumentParser(description="Estimate logical error rate for CSS state preparation circuits")
     parser.add_argument("-p", "--p_error", type=float, help="Physical error rate")
     parser.add_argument("-p_idle_factor", "--p_idle_factor", type=float, default=0.01, help="Idling error rate")
@@ -27,9 +28,9 @@ def main() -> None:
     circ_name = "zero_ft_heuristic_mixed.qasm" if not args.naive_ver else "zero_ft_naive.qasm"
     qc = QuantumCircuit.from_qasm_file(prefix / circ_name)
 
-    lut_path = (Path(__file__) / "../luts/").resolve()
-    with open(lut_path / "decoder_488_7.pickle", "rb") as f:
-        lut = pickle.load(f)
+    lut_path = (Path(__file__) / "../luts/decoder_488_7.pickle").resolve()
+    with lut_path.open("rb") as f:
+        lut = pickle.load(f)  # noqa: S301
     sim = NoisyNDFTStatePrepSimulator(qc, code, decoder=lut, p=args.p_error, p_idle=args.p_idle_factor * args.p_error)
     res = sim.logical_error_rate(min_errors=args.n_errors)
     print(",".join([str(x) for x in [args.p_error, *res]]))
