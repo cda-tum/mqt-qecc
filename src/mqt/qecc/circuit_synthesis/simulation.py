@@ -40,7 +40,7 @@ class NoisyNDFTStatePrepSimulator:
             state_prep_circ: The state preparation circuit.
             code: The code to simulate.
             p: The error rate.
-            zero_state: Whether thezero state is prepared or nor.
+            zero_state: Whether the zero state is prepared or not.
             parallel_gates: Whether to allow for parallel execution of gates.
             check_logical_0: Whether to check flag measurements or the logical state
         """
