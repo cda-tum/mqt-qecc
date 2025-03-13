@@ -943,8 +943,6 @@ def measure_two_flagged_7_or_8(
     _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
     _flag_measure(qc, flag[1], meas[1], z_measurement)
 
-    _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
-
     if not weight_7:
         _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
 
