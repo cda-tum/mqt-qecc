@@ -55,12 +55,9 @@ def cat_state_line(w: int) -> stim.Circuit:
         noisy stim circuit preparing the cat state
     """
     circ = stim.Circuit()
-    mid = w // 2
-    circ.append_operation("H", [mid])
-    for i in range(w // 2 - 1):
-        circ.append_operation("CX", [mid - i, mid - i - 1])
-        circ.append_operation("CX", [mid + i, mid + i + 1])
-    circ.append_operation("CX", [1, 0])
+    circ.append_operation("H", [0])
+    for i in reversed(range(1, w)):
+        circ.append("CX", [0, i])
     return circ
 
 
