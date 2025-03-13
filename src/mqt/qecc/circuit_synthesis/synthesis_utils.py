@@ -805,7 +805,7 @@ def measure_two_flagged_5_or_6(
         z_measurement: Whether to measure the ancilla in the Z basis.
         weight_5: Whether the stabilizer has weight 5.
     """
-    assert len(stab) == 6
+    assert len(stab) == 6 or (len(stab) == 5 and weight_5)
     flag = AncillaRegister(2)
     meas = ClassicalRegister(2)
 
@@ -862,7 +862,7 @@ def measure_w_flagged_5_or_6(
         z_measurement: Whether to measure the ancilla in the Z basis.
         weight_5: Whether the stabilizer has weight 5.
     """
-    assert len(stab) == 6
+    assert len(stab) == 6 or (len(stab) == 5 and weight_5)
     flag = AncillaRegister(3)
     meas = ClassicalRegister(3)
 

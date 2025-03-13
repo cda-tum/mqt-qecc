@@ -98,9 +98,27 @@ def weight_4_z() -> MeasurementTest:
 
 
 @pytest.fixture
+def weight_4_x() -> MeasurementTest:
+    """Return a measurement test for a weight 4 stabilizer."""
+    return _make_measurement_test(4, [3, 2, 1, 0], 1, False)
+
+
+@pytest.fixture
 def weight_4_z_6q() -> MeasurementTest:
     """Return a measurement test for a weight 4 stabilizer."""
     return _make_measurement_test(6, [0, 1, 2, 3], 1, True)
+
+
+@pytest.fixture
+def weight_5_z_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 6 stabilizer."""
+    return _make_measurement_test(5, [0, 1, 2, 3, 4], 1, True)
+
+
+@pytest.fixture
+def weight_5_x_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 6 stabilizer."""
+    return _make_measurement_test(5, [0, 1, 2, 3, 4], 1, False)
 
 
 @pytest.fixture
@@ -110,9 +128,21 @@ def weight_6_z_measurement() -> MeasurementTest:
 
 
 @pytest.fixture
-def weight_4_x() -> MeasurementTest:
-    """Return a measurement test for a weight 4 stabilizer."""
-    return _make_measurement_test(4, [3, 2, 1, 0], 1, False)
+def weight_6_x_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 6 stabilizer."""
+    return _make_measurement_test(6, [0, 1, 2, 3, 4, 5], 1, False)
+
+
+@pytest.fixture
+def weight_7_z_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(7, [6, 5, 4, 3, 2, 1, 0], 1, True)
+
+
+@pytest.fixture
+def weight_7_x_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(7, [6, 5, 4, 3, 2, 1, 0], 1, False)
 
 
 @pytest.fixture
@@ -122,9 +152,39 @@ def weight_8_x_measurement() -> MeasurementTest:
 
 
 @pytest.fixture
+def weight_8_z_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(8, [7, 6, 5, 4, 3, 2, 1, 0], 1, True)
+
+
+@pytest.fixture
 def weight_9_z_measurement() -> MeasurementTest:
     """Return a measurement test for a weight 8 stabilizer."""
-    return _make_measurement_test(100, [7, 6, 5, 4, 3, 2, 1, 0], 2, True)
+    return _make_measurement_test(100, [8, 7, 6, 5, 4, 3, 2, 1, 0], 2, True)
+
+
+@pytest.fixture
+def weight_11_z_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(11, list(range(11)), 2, True)
+
+
+@pytest.fixture
+def weight_11_x_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(11, list(range(11)), 2, False)
+
+
+@pytest.fixture
+def weight_12_z_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(12, list(range(12)), 2, True)
+
+
+@pytest.fixture
+def weight_12_x_measurement() -> MeasurementTest:
+    """Return a measurement test for a weight 8 stabilizer."""
+    return _make_measurement_test(12, list(range(12)), 2, False)
 
 
 @pytest.fixture
@@ -207,9 +267,18 @@ def test_one_flag_measurements(test: MeasurementTest, request):  # type: ignore[
         "weight_4_z",
         "weight_4_z_6q",
         "weight_4_x",
+        "weight_5_z_measurement",
+        "weight_5_x_measurement",
         "weight_6_z_measurement",
+        "weight_6_x_measurement",
+        "weight_7_z_measurement",
+        "weight_7_x_measurement",
         "weight_8_x_measurement",
         "weight_9_z_measurement",
+        "weight_11_z_measurement",
+        "weight_11_x_measurement",
+        "weight_12_z_measurement",
+        "weight_12_x_measurement",
         "weight_16_x_measurement",
     ],
 )
@@ -223,7 +292,6 @@ def test_two_flag(test: MeasurementTest, request):  # type: ignore[no-untyped-de
     z_measurement = fixture.z_measurement
 
     measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
-    print(qc.draw())
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
 
 
