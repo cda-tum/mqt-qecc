@@ -421,7 +421,7 @@ class LutDecoder:
                 syndrome_weights[syndrome_bytes] = (state, weight)
                 continue
             _, w = val
-            
+
             if weight < w:
                 syndrome_weights[syndrome_bytes] = (state, weight)
 

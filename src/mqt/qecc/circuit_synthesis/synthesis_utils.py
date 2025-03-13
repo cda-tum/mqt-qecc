@@ -584,7 +584,7 @@ def measure_flagged(
         return
 
     if w in {7, 8}:
-        weight_7 = (w == 7)
+        weight_7 = w == 7
         if t == 2:
             measure_two_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement, weight_7)
             return
@@ -964,15 +964,15 @@ def measure_three_flagged_8(
     _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
 
     _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
-    
+
     _flag_init(qc, flag[2], z_measurement)
     _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
-    
+
     _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
 
     _flag_init(qc, flag[3], z_measurement)
     _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
-    
+
     _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
     _flag_measure(qc, flag[0], meas[0], z_measurement)
 
@@ -1081,7 +1081,7 @@ def measure_three_flagged_12(
     measurement_bit: ClBit,
     z_measurement: bool = True,
     weight_11: bool = False,
-):
+) -> None:
     """Measure a three-flagged weight 12 stabilizer using an optimized scheme."""
     assert len(stab) == 12 or (len(stab) == 11 and weight_11)
     flag = AncillaRegister(6)
@@ -1115,12 +1115,11 @@ def measure_three_flagged_12(
 
     _ancilla_cnot(qc, flag[5], ancilla, z_measurement)
     _flag_measure(qc, flag[5], meas[5], z_measurement)
-    
+
     _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
 
     _flag_init(qc, flag[3], z_measurement)
     _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
-
 
     _ancilla_cnot(qc, stab[6], ancilla, z_measurement)
 
@@ -1146,11 +1145,9 @@ def measure_three_flagged_12(
 
     _ancilla_cnot(qc, flag[4], ancilla, z_measurement)
     _flag_measure(qc, flag[4], meas[4], z_measurement)
-    
+
     _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
     _flag_measure(qc, flag[1], meas[1], z_measurement)
-
-
 
     if not weight_11:
         _ancilla_cnot(qc, stab[11], ancilla, z_measurement)
@@ -1158,7 +1155,8 @@ def measure_three_flagged_12(
     if not z_measurement:
         qc.h(ancilla)
     qc.measure(ancilla, measurement_bit)
-    
+
+
 def qiskit_to_stim_circuit(qc: QuantumCircuit) -> Circuit:
     """Convert a Qiskit circuit to a Stim circuit."""
     single_qubit_gate_map = {
