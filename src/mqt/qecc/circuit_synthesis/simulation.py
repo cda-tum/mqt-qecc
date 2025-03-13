@@ -409,7 +409,7 @@ class LutDecoder:
         n_qubits = checks.shape[1]
 
         lut: dict[bytes, npt.NDArray[np.int8]] = {}
-        syndrome_weights = {}
+        syndrome_weights: dict[bytes, tuple[npt.NDArray[np.int8_], int]] = {}
 
         for i in range(2**n_qubits):
             state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
@@ -421,7 +421,7 @@ class LutDecoder:
                 syndrome_weights[syndrome_bytes] = (state, weight)
                 continue
             _, w = val
-            
+
             if weight < w:
                 syndrome_weights[syndrome_bytes] = (state, weight)
 
