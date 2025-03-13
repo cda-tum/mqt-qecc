@@ -12,6 +12,7 @@ import stim
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from ..codes import InvalidCSSCodeError
+from .synthesis_utils import support
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -197,7 +198,7 @@ class NoisyNDFTStatePrepSimulator:
         assert self.code.Hz is not None
 
         for check in self.code.Hx:
-            supp = _support(check)
+            supp = support(check)
             anc = self.stim_circ.num_qubits
             self.stim_circ.append_operation("H", [anc])
             for q in supp:
@@ -207,7 +208,7 @@ class NoisyNDFTStatePrepSimulator:
             self.n_measurements += 1
 
         for check in self.code.Hz:
-            supp = _support(check)
+            supp = support(check)
             anc = self.stim_circ.num_qubits
             for q in supp:
                 self.stim_circ.append_operation("CX", [q, anc])
@@ -281,14 +282,7 @@ class NoisyNDFTStatePrepSimulator:
 
         # Filter events where the verification circuit flagged
         verification_measurements = self.x_verification_measurements + self.z_verification_measurements
-        if self.check_logical_0:
-            # Compute dot products for all rows
-            dot_products = np.dot(detection_events[:, verification_measurements], self.code.Hx.T) % 2
-
-            # Find rows where all dot products are zero
-            index_array = np.where(np.all(dot_products == 0, axis=1))[0]
-        else:
-            index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
+        index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
         filtered_events = detection_events[index_array].astype(np.int8)
 
         if len(filtered_events) == 0:  # All events were discarded
@@ -443,8 +437,3 @@ class LutDecoder:
             lut[key] = np.array(v[0])
 
         return lut
-
-
-def _support(v: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
-    """Return the support of a vector."""
-    return np.where(v != 0)[0]
