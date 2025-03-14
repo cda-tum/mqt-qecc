@@ -427,6 +427,50 @@ def gate_optimal_prep_circuit(
     return StatePrepCircuit(circ, code, zero_state)
 
 
+def standard_form_prep_circuit(code: CSSCode, zero_state: bool = True) -> StatePrepCircuit:
+    """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis using the circuit's standard form.
+
+    Note that no depth optimization like Steane's latin rectangle method is performed.
+
+    Args:
+            code: The CSS code to prepare the state for.
+            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+
+    Returns: A state preparation circuit for the code.
+    """
+    h = code.Hx.copy() if zero_state else code.Hz.copy()
+    _h_red, _rk, _, _pivots = mod2.row_echelon(h, full=True)
+    cnots = _standard_form_cnots(code, zero_state)
+    qc = QuantumCircuit(code.n)
+    cnots = _standard_form_cnots(code, zero_state)
+
+    for pivot, trgts in cnots:
+        qc.h(pivot)
+        qc.cx(pivot, trgts)
+    return StatePrepCircuit(qc, code, zero_state)
+
+
+def _standard_form_cnots(code: CSSCode, zero_state: bool = True) -> list[tuple[int, list[int]]]:
+    """Return the cnots that prepare the +1 eigenstate of the code w.r.t. the Z or X basis using the circuit's standard form.
+
+    Args:
+            code: The CSS code to prepare the state for.
+            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+
+    Returns: A list of ctrl, targets tuples
+    """
+    h = code.Hx.copy() if zero_state else code.Hz.copy()
+    h_red, _rk, _, pivots = mod2.row_echelon(h, full=True)
+
+    cnots = []
+    for i, pivot in enumerate(pivots):
+        trgts = list(np.where(h_red[i, :])[0])
+        trgts.remove(pivot)
+        cnots.append((pivot, trgts))
+
+    return cnots
+
+
 def gate_optimal_verification_stabilizers(
     sp_circ: StatePrepCircuit,
     x_errors: bool = True,
