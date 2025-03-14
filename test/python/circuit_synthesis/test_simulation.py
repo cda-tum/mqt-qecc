@@ -12,6 +12,7 @@ import pytest
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis import (
     LutDecoder,
+    SteaneNDFTStatePrepSimulator,
     VerificationNDFTStatePrepSimulator,
     gate_optimal_verification_circuit,
     heuristic_prep_circuit,
@@ -141,5 +142,28 @@ def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit) -> No
     lower = 1e-4
     simulator = VerificationNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, zero_state=False)
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
+
+    assert p_l - tol < lower
+
+
+def test_steane_type_ftsp_trivial(steane_code: CSSCode, non_ft_steane_zero) -> None:
+    """Test state preparation using Steane-type verification.
+
+    This is overkill for the Steane code but this is just for testing purposes.
+    """
+    tol = 5e-3
+    p = 1e-2
+    lower = 1e-2
+    simulator = SteaneNDFTStatePrepSimulator(
+        non_ft_steane_zero,
+        non_ft_steane_zero,
+        non_ft_steane_zero,
+        non_ft_steane_zero,
+        steane_code,
+        p=p,
+        p_idle=p * 0.01,
+        zero_state=True,
+    )
+    p_l, _, _, _ = simulator.logical_error_rate(min_errors=100)
 
     assert p_l - tol < lower
