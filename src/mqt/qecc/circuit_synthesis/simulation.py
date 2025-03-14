@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import stim
+from qiskit import ClassicalRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from ..codes import InvalidCSSCodeError
@@ -207,13 +208,13 @@ class NoisyNDFTStatePrepSimulator:
     def measure_z(self) -> None:
         """Measure all data qubits in the Z basis."""
         self.data_measurements = [self.n_measurements + i for i in range(self.code.n)]
-        self.n_measurements += self.num_qubits
+        self.n_measurements += self.code.n
         self.stim_circ.append_operation("MRZ", list(range(self.num_qubits)))
 
     def measure_x(self) -> None:
         """Measure all data qubits in the X basis."""
         self.data_measurements = [self.n_measurements + i for i in range(self.code.n)]
-        self.n_measurements += self.num_qubits
+        self.n_measurements += self.code.n
         self.stim_circ.append_operation("MRX", list(range(self.num_qubits)))
 
     def logical_error_rate(
@@ -406,6 +407,91 @@ class VerificationNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         """
         verification_measurements = self.x_verification_measurements + self.z_verification_measurements
         index_array = np.where(np.all(samples[:, verification_measurements] == 0, axis=1))[0]
+        return samples[index_array].astype(np.int8)
+
+
+class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
+    """Class for simulating steane-type noisy state preparation circuit using a depolarizing noise model."""
+
+    def __init__(
+        self,
+        circ1: QuantumCircuit,
+        circ2: QuantumCircuit,
+        circ3: QuantumCircuit,
+        circ4: QuantumCircuit,
+        code: CSSCode,
+        p: float = 0.0,
+        p_idle: float | None = None,
+        zero_state: bool = True,
+        parallel_gates: bool = True,
+        decoder: LutDecoder | None = None,
+    ) -> None:
+        """Initialize the simulator.
+
+        Builds the circuit for the Steane-type preparation protocol by connecting the four state preparation circuits using transversal CNOTs.
+
+
+        Args:
+            circ1: The first, state preparation circuit.
+            circ2: The second, state preparation circuit.
+            circ3: The third, state preparation circuit.
+            circ4: The fourth, state preparation circuit
+            code: The code to simulate.
+            p: The error rate.
+            p_idle: Idling error rate. If None, it is set to p.
+            zero_state: Whether thezero state is prepared or nor.
+            parallel_gates: Whether to allow for parallel execution of gates.
+            decoder: The decoder to use.
+        """
+        circ2 = circ2.copy()
+        circ3 = circ3.copy()
+        circ4 = circ4.copy()
+        circ2.remove_final_measurements()
+        circ3.remove_final_measurements()
+        circ4.remove_final_measurements()
+        combined = circ4.tensor(circ3).tensor(circ2).tensor(circ1)
+
+        combined.barrier()  # need the barrier to retain order of measurements
+        # transversal cnots
+        combined.cx(range(code.n), range(code.n, 2 * code.n))
+        combined.cx(range(2 * code.n, 3 * code.n), range(3 * code.n, 4 * code.n))
+        combined.cx(range(2 * code.n, 3 * code.n), range(code.n))
+
+        combined.h(range(2 * code.n, 3 * code.n))  # second ancilla is measured in X basis
+
+        cr = ClassicalRegister(3 * code.n, "c")
+        combined.add_register(cr)
+        combined.measure(range(code.n, 4 * code.n), cr)  # measure out ancillas
+
+        self.anc1: list[int] = []
+        self.anc2: list[int] = []
+        self.anc3: list[int] = []
+
+        super().__init__(combined, code, p, p_idle, zero_state, parallel_gates, decoder)
+
+    def _compute_postselection_indices(self) -> None:
+        """Compute indices of measurements for postselection."""
+        self.anc_1 = list(range(self.code.n))
+        self.anc_2 = list(range(self.code.n, 2 * self.code.n))
+        self.anc_3 = list(range(2 * self.code.n, 3 * self.code.n))
+        self.n_measurements = 3 * self.code.n
+
+    def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+        """Filter samples based on measurement outcomes.
+
+        Args:
+            samples: The samples to filter.
+
+        Returns:
+            npt.NDArray[np.int8]: The filtered samples.
+        """
+        anc_1 = samples[:, self.anc_1]
+        anc_2 = samples[:, self.anc_2]
+        anc_3 = samples[:, self.anc_3]
+        check_anc_1 = (anc_1 @ self.code.Hx.T) % 2
+        check_anc_2 = (anc_2 @ self.code.Hz.T) % 2
+        check_anc_3 = (anc_3 @ self.code.Hx.T) % 2
+        index_array = np.where(np.all(np.hstack((check_anc_1, check_anc_2, check_anc_3)) == 0, axis=1))[0]
         return samples[index_array].astype(np.int8)
 
 
