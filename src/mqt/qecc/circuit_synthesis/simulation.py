@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class NoisyNDFTStatePrepSimulator:
-    """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
+    """Abstract class for simulating noisy state preparation circuit using a depolarizing noise model."""
 
     def __init__(
         self,
@@ -53,55 +53,50 @@ class NoisyNDFTStatePrepSimulator:
 
         self.circ = state_prep_circ
         self.num_qubits = state_prep_circ.num_qubits
+        self.num_verification_qubits = 0
         self.code = code
         self.p = p
         self.p_idle = p if p_idle is None else p_idle
         self.zero_state = zero_state
+        self.parallel_gates = parallel_gates
         # Store which measurements are X, Z or data measurements.
         # The indices refer to the indices of the measurements in the stim circuit.
-        self.x_verification_measurements: list[int] = []
-        self.z_verification_measurements: list[int] = []
+        self.stim_circ = stim.Circuit()
+        self.data_measurements: list[int] = []
         self.x_measurements: list[int] = []
         self.z_measurements: list[int] = []
-        self.data_measurements: list[int] = []
-        self.parallel_gates = parallel_gates
-        self.n_measurements = 0
-        self.stim_circ = stim.Circuit()
         if decoder is None:
             self.decoder = LutDecoder(code)
         else:
             self.decoder = decoder
+
         self.set_p(p, p_idle)
 
     def set_p(self, p: float, p_idle: float | None = None) -> None:
-        """Set the error rate.
+        """Set the error rate and initialize the stim circuit.
 
-        This reinitializes the stim circuit.
+        This overwrites the previous stim circuit.
 
         Args:
         p: The error rate.
         p_idle: Idling error rate. If None, it is set to p.
         """
-        self.x_verification_measurements = []
-        self.z_verification_measurements = []
         self.x_measurements = []
         self.z_measurements = []
         self.data_measurements = []
         self.n_measurements = 0
         self.p = p
-        self._reused_qubits = 0
         self.p_idle = p if p_idle is None else p_idle
         self.stim_circ = self.to_stim_circ()
-        self.num_qubits = (
-            self.stim_circ.num_qubits
-            - (len(self.x_verification_measurements) + len(self.z_verification_measurements))
-            + self._reused_qubits
-        )
+        self._compute_postselection_indices()
         self.measure_stabilizers()
         if self.zero_state:
             self.measure_z()
         else:
             self.measure_x()
+
+    def _compute_postselection_indices(self) -> None:
+        """Compute indices of measurements for postselection."""
 
     def to_stim_circ(self) -> stim.Circuit:
         """Convert a QuantumCircuit to a noisy STIM circuit.
@@ -126,7 +121,7 @@ class NoisyNDFTStatePrepSimulator:
         layers = dag.layers()
         used_qubits: list[int] = []
         targets = set()
-        measured: defaultdict[int, int] = defaultdict(int)
+        defaultdict(int)
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -141,7 +136,6 @@ class NoisyNDFTStatePrepSimulator:
                     ctrls.append(qubit)
                     if initialized[qubit]:
                         stim_circuit.append_operation("H", [qubit])
-                        # stim_circuit.append_operation("DEPOLARIZE1", [qubit], [self.p])
                         if not self.parallel_gates:
                             idle_error([qubit])
                         else:
@@ -173,19 +167,11 @@ class NoisyNDFTStatePrepSimulator:
                     anc = self.circ.find_bit(gate.qubits[0])[0]
                     stim_circuit.append_operation("X_ERROR", [anc], [2 * self.p / 3])
                     stim_circuit.append_operation("MR", [anc])
-                    if anc in targets:
-                        self.z_verification_measurements.append(self.n_measurements)
-                    else:
-                        self.x_verification_measurements.append(self.n_measurements)
-                    self.n_measurements += 1
                     if not self.parallel_gates:
                         idle_error([anc])
                     else:
                         used_qubits.append(anc)
                     initialized[anc] = False
-                    measured[anc] += 1
-                    if measured[anc] == 2:
-                        self._reused_qubits += 1
 
         return stim_circuit
 
@@ -197,24 +183,26 @@ class NoisyNDFTStatePrepSimulator:
         assert self.code.Hx is not None
         assert self.code.Hz is not None
 
+        anc = self.stim_circ.num_qubits + self.num_verification_qubits
         for check in self.code.Hx:
             supp = support(check)
-            anc = self.stim_circ.num_qubits
+
             self.stim_circ.append_operation("H", [anc])
             for q in supp:
                 self.stim_circ.append_operation("CX", [anc, q])
             self.stim_circ.append_operation("MRX", [anc])
             self.x_measurements.append(self.n_measurements)
             self.n_measurements += 1
+            anc += 1
 
         for check in self.code.Hz:
             supp = support(check)
-            anc = self.stim_circ.num_qubits
             for q in supp:
                 self.stim_circ.append_operation("CX", [q, anc])
             self.stim_circ.append_operation("MRZ", [anc])
             self.z_measurements.append(self.n_measurements)
             self.n_measurements += 1
+            anc += 1
 
     def measure_z(self) -> None:
         """Measure all data qubits in the Z basis."""
@@ -276,14 +264,21 @@ class NoisyNDFTStatePrepSimulator:
 
         return p_l / self.code.k, r_a, num_logical_errors, i * batch
 
+    def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+        """Filter samples based on measurement outcomes.
+
+        Args:
+            samples: The samples to filter.
+
+        Returns:
+            npt.NDArray[np.int8]: The filtered samples.
+        """
+
     def _simulate_batch(self, shots: int = 1024) -> tuple[int, int]:
         sampler = self.stim_circ.compile_sampler()
-        detection_events = sampler.sample(shots)
+        detection_events = sampler.sample(shots).astype(np.int8)
 
-        # Filter events where the verification circuit flagged
-        verification_measurements = self.x_verification_measurements + self.z_verification_measurements
-        index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
-        filtered_events = detection_events[index_array].astype(np.int8)
+        filtered_events = self._filter_runs(detection_events)
 
         if len(filtered_events) == 0:  # All events were discarded
             return 0, shots
@@ -349,6 +344,69 @@ class NoisyNDFTStatePrepSimulator:
         if name is not None:
             plt.legend()
         plt.tight_layout()
+
+
+class VerificationNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
+    """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
+
+    def __init__(
+        self,
+        state_prep_circ: QuantumCircuit,
+        code: CSSCode,
+        p: float = 0.0,
+        p_idle: float | None = None,
+        zero_state: bool = True,
+        parallel_gates: bool = True,
+        decoder: LutDecoder | None = None,
+    ) -> None:
+        """Initialize the simulator.
+
+        Args:
+            state_prep_circ: The state preparation circuit.
+            code: The code to simulate.
+            p: The error rate.
+            p_idle: Idling error rate. If None, it is set to p.
+            zero_state: Whether thezero state is prepared or nor.
+            parallel_gates: Whether to allow for parallel execution of gates.
+            decoder: The decoder to use.
+        """
+        self.z_verification_measurements: list[int] = []
+        self.x_verification_measurements: list[int] = []
+        super().__init__(state_prep_circ, code, p, p_idle, zero_state, parallel_gates, decoder)
+
+    def _compute_postselection_indices(self) -> None:
+        """Compute the indices of the verification measurements."""
+        dag = circuit_to_dag(self.circ)
+        layers = dag.layers()
+        targets = set()
+        for layer in layers:
+            layer_circ = dag_to_circuit(layer["graph"])
+
+            for gate in layer_circ.data:
+                if gate.operation.name == "cx":
+                    target = self.circ.find_bit(gate.qubits[1])[0]
+                    targets.add(target)
+
+                elif gate.operation.name == "measure":
+                    anc = self.circ.find_bit(gate.qubits[0])[0]
+                    if anc in targets:
+                        self.z_verification_measurements.append(self.n_measurements)
+                    else:
+                        self.x_verification_measurements.append(self.n_measurements)
+                    self.n_measurements += 1
+
+    def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+        """Filter samples based on measurement outcomes.
+
+        Args:
+            samples: The samples to filter.
+
+        Returns:
+            npt.NDArray[np.int8]: The filtered samples.
+        """
+        verification_measurements = self.x_verification_measurements + self.z_verification_measurements
+        index_array = np.where(np.all(samples[:, verification_measurements] == 0, axis=1))[0]
+        return samples[index_array].astype(np.int8)
 
 
 class LutDecoder:
