@@ -15,9 +15,7 @@ from mqt.qecc.circuit_synthesis.synthesis_utils import (
     gaussian_elimination_min_column_ops,
     gaussian_elimination_min_parallel_eliminations,
     measure_flagged,
-    measure_one_flagged,
     measure_stab_unflagged,
-    measure_two_flagged,
     qiskit_to_stim_circuit,
 )
 
@@ -76,11 +74,9 @@ class MeasurementTest(NamedTuple):
     stab: list[Qubit]
     ancilla: AncillaQubit
     measurement_bit: ClBit
-    t: int
-    z_measurement: bool
 
 
-def _make_measurement_test(n: int, stab: list[int], t: int, z_measurements: bool) -> MeasurementTest:
+def _make_measurement_test(n: int, stab: list[int]) -> MeasurementTest:
     q = QuantumRegister(n, "q")
     c = ClassicalRegister(1, "c")
     anc = AncillaRegister(1, "anc")
@@ -88,49 +84,7 @@ def _make_measurement_test(n: int, stab: list[int], t: int, z_measurements: bool
     stab_qubits = [q[i] for i in stab]
     ancilla = anc[0]
     measurement_bit = c[0]
-    return MeasurementTest(qc, stab_qubits, ancilla, measurement_bit, t, z_measurements)
-
-
-@pytest.fixture
-def weight_4_z() -> MeasurementTest:
-    """Return a measurement test for a weight 4 stabilizer."""
-    return _make_measurement_test(4, [0, 1, 2, 3], 1, True)
-
-
-@pytest.fixture
-def weight_4_z_6q() -> MeasurementTest:
-    """Return a measurement test for a weight 4 stabilizer."""
-    return _make_measurement_test(6, [0, 1, 2, 3], 1, True)
-
-
-@pytest.fixture
-def weight_6_z_measurement() -> MeasurementTest:
-    """Return a measurement test for a weight 6 stabilizer."""
-    return _make_measurement_test(6, [0, 1, 2, 3, 4, 5], 1, True)
-
-
-@pytest.fixture
-def weight_4_x() -> MeasurementTest:
-    """Return a measurement test for a weight 4 stabilizer."""
-    return _make_measurement_test(4, [3, 2, 1, 0], 1, False)
-
-
-@pytest.fixture
-def weight_8_x_measurement() -> MeasurementTest:
-    """Return a measurement test for a weight 8 stabilizer."""
-    return _make_measurement_test(8, [7, 6, 5, 4, 3, 2, 1, 0], 1, False)
-
-
-@pytest.fixture
-def weight_9_z_measurement() -> MeasurementTest:
-    """Return a measurement test for a weight 8 stabilizer."""
-    return _make_measurement_test(100, [7, 6, 5, 4, 3, 2, 1, 0], 2, True)
-
-
-@pytest.fixture
-def weight_16_x_measurement() -> MeasurementTest:
-    """Return a measurement test for a weight 16 stabilizer."""
-    return _make_measurement_test(16, [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 2, False)
+    return MeasurementTest(qc, stab_qubits, ancilla, measurement_bit)
 
 
 @pytest.mark.parametrize("test_vals", ["identity_matrix", "full_matrix"])
@@ -183,94 +137,73 @@ def correct_stabilizer_propagation(
     return bool(circ.has_flow(f))
 
 
-@pytest.mark.parametrize(
-    "test", ["weight_4_z", "weight_4_z_6q", "weight_4_x", "weight_6_z_measurement", "weight_8_x_measurement"]
-)
-def test_one_flag_measurements(test: MeasurementTest, request):  # type: ignore[no-untyped-def]
-    """Test measurement circuits."""
-    fixture = request.getfixturevalue(test)
-    qc = fixture.qc
-    stab = fixture.stab
-    ancilla = fixture.ancilla
-    measurement_bit = fixture.measurement_bit
-    z_measurement = fixture.z_measurement
+@pytest.mark.parametrize("w", list(range(4, 12)))
+@pytest.mark.parametrize("z_measurement", [True, False])
+def test_one_flag_measurements(w: int, z_measurement: bool) -> None:
+    """Test one-flag measurement circuits."""
+    z_test = _make_measurement_test(w, list(range(w)))
+    qc = z_test.qc
+    stab = z_test.stab
+    ancilla = z_test.ancilla
+    measurement_bit = z_test.measurement_bit
 
-    measure_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+    measure_flagged(qc, stab, ancilla, measurement_bit, t=1, z_measurement=z_measurement)
     assert qc.depth() == len(stab) + 3 + 2 * int(not z_measurement)  # 6 CNOTs + Measurement + 2 possible hadamards
     assert qc.count_ops().get("cx", 0) == len(stab) + 2  # CNOTs from measurement + 2 flagging CNOTs
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
 
 
-@pytest.mark.parametrize(
-    "test",
-    [
-        "weight_4_z",
-        "weight_4_z_6q",
-        "weight_4_x",
-        "weight_6_z_measurement",
-        "weight_8_x_measurement",
-        "weight_9_z_measurement",
-        "weight_16_x_measurement",
-    ],
-)
-def test_two_flag(test: MeasurementTest, request):  # type: ignore[no-untyped-def]
-    """Test two flag measurement circuits."""
-    fixture = request.getfixturevalue(test)
-    qc = fixture.qc
-    stab = fixture.stab
-    ancilla = fixture.ancilla
-    measurement_bit = fixture.measurement_bit
-    z_measurement = fixture.z_measurement
+@pytest.mark.parametrize("w", list(range(4, 20)))
+@pytest.mark.parametrize("z_measurement", [True, False])
+def test_two_flag_measurements(w: int, z_measurement: bool) -> None:
+    """Test two-flag measurement circuits."""
+    z_test = _make_measurement_test(w, list(range(w)))
+    qc = z_test.qc
+    stab = z_test.stab
+    ancilla = z_test.ancilla
+    measurement_bit = z_test.measurement_bit
 
-    measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
-    print(qc.draw())
+    measure_flagged(qc, stab, ancilla, measurement_bit, t=2, z_measurement=z_measurement)
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
 
 
-@pytest.mark.parametrize(
-    "test",
-    [
-        "weight_4_z",
-        "weight_4_z_6q",
-        "weight_4_x",
-        "weight_6_z_measurement",
-        "weight_8_x_measurement",
-        "weight_9_z_measurement",
-    ],
-)
-def test_flag_measurements(test: MeasurementTest, request) -> None:  # type: ignore[no-untyped-def]
-    """Test flag measurement circuits."""
-    fixture = request.getfixturevalue(test)
-    qc = fixture.qc
-    stab = fixture.stab
-    ancilla = fixture.ancilla
-    t = fixture.t
-    measurement_bit = fixture.measurement_bit
-    z_measurement = fixture.z_measurement
+@pytest.mark.parametrize("w", [4, 5, 6, 7, 8, 11, 12])
+@pytest.mark.parametrize("z_measurement", [True, False])
+def test_three_flag_measurements(w: int, z_measurement: bool) -> None:
+    """Test three-flag measurement circuits."""
+    z_test = _make_measurement_test(w, list(range(w)))
+    qc = z_test.qc
+    stab = z_test.stab
+    ancilla = z_test.ancilla
+    measurement_bit = z_test.measurement_bit
 
-    measure_flagged(qc, stab, ancilla, measurement_bit, t, z_measurement)
+    measure_flagged(qc, stab, ancilla, measurement_bit, t=3, z_measurement=z_measurement)
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
 
 
-@pytest.mark.parametrize(
-    "test",
-    [
-        "weight_4_z",
-        "weight_4_z_6q",
-        "weight_4_x",
-        "weight_6_z_measurement",
-        "weight_8_x_measurement",
-        "weight_9_z_measurement",
-    ],
-)
-def test_unflagged_measurements(test: MeasurementTest, request) -> None:  # type: ignore[no-untyped-def]
-    """Test flag measurement circuits."""
-    fixture = request.getfixturevalue(test)
-    qc = fixture.qc
-    stab = fixture.stab
-    ancilla = fixture.ancilla
-    measurement_bit = fixture.measurement_bit
-    z_measurement = fixture.z_measurement
+@pytest.mark.parametrize("w", list(range(4, 30)))
+@pytest.mark.parametrize("z_measurement", [True, False])
+def test_unflagged_measurements(w: int, z_measurement: bool) -> None:
+    """Test unflagged measurement circuits."""
+    z_test = _make_measurement_test(w, list(range(w)))
+    qc = z_test.qc
+    stab = z_test.stab
+    ancilla = z_test.ancilla
+    measurement_bit = z_test.measurement_bit
 
     measure_stab_unflagged(qc, stab, ancilla, measurement_bit, z_measurement)
+    assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)
+
+
+@pytest.mark.parametrize("w", [5, 6])
+@pytest.mark.parametrize("z_measurement", [True, False])
+def test_w_flag(w: int, z_measurement: bool) -> None:
+    """Test three-flag measurement circuits."""
+    z_test = _make_measurement_test(w, list(range(w)))
+    qc = z_test.qc
+    stab = z_test.stab
+    ancilla = z_test.ancilla
+    measurement_bit = z_test.measurement_bit
+
+    measure_flagged(qc, stab, ancilla, measurement_bit, t=w, z_measurement=z_measurement)
     assert correct_stabilizer_propagation(qc, stab, ancilla, z_measurement)

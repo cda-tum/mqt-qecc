@@ -66,6 +66,10 @@ class NoisyNDFTStatePrepSimulator:
         self.data_measurements: list[int] = []
         self.x_measurements: list[int] = []
         self.z_measurements: list[int] = []
+        self.data_measurements: list[int] = []
+        self.parallel_gates = parallel_gates
+        self.n_measurements = 0
+        self.stim_circ = stim.Circuit()
         if decoder is None:
             self.decoder = LutDecoder(code)
         else:
