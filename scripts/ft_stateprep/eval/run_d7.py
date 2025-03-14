@@ -9,7 +9,7 @@ from pathlib import Path
 from qiskit import QuantumCircuit
 
 from mqt.qecc.circuit_synthesis import (
-    VerificationNDFTStatePrepSimulator,
+    NoisyNDFTStatePrepSimulator,
 )
 from mqt.qecc.codes import SquareOctagonColorCode
 
@@ -31,9 +31,7 @@ def main() -> None:
     lut_path = (Path(__file__) / "../luts/decoder_488_7.pickle").resolve()
     with lut_path.open("rb") as f:
         lut = pickle.load(f)  # noqa: S301
-    sim = VerificationNDFTStatePrepSimulator(
-        qc, code, decoder=lut, p=args.p_error, p_idle=args.p_idle_factor * args.p_error
-    )
+    sim = NoisyNDFTStatePrepSimulator(qc, code, decoder=lut, p=args.p_error, p_idle=args.p_idle_factor * args.p_error)
     res = sim.logical_error_rate(min_errors=args.n_errors)
     print(",".join([str(x) for x in [args.p_error, *res]]))
 
