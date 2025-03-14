@@ -550,17 +550,18 @@ def measure_flagged(
     t: int,
     z_measurement: bool = True,
 ) -> None:
-    """Measure a w-flagged stabilizer with the general scheme.
+    """Measure a w-flagged stabilizer.
 
     The measurement is done in place.
 
     Args:
+        Args:
         qc: The quantum circuit to add the measurement to.
-        stab: The qubits to measure.
-        ancilla: The ancilla qubit to use for the measurement.
-        measurement_bit: The classical bit to store the measurement result of the ancilla.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
         t: The number of errors to protect against.
-        z_measurement: Whether to measure an X (False) or Z (True) stabilizer.
+        z_measurement: Whether to measure the ancilla in the Z basis.
     """
     w = len(stab)
     if w < 3:
@@ -575,16 +576,33 @@ def measure_flagged(
         measure_two_flagged_4(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
-    if w == 6 and t == 2:
-        measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
+    if w in {5, 6}:
+        weight_5 = w == 5
+        if t == 2:
+            measure_two_flagged_5_or_6(qc, stab, ancilla, measurement_bit, z_measurement, weight_5)
+            return
+        measure_w_flagged_5_or_6(qc, stab, ancilla, measurement_bit, z_measurement, weight_5)
         return
 
-    if w == 8 and t == 2:
-        measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
+    if w in {7, 8}:
+        weight_7 = w == 7
+        if t == 2:
+            measure_two_flagged_7_or_8(qc, stab, ancilla, measurement_bit, z_measurement, weight_7)
+            return
+        if t == 3:
+            measure_three_flagged_7_or_8(qc, stab, ancilla, measurement_bit, z_measurement, weight_7)
+            return
+
+    if w in {11, 12}:
+        weight_11 = w == 11
+        if t == 2:
+            measure_two_flagged_11_or_12(qc, stab, ancilla, measurement_bit, z_measurement, weight_11)
+        if t == 3:
+            measure_three_flagged_12(qc, stab, ancilla, measurement_bit, z_measurement, weight_11)
         return
 
     if t == 2:
-        measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        measure_two_flagged_general(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
     msg = f"Flagged measurement for w={w} and t={t} not implemented."
@@ -629,24 +647,22 @@ def measure_one_flagged(
     qc.measure(ancilla, measurement_bit)
 
 
-def measure_two_flagged(
+def measure_two_flagged_general(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
     measurement_bit: ClBit,
     z_measurement: bool = True,
 ) -> None:
-    """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13)."""
-    if len(stab) <= 4:
-        measure_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
-    if len(stab) == 6:
-        measure_flagged_6(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
-    if len(stab) == 8:
-        measure_flagged_8(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
+    """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13).
 
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+    """
     n_flags = (len(stab) + 1) // 2 - 1
     flag_reg = AncillaRegister(n_flags)
     meas_reg = ClassicalRegister(n_flags)
@@ -750,15 +766,25 @@ def measure_two_flagged_4(
     qc.measure(ancilla, measurement_bit)
 
 
-def measure_flagged_6(
+def measure_two_flagged_5_or_6(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
     measurement_bit: ClBit,
     z_measurement: bool = True,
+    weight_5: bool = False,
 ) -> None:
-    """Measure a 6-flagged stabilizer using an optimized scheme."""
-    assert len(stab) == 6
+    """Measure a two-flagged weight 6 stabilizer using an optimized scheme.
+
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+        weight_5: Whether the stabilizer has weight 5.
+    """
+    assert len(stab) == 6 or (len(stab) == 5 and weight_5)
     flag = AncillaRegister(2)
     meas = ClassicalRegister(2)
 
@@ -789,22 +815,96 @@ def measure_flagged_6(
     _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
     _flag_measure(qc, flag[1], meas[1], z_measurement)
 
-    _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+    if not weight_5:
+        _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
 
     if not z_measurement:
         qc.h(ancilla)
     qc.measure(ancilla, measurement_bit)
 
 
-def measure_flagged_8(
+def measure_w_flagged_5_or_6(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
     measurement_bit: ClBit,
     z_measurement: bool = True,
+    weight_5: bool = False,
 ) -> None:
-    """Measure an 8-flagged stabilizer using an optimized scheme."""
-    assert len(stab) == 8
+    """Measure a w-flagged weight 6 stabilizer using an optimized scheme.
+
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+        weight_5: Whether the stabilizer has weight 5.
+    """
+    assert len(stab) == 6 or (len(stab) == 5 and weight_5)
+    flag = AncillaRegister(3)
+    meas = ClassicalRegister(3)
+
+    qc.add_register(flag)
+    qc.add_register(meas)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[0], z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[1], z_measurement)
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
+
+    _flag_init(qc, flag[2], z_measurement)
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+    _flag_measure(qc, flag[0], meas[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+    _flag_measure(qc, flag[2], meas[2], z_measurement)
+
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+    _flag_measure(qc, flag[1], meas[1], z_measurement)
+
+    if not weight_5:
+        _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+
+    if not z_measurement:
+        qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_two_flagged_7_or_8(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+    weight_7: bool = False,
+) -> None:
+    """Measure a two-flagged weight 8 stabilizer using an optimized scheme.
+
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+        weight_7: Whether the stabilizer has weight 7.
+    """
+    assert len(stab) == 8 or (len(stab) == 7 and weight_7)
     flag = AncillaRegister(3)
     meas = ClassicalRegister(3)
     qc.add_register(flag)
@@ -843,7 +943,257 @@ def measure_flagged_8(
     _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
     _flag_measure(qc, flag[1], meas[1], z_measurement)
 
+    if not weight_7:
+        _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
+
+    if not z_measurement:
+        qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_three_flagged_7_or_8(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+    weight_7: bool = False,
+) -> None:
+    """Measure a three-flagged weight 8 stabilizer using an optimized scheme.
+
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+        weight_7: Whether the stabilizer has weight 7.
+    """
+    assert len(stab) == 8 or (len(stab) == 7 and weight_7)
+    flag = AncillaRegister(4)
+    meas = ClassicalRegister(4)
+    qc.add_register(flag)
+    qc.add_register(meas)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[0], z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+
+    _flag_init(qc, flag[1], z_measurement)
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
+
+    _flag_init(qc, flag[2], z_measurement)
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
+
+    _flag_init(qc, flag[3], z_measurement)
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+    _flag_measure(qc, flag[0], meas[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+    _flag_measure(qc, flag[2], meas[2], z_measurement)
+
+    _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[6], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+    _flag_measure(qc, flag[1], meas[1], z_measurement)
+
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+    _flag_measure(qc, flag[3], meas[3], z_measurement)
+
+    if not weight_7:
+        _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
+
+    if not z_measurement:
+        qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_two_flagged_11_or_12(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+    weight_11: bool = False,
+) -> None:
+    """Measure a two-flagged weight 12 stabilizer using an optimized scheme.
+
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+        weight_11: Whether the stabilizer has weight 11.
+    """
+    assert len(stab) == 12 or (len(stab) == 11 and weight_11)
+    flag = AncillaRegister(5)
+    meas = ClassicalRegister(5)
+    qc.add_register(flag)
+    qc.add_register(meas)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[0], z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+
+    _flag_init(qc, flag[1], z_measurement)
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
+
+    _flag_init(qc, flag[2], z_measurement)
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[4], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+
+    _flag_init(qc, flag[3], z_measurement)
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[6], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+    _flag_measure(qc, flag[2], meas[2], z_measurement)
+
     _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
+
+    _flag_init(qc, flag[4], z_measurement)
+    _ancilla_cnot(qc, flag[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[8], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+    _flag_measure(qc, flag[3], meas[3], z_measurement)
+
+    _ancilla_cnot(qc, stab[9], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+    _flag_measure(qc, flag[0], meas[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[10], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+    _flag_measure(qc, flag[1], meas[1], z_measurement)
+
+    _ancilla_cnot(qc, flag[4], ancilla, z_measurement)
+    _flag_measure(qc, flag[4], meas[4], z_measurement)
+
+    if not weight_11:
+        _ancilla_cnot(qc, stab[11], ancilla, z_measurement)
+
+    if not z_measurement:
+        qc.h(ancilla)
+    qc.measure(ancilla, measurement_bit)
+
+
+def measure_three_flagged_12(
+    qc: QuantumCircuit,
+    stab: list[Qubit] | npt.NDArray[np.int_],
+    ancilla: AncillaQubit,
+    measurement_bit: ClBit,
+    z_measurement: bool = True,
+    weight_11: bool = False,
+) -> None:
+    """Measure a three-flagged weight 12 stabilizer using an optimized scheme.
+
+    Args:
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
+        weight_11: Whether the stabilizer has weight 11.
+    """
+    assert len(stab) == 12 or (len(stab) == 11 and weight_11)
+    flag = AncillaRegister(6)
+    meas = ClassicalRegister(6)
+    qc.add_register(flag)
+    qc.add_register(meas)
+
+    if not z_measurement:
+        qc.h(ancilla)
+
+    _ancilla_cnot(qc, stab[0], ancilla, z_measurement)
+
+    _flag_init(qc, flag[0], z_measurement)
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[1], ancilla, z_measurement)
+
+    _flag_init(qc, flag[5], z_measurement)
+    _ancilla_cnot(qc, flag[5], ancilla, z_measurement)
+
+    _flag_init(qc, flag[1], z_measurement)
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[2], ancilla, z_measurement)
+    _ancilla_cnot(qc, stab[3], ancilla, z_measurement)
+
+    _flag_init(qc, flag[2], z_measurement)
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[5], ancilla, z_measurement)
+    _flag_measure(qc, flag[5], meas[5], z_measurement)
+
+    _ancilla_cnot(qc, stab[5], ancilla, z_measurement)
+
+    _flag_init(qc, flag[3], z_measurement)
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[6], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[2], ancilla, z_measurement)
+    _flag_measure(qc, flag[2], meas[2], z_measurement)
+
+    _ancilla_cnot(qc, stab[7], ancilla, z_measurement)
+
+    _flag_init(qc, flag[4], z_measurement)
+    _ancilla_cnot(qc, flag[4], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, stab[8], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[3], ancilla, z_measurement)
+    _flag_measure(qc, flag[3], meas[3], z_measurement)
+
+    _ancilla_cnot(qc, stab[9], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[0], ancilla, z_measurement)
+    _flag_measure(qc, flag[0], meas[0], z_measurement)
+
+    _ancilla_cnot(qc, stab[10], ancilla, z_measurement)
+
+    _ancilla_cnot(qc, flag[4], ancilla, z_measurement)
+    _flag_measure(qc, flag[4], meas[4], z_measurement)
+
+    _ancilla_cnot(qc, flag[1], ancilla, z_measurement)
+    _flag_measure(qc, flag[1], meas[1], z_measurement)
+
+    if not weight_11:
+        _ancilla_cnot(qc, stab[11], ancilla, z_measurement)
 
     if not z_measurement:
         qc.h(ancilla)
@@ -851,7 +1201,11 @@ def measure_flagged_8(
 
 
 def qiskit_to_stim_circuit(qc: QuantumCircuit) -> Circuit:
-    """Convert a Qiskit circuit to a Stim circuit."""
+    """Convert a Qiskit circuit to a Stim circuit.
+
+    Args:
+        qc: The Qiskit circuit to convert.
+    """
     single_qubit_gate_map = {
         "h": "H",
         "x": "X",
