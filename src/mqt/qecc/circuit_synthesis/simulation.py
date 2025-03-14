@@ -29,10 +29,11 @@ class NoisyNDFTStatePrepSimulator:
         self,
         state_prep_circ: QuantumCircuit,
         code: CSSCode,
-        p: float,
+        p: float = 0.0,
+        p_idle: float | None = None,
         zero_state: bool = True,
         parallel_gates: bool = True,
-        check_logical_0: bool = False,
+        decoder: LutDecoder | None = None,
     ) -> None:
         """Initialize the simulator.
 
@@ -40,9 +41,10 @@ class NoisyNDFTStatePrepSimulator:
             state_prep_circ: The state preparation circuit.
             code: The code to simulate.
             p: The error rate.
+            p_idle: Idling error rate. If None, it is set to p.
             zero_state: Whether thezero state is prepared or nor.
             parallel_gates: Whether to allow for parallel execution of gates.
-            check_logical_0: Whether to check flag measurements or the logical state
+            decoder: The decoder to use.
         """
         if code.Hx is None or code.Hz is None:
             msg = "The code must have both X and Z checks."
@@ -52,6 +54,7 @@ class NoisyNDFTStatePrepSimulator:
         self.num_qubits = state_prep_circ.num_qubits
         self.code = code
         self.p = p
+        self.p_idle = p if p_idle is None else p_idle
         self.zero_state = zero_state
         # Store which measurements are X, Z or data measurements.
         # The indices refer to the indices of the measurements in the stim circuit.
@@ -63,17 +66,20 @@ class NoisyNDFTStatePrepSimulator:
         self.parallel_gates = parallel_gates
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
-        self.decoder = LutDecoder(code)
-        self.check_logical_0 = check_logical_0
-        self.set_p(p)
+        if decoder is None:
+            self.decoder = LutDecoder(code)
+        else:
+            self.decoder = decoder
+        self.set_p(p, p_idle)
 
-    def set_p(self, p: float) -> None:
+    def set_p(self, p: float, p_idle: float | None = None) -> None:
         """Set the error rate.
 
         This reinitializes the stim circuit.
 
         Args:
         p: The error rate.
+        p_idle: Idling error rate. If None, it is set to p.
         """
         self.x_verification_measurements = []
         self.z_verification_measurements = []
@@ -83,6 +89,7 @@ class NoisyNDFTStatePrepSimulator:
         self.n_measurements = 0
         self.p = p
         self._reused_qubits = 0
+        self.p_idle = p if p_idle is None else p_idle
         self.stim_circ = self.to_stim_circ()
         self.num_qubits = (
             self.stim_circ.num_qubits
@@ -112,7 +119,7 @@ class NoisyNDFTStatePrepSimulator:
             for q in self.circ.qubits:
                 qubit = self.circ.find_bit(q)[0]
                 if initialized[qubit] and qubit not in used_qubits:
-                    stim_circuit.append_operation("DEPOLARIZE1", [self.circ.find_bit(q)[0]], [2 * self.p / 3])
+                    stim_circuit.append_operation("DEPOLARIZE1", [self.circ.find_bit(q)[0]], [self.p_idle])
 
         dag = circuit_to_dag(self.circ)
         layers = dag.layers()
@@ -133,7 +140,7 @@ class NoisyNDFTStatePrepSimulator:
                     ctrls.append(qubit)
                     if initialized[qubit]:
                         stim_circuit.append_operation("H", [qubit])
-                        stim_circuit.append_operation("DEPOLARIZE1", [qubit], [2 * self.p / 3])
+                        # stim_circuit.append_operation("DEPOLARIZE1", [qubit], [self.p])
                         if not self.parallel_gates:
                             idle_error([qubit])
                         else:
@@ -306,18 +313,25 @@ class NoisyNDFTStatePrepSimulator:
         )  # number of non-commuting corrected states
         return num_logical_errors, num_discarded
 
-    def plot_state_prep(self, ps: list[float], min_errors: int = 500, name: str | None = None) -> None:
+    def plot_state_prep(
+        self,
+        ps: list[float],
+        min_errors: int = 500,
+        name: str | None = None,
+        p_idle_factor: float = 1.0,
+    ) -> None:
         """Plot the logical error rate and accaptence rate as a function of the physical error rate.
 
         Args:
             ps: The physical error rates to plot.
             min_errors: The minimum number of errors to find before stopping.
             name: The name of the plot.
+            p_idle_factor: Factor to scale the idling error rate depending on ps.
         """
         p_ls = []
         r_as = []
         for p in ps:
-            self.set_p(p)
+            self.set_p(p, p_idle_factor * p)
             p_l, r_a, _num_logical_errors, _num_shots = self.logical_error_rate(min_errors=min_errors)
             p_ls.append(p_l)
             r_as.append(r_a)
@@ -408,16 +422,25 @@ class LutDecoder:
         """
         n_qubits = checks.shape[1]
 
-        syndromes = defaultdict(list)
         lut: dict[bytes, npt.NDArray[np.int8]] = {}
+        syndrome_weights: dict[bytes, tuple[npt.NDArray[np.int8_], int]] = {}
+
         for i in range(2**n_qubits):
             state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
             syndrome = checks @ state % 2
-            syndromes[syndrome.astype(np.int8).tobytes()].append(state)
+            syndrome_bytes = syndrome.astype(np.int8).tobytes()
+            val = syndrome_weights.get(syndrome_bytes)
+            weight = state.sum()
+            if val is None:
+                syndrome_weights[syndrome_bytes] = (state, weight)
+                continue
+            _, w = val
 
-        # Sort according to weight
-        for key, v in syndromes.items():
-            lut[key] = np.array(min(v, key=np.sum))
+            if weight < w:
+                syndrome_weights[syndrome_bytes] = (state, weight)
+
+        for key, v in syndrome_weights.items():
+            lut[key] = np.array(v[0])
 
         return lut
 

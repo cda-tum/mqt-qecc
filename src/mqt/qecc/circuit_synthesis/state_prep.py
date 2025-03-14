@@ -1101,7 +1101,7 @@ def _remove_stabilizer_equivalent_faults(
     return faults[indices]
 
 
-def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
+def naive_verification_circuit(sp_circ: StatePrepCircuit, flag_first_layer: bool = True) -> QuantumCircuit:
     """Naive verification circuit for a state preparation circuit."""
     if sp_circ.code.Hx is None or sp_circ.code.Hz is None:
         msg = "Code must have stabilizers defined."
@@ -1110,7 +1110,7 @@ def naive_verification_circuit(sp_circ: StatePrepCircuit) -> QuantumCircuit:
     z_measurements = list(sp_circ.code.Hx)
     x_measurements = list(sp_circ.code.Hz)
     reps = sp_circ.max_errors
-    return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps)
+    return _measure_ft_stabs(sp_circ, z_measurements * reps, x_measurements * reps, flag_first_layer=flag_first_layer)
 
 
 def get_hook_errors(measurements: list[npt.NDArray[np.int8]]) -> npt.NDArray[np.int8]:

@@ -15,6 +15,7 @@ from mqt.qecc.circuit_synthesis import (
     NoisyNDFTStatePrepSimulator,
     gate_optimal_verification_circuit,
     heuristic_prep_circuit,
+    naive_verification_circuit,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -47,10 +48,23 @@ def ft_steane_zero(steane_code: CSSCode) -> QuantumCircuit:
 
 
 @pytest.fixture
+def ft_steane_zero_naive(steane_code: CSSCode) -> QuantumCircuit:
+    """Return a fault-tolerant Steane code state preparation circuit measuring all stabilizers."""
+    circ = heuristic_prep_circuit(steane_code)
+    return naive_verification_circuit(circ, flag_first_layer=True)
+
+
+@pytest.fixture
 def ft_steane_plus(steane_code: CSSCode) -> QuantumCircuit:
     """Return a fault-tolerant Steane code state preparation circuit."""
     circ = heuristic_prep_circuit(steane_code, zero_state=False)
     return gate_optimal_verification_circuit(circ, max_timeout=2)
+
+
+@pytest.fixture
+def steane_lut(steane_code: CSSCode) -> LutDecoder:
+    """Return a LutDecoder for the Steane code."""
+    return LutDecoder(steane_code, init_luts=True)
 
 
 def test_lut(steane_code: CSSCode) -> None:
@@ -104,7 +118,12 @@ def test_non_ft_sim_zero(steane_code: CSSCode, non_ft_steane_zero: QuantumCircui
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_zero, steane_code, p=p)
+    simulator = NoisyNDFTStatePrepSimulator(
+        non_ft_steane_zero,
+        steane_code,
+        p=p,
+        p_idle=p * 0.01,
+    )
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol > lower
@@ -116,30 +135,54 @@ def test_ft_sim_zero(steane_code: CSSCode, ft_steane_zero: QuantumCircuit) -> No
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(ft_steane_zero, steane_code, p=p)
+    simulator = NoisyNDFTStatePrepSimulator(
+        ft_steane_zero,
+        steane_code,
+        p=p,
+        p_idle=p * 0.01,
+    )
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol < lower
 
 
-def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircuit) -> None:
+def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircuit, steane_lut: LutDecoder) -> None:
     """Test the simulation of a non fault-tolerant state preparation circuit for the Steane |0>."""
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_plus, steane_code, p=p, zero_state=False)
+    simulator = NoisyNDFTStatePrepSimulator(
+        non_ft_steane_plus, steane_code, p=p, p_idle=p * 0.01, zero_state=False, decoder=steane_lut
+    )
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol > lower
 
 
 @pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
-def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit) -> None:
+def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit, steane_lut: LutDecoder) -> None:
     """Test the simulation of a fault-tolerant state preparation circuit for the Steane |0>."""
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, zero_state=False)
+    simulator = NoisyNDFTStatePrepSimulator(
+        ft_steane_plus, steane_code, p=p, p_idle=p * 0.01, zero_state=False, decoder=steane_lut
+    )
+    p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
+
+    assert p_l - tol < lower
+
+
+def test_naive_verification_circuit_with_flags(
+    steane_code: CSSCode, ft_steane_zero_naive: QuantumCircuit, steane_lut: LutDecoder
+) -> None:
+    """Test that naive verification is correct."""
+    tol = 5e-4
+    p = 1e-3
+    lower = 1e-4
+    simulator = NoisyNDFTStatePrepSimulator(
+        ft_steane_zero_naive, steane_code, p=p, p_idle=p * 0.01, zero_state=True, decoder=steane_lut
+    )
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol < lower
