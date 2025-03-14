@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import stim
-from qiskit import ClassicalRegister
+from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from ..codes import InvalidCSSCodeError
@@ -17,7 +17,6 @@ from .synthesis_utils import support
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
-    from qiskit import QuantumCircuit
 
     from ..codes import CSSCode
 
@@ -420,9 +419,9 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         self,
         circ1: QuantumCircuit,
         circ2: QuantumCircuit,
-        circ3: QuantumCircuit,
-        circ4: QuantumCircuit,
         code: CSSCode,
+        circ3: QuantumCircuit | None = None,
+        circ4: QuantumCircuit | None = None,
         p: float = 0.0,
         p_idle: float | None = None,
         zero_state: bool = True,
@@ -433,6 +432,8 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
 
         Builds the circuit for the Steane-type preparation protocol by connecting the four state preparation circuits using transversal CNOTs.
 
+
+        If only two circuits are given, than a single transversal CNOT and check are performed.
 
         Args:
             circ1: The first, state preparation circuit.
@@ -446,38 +447,66 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             parallel_gates: Whether to allow for parallel execution of gates.
             decoder: The decoder to use.
         """
-        circ2 = circ2.copy()
-        circ3 = circ3.copy()
-        circ4 = circ4.copy()
+        if (circ3 is None and circ4 is not None) or (circ3 is not None and circ4 is None):
+            msg = "Only two or four circuits are supported."
+            raise ValueError(msg)
+
+        self.has_one_ancilla = circ3 is None
+
+        if self.has_one_ancilla:
+            circ3 = QuantumCircuit()
+            circ4 = QuantumCircuit()
+        else:
+            assert circ3 is not None
+            assert circ4 is not None
+            circ3 = circ3.copy()
+            circ4 = circ4.copy()
+
         circ2.remove_final_measurements()
         circ3.remove_final_measurements()
         circ4.remove_final_measurements()
+
         combined = circ4.tensor(circ3).tensor(circ2).tensor(circ1)
 
         combined.barrier()  # need the barrier to retain order of measurements
         # transversal cnots
-        combined.cx(range(code.n), range(code.n, 2 * code.n))
-        combined.cx(range(2 * code.n, 3 * code.n), range(3 * code.n, 4 * code.n))
-        combined.cx(range(2 * code.n, 3 * code.n), range(code.n))
 
-        combined.h(range(2 * code.n, 3 * code.n))  # second ancilla is measured in X basis
+        if self.has_one_ancilla:
+            if zero_state:
+                combined.cx(range(code.n), range(code.n, 2 * code.n))
+            else:
+                combined.cx(range(code.n, 2 * code.n), range(code.n))
 
-        cr = ClassicalRegister(3 * code.n, "c")
+        else:
+            combined.cx(range(code.n), range(code.n, 2 * code.n))
+            combined.cx(range(2 * code.n, 3 * code.n), range(3 * code.n, 4 * code.n))
+            combined.cx(range(2 * code.n, 3 * code.n), range(code.n))
+
+            combined.h(range(2 * code.n, 3 * code.n))  # second ancilla is measured in X basis
+
+        n_measured = 3 * code.n if not self.has_one_ancilla else code.n
+        cr = ClassicalRegister(n_measured, "c")
         combined.add_register(cr)
-        combined.measure(range(code.n, 4 * code.n), cr)  # measure out ancillas
+        if self.has_one_ancilla:
+            combined.measure(range(code.n, 2 * code.n), cr)
+        else:
+            combined.measure(range(code.n, 4 * code.n), cr)
 
-        self.anc1: list[int] = []
-        self.anc2: list[int] = []
-        self.anc3: list[int] = []
+        self.anc_1: list[int] = []
+        self.anc_2: list[int] = []
+        self.anc_3: list[int] = []
 
         super().__init__(combined, code, p, p_idle, zero_state, parallel_gates, decoder)
 
     def _compute_postselection_indices(self) -> None:
         """Compute indices of measurements for postselection."""
         self.anc_1 = list(range(self.code.n))
-        self.anc_2 = list(range(self.code.n, 2 * self.code.n))
-        self.anc_3 = list(range(2 * self.code.n, 3 * self.code.n))
-        self.n_measurements = 3 * self.code.n
+        if not self.has_one_ancilla:
+            self.anc_2 = list(range(self.code.n, 2 * self.code.n))
+            self.anc_3 = list(range(2 * self.code.n, 3 * self.code.n))
+            self.n_measurements = 3 * self.code.n
+        else:
+            self.n_measurements = self.code.n
 
     def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
         """Filter samples based on measurement outcomes.
@@ -489,12 +518,17 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             npt.NDArray[np.int8]: The filtered samples.
         """
         anc_1 = samples[:, self.anc_1]
-        anc_2 = samples[:, self.anc_2]
-        anc_3 = samples[:, self.anc_3]
         check_anc_1 = (anc_1 @ self.code.Hx.T) % 2
-        check_anc_2 = (anc_2 @ self.code.Hz.T) % 2
-        check_anc_3 = (anc_3 @ self.code.Hx.T) % 2
-        index_array = np.where(np.all(np.hstack((check_anc_1, check_anc_2, check_anc_3)) == 0, axis=1))[0]
+
+        if not self.has_one_ancilla:
+            anc_2 = samples[:, self.anc_2]
+            anc_3 = samples[:, self.anc_3]
+
+            check_anc_2 = (anc_2 @ self.code.Hz.T) % 2
+            check_anc_3 = (anc_3 @ self.code.Hx.T) % 2
+            index_array = np.where(np.all(np.hstack((check_anc_1, check_anc_2, check_anc_3)) == 0, axis=1))[0]
+        else:
+            index_array = np.where(np.all(check_anc_1 == 0, axis=1))[0]
         return samples[index_array].astype(np.int8)
 
 

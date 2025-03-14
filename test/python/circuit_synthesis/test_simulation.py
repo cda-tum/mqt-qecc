@@ -143,7 +143,7 @@ def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircui
     p = 1e-3
     lower = 1e-4
     simulator = VerificationNDFTStatePrepSimulator(
-        non_ft_steane_plus, steane_code, p=p, p_idle=p * 0.01, zero_state=False
+        non_ft_steane_plus, steane_code, p=p, p_idle=p * 0.01, zero_state=False, decoder=steane_lut
     )
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
@@ -157,7 +157,9 @@ def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit, stean
     p = 1e-3
     lower = 1e-4
 
-    simulator = VerificationNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, p_idle=p * 0.01, zero_state=False)
+    simulator = VerificationNDFTStatePrepSimulator(
+        ft_steane_plus, steane_code, p=p, p_idle=p * 0.01, zero_state=False, decoder=steane_lut
+    )
 
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
@@ -180,7 +182,7 @@ def test_naive_verification_circuit_with_flags(
     assert p_l - tol < lower
 
 
-def test_steane_type_ftsp_trivial(steane_code: CSSCode, non_ft_steane_zero) -> None:
+def test_steane_type_ftsp_trivial(steane_code: CSSCode, non_ft_steane_zero: QuantumCircuit) -> None:
     """Test state preparation using Steane-type verification.
 
     This is overkill for the Steane code but this is just for testing purposes.
@@ -191,9 +193,9 @@ def test_steane_type_ftsp_trivial(steane_code: CSSCode, non_ft_steane_zero) -> N
     simulator = SteaneNDFTStatePrepSimulator(
         non_ft_steane_zero,
         non_ft_steane_zero,
-        non_ft_steane_zero,
-        non_ft_steane_zero,
         steane_code,
+        non_ft_steane_zero,
+        non_ft_steane_zero,
         p=p,
         p_idle=p * 0.01,
         zero_state=True,
