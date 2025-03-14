@@ -23,9 +23,9 @@ If the optimal synthesis takes too long, the :func:`heuristic_verification_circu
 
     .. autofunction:: heuristic_verification_circuit
 
-State preparation circuits can be simulated using the :class:`NoisyNDFTStatePrepSimulator` class.
+State preparation circuits can be simulated using the :class:`VerificationNDFTStatePrepSimulator` class.
 
-    .. autoclass:: NoisyNDFTStatePrepSimulator
+    .. autoclass:: VerificationNDFTStatePrepSimulator
         :members:
 
 :math:`d<5` codes
