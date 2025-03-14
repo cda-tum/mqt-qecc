@@ -12,7 +12,7 @@ import pytest
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis import (
     LutDecoder,
-    NoisyNDFTStatePrepSimulator,
+    VerificationNDFTStatePrepSimulator,
     gate_optimal_verification_circuit,
     heuristic_prep_circuit,
 )
@@ -104,7 +104,7 @@ def test_non_ft_sim_zero(steane_code: CSSCode, non_ft_steane_zero: QuantumCircui
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_zero, steane_code, p=p)
+    simulator = VerificationNDFTStatePrepSimulator(non_ft_steane_zero, steane_code, p=p)
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol > lower
@@ -116,7 +116,7 @@ def test_ft_sim_zero(steane_code: CSSCode, ft_steane_zero: QuantumCircuit) -> No
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(ft_steane_zero, steane_code, p=p)
+    simulator = VerificationNDFTStatePrepSimulator(ft_steane_zero, steane_code, p=p)
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol < lower
@@ -127,7 +127,7 @@ def test_non_ft_sim_plus(steane_code: CSSCode, non_ft_steane_plus: QuantumCircui
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(non_ft_steane_plus, steane_code, p=p, zero_state=False)
+    simulator = VerificationNDFTStatePrepSimulator(non_ft_steane_plus, steane_code, p=p, zero_state=False)
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol > lower
@@ -139,7 +139,7 @@ def test_ft_sim_plus(steane_code: CSSCode, ft_steane_plus: QuantumCircuit) -> No
     tol = 5e-4
     p = 1e-3
     lower = 1e-4
-    simulator = NoisyNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, zero_state=False)
+    simulator = VerificationNDFTStatePrepSimulator(ft_steane_plus, steane_code, p=p, zero_state=False)
     p_l, _, _, _ = simulator.logical_error_rate(min_errors=10)
 
     assert p_l - tol < lower

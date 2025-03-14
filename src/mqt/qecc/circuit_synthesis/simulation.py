@@ -206,13 +206,13 @@ class NoisyNDFTStatePrepSimulator:
 
     def measure_z(self) -> None:
         """Measure all data qubits in the Z basis."""
-        self.data_measurements = [self.n_measurements + i for i in range(self.num_qubits)]
+        self.data_measurements = [self.n_measurements + i for i in range(self.code.n)]
         self.n_measurements += self.num_qubits
         self.stim_circ.append_operation("MRZ", list(range(self.num_qubits)))
 
     def measure_x(self) -> None:
         """Measure all data qubits in the X basis."""
-        self.data_measurements = [self.n_measurements + i for i in range(self.num_qubits)]
+        self.data_measurements = [self.n_measurements + i for i in range(self.code.n)]
         self.n_measurements += self.num_qubits
         self.stim_circ.append_operation("MRX", list(range(self.num_qubits)))
 
