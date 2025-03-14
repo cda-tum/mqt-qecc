@@ -602,7 +602,7 @@ def measure_flagged(
         return
 
     if t == 2:
-        measure_two_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
+        measure_two_flagged_general(qc, stab, ancilla, measurement_bit, z_measurement)
         return
 
     msg = f"Flagged measurement for w={w} and t={t} not implemented."
@@ -647,7 +647,7 @@ def measure_one_flagged(
     qc.measure(ancilla, measurement_bit)
 
 
-def measure_two_flagged(
+def measure_two_flagged_general(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
@@ -663,27 +663,6 @@ def measure_two_flagged(
         measurement_bit: Classical bit to store the measurement result of the ancilla.
         z_measurement: Whether to measure the ancilla in the Z basis.
     """
-    if len(stab) <= 4:
-        measure_one_flagged(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
-    if len(stab) == 5:
-        measure_two_flagged_5_or_6(qc, stab, ancilla, measurement_bit, z_measurement, weight_5=True)
-        return
-    if len(stab) == 6:
-        measure_two_flagged_5_or_6(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
-    if len(stab) == 7:
-        measure_two_flagged_7_or_8(qc, stab, ancilla, measurement_bit, z_measurement, weight_7=True)
-        return
-    if len(stab) == 8:
-        measure_two_flagged_7_or_8(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
-    if len(stab) == 11:
-        measure_two_flagged_11_or_12(qc, stab, ancilla, measurement_bit, z_measurement, weight_11=True)
-        return
-    if len(stab) == 12:
-        measure_two_flagged_11_or_12(qc, stab, ancilla, measurement_bit, z_measurement)
-        return
     n_flags = (len(stab) + 1) // 2 - 1
     flag_reg = AncillaRegister(n_flags)
     meas_reg = ClassicalRegister(n_flags)
