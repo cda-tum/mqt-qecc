@@ -12,12 +12,15 @@ import z3
 from ldpc import mod2
 from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit
 from stim import Circuit
+from sympy.combinatorics import Permutation, PermutationGroup
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     import numpy.typing as npt
     from qiskit import AncillaQubit, ClBit, Qubit
+
+    from mqt.qecc.circuit_synthesis.state_prep import StatePrepCircuit
 
 
 logger = logging.getLogger(__name__)
@@ -84,7 +87,7 @@ def iterative_search_with_timeout(
 
 
 def heuristic_gaussian_elimination(
-    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True
+    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True, penalty_cols: list[int] | None = None
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
     """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
 
@@ -95,10 +98,13 @@ def heuristic_gaussian_elimination(
     Args:
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
+        penalty_cols: indices of qubits whose CNOT connection shall occur earlier in the circuit
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
+    if penalty_cols is None:
+        penalty_cols = []
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
 
@@ -111,6 +117,10 @@ def heuristic_gaussian_elimination(
 
     costs -= np.sum(matrix, axis=0)
     np.fill_diagonal(costs, 1)
+    # NOTE: set the penalty terms to be higher than 0 to be ignored.
+    for i in penalty_cols:
+        for j in penalty_cols:
+            costs[i][j] = 1
 
     used_columns = []  # type: list[np.int_]
     eliminations = []  # type: list[tuple[int, int]]
@@ -152,6 +162,97 @@ def heuristic_gaussian_elimination(
     return matrix, eliminations
 
 
+def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation]:
+    """Based on the generators of the permutation group find the whole permutation group.
+
+    Args:
+        group_generators: A list of generators of the permutation group. Each generator is given as a list of integers describing the permutation. E.g. for a S7 generator: [0, 3, 2, 1, 6, 5, 4]
+
+    Returns:
+        Returns a list of Permutation object coming form sympy.combinatorics.
+    """
+    group_generators = [Permutation(generator) for generator in group_generators]
+    g = PermutationGroup(group_generators)
+    return list(g.generate())
+
+
+def check_mutually_disjointness_spcs(
+    c_spcs: list[StatePrepCircuit], p_spcs: list[StatePrepCircuit]
+) -> list[StatePrepCircuit]:
+    """Check if potential SPCs have mutually disjoint fault set with all current SPCs.
+
+    Take list of SPCs with already mutually disjoint fault sets and another list of potential candidates for new SPCs that
+    have a mutually disjoint fault set with all current SPCs.
+
+    Args:
+        c_spcs: current SPCs that are already mutually disjoint in terms of fault sets
+        p_spcs: potential SPCs that shall be tested for mutually disjointness against the current set
+    """
+    i = 0
+    while i < len(p_spcs):
+        pspc = p_spcs[i]
+        px_fs, pz_fs = get_fs_based_on_d(pspc)
+
+        # Check against *all* existing and newly added elements in c_spcs
+        for _spc in c_spcs:
+            # NOTE: for distance 5 and 7 we only compare against the 1 error fault set.
+            # This might need adjustments for different distances.
+            x_fs = _spc.compute_fault_set()
+            z_fs = _spc.compute_fault_set(x_errors=False)
+            if _spc.check_fs_overlap(x_fs, px_fs) or _spc.check_fs_overlap(z_fs, pz_fs):
+                break  # Stop checking if there's an overlap
+        else:  # No overlap found, so add pspc
+            c_spcs.append(pspc)
+
+        i += 1  # Move to next element in p_spcs
+    return c_spcs
+
+
+def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
+    """Get fault sets based on the code distance.
+
+    Only the faults sets that are of interest for the fault tolerant state preparation are being returned.
+    Supported are code distance 5 and 7.
+
+    Args:
+        spc: State Prep Circiut of which the fault set is to be returned.
+
+    Returns:
+        tuple: first entry the x fault set and second entry the z fault set.
+    """
+
+    def compute_fault_sets(level: int = 1) -> tuple[npt.NDArray[np.int8]]:
+        """Helper function to compute fault sets at a given level."""
+        spc.compute_fault_set(level)
+        spc.compute_fault_set(level, x_errors=False)
+        return spc.x_fault_sets[level], spc.z_fault_sets[level]
+
+    def filter_fault_set(fault_set: npt.NDArray[np.int8], threshold: int) -> npt.NDArray[np.int8]:
+        """Filter fault sets based on a sum threshold."""
+        return fault_set[np.where(fault_set.sum(axis=1) > threshold)]
+
+    fault_set_x_1, fault_set_z_1 = compute_fault_sets(1)
+
+    if spc.code.distance == 5:
+        return filter_fault_set(fault_set_x_1, 2), filter_fault_set(fault_set_z_1, 2)
+
+    if spc.code.distance == 7:
+        fault_set_x_2, fault_set_z_2 = compute_fault_sets(2)
+        return (
+            np.vstack([
+                filter_fault_set(fault_set_x_1, 3),
+                filter_fault_set(fault_set_x_2, 3),
+            ]),
+            np.vstack([
+                filter_fault_set(fault_set_z_1, 3),
+                filter_fault_set(fault_set_z_2, 3),
+            ]),
+        )
+
+    msg = f"Unsupported code distance: {spc.code.distance}"
+    raise ValueError(msg)
+
+
 def gaussian_elimination_min_column_ops(
     matrix: npt.NDArray[np.int8],
     termination_criteria: Callable[[Any], z3.BoolRef],
@@ -166,7 +267,7 @@ def gaussian_elimination_min_column_ops(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_eliminations: The maximum number of eliminations to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     n = matrix.shape[1]
@@ -235,7 +336,7 @@ def gaussian_elimination_min_parallel_eliminations(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_parallel_steps: The maximum number of parallel elimination steps to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     columns = np.array([
@@ -1229,3 +1330,14 @@ def qiskit_to_stim_circuit(qc: QuantumCircuit) -> Circuit:
             msg = f"Unsupported gate: {op}"
             raise ValueError(msg)
     return stim_circuit
+
+
+def support(v: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
+    """Return the support of a vector.
+
+    Args:
+        v: F2 vector
+
+    Returns: Array of non-zero indices
+    """
+    return np.where(v != 0)[0]
