@@ -496,6 +496,9 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         self.anc_2: list[int] = []
         self.anc_3: list[int] = []
 
+        self.x_checks = code.Hx if zero_state else np.vstack((code.Hx, code.Lx))
+        self.z_checks = code.Hz if not zero_state else np.vstack((code.Hz, code.Lz))
+
         super().__init__(combined, code, p, p_idle, zero_state, parallel_gates, decoder)
 
     def _compute_postselection_indices(self) -> None:
@@ -518,14 +521,14 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             npt.NDArray[np.int8]: The filtered samples.
         """
         anc_1 = samples[:, self.anc_1]
-        check_anc_1 = (anc_1 @ self.code.Hx.T) % 2
+        check_anc_1 = (anc_1 @ self.z_checks.T) % 2
 
         if not self.has_one_ancilla:
             anc_2 = samples[:, self.anc_2]
             anc_3 = samples[:, self.anc_3]
 
-            check_anc_2 = (anc_2 @ self.code.Hz.T) % 2
-            check_anc_3 = (anc_3 @ self.code.Hx.T) % 2
+            check_anc_2 = (anc_2 @ self.x_checks.T) % 2
+            check_anc_3 = (anc_3 @ self.z_checks.T) % 2
             index_array = np.where(np.all(np.hstack((check_anc_1, check_anc_2, check_anc_3)) == 0, axis=1))[0]
         else:
             index_array = np.where(np.all(check_anc_1 == 0, axis=1))[0]
