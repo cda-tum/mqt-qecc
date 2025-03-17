@@ -9,13 +9,14 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import stim
+from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from ..codes import InvalidCSSCodeError
+from .synthesis_utils import support
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
-    from qiskit import QuantumCircuit
 
     from ..codes import CSSCode
 
@@ -23,16 +24,17 @@ logger = logging.getLogger(__name__)
 
 
 class NoisyNDFTStatePrepSimulator:
-    """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
+    """Abstract class for simulating noisy state preparation circuit using a depolarizing noise model."""
 
     def __init__(
         self,
         state_prep_circ: QuantumCircuit,
         code: CSSCode,
-        p: float,
+        p: float = 0.0,
+        p_idle: float | None = None,
         zero_state: bool = True,
         parallel_gates: bool = True,
-        check_logical_0: bool = False,
+        decoder: LutDecoder | None = None,
     ) -> None:
         """Initialize the simulator.
 
@@ -40,9 +42,10 @@ class NoisyNDFTStatePrepSimulator:
             state_prep_circ: The state preparation circuit.
             code: The code to simulate.
             p: The error rate.
+            p_idle: Idling error rate. If None, it is set to p.
             zero_state: Whether thezero state is prepared or nor.
             parallel_gates: Whether to allow for parallel execution of gates.
-            check_logical_0: Whether to check flag measurements or the logical state
+            decoder: The decoder to use.
         """
         if code.Hx is None or code.Hz is None:
             msg = "The code must have both X and Z checks."
@@ -50,50 +53,53 @@ class NoisyNDFTStatePrepSimulator:
 
         self.circ = state_prep_circ
         self.num_qubits = state_prep_circ.num_qubits
+        self.num_verification_qubits = 0
         self.code = code
         self.p = p
+        self.p_idle = p if p_idle is None else p_idle
         self.zero_state = zero_state
+        self.parallel_gates = parallel_gates
         # Store which measurements are X, Z or data measurements.
         # The indices refer to the indices of the measurements in the stim circuit.
-        self.x_verification_measurements: list[int] = []
-        self.z_verification_measurements: list[int] = []
+        self.stim_circ = stim.Circuit()
+        self.data_measurements: list[int] = []
         self.x_measurements: list[int] = []
         self.z_measurements: list[int] = []
-        self.data_measurements: list[int] = []
         self.parallel_gates = parallel_gates
         self.n_measurements = 0
         self.stim_circ = stim.Circuit()
-        self.decoder = LutDecoder(code)
-        self.check_logical_0 = check_logical_0
-        self.set_p(p)
+        if decoder is None:
+            self.decoder = LutDecoder(code)
+        else:
+            self.decoder = decoder
 
-    def set_p(self, p: float) -> None:
-        """Set the error rate.
+        self.set_p(p, p_idle)
 
-        This reinitializes the stim circuit.
+    def set_p(self, p: float, p_idle: float | None = None) -> None:
+        """Set the error rate and initialize the stim circuit.
+
+        This overwrites the previous stim circuit.
 
         Args:
         p: The error rate.
+        p_idle: Idling error rate. If None, it is set to p.
         """
-        self.x_verification_measurements = []
-        self.z_verification_measurements = []
         self.x_measurements = []
         self.z_measurements = []
         self.data_measurements = []
         self.n_measurements = 0
         self.p = p
-        self._reused_qubits = 0
+        self.p_idle = p if p_idle is None else p_idle
         self.stim_circ = self.to_stim_circ()
-        self.num_qubits = (
-            self.stim_circ.num_qubits
-            - (len(self.x_verification_measurements) + len(self.z_verification_measurements))
-            + self._reused_qubits
-        )
+        self._compute_postselection_indices()
         self.measure_stabilizers()
         if self.zero_state:
             self.measure_z()
         else:
             self.measure_x()
+
+    def _compute_postselection_indices(self) -> None:
+        """Compute indices of measurements for postselection."""
 
     def to_stim_circ(self) -> stim.Circuit:
         """Convert a QuantumCircuit to a noisy STIM circuit.
@@ -112,13 +118,13 @@ class NoisyNDFTStatePrepSimulator:
             for q in self.circ.qubits:
                 qubit = self.circ.find_bit(q)[0]
                 if initialized[qubit] and qubit not in used_qubits:
-                    stim_circuit.append_operation("DEPOLARIZE1", [self.circ.find_bit(q)[0]], [2 * self.p / 3])
+                    stim_circuit.append_operation("DEPOLARIZE1", [self.circ.find_bit(q)[0]], [self.p_idle])
 
         dag = circuit_to_dag(self.circ)
         layers = dag.layers()
         used_qubits: list[int] = []
         targets = set()
-        measured: defaultdict[int, int] = defaultdict(int)
+        defaultdict(int)
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -133,7 +139,6 @@ class NoisyNDFTStatePrepSimulator:
                     ctrls.append(qubit)
                     if initialized[qubit]:
                         stim_circuit.append_operation("H", [qubit])
-                        stim_circuit.append_operation("DEPOLARIZE1", [qubit], [2 * self.p / 3])
                         if not self.parallel_gates:
                             idle_error([qubit])
                         else:
@@ -165,19 +170,11 @@ class NoisyNDFTStatePrepSimulator:
                     anc = self.circ.find_bit(gate.qubits[0])[0]
                     stim_circuit.append_operation("X_ERROR", [anc], [2 * self.p / 3])
                     stim_circuit.append_operation("MR", [anc])
-                    if anc in targets:
-                        self.z_verification_measurements.append(self.n_measurements)
-                    else:
-                        self.x_verification_measurements.append(self.n_measurements)
-                    self.n_measurements += 1
                     if not self.parallel_gates:
                         idle_error([anc])
                     else:
                         used_qubits.append(anc)
                     initialized[anc] = False
-                    measured[anc] += 1
-                    if measured[anc] == 2:
-                        self._reused_qubits += 1
 
         return stim_circuit
 
@@ -189,35 +186,37 @@ class NoisyNDFTStatePrepSimulator:
         assert self.code.Hx is not None
         assert self.code.Hz is not None
 
+        anc = self.stim_circ.num_qubits + self.num_verification_qubits
         for check in self.code.Hx:
-            supp = _support(check)
-            anc = self.stim_circ.num_qubits
+            supp = support(check)
+
             self.stim_circ.append_operation("H", [anc])
             for q in supp:
                 self.stim_circ.append_operation("CX", [anc, q])
             self.stim_circ.append_operation("MRX", [anc])
             self.x_measurements.append(self.n_measurements)
             self.n_measurements += 1
+            anc += 1
 
         for check in self.code.Hz:
-            supp = _support(check)
-            anc = self.stim_circ.num_qubits
+            supp = support(check)
             for q in supp:
                 self.stim_circ.append_operation("CX", [q, anc])
             self.stim_circ.append_operation("MRZ", [anc])
             self.z_measurements.append(self.n_measurements)
             self.n_measurements += 1
+            anc += 1
 
     def measure_z(self) -> None:
         """Measure all data qubits in the Z basis."""
-        self.data_measurements = [self.n_measurements + i for i in range(self.num_qubits)]
-        self.n_measurements += self.num_qubits
+        self.data_measurements = [self.n_measurements + i for i in range(self.code.n)]
+        self.n_measurements += self.code.n
         self.stim_circ.append_operation("MRZ", list(range(self.num_qubits)))
 
     def measure_x(self) -> None:
         """Measure all data qubits in the X basis."""
-        self.data_measurements = [self.n_measurements + i for i in range(self.num_qubits)]
-        self.n_measurements += self.num_qubits
+        self.data_measurements = [self.n_measurements + i for i in range(self.code.n)]
+        self.n_measurements += self.code.n
         self.stim_circ.append_operation("MRX", list(range(self.num_qubits)))
 
     def logical_error_rate(
@@ -268,21 +267,21 @@ class NoisyNDFTStatePrepSimulator:
 
         return p_l / self.code.k, r_a, num_logical_errors, i * batch
 
+    def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+        """Filter samples based on measurement outcomes.
+
+        Args:
+            samples: The samples to filter.
+
+        Returns:
+            npt.NDArray[np.int8]: The filtered samples.
+        """
+
     def _simulate_batch(self, shots: int = 1024) -> tuple[int, int]:
         sampler = self.stim_circ.compile_sampler()
-        detection_events = sampler.sample(shots)
+        detection_events = sampler.sample(shots).astype(np.int8)
 
-        # Filter events where the verification circuit flagged
-        verification_measurements = self.x_verification_measurements + self.z_verification_measurements
-        if self.check_logical_0:
-            # Compute dot products for all rows
-            dot_products = np.dot(detection_events[:, verification_measurements], self.code.Hx.T) % 2
-
-            # Find rows where all dot products are zero
-            index_array = np.where(np.all(dot_products == 0, axis=1))[0]
-        else:
-            index_array = np.where(np.all(detection_events[:, verification_measurements] == 0, axis=1))[0]
-        filtered_events = detection_events[index_array].astype(np.int8)
+        filtered_events = self._filter_runs(detection_events)
 
         if len(filtered_events) == 0:  # All events were discarded
             return 0, shots
@@ -306,18 +305,25 @@ class NoisyNDFTStatePrepSimulator:
         )  # number of non-commuting corrected states
         return num_logical_errors, num_discarded
 
-    def plot_state_prep(self, ps: list[float], min_errors: int = 500, name: str | None = None) -> None:
+    def plot_state_prep(
+        self,
+        ps: list[float],
+        min_errors: int = 500,
+        name: str | None = None,
+        p_idle_factor: float = 1.0,
+    ) -> None:
         """Plot the logical error rate and accaptence rate as a function of the physical error rate.
 
         Args:
             ps: The physical error rates to plot.
             min_errors: The minimum number of errors to find before stopping.
             name: The name of the plot.
+            p_idle_factor: Factor to scale the idling error rate depending on ps.
         """
         p_ls = []
         r_as = []
         for p in ps:
-            self.set_p(p)
+            self.set_p(p, p_idle_factor * p)
             p_l, r_a, _num_logical_errors, _num_shots = self.logical_error_rate(min_errors=min_errors)
             p_ls.append(p_l)
             r_as.append(r_a)
@@ -341,6 +347,192 @@ class NoisyNDFTStatePrepSimulator:
         if name is not None:
             plt.legend()
         plt.tight_layout()
+
+
+class VerificationNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
+    """Class for simulating noisy state preparation circuit using a depolarizing noise model."""
+
+    def __init__(
+        self,
+        state_prep_circ: QuantumCircuit,
+        code: CSSCode,
+        p: float = 0.0,
+        p_idle: float | None = None,
+        zero_state: bool = True,
+        parallel_gates: bool = True,
+        decoder: LutDecoder | None = None,
+    ) -> None:
+        """Initialize the simulator.
+
+        Args:
+            state_prep_circ: The state preparation circuit.
+            code: The code to simulate.
+            p: The error rate.
+            p_idle: Idling error rate. If None, it is set to p.
+            zero_state: Whether thezero state is prepared or nor.
+            parallel_gates: Whether to allow for parallel execution of gates.
+            decoder: The decoder to use.
+        """
+        self.z_verification_measurements: list[int] = []
+        self.x_verification_measurements: list[int] = []
+        super().__init__(state_prep_circ, code, p, p_idle, zero_state, parallel_gates, decoder)
+
+    def _compute_postselection_indices(self) -> None:
+        """Compute the indices of the verification measurements."""
+        dag = circuit_to_dag(self.circ)
+        layers = dag.layers()
+        targets = set()
+        for layer in layers:
+            layer_circ = dag_to_circuit(layer["graph"])
+
+            for gate in layer_circ.data:
+                if gate.operation.name == "cx":
+                    target = self.circ.find_bit(gate.qubits[1])[0]
+                    targets.add(target)
+
+                elif gate.operation.name == "measure":
+                    anc = self.circ.find_bit(gate.qubits[0])[0]
+                    if anc in targets:
+                        self.z_verification_measurements.append(self.n_measurements)
+                    else:
+                        self.x_verification_measurements.append(self.n_measurements)
+                    self.n_measurements += 1
+
+    def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+        """Filter samples based on measurement outcomes.
+
+        Args:
+            samples: The samples to filter.
+
+        Returns:
+            npt.NDArray[np.int8]: The filtered samples.
+        """
+        verification_measurements = self.x_verification_measurements + self.z_verification_measurements
+        index_array = np.where(np.all(samples[:, verification_measurements] == 0, axis=1))[0]
+        return samples[index_array].astype(np.int8)
+
+
+class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
+    """Class for simulating steane-type noisy state preparation circuit using a depolarizing noise model."""
+
+    def __init__(
+        self,
+        circ1: QuantumCircuit,
+        circ2: QuantumCircuit,
+        code: CSSCode,
+        circ3: QuantumCircuit | None = None,
+        circ4: QuantumCircuit | None = None,
+        p: float = 0.0,
+        p_idle: float | None = None,
+        zero_state: bool = True,
+        parallel_gates: bool = True,
+        decoder: LutDecoder | None = None,
+    ) -> None:
+        """Initialize the simulator.
+
+        Builds the circuit for the Steane-type preparation protocol by connecting the four state preparation circuits using transversal CNOTs.
+
+
+        If only two circuits are given, than a single transversal CNOT and check are performed.
+
+        Args:
+            circ1: The first, state preparation circuit.
+            circ2: The second, state preparation circuit.
+            circ3: The third, state preparation circuit.
+            circ4: The fourth, state preparation circuit
+            code: The code to simulate.
+            p: The error rate.
+            p_idle: Idling error rate. If None, it is set to p.
+            zero_state: Whether thezero state is prepared or nor.
+            parallel_gates: Whether to allow for parallel execution of gates.
+            decoder: The decoder to use.
+        """
+        if (circ3 is None and circ4 is not None) or (circ3 is not None and circ4 is None):
+            msg = "Only two or four circuits are supported."
+            raise ValueError(msg)
+
+        self.has_one_ancilla = circ3 is None
+
+        if self.has_one_ancilla:
+            circ3 = QuantumCircuit()
+            circ4 = QuantumCircuit()
+        else:
+            assert circ3 is not None
+            assert circ4 is not None
+            circ3 = circ3.copy()
+            circ4 = circ4.copy()
+
+        circ2.remove_final_measurements()
+        circ3.remove_final_measurements()
+        circ4.remove_final_measurements()
+
+        combined = circ4.tensor(circ3).tensor(circ2).tensor(circ1)
+
+        combined.barrier()  # need the barrier to retain order of measurements
+        # transversal cnots
+
+        if self.has_one_ancilla:
+            if zero_state:
+                combined.cx(range(code.n), range(code.n, 2 * code.n))
+            else:
+                combined.cx(range(code.n, 2 * code.n), range(code.n))
+
+        else:
+            combined.cx(range(code.n), range(code.n, 2 * code.n))
+            combined.cx(range(2 * code.n, 3 * code.n), range(3 * code.n, 4 * code.n))
+            combined.cx(range(2 * code.n, 3 * code.n), range(code.n))
+
+            combined.h(range(2 * code.n, 3 * code.n))  # second ancilla is measured in X basis
+
+        n_measured = 3 * code.n if not self.has_one_ancilla else code.n
+        cr = ClassicalRegister(n_measured, "c")
+        combined.add_register(cr)
+        if self.has_one_ancilla:
+            combined.measure(range(code.n, 2 * code.n), cr)
+        else:
+            combined.measure(range(code.n, 4 * code.n), cr)
+
+        self.anc_1: list[int] = []
+        self.anc_2: list[int] = []
+        self.anc_3: list[int] = []
+
+        self.x_checks = code.Hx if zero_state else np.vstack((code.Hx, code.Lx))
+        self.z_checks = code.Hz if not zero_state else np.vstack((code.Hz, code.Lz))
+
+        super().__init__(combined, code, p, p_idle, zero_state, parallel_gates, decoder)
+
+    def _compute_postselection_indices(self) -> None:
+        """Compute indices of measurements for postselection."""
+        self.anc_1 = list(range(self.code.n))
+        if not self.has_one_ancilla:
+            self.anc_2 = list(range(self.code.n, 2 * self.code.n))
+            self.anc_3 = list(range(2 * self.code.n, 3 * self.code.n))
+            self.n_measurements = 3 * self.code.n
+        else:
+            self.n_measurements = self.code.n
+
+    def _filter_runs(self, samples: npt.NDArray[np.int8]) -> npt.NDArray[np.int8]:
+        """Filter samples based on measurement outcomes.
+
+        Args:
+            samples: The samples to filter.
+
+        Returns:
+            npt.NDArray[np.int8]: The filtered samples.
+        """
+        anc_1 = samples[:, self.anc_1]
+        check_anc_1 = (anc_1 @ self.z_checks.T) % 2
+
+        if not self.has_one_ancilla:
+            anc_2 = samples[:, self.anc_2]
+            anc_3 = samples[:, self.anc_3]
+
+            check_anc_2 = (anc_2 @ self.x_checks.T) % 2
+            check_anc_3 = (anc_3 @ self.z_checks.T) % 2
+            index_array = np.where(np.all(np.hstack((check_anc_1, check_anc_2, check_anc_3)) == 0, axis=1))[0]
+        else:
+            index_array = np.where(np.all(check_anc_1 == 0, axis=1))[0]
+        return samples[index_array].astype(np.int8)
 
 
 class LutDecoder:
@@ -408,20 +600,24 @@ class LutDecoder:
         """
         n_qubits = checks.shape[1]
 
-        syndromes = defaultdict(list)
         lut: dict[bytes, npt.NDArray[np.int8]] = {}
+        syndrome_weights: dict[bytes, tuple[npt.NDArray[np.int8_], int]] = {}
+
         for i in range(2**n_qubits):
             state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
             syndrome = checks @ state % 2
-            syndromes[syndrome.astype(np.int8).tobytes()].append(state)
+            syndrome_bytes = syndrome.astype(np.int8).tobytes()
+            val = syndrome_weights.get(syndrome_bytes)
+            weight = state.sum()
+            if val is None:
+                syndrome_weights[syndrome_bytes] = (state, weight)
+                continue
+            _, w = val
 
-        # Sort according to weight
-        for key, v in syndromes.items():
-            lut[key] = np.array(min(v, key=np.sum))
+            if weight < w:
+                syndrome_weights[syndrome_bytes] = (state, weight)
+
+        for key, v in syndrome_weights.items():
+            lut[key] = np.array(v[0])
 
         return lut
-
-
-def _support(v: npt.NDArray[np.int_]) -> npt.NDArray[np.int_]:
-    """Return the support of a vector."""
-    return np.where(v != 0)[0]
