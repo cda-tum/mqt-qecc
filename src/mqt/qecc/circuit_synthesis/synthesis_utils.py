@@ -107,8 +107,6 @@ def heuristic_gaussian_elimination(
         penalty_cols = []
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
-    print(f"initial check matrix:\n{matrix}")
-    print("----------------------------------")
 
     def is_reduced() -> bool:
         return bool(len(np.where(np.all(matrix == 0, axis=0))[0]) == matrix.shape[1] - rank)
@@ -143,12 +141,10 @@ def heuristic_gaussian_elimination(
                 costs -= np.sum(matrix, axis=0)
                 np.fill_diagonal(costs, 1)
             else:  # try to move onto the next layer
-                print("\nUsed COLUMN reset\n")
                 used_columns = []
             continue
 
         i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
-        print(f"eliminate column {j} with column {i}")
         eliminations.append((int(i), int(j)))
 
         if parallel_elimination:
@@ -159,14 +155,9 @@ def heuristic_gaussian_elimination(
         matrix[:, j] = (matrix[:, i] + matrix[:, j]) % 2
         # update costs
         new_weights = np.sum((matrix[:, j][:, np.newaxis] + matrix) % 2, axis=0)
-        print(f"new weights:\n{new_weights}")
-        print(f"cost matrix before update:\n{costs}")
         costs[j, :] = new_weights - np.sum(matrix, axis=0)
         costs[:, j] = new_weights - np.sum(matrix[:, j])
-        print(f"cost matrix after update:\n{costs}")
         np.fill_diagonal(costs, 1)
-        print(f"matrix after elimination:\n{matrix}")
-        print("----------------------------------")
 
     return matrix, eliminations
 
