@@ -427,6 +427,163 @@ def gate_optimal_prep_circuit(
     return StatePrepCircuit(circ, code, zero_state)
 
 
+def iter_cyclic_combinations(lists):
+    """Generator that yields one combination of cyclic permutations for each list.
+    Each list in 'lists' is rotated by an offset given by its counter.
+    """
+    n = len(lists)
+    # counters to track the rotation index for each list
+    counters = [0] * n
+    # store the lengths of each list so we know when to reset a counter
+    lengths = [len(lst) for lst in lists]
+
+    while True:
+        # Yield the current combination based on counters.
+        current = [lst[i:] + lst[:i] for lst, i in zip(lists, counters)]
+        yield current
+
+        # Now update the counters (like an odometer)
+        for pos in reversed(range(n)):
+            counters[pos] += 1  # increment the current counter
+            if counters[pos] < lengths[pos]:
+                # Successfully incremented without overflow;
+                # we can break out and yield the next combination on the next iteration.
+                break
+            else:
+                # Reset this counter and move to the next (more significant) counter.
+                counters[pos] = 0
+        else:
+            # If we have reset all counters, then we've exhausted all combinations.
+            break
+
+
+def _permute_commuting_cnots(
+    trgt_order: dict[int, list[int]], ctrl_order, trgt_perm: dict[int, list[int]], ctrl_perm: dict[int, list[int]]
+) -> list[tuple[int, int]]:
+    """Permute CNOTs according to the given permutations.
+
+    Args:
+        trgt_order: The target order of the CNOTs.
+        ctrl_order: The control order of the CNOTs.
+        trgt_perm: The target permutation.
+        ctrl_perm: The control permutation.
+
+    Returns:
+        The CNOTs in correct order.
+    """
+    n = len(trgt_order) + len(ctrl_order)
+
+    orders = [None for _ in range(n)]
+    for ctrl, trgts in trgt_order.items():
+        perm = trgt_perm[ctrl]
+        orders[ctrl] = [trgts[perm[i]] for i in range(len(trgts))]
+    for trgt, ctrls in ctrl_order.items():
+        perm = ctrl_perm[trgt]
+        orders[trgt] = [ctrls[perm[i]] for i in range(len(ctrls))]
+
+    [0 for _ in range(n)]
+    done = [False for _ in range(n)]
+    cnots = []
+
+    stack = []
+    while not all(done):
+        if len(stack) == 0:
+            for i in range(n):
+                if not done[i]:
+                    stack.append(i)
+                    break
+
+        q1 = stack[-1]
+        q2 = orders[q1][0]
+
+        if q2 in stack:  # conflict -> resolve via cycles
+            print("conflict")
+            q1_idx = orders[q2].index(q1)
+            print(orders[q2])
+            orders[q2] = orders[q2][q1_idx:] + orders[q2][:q1_idx]
+            print(orders[q2])
+            print("####################")
+            # unroll stack to q2
+            stack = stack[: stack.index(q2) + 1]
+
+        if orders[q2][0] == q1:
+            if q1 in trgt_order:
+                cnots.append((q1, q2))
+            else:
+                cnots.append((q2, q1))
+            orders[q1].remove(q2)
+            orders[q2].remove(q1)
+            done[q1] = len(orders[q1]) == 0
+            done[q2] = len(orders[q2]) == 0
+            stack.pop()
+        else:
+            stack.append(q2)
+
+    return cnots
+
+
+def _canonical_permutation(w: int) -> list[int]:
+    """Return canonical ft5 permutation for weight w."""
+    if w <= 5:
+        return list(range(w))
+    offset = w // 2
+    pi = list(range(w))
+    if w % 2 == 1:
+        pi.remove(offset)
+    for i in range(offset):
+        if i % 2 == 0:
+            swap_idx = (i + w // 2) % len(pi)
+            pi[i], pi[swap_idx] = (pi[swap_idx], pi[i])
+        else:
+            pi[i]
+
+    if w % 2 == 1:
+        pi = pi[:offset] + [offset] + pi[offset:]
+
+    return pi
+
+
+def canonical_steane_type_prep_circuits(
+    code: CSSCode, zero_state: bool = True
+) -> tuple[QuantumCircuit, QuantumCircuit, QuantumCircuit, QuantumCircuit]:
+    """Return four circuits in standard form that prepare the +1 eigenstate of the code w.r.t. the Z or X basis that can implement Steane-type FTSP.
+
+    Args:
+            code: The CSS code to prepare the state for.
+            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+
+    Returns: A tuple of four state preparation circuits for the code.
+    """
+    n = code.n
+    trgt_order = _standard_form_cnots(code, zero_state)
+    ctrls = list(trgt_order.keys())
+    trgts = [trgt for trgt in range(n) if trgt not in ctrls]
+    ctrl_order = {trgt: [] for trgt in trgts}
+    for ctrl, ctrl_trgts in trgt_order.items():
+        for trgt in ctrl_trgts:
+            ctrl_order[trgt].append(ctrl)
+    for trgt in trgts:
+        ctrl_order[trgt].sort()
+
+    id_trgt = {ctrl: list(range(len(trgt_order[ctrl]))) for ctrl in ctrls}
+    id_ctrl = {trgt: list(range(len(ctrl_order[trgt]))) for trgt in trgts}
+
+    pi_trgt = {ctrl: _canonical_permutation(len(trgt_order[ctrl])) for ctrl in trgt_order}
+    pi_ctrl = {trgt: _canonical_permutation(len(ctrl_order[trgt])) for trgt in trgts}
+
+    c1 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, id_ctrl)
+    c2 = _permute_commuting_cnots(trgt_order, ctrl_order, pi_trgt, id_ctrl)
+    c3 = _permute_commuting_cnots(trgt_order, ctrl_order, pi_trgt, pi_ctrl)
+    c4 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, pi_ctrl)
+
+    qc1 = build_css_circuit_from_cnot_list(n, c1, ctrls)
+    qc2 = build_css_circuit_from_cnot_list(n, c2, ctrls)
+    qc3 = build_css_circuit_from_cnot_list(n, c3, ctrls)
+    qc4 = build_css_circuit_from_cnot_list(n, c4, ctrls)
+
+    return (qc1, qc2, qc3, qc4)
+
+
 def standard_form_prep_circuit(code: CSSCode, zero_state: bool = True) -> StatePrepCircuit:
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis using the circuit's standard form.
 
@@ -450,7 +607,7 @@ def standard_form_prep_circuit(code: CSSCode, zero_state: bool = True) -> StateP
     return StatePrepCircuit(qc, code, zero_state)
 
 
-def _standard_form_cnots(code: CSSCode, zero_state: bool = True) -> list[tuple[int, list[int]]]:
+def _standard_form_cnots(code: CSSCode, zero_state: bool = True) -> dict[int, list[int]]:
     """Return the cnots that prepare the +1 eigenstate of the code w.r.t. the Z or X basis using the circuit's standard form.
 
     Args:
@@ -462,11 +619,11 @@ def _standard_form_cnots(code: CSSCode, zero_state: bool = True) -> list[tuple[i
     h = code.Hx.copy() if zero_state else code.Hz.copy()
     h_red, _rk, _, pivots = mod2.row_echelon(h, full=True)
 
-    cnots = []
+    cnots = {}
     for i, pivot in enumerate(pivots):
         trgts = list(np.where(h_red[i, :])[0])
         trgts.remove(pivot)
-        cnots.append((pivot, trgts))
+        cnots[pivot] = trgts
 
     return cnots
 
