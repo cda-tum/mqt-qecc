@@ -35,7 +35,6 @@ class NoisyNDFTStatePrepSimulator:
         zero_state: bool = True,
         parallel_gates: bool = True,
         decoder: LutDecoder | None = None,
-        z_observable: bool = True,
     ) -> None:
         """Initialize the simulator.
 
@@ -59,7 +58,6 @@ class NoisyNDFTStatePrepSimulator:
         self.p = p
         self.p_idle = p if p_idle is None else p_idle
         self.zero_state = zero_state
-        self.z_observable = z_observable
         self.parallel_gates = parallel_gates
         # Store which measurements are X, Z or data measurements.
         # The indices refer to the indices of the measurements in the stim circuit.
@@ -95,7 +93,7 @@ class NoisyNDFTStatePrepSimulator:
         self.stim_circ = self.to_stim_circ()
         self._compute_postselection_indices()
         self.measure_stabilizers()
-        if self.z_observable:
+        if self.zero_state:
             self.measure_z()
         else:
             self.measure_x()
@@ -290,7 +288,7 @@ class NoisyNDFTStatePrepSimulator:
 
         state = filtered_events[:, self.data_measurements]
 
-        if self.z_observable:
+        if self.zero_state:
             checks = filtered_events[:, self.z_measurements]
             observables = self.code.Lz
             estimates = self.decoder.batch_decode_x(checks)
@@ -429,7 +427,6 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         zero_state: bool = True,
         parallel_gates: bool = True,
         decoder: LutDecoder | None = None,
-        z_observable: bool = True,
     ) -> None:
         """Initialize the simulator.
 
@@ -502,7 +499,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         self.x_checks = code.Hx if zero_state else np.vstack((code.Hx, code.Lx))
         self.z_checks = code.Hz if not zero_state else np.vstack((code.Hz, code.Lz))
 
-        super().__init__(combined, code, p, p_idle, zero_state, parallel_gates, decoder, z_observable)
+        super().__init__(combined, code, p, p_idle, zero_state, parallel_gates, decoder)
 
     def _compute_postselection_indices(self) -> None:
         """Compute indices of measurements for postselection."""
