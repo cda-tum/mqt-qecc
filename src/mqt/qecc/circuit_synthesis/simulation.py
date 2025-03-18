@@ -429,7 +429,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         zero_state: bool = True,
         parallel_gates: bool = True,
         decoder: LutDecoder | None = None,
-        z_observable: bool = True
+        z_observable: bool = True,
     ) -> None:
         """Initialize the simulator.
 
