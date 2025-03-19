@@ -74,6 +74,8 @@ class StatePrepCircuit:
         self.max_z_measurements = len(self.z_checks)
 
     def permute_circ(self, permutation: list[int]) -> None:
+        # TODO: add functionality that resets e.g. the fault sets
+        # are there other properties that need to be reset?
         """Permutes the qubits in the given quantum circuit according to the specified permutation.
 
         Args:
