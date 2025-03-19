@@ -534,6 +534,30 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             index_array = np.where(np.all(check_anc_1 == 0, axis=1))[0]
         return samples[index_array].astype(np.int8)
 
+    def logical_error_rate(
+        self,
+        shots: int = 100000,
+        shots_per_batch: int = 100000,
+        at_least_min_errors: bool = True,
+        min_errors: int = 500,
+    ) -> tuple[float, float, int, int, float, float]:
+        """Estimate the logical error rate of the code.
+
+        Args:
+            shots: The number of shots to use.
+            shots_per_batch: The number of shots per batch.
+            at_least_min_errors: Whether to continue simulating until at least min_errors are found.
+            min_errors: The minimum number of errors to find before stopping.
+        """
+        p_l, r_a, num_logical_errors, total_shots = super().logical_error_rate(
+            shots, shots_per_batch, at_least_min_errors, min_errors
+        )
+
+        p_l_error = np.sqrt(p_l * (1 - p_l) / total_shots)
+        r_a_error = np.sqrt(r_a * (1 - r_a) / total_shots)
+
+        return p_l, r_a, num_logical_errors, total_shots, p_l_error, r_a_error
+
 
 class LutDecoder:
     """Lookup table decoder for a CSSCode."""
