@@ -497,6 +497,7 @@ def _permute_commuting_cnots(
         q2 = orders[q1][0]
 
         if q2 in stack:  # conflict -> resolve via cycles
+            print("CONFLICT")
             q1_idx = orders[q2].index(q1)
             print(orders[q2])
             orders[q2] = orders[q2][q1_idx:] + orders[q2][:q1_idx]
@@ -523,22 +524,107 @@ def _permute_commuting_cnots(
 
 def _canonical_permutation(w: int) -> list[int]:
     """Return canonical ft5 permutation for weight w."""
-    if w <= 5:
-        return list(range(w))
-    offset = w // 2
     pi = list(range(w))
-    if w % 2 == 1:
-        pi.remove(offset)
-    for i in range(offset):
-        if i % 2 == 0:
-            swap_idx = (i + w // 2) % len(pi)
-            pi[i], pi[swap_idx] = (pi[swap_idx], pi[i])
-        else:
-            pi[i]
+    pi[0], pi[-1] = pi[-1], pi[0]
 
-    if w % 2 == 1:
-        pi = pi[:offset] + [offset] + pi[offset:]
+    # if w <= 5:
+    #     return list(range(w))
+    # offset = w // 2
+    # pi = list(range(w))
+    # if w % 2 == 1:
+    #     pi.remove(offset)
+    # for i in range(offset):
+    #     if i % 2 == 0:
+    #         swap_idx = (i + w // 2) % len(pi)
+    #         pi[i], pi[swap_idx] = (pi[swap_idx], pi[i])
+    #     else:
+    #         pi[i]
 
+    # if w % 2 == 1:
+    #     pi = pi[:offset] + [offset] + pi[offset:]
+
+    return pi
+
+
+def find_swapping_permutation(lists: list[list[int]]) -> dict[int, int]:
+    """Given a list of lists of integers, finds an involution π (a permutation
+    composed solely of 2-cycles and fixed points) with the property that for
+    every list xs, π swaps one of the first three elements with one of the
+    last three elements.
+
+    Parameters:
+        lists (list of list of int): The input lists (each assumed to have 7 integers).
+
+    Returns:
+        dict or None: A dictionary representing the permutation π, where each key maps
+                      to its image under π, or None if no such permutation exists.
+    """
+    # Step 1: Compute candidate pairs for each list.
+    # Here, "first three" are indices 0-2 and "last three" are indices 4-6.
+    list_candidates = []
+    for xs in lists:
+        cand = set()
+        for i in range(3):  # first three elements
+            for j in range(4, 7):  # last three elements
+                # Use sorted tuple to represent an unordered pair
+                pair = tuple(sorted((xs[i], xs[j])))
+                cand.add(pair)
+        list_candidates.append(cand)
+
+    # Step 2: Compute the global candidate set (union of all candidate pairs).
+    global_candidates = set()
+    for cand in list_candidates:
+        global_candidates |= cand
+    candidate_edges = list(global_candidates)
+
+    # Collect the full set of numbers (the domain for our permutation).
+    global_numbers = set()
+    for xs in lists:
+        global_numbers |= set(xs)
+
+    # Step 3: Search for a matching (set of disjoint candidate pairs) such that
+    # for every list at least one of its candidate pairs is in the matching.
+    best_matching = None
+
+    def backtrack(i, current_matching, used) -> None:
+        nonlocal best_matching
+        # If all candidate edges have been considered,
+        # check if current matching "covers" every list.
+        if i == len(candidate_edges):
+            for cand in list_candidates:
+                if not any(edge in current_matching for edge in cand):
+                    return
+            best_matching = current_matching.copy()
+            return
+
+        # Option 1: Skip the current candidate edge.
+        backtrack(i + 1, current_matching, used)
+        if best_matching is not None:
+            return  # solution found
+
+        # Option 2: Try to include candidate_edges[i] if neither number is used yet.
+        edge = candidate_edges[i]
+        a, b = edge
+        if a not in used and b not in used:
+            current_matching.add(edge)
+            used.add(a)
+            used.add(b)
+            backtrack(i + 1, current_matching, used)
+            if best_matching is not None:
+                return
+            current_matching.remove(edge)
+            used.remove(a)
+            used.remove(b)
+
+    backtrack(0, set(), set())
+
+    # Step 4: If a matching was found, build the permutation π.
+    if best_matching is None:
+        return None
+    pi = {x: x for x in global_numbers}  # initially, all elements are fixed
+    for a, b in best_matching:
+        pi[a] = b
+        pi[b] = a
     return pi
 
 
@@ -572,14 +658,25 @@ def canonical_steane_type_prep_circuits(
 
     c1 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, id_ctrl)
     c2 = _permute_commuting_cnots(trgt_order, ctrl_order, pi_trgt, id_ctrl)
-
     c3 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, pi_ctrl)
 
-    new_trgt_order = {ctrl: [] for ctrl in ctrls}
-    for ctrl, trgt in c3:
-        new_trgt_order[ctrl].append(trgt)
-    new_pi_trgt = {ctrl: _canonical_permutation(len(new_trgt_order[ctrl])) for ctrl in ctrls}
-    c4 = _permute_commuting_cnots(trgt_order, ctrl_order, new_pi_trgt, pi_ctrl)
+    # collect cnots in c3 with same target into groups
+    c3_groups = defaultdict(set)
+    for cnot in c3:
+        c3_groups[cnot[1]].add(cnot[0])
+
+    # we need to find a permutation that fulfills the following for all groups of targets:
+    # - map the first three elements into the second half
+    # - map the last element into the first half
+    # No conflicts should occur
+    lists = list(trgt_order.values())
+    pi_swaps = find_swapping_permutation(lists)
+    pi = [pi_swaps[x] for x in trgts]
+    # apply pi
+    # use pi to order c3_groups
+    c4 = []
+    for x in pi:
+        c4.extend([(y, x) for y in c3_groups[x]])
 
     qc1 = build_css_circuit_from_cnot_list(n, c1, ctrls)
     qc2 = build_css_circuit_from_cnot_list(n, c2, ctrls)
