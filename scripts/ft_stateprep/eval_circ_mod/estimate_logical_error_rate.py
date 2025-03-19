@@ -74,7 +74,7 @@ def main() -> None:
         p_idle=args.p_idle_factor * args.p_error,
         zero_state=args.zero_state,
     )
-    res = sim.logical_error_rate(shots=10000, min_errors=args.n_errors)
+    res = sim.logical_error_rate(min_errors=args.n_errors)
     print(",".join([str(x) for x in res]))
 
 

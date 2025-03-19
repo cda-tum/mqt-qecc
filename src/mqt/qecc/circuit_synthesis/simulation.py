@@ -536,10 +536,10 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
 
     def logical_error_rate(
         self,
-        shots: int = 100000,
-        shots_per_batch: int = 100000,
+        shots: int = 500000,
+        shots_per_batch: int = 500000,
         at_least_min_errors: bool = True,
-        min_errors: int = 500,
+        min_errors: int = 250,
     ) -> tuple[float, float, int, int, float, float]:
         """Estimate the logical error rate of the code.
 
