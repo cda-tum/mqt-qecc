@@ -497,7 +497,6 @@ def _permute_commuting_cnots(
         q2 = orders[q1][0]
 
         if q2 in stack:  # conflict -> resolve via cycles
-            print("conflict")
             q1_idx = orders[q2].index(q1)
             print(orders[q2])
             orders[q2] = orders[q2][q1_idx:] + orders[q2][:q1_idx]
@@ -573,8 +572,14 @@ def canonical_steane_type_prep_circuits(
 
     c1 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, id_ctrl)
     c2 = _permute_commuting_cnots(trgt_order, ctrl_order, pi_trgt, id_ctrl)
-    c3 = _permute_commuting_cnots(trgt_order, ctrl_order, pi_trgt, pi_ctrl)
-    c4 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, pi_ctrl)
+
+    c3 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, pi_ctrl)
+
+    new_trgt_order = {ctrl: [] for ctrl in ctrls}
+    for ctrl, trgt in c3:
+        new_trgt_order[ctrl].append(trgt)
+    new_pi_trgt = {ctrl: _canonical_permutation(len(new_trgt_order[ctrl])) for ctrl in ctrls}
+    c4 = _permute_commuting_cnots(trgt_order, ctrl_order, new_pi_trgt, pi_ctrl)
 
     qc1 = build_css_circuit_from_cnot_list(n, c1, ctrls)
     qc2 = build_css_circuit_from_cnot_list(n, c2, ctrls)
