@@ -628,6 +628,35 @@ def find_swapping_permutation(lists: list[list[int]]) -> dict[int, int]:
     return pi
 
 
+def random_steane_type_prep_circuits(
+    code: CSSCode, zero_state: bool = True
+) -> tuple[QuantumCircuit, QuantumCircuit, QuantumCircuit, QuantumCircuit]:
+    """Return four circuits in permuted standard form that prepare the +1 eigenstate of the code w.r.t. the Z or X basis that can implement Steane-type FTSP.
+
+    Args:
+            code: The CSS code to prepare the state for.
+            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+
+    Returns: A tuple of four state preparation circuits for the code.
+    """
+    trgt_order = _standard_form_cnots(code, zero_state)
+    c1 = [(x, y) for x, ys in trgt_order.items() for y in ys]
+
+    # obtain three random permutations of the cnots
+    n = code.n
+    c2 = np.random.permutation(c1)
+    c3 = np.random.permutation(c1)
+    c4 = np.random.permutation(c1)
+    ctrls = trgt_order.keys()
+
+    qc1 = build_css_circuit_from_cnot_list(n, c1, ctrls)
+    qc2 = build_css_circuit_from_cnot_list(n, c2, ctrls)
+    qc3 = build_css_circuit_from_cnot_list(n, c3, ctrls)
+    qc4 = build_css_circuit_from_cnot_list(n, c4, ctrls)
+
+    return (qc1, qc2, qc3, qc4)
+
+
 def canonical_steane_type_prep_circuits(
     code: CSSCode, zero_state: bool = True
 ) -> tuple[QuantumCircuit, QuantumCircuit, QuantumCircuit, QuantumCircuit]:
