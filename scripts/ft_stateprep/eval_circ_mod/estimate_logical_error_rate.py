@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import pickle
 from pathlib import Path
 
 from qiskit import QuantumCircuit
@@ -38,6 +39,10 @@ def main() -> None:
         d = args.distance
         code = CSSCode.from_code_name("surface", d)
         code_name = f"rotated_surface_d{d}"
+    elif "cc_4_8_8_d7" in code_name:
+        d = 7
+        code = SquareOctagonColorCode(d)
+        lut_path = (Path("__file__") / "../../eval/luts/decoder_488_7.pickle").resolve()
     elif "cc_4_8_8" in code_name:
         d = 5
         code = SquareOctagonColorCode(d)
@@ -51,6 +56,12 @@ def main() -> None:
 
     prefix = (Path(__file__) / "../circuits/").resolve()
     circ_file_core = f"{code_name}_heuristic_"
+    if lut_path.exists():
+        with lut_path.open("rb") as f:
+            lut = pickle.load(f)
+    else:
+        msg = "LUT file not found."
+        raise ValueError(msg)
 
     # check if file exists
     # if not (prefix / code_name / circ_file).exists():
@@ -73,6 +84,7 @@ def main() -> None:
         p=args.p_error,
         p_idle=args.p_idle_factor * args.p_error,
         zero_state=args.zero_state,
+        decoder=lut if code_name == "cc_4_8_8_d7" else None,
     )
     res = sim.logical_error_rate(min_errors=args.n_errors)
     print(",".join([str(x) for x in res]))
