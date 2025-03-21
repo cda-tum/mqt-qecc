@@ -483,7 +483,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             combined.cx(range(2 * code.n, 3 * code.n), range(code.n))
 
             combined.h(range(2 * code.n, 3 * code.n))  # second ancilla is measured in X basis
-
+        combined.barrier()  # need the barrier to retain order of measurements
         n_measured = 3 * code.n if not self.has_one_ancilla else code.n
         cr = ClassicalRegister(n_measured, "c")
         combined.add_register(cr)
