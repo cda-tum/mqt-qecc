@@ -674,65 +674,6 @@ class LutDecoder:
 
         return global_lut
 
-    def generate_lut_progress(
-        self: np.ndarray, chunk_size: int = 2**20, num_workers: int | None = None
-    ) -> dict[bytes, np.ndarray]:
-        """Generate a lookup table (LUT) for error correction by processing the state space in chunks,
-        in parallel, and displaying a progress bar.
-
-        Parameters:
-            checks (np.ndarray): The stabilizer check matrix (binary).
-            chunk_size (int): Number of states processed per chunk.
-            num_workers (int): Number of parallel worker processes (default: use available cores).
-
-        Returns:
-            dict[bytes, np.ndarray]: A LUT mapping syndrome bytes to error state arrays.
-        """
-        n_qubits = self.shape[1]
-        global_lut = {}
-
-        # Process weights in increasing order so that lower-weight errors take precedence.
-        for weight in range(n_qubits):
-            total_combinations = math.comb(n_qubits, weight)
-            if total_combinations == 0:
-                continue
-            print(f"Processing weight {weight} with {total_combinations} combinations.")
-
-            # Create a generator of all combinations for this weight.
-            comb_iter = itertools.combinations(range(n_qubits), weight)
-            # Split the combinations into chunks.
-            chunks = list(_chunked_iterable(comb_iter, chunk_size))
-
-            # results = []
-            # with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-            #     # Submit each chunk to be processed.
-            #     futures = {executor.submit(process_combinations_chunk, chunk, checks, n_qubits): chunk
-            #                for chunk in chunks}
-            #     for future in tqdm(concurrent.futures.as_completed(futures), total=len(chunks),
-            #                        desc=f"Weight {weight}"):
-            #         results.append(future.result())
-            weight_dict = {}
-            with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-                futures = [executor.submit(_process_combinations_chunk, chunk, self, n_qubits) for chunk in chunks]
-                for future in tqdm(
-                    concurrent.futures.as_completed(futures), total=len(futures), desc=f"Weight {weight}"
-                ):
-                    # Merge the result of this chunk immediately.
-                    _merge_into(weight_dict, future.result())
-                    print(len(weight_dict))
-            # Merge results for the current weight.
-            _merge_into(global_lut, weight_dict)
-            # # Only update global LUT with new syndrome keys.
-            # for syndrome_bytes, state in weight_dict.items():
-            #     if syndrome_bytes not in global_lut:
-            #         global_lut[syndrome_bytes] = state
-
-            if len(global_lut) == 2 ** self.shape[0]:
-                print("All syndromes found.")
-                break
-
-        return global_lut
-
 
 def _chunked_iterable(iterable, chunk_size):
     """Yield lists of items from the given iterable, each of size at most chunk_size."""
