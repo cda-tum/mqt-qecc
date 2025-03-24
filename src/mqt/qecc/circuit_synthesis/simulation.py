@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import concurrent.futures
+import itertools
 import logging
+import math
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
@@ -11,6 +14,7 @@ import numpy as np
 import stim
 from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+from tqdm import tqdm
 
 from ..codes import InvalidCSSCodeError
 from .synthesis_utils import support
@@ -483,7 +487,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             combined.cx(range(2 * code.n, 3 * code.n), range(code.n))
 
             combined.h(range(2 * code.n, 3 * code.n))  # second ancilla is measured in X basis
-
+        combined.barrier()  # need the barrier to retain order of measurements
         n_measured = 3 * code.n if not self.has_one_ancilla else code.n
         cr = ClassicalRegister(n_measured, "c")
         combined.add_register(cr)
@@ -533,6 +537,30 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         else:
             index_array = np.where(np.all(check_anc_1 == 0, axis=1))[0]
         return samples[index_array].astype(np.int8)
+
+    def logical_error_rate(
+        self,
+        shots: int = 500000,
+        shots_per_batch: int = 500000,
+        at_least_min_errors: bool = True,
+        min_errors: int = 250,
+    ) -> tuple[float, float, int, int, float, float]:
+        """Estimate the logical error rate of the code.
+
+        Args:
+            shots: The number of shots to use.
+            shots_per_batch: The number of shots per batch.
+            at_least_min_errors: Whether to continue simulating until at least min_errors are found.
+            min_errors: The minimum number of errors to find before stopping.
+        """
+        p_l, r_a, num_logical_errors, total_shots = super().logical_error_rate(
+            shots, shots_per_batch, at_least_min_errors, min_errors
+        )
+
+        p_l_error = np.sqrt(p_l * (1 - p_l) / total_shots)
+        r_a_error = np.sqrt(r_a * (1 - r_a) / total_shots)
+
+        return p_l, r_a, num_logical_errors, total_shots, p_l_error, r_a_error
 
 
 class LutDecoder:
@@ -593,31 +621,110 @@ class LutDecoder:
             self.z_lut = self.x_lut
 
     @staticmethod
-    def _generate_lut(checks: npt.NDArray[np.int_]) -> dict[bytes, npt.NDArray[np.int_]]:
-        """Generate a lookup table for the stabilizer state.
+    def _generate_lut(
+        checks: np.ndarray, chunk_size: int = 2**20, num_workers: int = 8, print_progress: bool = False
+    ) -> dict[bytes, np.ndarray]:
+        """Generate a lookup table (LUT) for error correction by processing the state space in chunks,
+        in parallel, and displaying a progress bar.
 
-        The lookup table maps error syndromes to their errors.
+        Parameters:
+            checks (np.ndarray): The stabilizer check matrix (binary).
+            chunk_size (int): Number of states processed per chunk.
+            num_workers (int): Number of parallel worker processes (default: use available cores).
+            print_progress (bool): Whether to print progress information.
+
+        Returns:
+            dict[bytes, np.ndarray]: A LUT mapping syndrome bytes to error state arrays.
         """
         n_qubits = checks.shape[1]
+        global_lut = {}
 
-        lut: dict[bytes, npt.NDArray[np.int8]] = {}
-        syndrome_weights: dict[bytes, tuple[npt.NDArray[np.int8_], int]] = {}
-
-        for i in range(2**n_qubits):
-            state: npt.NDArray[np.int_] = np.array(list(np.binary_repr(i).zfill(n_qubits))).astype(np.int8)
-            syndrome = checks @ state % 2
-            syndrome_bytes = syndrome.astype(np.int8).tobytes()
-            val = syndrome_weights.get(syndrome_bytes)
-            weight = state.sum()
-            if val is None:
-                syndrome_weights[syndrome_bytes] = (state, weight)
+        # Process weights in increasing order so that lower-weight errors take precedence.
+        for weight in range(n_qubits):
+            total_combinations = math.comb(n_qubits, weight)
+            if total_combinations == 0:
                 continue
-            _, w = val
+            if print_progress:
+                print(f"Processing weight {weight} with {total_combinations} combinations.")
 
-            if weight < w:
-                syndrome_weights[syndrome_bytes] = (state, weight)
+            # Create a generator of all combinations for this weight.
+            comb_iter = itertools.combinations(range(n_qubits), weight)
+            # Split the combinations into chunks.
+            chunks = list(_chunked_iterable(comb_iter, chunk_size))
 
-        for key, v in syndrome_weights.items():
-            lut[key] = np.array(v[0])
+            weight_dict = {}
+            with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+                futures = [executor.submit(_process_combinations_chunk, chunk, checks, n_qubits) for chunk in chunks]
+                if print_progress:
+                    for future in tqdm(
+                        concurrent.futures.as_completed(futures), total=len(futures), desc=f"Weight {weight}"
+                    ):
+                        _merge_into(weight_dict, future.result())
 
-        return lut
+                else:
+                    for future in concurrent.futures.as_completed(futures):
+                        _merge_into(weight_dict, future.result())
+
+            _merge_into(global_lut, weight_dict)
+
+            if len(global_lut) == 2 ** checks.shape[0]:
+                if print_progress:
+                    print("All syndromes found.")
+                break
+
+        return global_lut
+
+
+def _chunked_iterable(iterable, chunk_size):
+    """Yield lists of items from the given iterable, each of size at most chunk_size."""
+    chunk = []
+    for item in iterable:
+        chunk.append(item)
+        if len(chunk) == chunk_size:
+            yield chunk
+            chunk = []
+    if chunk:
+        yield chunk
+
+
+def _process_combinations_chunk(chunk, checks, n_qubits):
+    """Process a chunk of combinations. For each combination, construct the binary state,
+    compute its syndrome, and add it to a dictionary if not already present.
+
+    Returns:
+        dict: mapping syndrome (bytes) -> error state (numpy array)
+    """
+    chunk_dict = {}
+    for comb in chunk:
+        # Create an error state with 1's in positions given by comb.
+        state = np.zeros(n_qubits, dtype=np.int8)
+        state[list(comb)] = 1
+        # Compute the syndrome and cast to int8 for consistency.
+        syndrome = ((checks @ state) % 2).astype(np.int8)
+        syndrome_bytes = syndrome.tobytes()
+        # Since all states here have the same weight,
+        # we keep the first encountered state for a given syndrome.
+        if syndrome_bytes not in chunk_dict:
+            chunk_dict[syndrome_bytes] = state.copy()
+    return chunk_dict
+
+
+def _merge_dicts(dict_list):
+    """Merge a list of dictionaries. In case of key conflicts,
+    the first encountered value is kept.
+    """
+    merged = {}
+    for d in dict_list:
+        for key, state in d.items():
+            if key not in merged:
+                merged[key] = state
+    return merged
+
+
+def _merge_into(target, source) -> None:
+    """Merge source dictionary into target dictionary. In case of key conflicts,
+    keep the existing value in the target.
+    """
+    for key, state in source.items():
+        if key not in target:
+            target[key] = state
