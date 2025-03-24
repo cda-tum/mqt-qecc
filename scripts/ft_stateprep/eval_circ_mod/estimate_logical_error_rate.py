@@ -43,6 +43,12 @@ def main() -> None:
         d = 7
         code = SquareOctagonColorCode(d)
         lut_path = (Path("__file__") / "../../eval/luts/decoder_488_7.pickle").resolve()
+        if lut_path.exists():
+            with lut_path.open("rb") as f:
+                lut = pickle.load(f)
+        else:
+            msg = "LUT file not found."
+            raise ValueError(msg)
     elif "cc_4_8_8" in code_name:
         d = 5
         code = SquareOctagonColorCode(d)
@@ -56,12 +62,6 @@ def main() -> None:
 
     prefix = (Path(__file__) / "../circuits/").resolve()
     circ_file_core = f"{code_name}_heuristic_"
-    if lut_path.exists():
-        with lut_path.open("rb") as f:
-            lut = pickle.load(f)
-    else:
-        msg = "LUT file not found."
-        raise ValueError(msg)
 
     # check if file exists
     # if not (prefix / code_name / circ_file).exists():
@@ -71,7 +71,7 @@ def main() -> None:
     # else:
     circuits = []
     # load circuit from file
-    for _id in [0, 1, 2, 3] if code_name == "c_4_8_8" else [0, 1, 2]:
+    for _id in [0, 1, 2, 3] if code_name == "cc_4_8_8" else [0, 1, 2]:
         circ_file = circ_file_core + str(_id)
         circuits.append(QuantumCircuit.from_qasm_file(prefix / code_name / circ_file))
 
@@ -80,7 +80,7 @@ def main() -> None:
         circ2=circuits[1],
         code=code,
         circ3=circuits[2],
-        circ4=circuits[3] if code_name == "c_4_8_8" else circuits[2],
+        circ4=circuits[3] if code_name == "cc_4_8_8" else circuits[2],
         p=args.p_error,
         p_idle=args.p_idle_factor * args.p_error,
         zero_state=args.zero_state,
