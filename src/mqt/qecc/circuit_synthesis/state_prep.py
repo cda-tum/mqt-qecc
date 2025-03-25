@@ -562,13 +562,14 @@ def find_swapping_permutation(lists: list[list[int]]) -> dict[int, int]:
                       to its image under π, or None if no such permutation exists.
     """
     # Step 1: Compute candidate pairs for each list.
-    # Here, "first three" are indices 0-2 and "last three" are indices 4-6.
     list_candidates = []
     for xs in lists:
         cand = set()
         for i in range(3):  # first three elements
-            for j in range(4, 7):  # last three elements
+            for j in range(len(xs) - 3, len(xs)):  # last three elements
                 # Use sorted tuple to represent an unordered pair
+                if i == j:
+                    continue
                 pair = tuple(sorted((xs[i], xs[j])))
                 cand.add(pair)
         list_candidates.append(cand)
@@ -646,9 +647,12 @@ def random_steane_type_prep_circuits(
 
     # obtain three random permutations of the cnots
     n = code.n
-    c2 = np.random.permutation(c1)
-    c3 = np.random.permutation(c1)
-    c4 = np.random.permutation(c1)
+    p1 = np.random.permutation(len(c1))
+    p2 = np.random.permutation(len(c1))
+    p3 = np.random.permutation(len(c1))
+    c2 = [c1[i] for i in p1]
+    c3 = [c1[i] for i in p2]
+    c4 = [c1[i] for i in p3]
     ctrls = trgt_order.keys()
 
     qc1 = build_css_circuit_from_cnot_list(n, c1, ctrls)
@@ -656,7 +660,7 @@ def random_steane_type_prep_circuits(
     qc3 = build_css_circuit_from_cnot_list(n, c3, ctrls)
     qc4 = build_css_circuit_from_cnot_list(n, c4, ctrls)
 
-    return (qc1, qc2, qc3, qc4)
+    return qc1, qc2, qc3, qc4, [p1, p2, p3]
 
 
 def canonical_steane_type_prep_circuits(
