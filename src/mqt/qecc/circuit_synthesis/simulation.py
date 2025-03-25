@@ -91,7 +91,6 @@ class NoisyNDFTStatePrepSimulator:
         self.p = p
         self.p_idle = p if p_idle is None else p_idle
         self.stim_circ = self.to_stim_circ(self.circ)
-        self.stim_circ.append("DEPOLARIZE1", list(range(self.circ.num_qubits)), [self.p])
         n_measurements = self._compute_postselection_indices()
         self.x_measurements, self.z_measurements = self.measure_stabilizers(self.stim_circ, n_measurements)
         n_measurements += len(self.x_measurements) + len(self.z_measurements)
