@@ -78,7 +78,7 @@ class NoisyNDFTStatePrepSimulator:
 
         self.set_p(p, p_idle)
 
-    def set_p(self, p: float, p_idle: float | None = None) -> int:
+    def set_p(self, p: float, p_idle: float | None = None, error_free_qubits=[]) -> int:
         """Set the error rate and initialize the stim circuit.
 
         This overwrites the previous stim circuit.
@@ -90,7 +90,7 @@ class NoisyNDFTStatePrepSimulator:
         self.n_measurements = 0
         self.p = p
         self.p_idle = p if p_idle is None else p_idle
-        self.stim_circ = self.to_stim_circ(self.circ)
+        self.stim_circ = self.to_stim_circ(self.circ, error_free_qubits=error_free_qubits)
         n_measurements = self._compute_postselection_indices()
         self.x_measurements, self.z_measurements = self.measure_stabilizers(self.stim_circ, n_measurements)
         n_measurements += len(self.x_measurements) + len(self.z_measurements)
@@ -181,7 +181,8 @@ class NoisyNDFTStatePrepSimulator:
 
                 elif gate.operation.name == "measure":
                     anc = circ.find_bit(gate.qubits[0])[0]
-                    stim_circuit.append_operation("X_ERROR", [anc], [2 * self.p / 3])
+                    if anc not in error_free_qubits:
+                        stim_circuit.append_operation("X_ERROR", [anc], [2 * self.p / 3])
                     stim_circuit.append_operation("MR", [anc])
                     if not self.parallel_gates:
                         idle_error([anc])
@@ -557,7 +558,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             return 3 * self.code.n
         return self.code.n
 
-    def set_p(self, p: float, p_idle: float | None = None) -> None:
+    def set_p(self, p: float, p_idle: float | None = None, error_free_qubits=[]) -> None:
         """Set the error rate and initialize the stim circuit.
 
         This overwrites the previous stim circuit.
@@ -566,11 +567,11 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         p: The error rate.
         p_idle: Idling error rate. If None, it is set to p.
         """
-        super().set_p(p, p_idle)
+        super().set_p(p, p_idle, error_free_qubits)
         if self.secondary_error_gadget is None:
             return
         self.secondary_stim_circ = self.to_stim_circ(
-            self.secondary_error_gadget, error_free_qubits=list(range(4 * self.code.n, 5 * self.code.n))
+            self.secondary_error_gadget, error_free_qubits=list(range(4 * self.code.n, 5 * self.code.n)) + error_free_qubits
         )
         self.secondary_stim_circ.append("DEPOLARIZE1", list(range(4 * self.code.n, 5 * self.code.n)), [self.p])
         n_measurements = self._compute_postselection_indices()
@@ -633,7 +634,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             secondary_state = (secondary_state + estimate_1) % 2
             estimates = self.decoder.batch_decode_z((secondary_state @ self.code.Hx.T % 2).astype(np.int8))
         else:
-            estimate_1 = self.decoder.batch_decode_z((state @ self.code.Hz.T % 2).astype(np.int8))
+            estimate_1 = self.decoder.batch_decode_x((state @ self.code.Hz.T % 2).astype(np.int8))
             secondary_state = (secondary_state + estimate_1) % 2
             observables = self.code.Lz
             estimates = self.decoder.batch_decode_x((secondary_state @ self.code.H.T % 2).astype(np.int8))
