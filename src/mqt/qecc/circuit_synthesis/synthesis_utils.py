@@ -381,6 +381,9 @@ def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
 
     fault_set_x_1, fault_set_z_1 = compute_fault_sets(1)
 
+    if spc.code.distance == 3:
+        return fault_set_x_1, fault_set_z_1
+
     if spc.code.distance == 5:
         return filter_fault_set(fault_set_x_1, 2), filter_fault_set(fault_set_z_1, 2)
 
@@ -388,11 +391,11 @@ def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
         fault_set_x_2, fault_set_z_2 = compute_fault_sets(2)
         return (
             np.vstack([
-                filter_fault_set(fault_set_x_1, 3),
+                filter_fault_set(fault_set_x_1, 2),
                 filter_fault_set(fault_set_x_2, 3),
             ]),
             np.vstack([
-                filter_fault_set(fault_set_z_1, 3),
+                filter_fault_set(fault_set_z_1, 2),
                 filter_fault_set(fault_set_z_2, 3),
             ]),
         )
