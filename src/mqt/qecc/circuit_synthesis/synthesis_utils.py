@@ -567,7 +567,8 @@ def build_css_circuit_from_cnot_list(n: int, cnots: list[tuple[int, int]], hadam
         The quantum circuit.
     """
     circ = QuantumCircuit(n)
-    circ.h(hadamards)
+    if hadamards:
+        circ.h(hadamards)
     for i, j in cnots:
         circ.cx(i, j)
     return circ
