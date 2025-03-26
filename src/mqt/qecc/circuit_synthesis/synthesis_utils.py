@@ -85,9 +85,25 @@ def iterative_search_with_timeout(
         curr_param = min_param
     return None, max_param
 
+def print_dynamic_eliminations(eliminations, failed_cnots) -> None:
+    """Prints the eliminations list dynamically on a single line.
+
+    Parameters:
+    - eliminations: List of (control, target) tuples representing CNOT operations.
+    """
+    # Clear both lines
+    sys.stdout.write("\r" + " " * 1000 + "\r")  # Clear line 1
+
+    # Print the updated lists
+    sys.stdout.write(f"\rCurrent Eliminations: {eliminations} | Failed CNOTs: {failed_cnots}")
+    sys.stdout.flush()
+
 
 def heuristic_gaussian_elimination(
-    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True, penalty_cols: list[int] | None = None
+    matrix: npt.NDArray[np.int8],
+    parallel_elimination: bool = True,
+    penalty_cols: list[tuple[int]] | None = None,
+    ref_spc: StatePrepCircuit | None = None,
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
     """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
 
@@ -98,7 +114,8 @@ def heuristic_gaussian_elimination(
     Args:
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
-        penalty_cols: indices of qubits whose CNOT connection shall occur earlier in the circuit
+        penalty_cols: tuples of CNOTs (control, target) which are initially added to the failed_cnots list and hence can only be applied once the control qubit has been used elsewhere
+        ref_spc: reference SPC of which the fault set determines the construction of the new circuit
 
     Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
@@ -118,18 +135,37 @@ def heuristic_gaussian_elimination(
     costs -= np.sum(matrix, axis=0)
     np.fill_diagonal(costs, 1)
     # NOTE: set the penalty terms to be higher than 0 to be ignored.
-    for i in penalty_cols:
-        for j in penalty_cols:
-            costs[i][j] = 1
+    # for i in penalty_cols:
+    #     for j in penalty_cols:
+    #         costs[i][j] = 1
 
     used_columns = []  # type: list[np.int_]
     eliminations = []  # type: list[tuple[int, int]]
+    # NOTE: set up variables for distinct fault set construction
+    if ref_spc is not None:
+        # matrix that describes how and error happening at qubit i would propagate right now through
+        # the circuit
+        x_propagation_matrix: npt.NDArray[np.int8] = np.eye(matrix.shape[1], dtype=np.int8)
+        z_propagation_matrix: npt.NDArray[np.int8] = np.eye(matrix.shape[1], dtype=np.int8)
+        # fill fault set with all possible non-propagated single errors
+        current_x_fs = np.empty((0, matrix.shape[1]), dtype=np.int8)
+        current_z_fs = np.empty((0, matrix.shape[1]), dtype=np.int8)
+        backtrack_required: bool = False
+        print("calculating reference fault sets")
+        x_fs, _z_fs = get_fs_based_on_d(ref_spc)
+        print("finished calculating fault sets")
+        stack = []
+    failed_cnots = penalty_cols
+    used_cnots = []
     while not is_reduced():
+        # flag in case algorithm can only choose CNOT that would violate t-distinctness
+        deadend = False
+
         m = np.zeros((matrix.shape[1], matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
         m[used_columns, :] = True
         m[:, used_columns] = True
-
         costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
+
         if np.all(costs_unused >= 0) or len(used_columns) == matrix.shape[1]:  # no more reductions possible
             if used_columns == []:  # local minimum => get out by making matrix triangular
                 logger.warning("Local minimum reached. Making matrix triangular.")
@@ -144,8 +180,74 @@ def heuristic_gaussian_elimination(
                 used_columns = []
             continue
 
-        i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
+        if ref_spc is not None:
+            # Get all valid (i, j) pairs sorted by cost
+            candidate_indices = np.argsort(costs_unused.flatten())  # Flatten and sort by value
+            candidate_pairs = [np.unravel_index(idx, costs.shape) for idx in candidate_indices]
+
+            # Find the first (i, j) that does NOT cause overlap
+            for i, j in candidate_pairs:
+                if (int(i), int(j)) in failed_cnots or (int(i), int(j)) in used_cnots:
+                    continue
+
+                if costs_unused[i, j] >= 0 and backtrack_required:  # level has been checked completely
+                    x_propagation_matrix, z_propagation_matrix, used_columns, matrix, costs, used_cnots, _ = stack.pop()
+                    removed_cnot = eliminations.pop()
+                    failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[0] != fcnot[0]]
+                    print_dynamic_eliminations(eliminations, failed_cnots)
+                    backtrack_required = False
+                    deadend = True
+                    break
+
+                if costs_unused[i, j] >= 0:  # level has been checked once but possibly not completely
+                    used_columns = []
+                    deadend = True
+                    backtrack_required = True
+                    break
+
+                used_cnots.append((int(i), int(j)))
+
+                new_x_error, next_x_propagation_matrix = get_next_error(
+                    propagation_matrix=x_propagation_matrix.copy(), cnot_gate=(int(i), int(j))
+                )
+                new_z_error, next_z_propagation_matrix = get_next_error(
+                    propagation_matrix=z_propagation_matrix.copy(), cnot_gate=(int(i), int(j)), x_error=False
+                )
+                trial_x_fs = np.append(current_x_fs, [new_x_error], axis=0)
+                trial_z_fs = np.append(current_z_fs, [new_z_error], axis=0)
+
+                # Check if there is no overlap—if true, accept (i, j)
+                # NOTE: this needs to be updated. So far I am checking only error one events of the new circuit against error one and two
+                # events of the reference circuit, but it can also happen that a two error event of the new circuit overlaps with some
+                # error one event of the reference circuit, which is neglected here.
+                if not ref_spc.check_fs_overlap(
+                    x_fs, trial_x_fs
+                ):  # and not ref_spc.check_fs_overlap(z_fs, trial_z_fs, x_error=False):
+                    stack.append((
+                        x_propagation_matrix.copy(),
+                        z_propagation_matrix.copy(),
+                        used_columns.copy(),
+                        matrix.copy(),
+                        costs.copy(),
+                        used_cnots.copy(),
+                        failed_cnots.copy(),
+                    ))
+                    used_cnots = []
+                    failed_cnots = [fcnot for fcnot in failed_cnots if int(i) != fcnot[0]]
+                    current_x_fs = trial_x_fs
+                    current_z_fs = trial_z_fs
+                    x_propagation_matrix = next_x_propagation_matrix
+                    z_propagation_matrix = next_z_propagation_matrix
+                    break
+                failed_cnots.append((int(i), int(j)))
+                print_dynamic_eliminations(eliminations, failed_cnots)
+
+        else:
+            i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
+        if deadend:
+            continue
         eliminations.append((int(i), int(j)))
+        print_dynamic_eliminations(eliminations, failed_cnots)
 
         if parallel_elimination:
             used_columns.append(i)
