@@ -318,7 +318,7 @@ def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation
 
 
 def check_mutually_disjointness_spcs(
-    c_spcs: list[StatePrepCircuit], p_spcs: list[StatePrepCircuit]
+    c_spcs: list[StatePrepCircuit], p_spcs: list[StatePrepCircuit], x_error: bool = True
 ) -> list[StatePrepCircuit]:
     """Check if potential SPCs have mutually disjoint fault set with all current SPCs.
 
@@ -328,10 +328,14 @@ def check_mutually_disjointness_spcs(
     Args:
         c_spcs: current SPCs that are already mutually disjoint in terms of fault sets
         p_spcs: potential SPCs that shall be tested for mutually disjointness against the current set
+        x_error: flag that decides if check happens for x errors or z errors
     """
     i = 0
     while i < len(p_spcs):
         pspc = p_spcs[i]
+        # NOTE: check if it is not better to use the big fault set of the current SPC here as those sets have already been
+        # calculated and do not need to be calculated again
+        # FIX: big fs calculation should be only done for the current elements if there are more candidates than current elements
         px_fs, pz_fs = get_fs_based_on_d(pspc)
 
         # Check against *all* existing and newly added elements in c_spcs
@@ -340,7 +344,10 @@ def check_mutually_disjointness_spcs(
             # This might need adjustments for different distances.
             x_fs = _spc.compute_fault_set()
             z_fs = _spc.compute_fault_set(x_errors=False)
-            if _spc.check_fs_overlap(x_fs, px_fs) or _spc.check_fs_overlap(z_fs, pz_fs):
+            if x_error:
+                if _spc.check_fs_overlap(x_fs, px_fs):
+                    break
+            elif _spc.check_fs_overlap(z_fs, pz_fs, x_error=False):
                 break  # Stop checking if there's an overlap
         else:  # No overlap found, so add pspc
             c_spcs.append(pspc)
