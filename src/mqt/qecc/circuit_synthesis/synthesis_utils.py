@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import sys
 from typing import TYPE_CHECKING, Any
 
 import multiprocess
@@ -84,6 +85,7 @@ def iterative_search_with_timeout(
         curr_timeout = int(curr_timeout * timeout_factor)
         curr_param = min_param
     return None, max_param
+
 
 def print_dynamic_eliminations(eliminations, failed_cnots) -> None:
     """Prints the eliminations list dynamically on a single line.
@@ -262,6 +264,43 @@ def heuristic_gaussian_elimination(
         np.fill_diagonal(costs, 1)
 
     return matrix, eliminations
+
+
+def get_next_error(
+    propagation_matrix: npt.NDArray[np.int8], cnot_gate: tuple[int, int], x_error: bool = True
+) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
+    """Propagates a single X or Z error through a CNOT gate in the circuit.
+
+    This function updates the error propagation matrix when a new CNOT gate is applied.
+    Each row in the matrix represents the propagated error if a single X or Z error occurs on that qubit.
+
+    Args:
+        propagation_matrix (npt.NDArray[np.int8]):
+            Current error propagation matrix (shape: [n_qubits, n_qubits]).
+        cnot_gate (Tuple[int, int]):
+            A tuple representing the new CNOT gate (control, target).
+        x_error (bool, optional):
+            Flag indicating whether to propagate X errors (True) or Z errors (False).
+            Defaults to True.
+
+    Returns:
+        Tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
+            - The propagated error (affected row of the matrix).
+            - The updated error propagation matrix.
+
+    """
+    # NOTE: This implementation assumes single error events only. For higher-order errors, adjustments are required.
+    control, target = cnot_gate
+
+    control_row = propagation_matrix[control]
+    target_row = propagation_matrix[target]
+
+    if x_error:
+        propagation_matrix[control] = np.bitwise_xor(control_row, target_row)
+        return propagation_matrix[control], propagation_matrix
+
+    propagation_matrix[target] = np.bitwise_xor(control_row, target_row)
+    return propagation_matrix[target], propagation_matrix
 
 
 def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation]:
