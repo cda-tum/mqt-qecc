@@ -200,6 +200,6 @@ def test_steane_type_ftsp_trivial(steane_code: CSSCode, non_ft_steane_zero: Quan
         p_idle=p * 0.01,
         zero_state=True,
     )
-    p_l, _, _, _ = simulator.logical_error_rate(min_errors=100)
+    p_l, _, _, _, _, _ = simulator.logical_error_rate(min_errors=100)
 
     assert p_l - tol < lower
