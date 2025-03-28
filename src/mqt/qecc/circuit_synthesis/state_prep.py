@@ -233,8 +233,19 @@ class StatePrepCircuit:
     def check_fs_overlap(self, fs_1: npt.NDArray[np.int8], fs_2: npt.NDArray[np.int8], x_error: bool = True) -> bool:
         """Returns True if there is an overlap between both fault sets."""
         # TODO: add method docstring and argument descriptions
+        # check if one of the fault sets is empty. If so, default is no overlap
+        if not fs_1.size or not fs_2.size:
+            return False
         check_fn = self.code.stabilizer_eq_x_error if x_error else self.code.stabilizer_eq_z_error
         return any(check_fn(f1, f2) for f1 in fs_1 for f2 in fs_2)
+        # check_fn = self.code.stabilizer_eq_x_error if x_error else self.code.stabilizer_eq_z_error
+        # for f1 in fs_1:
+        #     for f2 in fs_2:
+        #         if check_fn(f1, f2):
+        #             print(f"\nOverlap found: f1={f1}, f2={f2}\nx-error:{x_error}")
+        #             return True  # Return immediately after finding the first overlap
+        #
+        # return False  # Return False if no overlaps are found
 
 
 def _build_state_prep_circuit_from_back(
