@@ -106,6 +106,9 @@ def heuristic_gaussian_elimination(
     parallel_elimination: bool = True,
     penalty_cols: list[tuple[int]] | None = None,
     ref_spc: StatePrepCircuit | None = None,
+    ref_x_fs: npt.NDArray[np.int8] | None = None,
+    ref_z_fs: npt.NDArray[np.int8] | None = None,
+    guide_by_x: bool = True,
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
     """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
 
@@ -124,6 +127,14 @@ def heuristic_gaussian_elimination(
     """
     if penalty_cols is None:
         penalty_cols = []
+    if ref_x_fs is None:
+        ref_x_fs = np.empty((0,), dtype=np.int8)
+    if ref_z_fs is None:
+        ref_z_fs = np.empty((0,), dtype=np.int8)
+    if not ((ref_x_fs.size or ref_z_fs.size) ^ (ref_spc is None)):
+        msg = "It is necessary to either provide both a reference SPC and at least one fault set or nothing."
+        raise ValueError(msg)
+
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
 
@@ -136,32 +147,26 @@ def heuristic_gaussian_elimination(
 
     costs -= np.sum(matrix, axis=0)
     np.fill_diagonal(costs, 1)
-    # NOTE: set the penalty terms to be higher than 0 to be ignored.
-    # for i in penalty_cols:
-    #     for j in penalty_cols:
-    #         costs[i][j] = 1
 
     used_columns = []  # type: list[np.int_]
     eliminations = []  # type: list[tuple[int, int]]
+    failed_cnots = penalty_cols
+    used_cnots = []
     # NOTE: set up variables for distinct fault set construction
     if ref_spc is not None:
-        # matrix that describes how and error happening at qubit i would propagate right now through
+        # matrix that describes how an error happening at qubit i would propagate right now through
         # the circuit
         x_propagation_matrix: npt.NDArray[np.int8] = np.eye(matrix.shape[1], dtype=np.int8)
         z_propagation_matrix: npt.NDArray[np.int8] = np.eye(matrix.shape[1], dtype=np.int8)
-        # fill fault set with all possible non-propagated single errors
-        current_x_fs = np.empty((0, matrix.shape[1]), dtype=np.int8)
-        current_z_fs = np.empty((0, matrix.shape[1]), dtype=np.int8)
+        np.empty((0, matrix.shape[1]), dtype=np.int8)
+        np.empty((0, matrix.shape[1]), dtype=np.int8)
         backtrack_required: bool = False
-        print("calculating reference fault sets")
-        x_fs, _z_fs = get_fs_based_on_d(ref_spc)
-        print("finished calculating fault sets")
+        overlapping_errors_x = set()
+        overlapping_errors_z = set()
         stack = []
-    failed_cnots = penalty_cols
-    used_cnots = []
     while not is_reduced():
         # flag in case algorithm can only choose CNOT that would violate t-distinctness
-        deadend = False
+        deadend: bool = False
 
         m = np.zeros((matrix.shape[1], matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
         m[used_columns, :] = True
@@ -195,13 +200,16 @@ def heuristic_gaussian_elimination(
                 if costs_unused[i, j] >= 0 and backtrack_required:  # level has been checked completely
                     x_propagation_matrix, z_propagation_matrix, used_columns, matrix, costs, used_cnots, _ = stack.pop()
                     removed_cnot = eliminations.pop()
-                    failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[0] != fcnot[0]]
+                    if guide_by_x:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[0] != fcnot[0]]
+                    else:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[1] != fcnot[1]]
                     print_dynamic_eliminations(eliminations, failed_cnots)
                     backtrack_required = False
                     deadend = True
                     break
-
-                if costs_unused[i, j] >= 0:  # level has been checked once but possibly not completely
+                # level has been checked once but possibly not completely due to parallelization
+                if costs_unused[i, j] >= 0:
                     used_columns = []
                     deadend = True
                     backtrack_required = True
@@ -215,16 +223,51 @@ def heuristic_gaussian_elimination(
                 new_z_error, next_z_propagation_matrix = get_next_error(
                     propagation_matrix=z_propagation_matrix.copy(), cnot_gate=(int(i), int(j)), x_error=False
                 )
-                trial_x_fs = np.append(current_x_fs, [new_x_error], axis=0)
-                trial_z_fs = np.append(current_z_fs, [new_z_error], axis=0)
+
+                # INFO: Quickly check if new error is known to cause overlap. This saves another long overlap check.
+                new_x_error_tuple = tuple(new_x_error.flatten())
+                new_z_error_tuple = tuple(new_z_error.flatten())
+                if new_x_error_tuple in overlapping_errors_x:
+                    continue
+                if new_z_error_tuple in overlapping_errors_z:
+                    continue
+
+                new_x_error = np.expand_dims(new_x_error, axis=0)
+                new_z_error = np.expand_dims(new_z_error, axis=0)
+
+                # trial_x_fs = np.append(current_x_fs, [new_x_error], axis=0)
+                # trial_z_fs = np.append(current_z_fs, [new_z_error], axis=0)
 
                 # Check if there is no overlap—if true, accept (i, j)
                 # NOTE: this needs to be updated. So far I am checking only error one events of the new circuit against error one and two
                 # events of the reference circuit, but it can also happen that a two error event of the new circuit overlaps with some
                 # error one event of the reference circuit, which is neglected here.
-                if not ref_spc.check_fs_overlap(
-                    x_fs, trial_x_fs
-                ):  # and not ref_spc.check_fs_overlap(z_fs, trial_z_fs, x_error=False):
+                found_cnot = False
+
+                # only calculate overlap if reference fault set is given (optimization)
+                if ref_x_fs.size:
+                    x_overlap: bool = ref_spc.check_fs_overlap(ref_x_fs, new_x_error)
+                if ref_z_fs.size:
+                    z_overlap: bool = ref_spc.check_fs_overlap(ref_z_fs, new_z_error, x_error=False)
+
+                if ref_x_fs.size and ref_z_fs.size:
+                    # Both sets provided: Enter if **both** overlaps fail
+                    found_cnot = not (x_overlap or z_overlap)
+                    if not found_cnot:
+                        overlapping_errors_x.add(new_x_error_tuple)
+                        overlapping_errors_z.add(new_z_error_tuple)
+                elif ref_x_fs.size:
+                    # Only x-set provided: Enter if **x_overlap** fails
+                    found_cnot = not x_overlap
+                    if not found_cnot:
+                        overlapping_errors_x.add(new_x_error_tuple)
+                elif ref_z_fs.size:
+                    # Only z-set provided: Enter if **z_overlap** fails
+                    found_cnot = not z_overlap
+                    if not found_cnot:
+                        overlapping_errors_z.add(new_z_error_tuple)
+
+                if found_cnot:
                     stack.append((
                         x_propagation_matrix.copy(),
                         z_propagation_matrix.copy(),
@@ -235,11 +278,16 @@ def heuristic_gaussian_elimination(
                         failed_cnots.copy(),
                     ))
                     used_cnots = []
-                    failed_cnots = [fcnot for fcnot in failed_cnots if int(i) != fcnot[0]]
-                    current_x_fs = trial_x_fs
-                    current_z_fs = trial_z_fs
-                    x_propagation_matrix = next_x_propagation_matrix
-                    z_propagation_matrix = next_z_propagation_matrix
+                    if guide_by_x:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if int(i) != fcnot[0]]
+                    else:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if int(j) != fcnot[1]]
+
+                    if ref_x_fs.size and not x_overlap:
+                        x_propagation_matrix = next_x_propagation_matrix
+                    elif ref_z_fs.size and not z_overlap:
+                        z_propagation_matrix = next_z_propagation_matrix
+
                     break
                 failed_cnots.append((int(i), int(j)))
                 print_dynamic_eliminations(eliminations, failed_cnots)
