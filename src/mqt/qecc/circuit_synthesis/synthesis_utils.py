@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import sys
 from typing import TYPE_CHECKING, Any
 
 import multiprocess
@@ -86,8 +87,28 @@ def iterative_search_with_timeout(
     return None, max_param
 
 
+def print_dynamic_eliminations(eliminations, failed_cnots) -> None:
+    """Prints the eliminations list dynamically on a single line.
+
+    Parameters:
+    - eliminations: List of (control, target) tuples representing CNOT operations.
+    """
+    # Clear both lines
+    sys.stdout.write("\r" + " " * 1000 + "\r")  # Clear line 1
+
+    # Print the updated lists
+    sys.stdout.write(f"\rCurrent Eliminations: {eliminations} | Failed CNOTs: {failed_cnots}")
+    sys.stdout.flush()
+
+
 def heuristic_gaussian_elimination(
-    matrix: npt.NDArray[np.int8], parallel_elimination: bool = True, penalty_cols: list[int] | None = None
+    matrix: npt.NDArray[np.int8],
+    parallel_elimination: bool = True,
+    penalty_cols: list[tuple[int]] | None = None,
+    ref_spc: StatePrepCircuit | None = None,
+    ref_x_fs: npt.NDArray[np.int8] | None = None,
+    ref_z_fs: npt.NDArray[np.int8] | None = None,
+    guide_by_x: bool = True,
 ) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
     """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
 
@@ -98,13 +119,22 @@ def heuristic_gaussian_elimination(
     Args:
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
-        penalty_cols: indices of qubits whose CNOT connection shall occur earlier in the circuit
+        penalty_cols: tuples of CNOTs (control, target) which are initially added to the failed_cnots list and hence can only be applied once the control qubit has been used elsewhere
+        ref_spc: reference SPC of which the fault set determines the construction of the new circuit
 
     Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     if penalty_cols is None:
         penalty_cols = []
+    if ref_x_fs is None:
+        ref_x_fs = np.empty((0,), dtype=np.int8)
+    if ref_z_fs is None:
+        ref_z_fs = np.empty((0,), dtype=np.int8)
+    if not ((ref_x_fs.size or ref_z_fs.size) ^ (ref_spc is None)):
+        msg = "It is necessary to either provide both a reference SPC and at least one fault set or nothing."
+        raise ValueError(msg)
+
     matrix = matrix.copy()
     rank = mod2.rank(matrix)
 
@@ -117,19 +147,32 @@ def heuristic_gaussian_elimination(
 
     costs -= np.sum(matrix, axis=0)
     np.fill_diagonal(costs, 1)
-    # NOTE: set the penalty terms to be higher than 0 to be ignored.
-    for i in penalty_cols:
-        for j in penalty_cols:
-            costs[i][j] = 1
 
     used_columns = []  # type: list[np.int_]
     eliminations = []  # type: list[tuple[int, int]]
+    failed_cnots = penalty_cols
+    used_cnots = []
+    # NOTE: set up variables for distinct fault set construction
+    if ref_spc is not None:
+        # matrix that describes how an error happening at qubit i would propagate right now through
+        # the circuit
+        x_propagation_matrix: npt.NDArray[np.int8] = np.eye(matrix.shape[1], dtype=np.int8)
+        z_propagation_matrix: npt.NDArray[np.int8] = np.eye(matrix.shape[1], dtype=np.int8)
+        np.empty((0, matrix.shape[1]), dtype=np.int8)
+        np.empty((0, matrix.shape[1]), dtype=np.int8)
+        backtrack_required: bool = False
+        overlapping_errors_x = set()
+        overlapping_errors_z = set()
+        stack = []
     while not is_reduced():
+        # flag in case algorithm can only choose CNOT that would violate t-distinctness
+        deadend: bool = False
+
         m = np.zeros((matrix.shape[1], matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
         m[used_columns, :] = True
         m[:, used_columns] = True
-
         costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
+
         if np.all(costs_unused >= 0) or len(used_columns) == matrix.shape[1]:  # no more reductions possible
             if used_columns == []:  # local minimum => get out by making matrix triangular
                 logger.warning("Local minimum reached. Making matrix triangular.")
@@ -144,8 +187,117 @@ def heuristic_gaussian_elimination(
                 used_columns = []
             continue
 
-        i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
+        if ref_spc is not None:
+            # Get all valid (i, j) pairs sorted by cost
+            candidate_indices = np.argsort(costs_unused.flatten())  # Flatten and sort by value
+            candidate_pairs = [np.unravel_index(idx, costs.shape) for idx in candidate_indices]
+
+            # Find the first (i, j) that does NOT cause overlap
+            for i, j in candidate_pairs:
+                if (int(i), int(j)) in failed_cnots or (int(i), int(j)) in used_cnots:
+                    continue
+
+                if costs_unused[i, j] >= 0 and backtrack_required:  # level has been checked completely
+                    x_propagation_matrix, z_propagation_matrix, used_columns, matrix, costs, used_cnots, _ = stack.pop()
+                    removed_cnot = eliminations.pop()
+                    if guide_by_x:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[0] != fcnot[0]]
+                    else:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[1] != fcnot[1]]
+                    print_dynamic_eliminations(eliminations, failed_cnots)
+                    backtrack_required = False
+                    deadend = True
+                    break
+                # level has been checked once but possibly not completely due to parallelization
+                if costs_unused[i, j] >= 0:
+                    used_columns = []
+                    deadend = True
+                    backtrack_required = True
+                    break
+
+                used_cnots.append((int(i), int(j)))
+
+                new_x_error, next_x_propagation_matrix = get_next_error(
+                    propagation_matrix=x_propagation_matrix.copy(), cnot_gate=(int(i), int(j))
+                )
+                new_z_error, next_z_propagation_matrix = get_next_error(
+                    propagation_matrix=z_propagation_matrix.copy(), cnot_gate=(int(i), int(j)), x_error=False
+                )
+
+                # INFO: Quickly check if new error is known to cause overlap. This saves another long overlap check.
+                new_x_error_tuple = tuple(new_x_error.flatten())
+                new_z_error_tuple = tuple(new_z_error.flatten())
+                if new_x_error_tuple in overlapping_errors_x:
+                    continue
+                if new_z_error_tuple in overlapping_errors_z:
+                    continue
+
+                new_x_error = np.expand_dims(new_x_error, axis=0)
+                new_z_error = np.expand_dims(new_z_error, axis=0)
+
+                # trial_x_fs = np.append(current_x_fs, [new_x_error], axis=0)
+                # trial_z_fs = np.append(current_z_fs, [new_z_error], axis=0)
+
+                # Check if there is no overlap—if true, accept (i, j)
+                # NOTE: this needs to be updated. So far I am checking only error one events of the new circuit against error one and two
+                # events of the reference circuit, but it can also happen that a two error event of the new circuit overlaps with some
+                # error one event of the reference circuit, which is neglected here.
+                found_cnot = False
+
+                # only calculate overlap if reference fault set is given (optimization)
+                if ref_x_fs.size:
+                    x_overlap: bool = ref_spc.check_fs_overlap(ref_x_fs, new_x_error)
+                if ref_z_fs.size:
+                    z_overlap: bool = ref_spc.check_fs_overlap(ref_z_fs, new_z_error, x_error=False)
+
+                if ref_x_fs.size and ref_z_fs.size:
+                    # Both sets provided: Enter if **both** overlaps fail
+                    found_cnot = not (x_overlap or z_overlap)
+                    if not found_cnot:
+                        overlapping_errors_x.add(new_x_error_tuple)
+                        overlapping_errors_z.add(new_z_error_tuple)
+                elif ref_x_fs.size:
+                    # Only x-set provided: Enter if **x_overlap** fails
+                    found_cnot = not x_overlap
+                    if not found_cnot:
+                        overlapping_errors_x.add(new_x_error_tuple)
+                elif ref_z_fs.size:
+                    # Only z-set provided: Enter if **z_overlap** fails
+                    found_cnot = not z_overlap
+                    if not found_cnot:
+                        overlapping_errors_z.add(new_z_error_tuple)
+
+                if found_cnot:
+                    stack.append((
+                        x_propagation_matrix.copy(),
+                        z_propagation_matrix.copy(),
+                        used_columns.copy(),
+                        matrix.copy(),
+                        costs.copy(),
+                        used_cnots.copy(),
+                        failed_cnots.copy(),
+                    ))
+                    used_cnots = []
+                    if guide_by_x:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if int(i) != fcnot[0]]
+                    else:
+                        failed_cnots = [fcnot for fcnot in failed_cnots if int(j) != fcnot[1]]
+
+                    if ref_x_fs.size and not x_overlap:
+                        x_propagation_matrix = next_x_propagation_matrix
+                    elif ref_z_fs.size and not z_overlap:
+                        z_propagation_matrix = next_z_propagation_matrix
+
+                    break
+                failed_cnots.append((int(i), int(j)))
+                print_dynamic_eliminations(eliminations, failed_cnots)
+
+        else:
+            i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
+        if deadend:
+            continue
         eliminations.append((int(i), int(j)))
+        print_dynamic_eliminations(eliminations, failed_cnots)
 
         if parallel_elimination:
             used_columns.append(i)
@@ -160,6 +312,43 @@ def heuristic_gaussian_elimination(
         np.fill_diagonal(costs, 1)
 
     return matrix, eliminations
+
+
+def get_next_error(
+    propagation_matrix: npt.NDArray[np.int8], cnot_gate: tuple[int, int], x_error: bool = True
+) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
+    """Propagates a single X or Z error through a CNOT gate in the circuit.
+
+    This function updates the error propagation matrix when a new CNOT gate is applied.
+    Each row in the matrix represents the propagated error if a single X or Z error occurs on that qubit.
+
+    Args:
+        propagation_matrix (npt.NDArray[np.int8]):
+            Current error propagation matrix (shape: [n_qubits, n_qubits]).
+        cnot_gate (Tuple[int, int]):
+            A tuple representing the new CNOT gate (control, target).
+        x_error (bool, optional):
+            Flag indicating whether to propagate X errors (True) or Z errors (False).
+            Defaults to True.
+
+    Returns:
+        Tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
+            - The propagated error (affected row of the matrix).
+            - The updated error propagation matrix.
+
+    """
+    # NOTE: This implementation assumes single error events only. For higher-order errors, adjustments are required.
+    control, target = cnot_gate
+
+    control_row = propagation_matrix[control]
+    target_row = propagation_matrix[target]
+
+    if x_error:
+        propagation_matrix[control] = np.bitwise_xor(control_row, target_row)
+        return propagation_matrix[control], propagation_matrix
+
+    propagation_matrix[target] = np.bitwise_xor(control_row, target_row)
+    return propagation_matrix[target], propagation_matrix
 
 
 def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation]:
@@ -177,7 +366,7 @@ def get_permutation_group(group_generators: list[list[int]]) -> list[Permutation
 
 
 def check_mutually_disjointness_spcs(
-    c_spcs: list[StatePrepCircuit], p_spcs: list[StatePrepCircuit]
+    c_spcs: list[StatePrepCircuit], p_spcs: list[StatePrepCircuit], x_error: bool = True
 ) -> list[StatePrepCircuit]:
     """Check if potential SPCs have mutually disjoint fault set with all current SPCs.
 
@@ -187,10 +376,14 @@ def check_mutually_disjointness_spcs(
     Args:
         c_spcs: current SPCs that are already mutually disjoint in terms of fault sets
         p_spcs: potential SPCs that shall be tested for mutually disjointness against the current set
+        x_error: flag that decides if check happens for x errors or z errors
     """
     i = 0
     while i < len(p_spcs):
         pspc = p_spcs[i]
+        # NOTE: check if it is not better to use the big fault set of the current SPC here as those sets have already been
+        # calculated and do not need to be calculated again
+        # FIX: big fs calculation should be only done for the current elements if there are more candidates than current elements
         px_fs, pz_fs = get_fs_based_on_d(pspc)
 
         # Check against *all* existing and newly added elements in c_spcs
@@ -199,7 +392,10 @@ def check_mutually_disjointness_spcs(
             # This might need adjustments for different distances.
             x_fs = _spc.compute_fault_set()
             z_fs = _spc.compute_fault_set(x_errors=False)
-            if _spc.check_fs_overlap(x_fs, px_fs) or _spc.check_fs_overlap(z_fs, pz_fs):
+            if x_error:
+                if _spc.check_fs_overlap(x_fs, px_fs):
+                    break
+            elif _spc.check_fs_overlap(z_fs, pz_fs, x_error=False):
                 break  # Stop checking if there's an overlap
         else:  # No overlap found, so add pspc
             c_spcs.append(pspc)
@@ -233,6 +429,9 @@ def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
 
     fault_set_x_1, fault_set_z_1 = compute_fault_sets(1)
 
+    if spc.code.distance == 3:
+        return fault_set_x_1, fault_set_z_1
+
     if spc.code.distance == 5:
         return filter_fault_set(fault_set_x_1, 2), filter_fault_set(fault_set_z_1, 2)
 
@@ -240,11 +439,11 @@ def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
         fault_set_x_2, fault_set_z_2 = compute_fault_sets(2)
         return (
             np.vstack([
-                filter_fault_set(fault_set_x_1, 3),
+                filter_fault_set(fault_set_x_1, 2),
                 filter_fault_set(fault_set_x_2, 3),
             ]),
             np.vstack([
-                filter_fault_set(fault_set_z_1, 3),
+                filter_fault_set(fault_set_z_1, 2),
                 filter_fault_set(fault_set_z_2, 3),
             ]),
         )
@@ -416,7 +615,8 @@ def build_css_circuit_from_cnot_list(n: int, cnots: list[tuple[int, int]], hadam
         The quantum circuit.
     """
     circ = QuantumCircuit(n)
-    circ.h(hadamards)
+    if hadamards:
+        circ.h(hadamards)
     for i, j in cnots:
         circ.cx(i, j)
     return circ
