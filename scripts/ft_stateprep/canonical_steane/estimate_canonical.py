@@ -14,12 +14,11 @@ codes = {"golay": CSSCode.from_code_name("golay"), "hex": HexagonalColorCode(7),
 
 def main() -> None:
     """Run the logical error rate estimation for a given code and physical error rate."""
-    available_codes = ["steane", "tetrahedral", "shor", "surface", "cc_4_8_8", "cc_6_6_6", "hamming", "carbon"]
     parser = argparse.ArgumentParser(description="Estimate logical error rate for CSS state preparation circuits")
     parser.add_argument(
         "code",
         type=str,
-        help="Code for which to estimate logical error rate. Available codes: " + ", ".join(available_codes),
+        help="Code for which to estimate logical error rate. Available codes: " + ", ".join(codes),
     )
     parser.add_argument("-p", "--p_error", type=float, help="Physical error rate")
     parser.add_argument("-n", "--n_errors", type=int, default=500, help="Number of errors to sample")

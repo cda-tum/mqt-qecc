@@ -563,6 +563,7 @@ def find_swapping_permutation(lists: list[list[int]]) -> dict[int, int]:
     """
     # Step 1: Compute candidate pairs for each list.
     list_candidates = []
+    lists = [lst for lst in lists if len(lst) > 4]
     for xs in lists:
         cand = set()
         for i in range(3):  # first three elements
@@ -696,17 +697,24 @@ def canonical_steane_type_prep_circuits(
     c3 = _permute_commuting_cnots(trgt_order, ctrl_order, id_trgt, pi_ctrl)
 
     # collect cnots in c3 with same target into groups
-    c3_groups = defaultdict(set)
+    c3_groups = defaultdict(list)
     for cnot in c3:
-        c3_groups[cnot[1]].add(cnot[0])
+        c3_groups[cnot[1]].append(cnot[0])
 
     # we need to find a permutation that fulfills the following for all groups of targets:
     # - map the first three elements into the second half
     # - map the last element into the first half
     # No conflicts should occur
     lists = list(trgt_order.values())
+
     pi_swaps = find_swapping_permutation(lists)
-    pi = [pi_swaps[x] for x in trgts]
+
+    pi = []
+    for x in trgts:
+        if x in pi_swaps:
+            pi.append(pi_swaps[x])
+        else:
+            pi.append(x)
     # apply pi
     # use pi to order c3_groups
     c4 = []
