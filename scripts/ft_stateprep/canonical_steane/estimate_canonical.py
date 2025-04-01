@@ -37,7 +37,7 @@ def main() -> None:
     if code_name in codes:
         code = codes[code_name]
     else:
-        raise ValueError("Code " + code_name + " not available. Available codes: " + ", ".join(available_codes))
+        raise ValueError("Code " + code_name + " not available. Available codes: " + ", ".join(codes))
 
     if args.perm == "canonical":
         qc1, qc2, qc3, qc4 = canonical_steane_type_prep_circuits(code)
