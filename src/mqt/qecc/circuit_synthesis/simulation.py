@@ -78,7 +78,7 @@ class NoisyNDFTStatePrepSimulator:
 
         self.set_p(p, p_idle)
 
-    def set_p(self, p: float, p_idle: float | None = None, error_free_qubits=[]) -> int:
+    def set_p(self, p: float, p_idle: float | None = None, error_free_qubits=None) -> int:
         """Set the error rate and initialize the stim circuit.
 
         This overwrites the previous stim circuit.
@@ -87,6 +87,8 @@ class NoisyNDFTStatePrepSimulator:
         p: The error rate.
         p_idle: Idling error rate. If None, it is set to p.
         """
+        if error_free_qubits is None:
+            error_free_qubits = []
         self.n_measurements = 0
         self.p = p
         self.p_idle = p if p_idle is None else p_idle
@@ -558,7 +560,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             return 3 * self.code.n
         return self.code.n
 
-    def set_p(self, p: float, p_idle: float | None = None, error_free_qubits=[]) -> None:
+    def set_p(self, p: float, p_idle: float | None = None, error_free_qubits=None) -> None:
         """Set the error rate and initialize the stim circuit.
 
         This overwrites the previous stim circuit.
@@ -567,11 +569,14 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         p: The error rate.
         p_idle: Idling error rate. If None, it is set to p.
         """
+        if error_free_qubits is None:
+            error_free_qubits = []
         super().set_p(p, p_idle, error_free_qubits)
         if self.secondary_error_gadget is None:
             return
         self.secondary_stim_circ = self.to_stim_circ(
-            self.secondary_error_gadget, error_free_qubits=list(range(4 * self.code.n, 5 * self.code.n)) + error_free_qubits
+            self.secondary_error_gadget,
+            error_free_qubits=list(range(4 * self.code.n, 5 * self.code.n)) + error_free_qubits,
         )
         self.secondary_stim_circ.append("DEPOLARIZE1", list(range(4 * self.code.n, 5 * self.code.n)), [self.p])
         n_measurements = self._compute_postselection_indices()
@@ -814,11 +819,14 @@ class LutDecoder:
             # Create a generator of all combinations for this weight.
             comb_iter = itertools.combinations(range(n_qubits), weight)
             # Split the combinations into chunks.
-            chunks = list(_chunked_iterable(comb_iter, chunk_size))
+            chunks = _chunked_iterable(comb_iter, chunk_size)
 
             weight_dict = {}
             with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-                futures = [executor.submit(_process_combinations_chunk, chunk, checks, n_qubits) for chunk in chunks]
+                d2 = weight_dict.copy()
+                futures = [
+                    executor.submit(_process_combinations_chunk, chunk, checks, n_qubits, d2) for chunk in chunks
+                ]
                 if print_progress:
                     for future in tqdm(
                         concurrent.futures.as_completed(futures), total=len(futures), desc=f"Weight {weight}"
@@ -851,7 +859,7 @@ def _chunked_iterable(iterable, chunk_size):
         yield chunk
 
 
-def _process_combinations_chunk(chunk, checks, n_qubits):
+def _process_combinations_chunk(chunk, checks, n_qubits, weight_map):
     """Process a chunk of combinations. For each combination, construct the binary state,
     compute its syndrome, and add it to a dictionary if not already present.
 
@@ -868,7 +876,7 @@ def _process_combinations_chunk(chunk, checks, n_qubits):
         syndrome_bytes = syndrome.tobytes()
         # Since all states here have the same weight,
         # we keep the first encountered state for a given syndrome.
-        if syndrome_bytes not in chunk_dict:
+        if syndrome_bytes not in weight_map and syndrome_bytes not in chunk_dict:
             chunk_dict[syndrome_bytes] = state.copy()
     return chunk_dict
 
