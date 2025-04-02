@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import itertools
 import logging
-import pickle
+import pickle  # noqa: S403
 from pathlib import Path
 
 import matplotlib.patheffects as path_effects
@@ -129,7 +129,7 @@ def collect_data_space_time(
         for _circ in circuits:
             pass
 
-    for l, instance in enumerate(instances):
+    for l, instance in enumerate(instances):  # noqa: E741
         logger = logging.getLogger(__name__)
 
         # check whether new values for q, min_depth, tgate, ratio and circuit_type. If yes sample new circuits, otherwise keep them
@@ -422,7 +422,7 @@ def plot_improvement_circuit_types(
                 "layout_name": instance["layout_name"],
                 "min_depth": instance["min_depth"],
             })
-    for el in dct_mat:
+    for _ in dct_mat:
         pass
     # reshape such that one gets lists with fixed layout_name and fixed q
     unique_q = {entry["q"] for entry in dct_mat}
@@ -459,7 +459,7 @@ def plot_improvement_circuit_types(
         dct_plot.update({key: [lst_improvement, lst_std]})
         dct_plot_abs.update({key: [lst_abslayers, lst_std_abslayers]})
 
-    for el, val in dct_plot.items():
+    for _, _ in dct_plot.items():
         pass
 
     colors = plt.cm.rainbow(np.linspace(0, 1, 7))
@@ -623,6 +623,8 @@ def plot_f_vs_t(
         ratio (float): _description_
         layout_name (str): _description_
         min_depth (int): _description_
+        graphtype (str): _description_
+        hc_params (dict): _description
         path (str, optional): _description_. Defaults to "./results".
         size (tuple[int,int]): size of plot
     """
@@ -1152,7 +1154,10 @@ def plot_improvement_f_variation(
     Plot graphs for multiple layouts and metrics
 
     Args:
-        res_lst (list[dict]): _description_
+        res_lst_crossing (list[dict]): _description_
+        res_lst_routing (list[dict]): _description_
+        t (int): _
+        ratio (float): _
         q (int): _description_
         layout_name (str): _description_
         min_depth (int): _description_
@@ -1286,7 +1291,7 @@ def plot_improvement_f_variation(
         data_abs_r[f_idx, l_idx] = el["mean_final_layers"]
         data_abs_std_r[f_idx, l_idx] = el["std_final_layers"]
 
-    # define colors for each layout and use different line types for the metrics. however you have two lsits, so do it directly
+    # define colors for each layout and use different line types for the metrics. however you have two lists, so do it directly
     colors = plt.cm.rainbow(np.linspace(0, 1, 7))
     _, ax = plt.subplots(figsize=size)
 
@@ -1354,7 +1359,7 @@ def plot_f_vs_t_subfigs(
 ) -> None:
     """Plots a Matrix Plot with variation in number of factories and t for two result lists in subplots."""
 
-    def process_res_list(res_lst):
+    def process_res_list(res_lst: list) -> tuple:
         instances = res_lst[0]["instances"][: len(res_lst)]
         idx_include = [
             i
@@ -1407,7 +1412,7 @@ def plot_f_vs_t_subfigs(
 
     fig, axes = plt.subplots(2, 2, figsize=size, gridspec_kw={"width_ratios": [1, 1], "height_ratios": [1, 1]})
 
-    def plot_with_text(ax, data, data_std, r):
+    def plot_with_text(ax: plt.axes.Axes, data: np.ndarray, data_std: np.ndarray, r: int) -> plt.image.AxesImage:
         im = ax.imshow(data, cmap="viridis", aspect="auto")
         for i in range(data.shape[0]):
             for j in range(data.shape[1]):
@@ -1437,7 +1442,7 @@ def plot_f_vs_t_subfigs(
         ax.set_yticklabels(list(available_f_dct.keys()))
         return im
 
-    def plot_with_text_int(ax, data, data_std):
+    def plot_with_text_int(ax: plt.axes.Axes, data: np.ndarray, data_std: np.ndarray) -> plt.image.AxesImage:
         im = ax.imshow(data, cmap="viridis", aspect="auto")
         r = 0
         for i in range(data.shape[0]):

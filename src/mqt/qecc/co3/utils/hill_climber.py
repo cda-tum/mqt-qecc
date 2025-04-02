@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import multiprocessing
 import operator
-import pickle
+import pickle  # noqa: S403
 import random
 from pathlib import Path
 

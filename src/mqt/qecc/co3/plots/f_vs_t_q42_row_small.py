@@ -1,6 +1,7 @@
+"""Creates results for circuits with 42 qubits."""
 from __future__ import annotations
 
-import pickle
+import pickle  # noqa: S403
 from pathlib import Path
 
 import mqt.qecc.co3 as co
@@ -24,14 +25,10 @@ factories_q42_row = [
 ]  # , (1,33)]
 
 g, data_qubit_locs, factory_ring = co.plots.gen_layout("row", 42, factories_q42_row)
-custom_layout_q42_row_f12_CC = [data_qubit_locs, g.copy()]
-g = co.plots.remove_edge_per_factory(g, factories_q42_row)
-custom_layout_q42_row_f12_FSC = [data_qubit_locs, g]
+custom_layout_q42_row_f12_cc = [data_qubit_locs, g.copy()]
 
 g, data_qubit_locs, factory_ring = co.plots.gen_layout("row", 42, factories_q42_row[:4])
-custom_layout_q42_row_f4_CC = [data_qubit_locs, g.copy()]
-g = co.plots.remove_edge_per_factory(g, factories_q42_row[:4])
-custom_layout_q42_row_f4_FSC = [data_qubit_locs, g]
+custom_layout_q42_row_f4_cc = [data_qubit_locs, g.copy()]
 
 
 hc_params = {
@@ -46,61 +43,6 @@ hc_params = {
 }
 
 instances = [
-    # FSC, run fsc with removed graph edges first to ensure that the chosen circutis really work. i encountered 1 case when the crossing metric could not be computed but could not reprodcue it
-    # f=12
-    {
-        "q": 42,
-        "t": 4,
-        "min_depth": 42 * 4,
-        "tgate": True,
-        "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f12_FSC,
-        "factory_locs": factories_q42_row,
-        "layout_type": "custom",
-        "layout_name": "row",
-        "graphtype": "FSC",
-        "circuit_type": "random",
-    },
-    {
-        "q": 42,
-        "t": 12,
-        "min_depth": 42 * 4,
-        "tgate": True,
-        "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f12_FSC,
-        "factory_locs": factories_q42_row,
-        "layout_type": "custom",
-        "layout_name": "row",
-        "graphtype": "FSC",
-        "circuit_type": "random",
-    },
-    # f=4
-    {
-        "q": 42,
-        "t": 4,
-        "min_depth": 42 * 4,
-        "tgate": True,
-        "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f4_FSC,
-        "factory_locs": factories_q42_row[:4],
-        "layout_type": "custom",
-        "layout_name": "row",
-        "graphtype": "FSC",
-        "circuit_type": "random",
-    },
-    {
-        "q": 42,
-        "t": 12,
-        "min_depth": 42 * 4,
-        "tgate": True,
-        "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f4_FSC,
-        "factory_locs": factories_q42_row[:4],
-        "layout_type": "custom",
-        "layout_name": "row",
-        "graphtype": "FSC",
-        "circuit_type": "random",
-    },
     # CC
     # f=12
     {
@@ -109,7 +51,7 @@ instances = [
         "min_depth": 42 * 4,
         "tgate": True,
         "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f12_CC,
+        "custom_layout": custom_layout_q42_row_f12_cc,
         "factory_locs": factories_q42_row,
         "layout_type": "custom",
         "layout_name": "row",
@@ -122,7 +64,7 @@ instances = [
         "min_depth": 42 * 4,
         "tgate": True,
         "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f12_CC,
+        "custom_layout": custom_layout_q42_row_f12_cc,
         "factory_locs": factories_q42_row,
         "layout_type": "custom",
         "layout_name": "row",
@@ -136,7 +78,7 @@ instances = [
         "min_depth": 42 * 4,
         "tgate": True,
         "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f4_CC,
+        "custom_layout": custom_layout_q42_row_f4_cc,
         "factory_locs": factories_q42_row[:4],
         "layout_type": "custom",
         "layout_name": "row",
@@ -149,7 +91,7 @@ instances = [
         "min_depth": 42 * 4,
         "tgate": True,
         "ratio": 0.8,
-        "custom_layout": custom_layout_q42_row_f4_CC,
+        "custom_layout": custom_layout_q42_row_f4_cc,
         "factory_locs": factories_q42_row[:4],
         "layout_type": "custom",
         "layout_name": "row",
@@ -165,15 +107,15 @@ res_lst = co.plots.collect_data_space_time(instances, hc_params, reps, path, bot
 
 
 with Path(path).open("rb") as f:
-    res_lst = pickle.load(f)
+    res_lst = pickle.load(f)  # noqa: S301
 
 with Path(path).open("rb") as f:
-    res_lst = pickle.load(f)
+    res_lst = pickle.load(f)  # noqa: S301
 
 path = "./results/f_vs_time_q42_ratio08_small_row_metricrouting"
 
 with Path(path).open("rb") as f:
-    res_lst_routing = pickle.load(f)
+    res_lst_routing = pickle.load(f)  # noqa: S301
 
 for i, res in enumerate(res_lst_routing):
     layout_type = res["instances"][i]["layout_name"]

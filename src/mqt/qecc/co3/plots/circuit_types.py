@@ -1,3 +1,5 @@
+"""Constructs random circuits of different types."""
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -7,8 +9,6 @@ import mqt.qecc.co3 as co
 
 plt.rcParams["font.family"] = "Times New Roman"
 
-import pickle
-from pathlib import Path
 
 path = "./results/circuit_types_q24_250321_c"
 
@@ -203,8 +203,8 @@ reps = 5
 both_metric = False
 res_lst = co.plots.collect_data_space_time(instances, hc_params, reps, path, both_metric)
 
-with Path(path).open("rb") as f:
-    res_lst = pickle.load(f)
+# with Path(path).open("rb") as f:
+#    res_lst = pickle.load(f)
 
-for _res in res_lst:
-    pass
+# for _res in res_lst:
+#    pass

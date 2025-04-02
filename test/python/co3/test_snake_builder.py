@@ -7,7 +7,7 @@ import networkx as nx
 import mqt.qecc.co3 as co
 
 
-def test_snake_builder_STDW():
+def test_snake_builder_stdw():
     """Tests the stabilizers for a 4-snake with d=5 with the STDW scheme."""
     m = 10
     n = 18

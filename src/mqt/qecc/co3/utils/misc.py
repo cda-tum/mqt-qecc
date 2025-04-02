@@ -65,16 +65,18 @@ def generate_min_parallel_circuit(q: int, min_depth: int, layer_size: int) -> li
     while len(all_labels_used) < q or len(lst) < num_layers:
         temp = []
         flattened_labels = [label for tup in lst[-1] for label in tup]
-        k = random.choice(flattened_labels)  # this qubit will be used in current layer too to destroy parallelism
+        k = random.choice(  # noqa: S311
+            flattened_labels
+        )  # this qubit will be used in current layer too to destroy parallelism
         labels_copy = labels.copy()
         labels_copy.remove(k)
-        l = random.choice(labels_copy)  # form pair with l and k
+        l = random.choice(labels_copy)  # form pair with l and k  # noqa: E741, S311
         temp.append((l, k))
         labels_copy.remove(l)
 
         # fill up layer, avoid duplicates
         while len(temp) < layer_size:
-            random_tuple = random.choice([(labels_copy[i], labels_copy[i + 1]) for i in range(0, len(labels_copy), 2)])
+            random_tuple = random.choice([(labels_copy[i], labels_copy[i + 1]) for i in range(0, len(labels_copy), 2)])  # noqa: S311
             # Check for duplicates in the layer
             if all(
                 t[0] not in [tup[0] for tup in temp] and t[1] not in [tup[1] for tup in temp] for t in [random_tuple]
@@ -145,7 +147,7 @@ def generate_random_circuit(
 
     if tgate is True:
         while len(t_gates) <= num_t_gates:
-            a = random.randrange(q)
+            a = random.randrange(q)  # noqa: S311
             t_gates.append(a)
             used_qubits.add(a)
 
@@ -164,9 +166,9 @@ def generate_random_circuit(
             t_gates.append(i)  # Prioritize adding T gate
             extra_t_count += 1
         else:
-            b = random.choice(range(q))  # Pick a random second qubit
+            b = random.choice(range(q))  # Pick a random second qubit  # noqa: S311
             while b == i:  # Ensure b is different from i
-                b = random.choice(range(q))
+                b = random.choice(range(q))  # noqa: S311
             cnot_pairs.append((i, b))
             extra_cnot_count += 1
 
@@ -182,62 +184,13 @@ def generate_random_circuit(
     return circuit
 
 
-"""
-def generate_random_circuit(q: int, min_depth: int, tgate: bool = False, ratio: float = 0.5) -> list[tuple[int, int] | int]:
-    Random CNOT Pairs. Optional: random T gates.
-
-    makes it deep enough that each qubit is used at least once
-    min_depth is the minimum number of cnots
-    circuit = set of terminal pairs
-    the labeling does not yet follow the labels of a networkx.Graph but only range(q).
-
-    Args:
-        q (int): number of qubits of the circuit
-        min_depth (int): minimal number of gates
-        tgate (bool, optional): whether t gates are included or not Defaults to False.
-        ratio (float, optional): ratio between t gates and cnots.
-            more t gates if smaller than 0.5.
-            note that the ratio is not deterministically fixed, only determines probabilities.
-            Defaults to 0.5.
-
-    Raises:
-        ValueError: _description_
-
-    Returns:
-        list[tuple[int, int]]: _description_
-
-    if q < 2:
-        msg = "q must be at least 2 to form pairs."
-        raise ValueError(msg)
-
-    pairs = [] #cnot pairs and t single qubit gate labels
-    covered_elements = set()  # Keep track of elements that have appeared in a pair
-
-    while len(covered_elements) < q or len(pairs) < min_depth:
-        t = random.random() if tgate else 0
-        if t <= ratio:
-            a, b = random.sample(range(q), 2)
-            pair = (a, b)
-
-            pairs.append(pair)
-
-            covered_elements.update(pair)
-        elif t != 1 and ratio < t <= 1:
-            i = random.randrange(q)
-            pairs.append(i)
-            covered_elements.add(i)
-
-    return pairs
-"""
-
-
 def translate_layout_circuit(
     pairs: list[tuple[int, int] | int], layout: dict
 ) -> list[tuple[tuple[int, int]] | tuple[int, int]]:
     """Translates a `pairs` circuit (with int labels) into the lattice's labels for a given layout.
 
     However, pairs does not only include tuple[int,int] but can include int as well for T gates. Then, layout will also include
-    a lsit of factory positions in the key="factory_positions". but this will be ignored for this
+    a list of factory positions in the key="factory_positions". but this will be ignored for this
     """
     # return [(layout[pair[0]], layout[pair[1]]) for pair in pairs]
     terminal_pairs = [(layout[pair[0]], layout[pair[1]]) if isinstance(pair, tuple) else layout[pair] for pair in pairs]
@@ -301,7 +254,7 @@ def compare_original_dynamic_gate_order(q: int, layout: dict, router: co.Shortes
                 translated_previous.append(reverse_mapping[item])
         else:  # If it's not a tuple (single number, shouldn't happen based on your input)
             msg = f"Unexpected element in data: {item}"
-            raise ValueError(msg)
+            raise TypeError(msg)
 
     translated_routing = []
     for item in gates_routing:
@@ -312,7 +265,7 @@ def compare_original_dynamic_gate_order(q: int, layout: dict, router: co.Shortes
                 translated_routing.append(reverse_mapping[item])
         else:  # If it's not a tuple (single number, shouldn't happen based on your input)
             msg = f"Unexpected element in data: {item}"
-            raise ValueError(msg)
+            raise TypeError(msg)
 
     # switch on purpose two entries which is wrong to check whether this is recognized
     # temp = translated_routing[0]

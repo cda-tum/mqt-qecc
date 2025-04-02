@@ -117,11 +117,9 @@ class SnakeBuilderSC:
         Returns:
             bool: whether both are neighbors.
         """
-        if abs(node1[0] - node2[0]) == 1 and node1[1] == node2[1]:  # vertical neighbors
-            return True
-        if abs(node1[1] - node2[1]) == 1 and node1[0] == node2[0]:  # horizontal neighbors
-            return True
-        return False
+        return (abs(node1[0] - node2[0]) == 1 and node1[1] == node2[1]) or (
+            abs(node1[1] - node2[1]) == 1 and node1[0] == node2[0]
+        )
 
     @staticmethod
     def neighbors_diag(node1: tuple[int, int], node2: tuple[int, int]) -> bool:
@@ -321,7 +319,7 @@ class SnakeBuilderSC:
 
         return self.plaquettes, self.stars
 
-        # add check whether ther are q-num stabs = 1
+        # add check whether there are q-num stabs = 1
 
     def gen_checks(self) -> tuple[np.ndarray, np.ndarray, dict]:
         """Return checks and translation dict."""
@@ -425,9 +423,14 @@ class SnakeBuilderSC:
         plt.legend(unique_handles, unique_legend.keys())
         plt.show()
 
-    def get_logical_operator_basis(self):
+    def get_logical_operator_basis(self) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
+        """Generates Logical Operators of the snake.
+
+        Returns:
+            tuple[np.ndarray[np.int32], np.ndarray[np.int32]]: logical operators.
+        """
         hx, hz, _ = self.gen_checks()
-        return CSSCode._compute_logical(np.array(hx), np.array(hz))
+        return CSSCode._compute_logical(np.array(hx), np.array(hz))  # noqa: SLF001
 
 
 class SnakeBuilderSTDW:
@@ -739,7 +742,8 @@ class SnakeBuilderSTDW:
 
     def fill_triangle(self, triangle_idx: int) -> list[list[tuple]]:
         """Selects the subset of z stabilizers within the triangle (possibly also including stdw nodes) s.t. each node is maximally touched twice by a plaquette."""
-        assert triangle_idx != 0 and triangle_idx != len(self.positions) - 1, (
+        assert triangle_idx != 0, "filling of triangles only possible if not at the ends of the snake"
+        assert triangle_idx != len(self.positions) - 1, (
             "filling of triangles only possible if not at the ends of the snake"
         )
         z_plaquettes, _ = self.find_stabilizers()

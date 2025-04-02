@@ -1545,7 +1545,7 @@ def remove_edge_per_factory(g: nx.Graph, factories: list[tuple[int, int]]) -> nx
         assert len(neighbors) == 2, "your factory has access to more than 2 neighboring nodes which is a little weird"
 
         # choose a random of those neighbors
-        node = random.choice(neighbors)
+        node = random.choice(neighbors)  # noqa: S311
 
         # remove the corresponding edge from g
         # if (node, factory) in g.edges():
