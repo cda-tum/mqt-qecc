@@ -1,4 +1,5 @@
 """Creates results for circuits with 42 qubits."""
+
 from __future__ import annotations
 
 import pickle  # noqa: S403
