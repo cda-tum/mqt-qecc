@@ -16,18 +16,6 @@ jobs:
     name: 🔍 Change
     uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.5
 
-  cpp-tests:
-    name: 🇨‌ Test
-    needs: change-detection
-    if: fromJSON(needs.change-detection.outputs.run-cpp-tests)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-ci.yml@v1.5
-
-  cpp-linter:
-    name: 🇨‌ Lint
-    needs: change-detection
-    if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-linter.yml@v1.5
-
   python-tests:
     name: 🐍 Test
     needs: change-detection
@@ -51,8 +39,6 @@ jobs:
     if: always()
     needs:
       - change-detection
-      - cpp-tests
-      - cpp-linter
       - python-tests
       - code-ql
       - cd
@@ -62,14 +48,6 @@ jobs:
         uses: re-actors/alls-green@release/v1
         with:
           allowed-skips: >-
-            ${{
-              fromJSON(needs.change-detection.outputs.run-cpp-tests)
-              && '' || 'cpp-tests,'
-            }}
-            ${{
-              fromJSON(needs.change-detection.outputs.run-cpp-linter)
-              && '' || 'cpp-linter,'
-            }}
             ${{
               fromJSON(needs.change-detection.outputs.run-python-tests)
               && '' || 'python-tests,'
