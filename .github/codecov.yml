@@ -24,10 +24,6 @@ flag_management:
         target: 90%
         threshold: 1%
   individual_flags:
-    - name: cpp
-      paths:
-        - "include"
-        - "src"
     - name: python
       paths:
         - "src/mqt/**/*.py"
