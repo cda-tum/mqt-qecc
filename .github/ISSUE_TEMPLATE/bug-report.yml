@@ -18,8 +18,6 @@ body:
         Please provide information about your environment. For example, OS, C++ compiler, mqt.qecc version etc.
       placeholder: |
         - OS:
-        - C++ compiler:
-        - mqt.core version:
         - Additional environment information:
     validations:
       required: true
