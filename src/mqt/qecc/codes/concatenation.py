@@ -125,7 +125,7 @@ class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
         hx = np.array([self._outer_checks_to_physical(check, "X") for check in outer_code.Hx], dtype=np.int8)
         hz = np.array([self._outer_checks_to_physical(check, "Z") for check in outer_code.Hz], dtype=np.int8)
         d = min(code.distance * outer_code.distance for code in inner_codes)
-        CSSCode.__init__(self, d, hx, hz)
+        CSSCode.__init__(self, hx, hz, d)
 
     def _outer_checks_to_physical(self, check: npt.NDArray[np.int8], operator: str) -> npt.NDArray[np.int8]:
         """Convert a check operator on the outer code to the operator on the concatenated code.

@@ -36,7 +36,7 @@ def construct_bb_code(n: int) -> CSSCode:
     else:
         msg = f"No bb code with n = {n}."
         raise InvalidCSSCodeError(msg)
-    return CSSCode(d, x, z)
+    return CSSCode(x, z, d)
 
 
 def _shift_matrix(l_: int) -> npt.NDArray[np.int8]:
