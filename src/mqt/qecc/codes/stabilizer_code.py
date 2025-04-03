@@ -176,7 +176,7 @@ class StabilizerCode:
         return StabilizerCode([], distance=1, z_logicals=z_logicals, x_logicals=x_logicals, n=n)
 
     @classmethod
-    def from_file(cls, file_path: str) -> StabilizerCode:
+    def from_file(cls, file_path: str | Path) -> StabilizerCode:
         """Load a Stabilizer code from a file.
 
         The file should have one line per stabilizer generator as a string.

@@ -226,7 +226,7 @@ class CSSCode(StabilizerCode):
         raise InvalidCSSCodeError(msg)
 
     @classmethod
-    def from_file(cls, file_path: str) -> CSSCode:
+    def from_file(cls, file_path: str | Path) -> CSSCode:
         """Load a CSS code from a file.
 
         The file should have one line per stabilizer generator as a string.
@@ -247,7 +247,7 @@ class CSSCode(StabilizerCode):
         """
         with Path(file_path).open(encoding="utf-8") as f:
             lines = f.readlines()
-        stabilizers = [line.strip() for line in lines]
+        stabilizers = [line.strip() for line in lines if line.strip()]
         # read in stabilizers
         x_stabs = []
         z_stabs = []
