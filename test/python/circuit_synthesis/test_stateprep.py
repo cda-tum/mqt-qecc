@@ -36,13 +36,13 @@ def steane_code() -> CSSCode:
 @pytest.fixture
 def css_4_2_2_code() -> CSSCode:
     """Return the 4,2,2  code."""
-    return CSSCode(2, np.array([[1] * 4]), np.array([[1] * 4]))
+    return CSSCode(np.array([[1] * 4]), np.array([[1] * 4]), 2)
 
 
 @pytest.fixture
 def css_6_2_2_code() -> CSSCode:
     """Return the 4,2,2  code."""
-    return CSSCode(2, np.array([[1] * 6]), np.array([[1] * 6]))
+    return CSSCode(np.array([[1] * 6]), np.array([[1] * 6]), 2)
 
 
 @pytest.fixture
@@ -89,7 +89,7 @@ def color_code_d5_sp(cc_4_8_8_code: CSSCode) -> StatePrepCircuit:
 
 def test_heuristic_overcomplete_stabilizers() -> None:
     """Check that synthesis also works for overcomplete stabilizers."""
-    code = CSSCode(2, np.array([[1, 1, 1, 1], [1, 1, 1, 1]]), np.array([[1, 1, 1, 1], [1, 1, 1, 1]]))
+    code = CSSCode(np.array([[1, 1, 1, 1], [1, 1, 1, 1]]), np.array([[1, 1, 1, 1], [1, 1, 1, 1]]), 2)
     sp_circ = heuristic_prep_circuit(code)
     circ = sp_circ.circ
     x, z = get_stabs_css(circ)

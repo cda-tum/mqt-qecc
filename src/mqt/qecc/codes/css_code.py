@@ -161,7 +161,7 @@ class CSSCode(StabilizerCode):
     @classmethod
     def get_trivial_code(cls, n: int) -> CSSCode:
         """Return the trivial code."""
-        return CSSCode(1, None, None, n=n)
+        return CSSCode(None, None, 1, n=n)
 
     @staticmethod
     def from_code_name(code_name: str, distance: int | None = None) -> CSSCode:
@@ -217,7 +217,7 @@ class CSSCode(StabilizerCode):
             if code_name in distances:
                 x_distance, z_distance = distances[code_name]
                 distance = min(x_distance, z_distance)
-                return CSSCode(distance, hx, hz, x_distance=x_distance, z_distance=z_distance)
+                return CSSCode(hx, hz, distance, x_distance=x_distance, z_distance=z_distance)
 
             if distance is None:
                 msg = f"Distance is not specified for {code_name}"
