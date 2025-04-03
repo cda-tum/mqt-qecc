@@ -1,9 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=66.1",
-    "setuptools_scm>=8.1",
-]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "mqt.qecc"
@@ -60,12 +57,17 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[tool.hatch.version]
+path = "src/mqt/qecc/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mqt/qecc"]
+
 [project.optional-dependencies]
 test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
 coverage = ["mqt.qecc[test]", "pytest-cov>=4"]
 docs = [
     "furo>=2023.9.10",
-    "setuptools-scm>=8.1",
     "sphinxcontrib-bibtex>=2.4.2",
     "sphinx-copybutton>=0.5",
     "ipykernel",
@@ -82,9 +84,6 @@ Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
 Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
-
-[tool.setuptools_scm]
-write_to = "src/mqt/qecc/_version.py"
 
 [tool.pytest.ini_options]
 minversion = "7.2"
@@ -234,35 +233,6 @@ anc = "anc"
 
 [tool.repo-review]
 ignore = ["GH200"]
-
-
-[tool.cibuildwheel]
-build = "cp3*"
-skip = "*-musllinux*"
-archs = "auto64"
-test-command = "python -c \"from mqt import qecc\""
-test-skip = ["cp313*"] # skip testing on Python 3.13 until our dependencies are ready
-build-frontend = "build[uv]"
-enable = ["cpython-freethreading"]
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
-manylinux-ppc64le-image = "manylinux_2_28"
-manylinux-s390x-image = "manylinux_2_28"
-
-[tool.cibuildwheel.linux]
-environment = { DEPLOY = "ON" }
-
-[tool.cibuildwheel.macos]
-environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
-
-[tool.cibuildwheel.windows]
-before-build = "uv pip install delvewheel>=1.7.3"
-repair-wheel-command = "delvewheel repair -v -w {dest_dir} {wheel} --namespace-pkg mqt"
-environment = { CMAKE_ARGS = "-T ClangCL" }
-
-[[tool.cibuildwheel.overrides]]
-select = "*-macosx_arm64"
-environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 
 [tool.uv]
