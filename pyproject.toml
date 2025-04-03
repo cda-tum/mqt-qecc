@@ -1,10 +1,9 @@
 [build-system]
 requires = [
-  "scikit-build-core>=0.10.1",
-  "setuptools-scm>=8.1",
-  "pybind11>=2.13.5",
+    "setuptools>=66.1",
+    "setuptools_scm>=8.1",
 ]
-build-backend = "scikit_build_core.build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "mqt.qecc"
@@ -29,7 +28,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: C++",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -79,73 +77,11 @@ docs = [
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]
 
-[project.scripts]
-"ecc_qiskit_wrapper" = "mqt.qecc.ecc_qiskit_wrapper:main"
-"mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
-"mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
-
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
 Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
-
-[tool.scikit-build]
-# Protect the configuration against future changes in scikit-build-core
-minimum-version = "build-system.requires"
-
-# Set the wheel install directory
-wheel.install-dir = "mqt/qecc"
-
-# Explicitly set the package directory
-wheel.packages = ["src/mqt"]
-
-# Set required Ninja version
-ninja.version = ">=1.10"
-
-# Setuptools-style build caching in a local directory
-build-dir = "build/{wheel_tag}/{build_type}"
-
-# Only build the Python bindings target
-build.targets = ["pyqecc"]
-
-# Only install the Python package component
-install.components = ["mqt-qecc_Python"]
-
-metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["src/mqt/qecc/_version.py"]
-sdist.exclude = [
-    "**/.github",
-    "**/doc",
-    "**/docs",
-    "**/meta",
-    "**/plots",
-    "**/test",
-    "**/tests",
-]
-
-[tool.scikit-build.cmake.define]
-BUILD_MQT_QECC_TESTS = "OFF"
-BUILD_MQT_QECC_BINDINGS = "ON"
-ENABLE_IPO = "ON"
-
-[[tool.scikit-build.overrides]]
-if.python-version = ">=3.13"
-if.abi-flags = "t"
-if.platform-system = "win32"
-inherit.cmake.define = "append"
-cmake.define.DISABLE_GIL = "1"
-
-
-[tool.check-sdist]
-sdist-only = ["src/mqt/qecc/_version.py"]
-git-only = [
-    "docs/*",
-    "examples/*",
-    "test/*",
-    ".idea/*",
-]
-
 
 [tool.setuptools_scm]
 write_to = "src/mqt/qecc/_version.py"
