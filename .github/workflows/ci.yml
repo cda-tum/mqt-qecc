@@ -11,6 +11,7 @@ permissions:
   attestations: write
   contents: read
   id-token: write
+  security-events: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
