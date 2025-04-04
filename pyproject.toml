@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -58,10 +58,13 @@ dependencies = [
 dynamic = ["version"]
 
 [tool.hatch.version]
-path = "src/mqt/qecc/__about__.py"
+source = "vcs"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/mqt/qecc"]
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/mqt/qecc/_version.py"
 
 [project.optional-dependencies]
 test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
