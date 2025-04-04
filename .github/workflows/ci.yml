@@ -7,20 +7,25 @@ on:
   merge_group:
   workflow_dispatch:
 
-permissions:
-  attestations: write
-  contents: read
-  id-token: write
-  security-events: write
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  security-events: write
 
 jobs:
   change-detection:
     name: 🔍 Change
     uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-change-detection.yml@v1.8
+
+  python-linter:
+    name: 🐍 Lint
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-python-tests)
+    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-linter.yml@v1.8
 
   python-tests:
     name: 🐍 Test
@@ -34,12 +39,6 @@ jobs:
     if: fromJSON(needs.change-detection.outputs.run-code-ql)
     uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-code-ql-python.yml@v1.8
 
-  cd:
-    name: 🚀 CD
-    needs: change-detection
-    if: fromJSON(needs.change-detection.outputs.run-cd)
-    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-packaging.yml@v1.8
-
   required-checks-pass: # This job does nothing and is only used for branch protection
     name: 🚦 Check
     if: always()
@@ -47,7 +46,6 @@ jobs:
       - change-detection
       - python-tests
       - code-ql
-      - cd
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
