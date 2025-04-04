@@ -1,65 +1,78 @@
 # Installation
 
-QECC is mainly developed as a C++ library.
-In order to make the tool as accessible as possible, it comes with an easy-to-use Python interface.
+We highly recommend using [`uv`](https://docs.astral.sh/uv/) for working with Python projects.
+It is an extremely fast Python package and project manager, written in Rust and developed by [Astral](https://astral.sh/) (the same team behind [`ruff`](https://docs.astral.sh/ruff/)).
+It can act as a drop-in replacement for `pip` and `virtualenv`, and provides a more modern and faster alternative to the traditional Python package management tools.
+It automatically handles the creation of virtual environments and the installation of packages, and is much faster than `pip`.
+Additionally, it can even set up Python for you if it is not installed yet.
 
-We encourage installing QECC via pip (preferably in a [virtual environment](https://docs.python.org/3/library/venv.html)):
+If you do not have `uv` installed yet, you can install it via:
 
-> ```console
-> (venv) $ pip install mqt.qecc
-> ```
-
-:::{note}
-In order to set up a virtual environment, you can use the following commands:
+::::{tab-set}
+:::{tab-item} macOS and Linux
 
 ```console
-$ python3 -m venv venv
-$ source venv/bin/activate
+$ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-If you are using Windows, you can use the following commands instead:
+:::
+:::{tab-item} Windows
 
 ```console
-$ python3 -m venv venv
-$ venv\Scripts\activate.bat
+$ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+::::
+
+Check out their excellent [documentation](https://docs.astral.sh/uv/) for more information.
+
+:::::
+
+::::{tab-set}
+:sync-group: installer
+
+:::{tab-item} uv _(recommended)_
+:sync: uv
+
+```console
+$ uv pip install mqt.qecc
 ```
 
 :::
 
-% A Detailed Walk Through
-% #######################
-%
-% First, save the following lines as :code:`steane_example.py` in a folder where you want to install QECC and run the example:
-%
-% .. code-block:: python
-%
-% from mqt.qecc import CSSCode
-% from mqt.qecc.circuit_synthesis import \*
-% import numpy as np
-%
-% H = np.array([[1, 0, 0, 1, 0, 1, 1], [0, 1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1, 1]], dtype=np.int8)
-% code = CSSCode(H, H)
-% non_ft_circ = heuristic_prep_circuit(code)
-% ft_circ = gate_optimal_verification_circuit(non_ft_circ)
-% sim = NoisyNDFTStatePrepSimulator(ft_circ, code)
-% sim.set_p(0.01, 0.0001)
-% p_l, r_a, n_err, n_total = logical_error_rate(shots=100000, at_least_min_error=False)
-%
-% print(p_l, r_a, n_err, n_total)
-%
-%
-% Then, the following snippet shows the installation process from setting up the virtual environment to running a small example program.
-%
-% .. code-block:: console
-%
-% $ python3 -m venv venv
-% $ . venv/bin/activate
-% (venv) $ pip install -U pip setuptools wheel
-% (venv) $ pip install mqt.qecc
-% (venv) $ python3 steane_example.py
-% {
-% "decodingTime(ms)": 0,
-% "estimate": "[0,1,0,0,0,0,0]"
-% }
-% True
-% [0 1 0 0 0 0 0]
+:::{tab-item} pip
+:sync: pip
+
+```console
+(.venv) $ python -m pip install mqt.qecc
+```
+
+:::
+::::
+
+## Integrating MQT QECC into your project
+
+If you want to use the MQT QECC Python package in your own project, you can simply add it as a dependency in your `pyproject.toml` file.
+This will automatically install the MQT QECC package when your project is installed.
+
+::::{tab-set}
+
+:::{tab-item} uv _(recommended)_
+
+```console
+$ uv add mqt.qecc
+```
+
+:::
+
+:::{tab-item} pyproject.toml
+
+```toml
+[project]
+# ...
+dependencies = ["mqt.qecc>=2.0.0"]
+# ...
+```
+
+:::
+::::
