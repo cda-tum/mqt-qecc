@@ -71,13 +71,23 @@ test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
 coverage = ["mqt.qecc[test]", "pytest-cov>=4"]
 docs = [
     "furo>=2023.9.10",
-    "sphinxcontrib-bibtex>=2.4.2",
-    "sphinx-copybutton>=0.5",
-    "ipykernel",
-    "nbsphinx",
-    "sphinxext-opengraph>=0.9",
-    "sphinx-autodoc-typehints",
-    "qiskit[visualization]",
+      "sphinx-autoapi>=3.6.0",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-design>=0.6.1",
+  "sphinxcontrib-bibtex>=2.6.3",
+  "sphinxcontrib-svg2pdfconverter>=1.3.0",
+  "sphinxext-opengraph>=0.9.1",
+  "myst-nb>=1.2.0",
+  "sphinx>=7.4.7",
+  "sphinx>=8.1.3; python_version >= '3.10'",
+  "sphinx>=8.2.3; python_version >= '3.11'",
+    # "sphinxcontrib-bibtex>=2.4.2",
+    # "sphinx-copybutton>=0.5",
+    # "ipykernel",
+    # "nbsphinx",
+    # "sphinxext-opengraph>=0.9",
+    # "sphinx-autodoc-typehints",
+    # "qiskit[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]

@@ -1,9 +1,15 @@
+# Copyright (c) 2025 Chair for Design Automation, TUM
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
+
 """Sphinx configuration file."""
 
 from __future__ import annotations
 
 import warnings
-from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,20 +21,21 @@ ROOT = Path(__file__).parent.parent.resolve()
 
 
 try:
-    from mqt.qecc import __version__ as version
+    # Python 3.8+
+    from importlib.metadata import version as get_version
+except ImportError:
+    # For older Python versions
+    from importlib_metadata import version as get_version
+
+try:
+    version = get_version("mqt.qecc")
 except ModuleNotFoundError:
-    try:
-        version = metadata.version("mqt.qecc")
-    except ModuleNotFoundError:
-        msg = (
-            "Package should be installed to produce documentation! "
-            "Assuming a modern git archive was used for version discovery."
-        )
-        warnings.warn(msg, stacklevel=1)
+    msg = (
+        "Package should be installed to produce documentation! "
+        "Assuming a modern git archive was used for version discovery."
+    )
+    warnings.warn(msg, stacklevel=1)
 
-        from setuptools_scm import get_version
-
-        version = get_version(root=str(ROOT), fallback_root=ROOT)
 
 # Filter git details from version
 release = version.split("+")[0]
@@ -39,9 +46,9 @@ if TYPE_CHECKING:
 
 # -- Project information -----------------------------------------------------
 project = "QECC"
-author = "Lucas Berent"
+author = "Chair for Design Automation, Technical University of Munich"
 language = "en"
-project_copyright = "Chair for Design Automation, Technical University of Munich"
+project_copyright = "2025, Chair for Design Automation, Technical University of Munich"
 
 master_doc = "index"
 
@@ -51,19 +58,43 @@ html_css_files = ["custom.css"]
 
 # -- General configuration ---------------------------------------------------
 extensions = [
-    "sphinx.ext.napoleon",
+    "myst_nb",
+    "autoapi.extension",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.mathjax",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.autosectionlabel",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.githubpages",
-    "sphinxcontrib.bibtex",
+    "sphinx.ext.napoleon",
     "sphinx_copybutton",
-    "nbsphinx",
+    "sphinx_design",
     "sphinxext.opengraph",
-    "sphinx_autodoc_typehints",
+    "sphinx.ext.viewcode",
+    "sphinxcontrib.inkscapeconverter",
+    "sphinxcontrib.bibtex",
+    # "sphinx.ext.napoleon",
+    # "sphinx.ext.autodoc",
+    # "sphinx.ext.autosummary",
+    # "sphinx.ext.mathjax",
+    # "sphinx.ext.intersphinx",
+    # "sphinx.ext.autosectionlabel",
+    # "sphinx.ext.viewcode",
+    # "sphinx.ext.githubpages",
+    # "sphinxcontrib.bibtex",
+    # "sphinx_copybutton",
+    # "nbsphinx",
+    # "sphinxext.opengraph",
+    # "sphinx_autodoc_typehints",
+]
+
+source_suffix = [".rst", ".md"]
+
+exclude_patterns = [
+    "_build",
+    "**.ipynb_checkpoints",
+    "**.jupyter_cache",
+    "**jupyter_execute",
+    "Thumbs.db",
+    ".DS_Store",
+    ".env",
+    ".venv",
 ]
 
 pygments_style = "colorful"
@@ -84,23 +115,44 @@ intersphinx_mapping = {
     "syrec": ("https://mqt.readthedocs.io/projects/syrec/en/latest", None),
 }
 
-nbsphinx_execute = "auto"
-highlight_language = "python3"
-nbsphinx_execute_arguments = [
-    "--InlineBackend.figure_formats={'svg', 'pdf'}",
-    "--InlineBackend.rc=figure.dpi=200",
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "substitution",
+    "deflist",
+    "dollarmath",
 ]
-nbsphinx_kernel_name = "python3"
+myst_substitutions = {
+    "version": version,
+}
+myst_heading_anchors = 3
 
-autosectionlabel_prefix_document = True
 
-exclude_patterns = [
-    "_build",
-    "build",
-    "**.ipynb_checkpoints",
-    "Thumbs.db",
-    ".DS_Store",
-    ".env",
+# nbsphinx_execute = "auto"
+# highlight_language = "python3"
+# nbsphinx_execute_arguments = [
+#     "--InlineBackend.figure_formats={'svg', 'pdf'}",
+#     "--InlineBackend.rc=figure.dpi=200",
+# ]
+# nbsphinx_kernel_name = "python3"
+
+# autosectionlabel_prefix_document = True
+
+# exclude_patterns = [
+#     "_build",
+#     "build",
+#     "**.ipynb_checkpoints",
+#     "Thumbs.db",
+#     ".DS_Store",
+#     ".env",
+# ]
+
+# -- Options for {MyST}NB ----------------------------------------------------
+
+nb_execution_mode = "cache"
+nb_mime_priority_overrides = [
+    # builder name, mime type, priority
+    ("latex", "image/svg+xml", 15),
 ]
 
 
@@ -122,10 +174,24 @@ copybutton_prompt_text = r"(?:\(venv\) )?\$ "
 copybutton_prompt_is_regexp = True
 copybutton_line_continuation_character = "\\"
 
-autosummary_generate = True
+modindex_common_prefix = ["mqt.qecc."]
 
-typehints_use_rtype = False
-napoleon_use_rtype = False
+autoapi_dirs = ["../src/mqt"]
+autoapi_python_use_implicit_namespaces = True
+autoapi_root = "api"
+autoapi_add_toctree_entry = False
+autoapi_ignore = [
+    "*/**/_version.py",
+]
+autoapi_options = [
+    "members",
+    "show-inheritance",
+    "show-module-summary",
+]
+autoapi_keep_files = True
+add_module_names = False
+toc_object_entries_show_parents = "hide"
+python_use_unqualified_type_names = True
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
