@@ -69,19 +69,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.inkscapeconverter",
     "sphinxcontrib.bibtex",
-    # "sphinx.ext.napoleon",
-    # "sphinx.ext.autodoc",
-    # "sphinx.ext.autosummary",
-    # "sphinx.ext.mathjax",
-    # "sphinx.ext.intersphinx",
-    # "sphinx.ext.autosectionlabel",
-    # "sphinx.ext.viewcode",
-    # "sphinx.ext.githubpages",
-    # "sphinxcontrib.bibtex",
-    # "sphinx_copybutton",
-    # "nbsphinx",
-    # "sphinxext.opengraph",
-    # "sphinx_autodoc_typehints",
 ]
 
 source_suffix = [".rst", ".md"]
@@ -127,25 +114,6 @@ myst_substitutions = {
 }
 myst_heading_anchors = 3
 
-
-# nbsphinx_execute = "auto"
-# highlight_language = "python3"
-# nbsphinx_execute_arguments = [
-#     "--InlineBackend.figure_formats={'svg', 'pdf'}",
-#     "--InlineBackend.rc=figure.dpi=200",
-# ]
-# nbsphinx_kernel_name = "python3"
-
-# autosectionlabel_prefix_document = True
-
-# exclude_patterns = [
-#     "_build",
-#     "build",
-#     "**.ipynb_checkpoints",
-#     "Thumbs.db",
-#     ".DS_Store",
-#     ".env",
-# ]
 
 # -- Options for {MyST}NB ----------------------------------------------------
 
