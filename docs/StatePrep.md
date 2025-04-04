@@ -108,7 +108,7 @@ Additionally one has to pay special attention to the order of measurements in th
 
 Because both error types are considered, the verification circuit now measures both X- and Z-stabilizers. Unfortunately a Z error in an X measurement can propagate to the data qubits and vice versa for Z measurements. Therefore, if we check for Z errors after we have checked for X errors the measurements might introduce more X errors on the data qubits. We can check those again but that would just turn the situation around; now Z errors can propagate to the data qubits.
 
-Detecting such _hook errors_ can be achieved via flag-fault tolerant stabilizer measurements [^2]. Usually, information from such hook errors is used to augment an error correction scheme. But we can also use these flags as additional measurements on which we post-select. If one of the flags triggers, this indicates that a hook error happened and we reset.
+Detecting such _hook errors_ can be achieved via flag-fault tolerant stabilizer measurements [^1]. Usually, information from such hook errors is used to augment an error correction scheme. But we can also use these flags as additional measurements on which we post-select. If one of the flags triggers, this indicates that a hook error happened and we reset.
 
 By default QECC automatically performs such additional measurements when necessary. The general construction is sketched in the following figure.
 
@@ -120,7 +120,7 @@ Let's consider a larger code to illustrate the point. The [square-octagon color 
 
 The distance 5 code uses 17 qubits from this lattice, i.e., we have a $[[17, 1, 5]]$ CSS code. Given the size of the code, synthesizing an optimal state preparation circuit might take a long time. QECC also has a fast heuristic state preparation circuit synthesis.
 
-[^2]: https://arxiv.org/abs/1708.02246
+[^1]: https://arxiv.org/abs/1708.02246
 
 ```python
 from mqt.qecc.circuit_synthesis import heuristic_prep_circuit
@@ -172,11 +172,11 @@ cc_simulator.plot_state_prep(ps, min_errors=50, name="Distance 5", p_idle_factor
 
 ## Deterministic state preparation ($d < 5$)
 
-A possible disadvantage of the above approach is that the verification circuits are non-deterministic. This means that we potentially have to run the circuit multiple times to successfully prepare the state. This can be circumvented by using the information gained from the verification measurements to possibly identify the dangerous error and correct it. If this this is done for every possible (single) error, we refer to the state preparation as deterministic [^1].
+A possible disadvantage of the above approach is that the verification circuits are non-deterministic. This means that we potentially have to run the circuit multiple times to successfully prepare the state. This can be circumvented by using the information gained from the verification measurements to possibly identify the dangerous error and correct it. If this this is done for every possible (single) error, we refer to the state preparation as deterministic [^2].
 
-For small codes ($d < 5$ i.e. we need to consider only a single error) this problem is still tractable and can be solved in an optimal way using satisfiability solvers. QECC can automatically generate deterministic state preparation circuits for such codes.
+For small codes ($d < 5$ i.e., we need to consider only a single error) this problem is still tractable and can be solved in an optimal way using satisfiability solvers. QECC can automatically generate deterministic state preparation circuits for such codes.
 
-[^1]: https://arxiv.org/abs/2301.10017
+[^2]: https://arxiv.org/abs/2301.10017
 
 For this we come back to our $d=3$ Steane code.
 
