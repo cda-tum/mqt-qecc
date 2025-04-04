@@ -1,5 +1,8 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = [
+         "hatchling",
+         "hatch-vcs",
+         "Cython"]
 build-backend = "hatchling.build"
 
 [project]
@@ -81,13 +84,6 @@ docs = [
   "sphinx>=7.4.7",
   "sphinx>=8.1.3; python_version >= '3.10'",
   "sphinx>=8.2.3; python_version >= '3.11'",
-    # "sphinxcontrib-bibtex>=2.4.2",
-    # "sphinx-copybutton>=0.5",
-    # "ipykernel",
-    # "nbsphinx",
-    # "sphinxext-opengraph>=0.9",
-    # "sphinx-autodoc-typehints",
-    # "qiskit[visualization]",
 ]
 visualization = ["matplotlib", "scipy"]
 dev = ["mqt.qecc[coverage, docs, visualization]"]
