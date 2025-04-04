@@ -60,6 +60,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/mqt"]
+
 [tool.hatch.version]
 source = "vcs"
 
@@ -93,6 +96,11 @@ Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
 Issues = "https://github.com/cda-tum/mqt-qecc/issues"
 Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
+
+[project.scripts]
+"mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
+"mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
+
 
 [tool.pytest.ini_options]
 minversion = "7.2"
