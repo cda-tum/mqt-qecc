@@ -11,11 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  id-token: write
-  security-events: write
-
 jobs:
   change-detection:
     name: 🔍 Change
@@ -32,6 +27,9 @@ jobs:
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-python-tests)
     uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-ci.yml@v1.8
+    permissions:
+      contents: read
+      id-token: write
 
   code-ql:
     name: 📝 CodeQL
