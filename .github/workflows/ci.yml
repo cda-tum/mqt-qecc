@@ -42,6 +42,7 @@ jobs:
     if: always()
     needs:
       - change-detection
+      - python-linter
       - python-tests
       - code-ql
     runs-on: ubuntu-latest
@@ -50,6 +51,10 @@ jobs:
         uses: re-actors/alls-green@release/v1
         with:
           allowed-skips: >-
+            ${{
+              fromJSON(needs.change-detection.outputs.run-python-tests)
+              && '' || 'python-linter,'
+            }}
             ${{
               fromJSON(needs.change-detection.outputs.run-python-tests)
               && '' || 'python-tests,'
