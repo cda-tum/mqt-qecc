@@ -125,11 +125,14 @@ filterwarnings = [
 [tool.coverage]
 run.source = ["mqt.qecc"]
 report.exclude_also = [
-    '\.\.\.',
-    'if TYPE_CHECKING:',
-    'raise AssertionError',
-    'raise NotImplementedError',
+  '\.\.\.',
+  'if TYPE_CHECKING:',
+  'raise AssertionError',
+  'raise NotImplementedError',
+  'def __dir__()',  # Ignore __dir__ method that exists mainly for better IDE support
+  '@overload'  # Overloads are only for static typing
 ]
+
 
 [tool.mypy]
 files = ["src/mqt", "test/python", "noxfile.py"]
