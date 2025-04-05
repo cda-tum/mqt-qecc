@@ -1,8 +1,8 @@
 [build-system]
 requires = [
-         "hatchling",
-         "hatch-vcs",
-         "Cython"]
+  "hatchling>=1.27.0",
+  "hatch-vcs>=0.4.0"
+]
 build-backend = "hatchling.build"
 
 [project]
@@ -68,25 +68,6 @@ source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/mqt/qecc/_version.py"
-
-[project.optional-dependencies]
-test = ["pytest>=7.2", "pytest-console-scripts>=1.4", "pytest-mock>=3.7"]
-coverage = ["mqt.qecc[test]", "pytest-cov>=4"]
-docs = [
-    "furo>=2024.8.6",
-    "sphinx-autoapi>=3.6.0",
-    "sphinx-copybutton>=0.5.2",
-    "sphinx-design>=0.6.1",
-    "sphinxcontrib-bibtex>=2.6.3",
-    "sphinxcontrib-svg2pdfconverter>=1.3.0",
-    "sphinxext-opengraph>=0.9.1",
-    "myst-nb>=1.2.0",
-    "sphinx>=7.4.7",
-    "sphinx>=8.1.3; python_version >= '3.10'",
-    "sphinx>=8.2.3; python_version >= '3.11'",
-]
-visualization = ["matplotlib", "scipy"]
-dev = ["mqt.qecc[coverage, docs, visualization]"]
 
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
@@ -255,3 +236,36 @@ ignore = ["GH200"]
 [tool.uv]
 required-version = ">=0.5.20"
 reinstall-package = ["mqt.qecc"]
+
+[dependency-groups]
+docs = [
+  "furo>=2024.8.6",
+  "setuptools-scm>=8.1",
+  "sphinx-autoapi>=3.6.0",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-design>=0.6.1",
+  "sphinxcontrib-bibtex>=2.6.3",
+  "sphinxcontrib-svg2pdfconverter>=1.3.0",
+  "sphinxext-opengraph>=0.9.1",
+  "myst-nb>=1.2.0",
+  "sphinx>=7.4.7",
+  "sphinx>=8.1.3; python_version >= '3.10'",
+  "sphinx>=8.2.3; python_version >= '3.11'",
+  "qiskit[qasm3-import,visualization]>=1.0.0",
+  "ipywidgets>=8.1.5",
+]
+test = [
+  "pytest>=8.3.3",
+  "pytest-console-scripts>=1.4.1",
+  "pytest-cov>=6",
+  "pytest-mock>=3.7",
+]
+visualization = [
+  "matplotlib",
+  "scipy"
+]
+dev = [
+  {include-group = "docs"},
+  {include-group = "test"},
+  {include-group = "visualization"},
+]
