@@ -34,7 +34,9 @@ The tool can be used to:
 </p>
 
 ::: warning
-The C++ implementation of the [union find decoder for LDPC codes](https://arxiv.org/pdf/2301.05731) and the [circuit transpilation framework](https://arxiv.org/abs/2209.0118) have been removed and are no longer available. QECC is now entirely a Python package. For up to date software for decoding LDPC codes we refer to [quantumgizmos/ldpc](https://github.com/quantumgizmos/ldpc).
+The C++ implementation of the [union find decoder for LDPC codes](https://arxiv.org/pdf/2301.05731) and the [circuit transpilation framework](https://arxiv.org/abs/2209.0118) have been removed with `v2.0.0` and are no longer available.
+QECC is now entirely a Python package.
+For up to date software for decoding LDPC codes we refer to [quantumgizmos/ldpc](https://github.com/quantumgizmos/ldpc).
 
 If you would like to use these features, they are available in `mqt.qecc` version <2.0.0.
 :::
