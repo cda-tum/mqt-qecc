@@ -15,7 +15,7 @@ body:
     attributes:
       label: Environment information
       description: >-
-        Please provide information about your environment. For example, OS, C++ compiler, mqt.qecc version etc.
+        Please provide information about your environment. For example, OS, mqt.qecc version etc.
       placeholder: |
         - OS:
         - Additional environment information:
