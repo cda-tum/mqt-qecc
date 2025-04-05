@@ -253,4 +253,5 @@ ignore = ["GH200"]
 
 
 [tool.uv]
+required-version = ">=0.5.20"
 reinstall-package = ["mqt.qecc"]
