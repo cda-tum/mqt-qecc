@@ -7,11 +7,6 @@ on:
     paths:
       - .github/workflows/cd.yml
 
-permissions:
-  attestations: write
-  contents: read
-  id-token: write
-
 jobs:
   python-packaging:
     name: 🐍 Packaging
