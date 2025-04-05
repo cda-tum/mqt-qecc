@@ -57,13 +57,11 @@ Pull Request Workflow
 - Create PRs early. It is ok to create work-in-progress PRs. You may mark these as draft PRs on GitHub.
 - Describe your PR. Start with a descriptive title, reference any related issues by including the issue number in the PR description, and add a comprehensive description of the changes. We provide a PR template that you can (and should) follow to create a PR.
 - Whenever a PR is created or updated, several workflows on all supported platforms and versions of Python are executed. Make sure your PR passes *all* these continuous integration (CI) checks. Here are some tips for finding the cause of certain failures:
-  - If any of the *C++/\** checks fail, this most likely indicates build errors or test failures in the C++ part of the code base. Look through the respective logs on GitHub for any error or failure messages.
 
   - If any of the :code:`Python Packaging/\*` checks fail, this indicates an error in the Python bindings or creation of the Python wheels and/or source distribution. Look through the respective logs on GitHub for any error or failure messages.
   - If any of the :code:`Python/\*` checks fail, this indicates an error in the Python part of the code base. Look through the respective logs on GitHub for any error or failure messages.
   - If any of the :code:`codecov/\*` checks fail, this means that your changes are not appropriately covered by tests or that the overall project coverage decreased too much. Ensure that you include tests for all your changes in the PR.
   - If the :code:`docs/readthedocs.org:qecc` check fails, the documentation could not be built properly. Inspect the corresponding log file for any errors.
-  - If :code:`cpp-linter` comments on your PR with a list of warnings, these have been raised by :code:`clang-tidy` when checking the C++ part of your changes for warnings or style guideline violations. The individual messages frequently provide helpful suggestions on how to fix the warnings.
   - If the :code:`pre-commit.ci` check fails, some of the :code:`pre-commit` checks failed and could not be fixed automatically by the *pre-commit.ci* bot. Such failures are most likely related to the Python part of the code base. The individual log messages frequently provide helpful suggestions on how to fix the warnings.
 
 - Once your PR is ready, change it from a draft PR to a regular PR and request a review from one of the project maintainers.

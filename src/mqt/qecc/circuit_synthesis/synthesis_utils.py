@@ -96,7 +96,7 @@ def heuristic_gaussian_elimination(
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     matrix = matrix.copy()
@@ -166,7 +166,7 @@ def gaussian_elimination_min_column_ops(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_eliminations: The maximum number of eliminations to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     n = matrix.shape[1]
@@ -235,7 +235,7 @@ def gaussian_elimination_min_parallel_eliminations(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_parallel_steps: The maximum number of parallel elimination steps to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     columns = np.array([

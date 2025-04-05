@@ -14,48 +14,37 @@ concurrency:
 jobs:
   change-detection:
     name: 🔍 Change
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-change-detection.yml@v1.5
+    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-change-detection.yml@v1.8
 
-  cpp-tests:
-    name: 🇨‌ Test
+  python-linter:
+    name: 🐍 Lint
     needs: change-detection
-    if: fromJSON(needs.change-detection.outputs.run-cpp-tests)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-ci.yml@v1.5
-
-  cpp-linter:
-    name: 🇨‌ Lint
-    needs: change-detection
-    if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-cpp-linter.yml@v1.5
+    if: fromJSON(needs.change-detection.outputs.run-python-tests)
+    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-linter.yml@v1.8
 
   python-tests:
     name: 🐍 Test
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-python-tests)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-ci.yml@v1.5
+    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-ci.yml@v1.8
+    permissions:
+      contents: read
+      id-token: write
 
   code-ql:
     name: 📝 CodeQL
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-code-ql)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-code-ql.yml@v1.5
-
-  cd:
-    name: 🚀 CD
-    needs: change-detection
-    if: fromJSON(needs.change-detection.outputs.run-cd)
-    uses: cda-tum/mqt-workflows/.github/workflows/reusable-python-packaging.yml@v1.5
+    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-code-ql-python.yml@v1.8
 
   required-checks-pass: # This job does nothing and is only used for branch protection
     name: 🚦 Check
     if: always()
     needs:
       - change-detection
-      - cpp-tests
-      - cpp-linter
+      - python-linter
       - python-tests
       - code-ql
-      - cd
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
@@ -63,12 +52,8 @@ jobs:
         with:
           allowed-skips: >-
             ${{
-              fromJSON(needs.change-detection.outputs.run-cpp-tests)
-              && '' || 'cpp-tests,'
-            }}
-            ${{
-              fromJSON(needs.change-detection.outputs.run-cpp-linter)
-              && '' || 'cpp-linter,'
+              fromJSON(needs.change-detection.outputs.run-python-tests)
+              && '' || 'python-linter,'
             }}
             ${{
               fromJSON(needs.change-detection.outputs.run-python-tests)
