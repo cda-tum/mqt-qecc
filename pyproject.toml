@@ -66,9 +66,6 @@ packages = ["src/mqt"]
 [tool.hatch.version]
 source = "vcs"
 
-[tool.hatch.version.raw-options]
-version_scheme = "no-guess-dev"
-
 [tool.hatch.build.hooks.vcs]
 version-file = "src/mqt/qecc/_version.py"
 
