@@ -91,22 +91,6 @@ repos:
     hooks:
       - id: typos
 
-  # Clang-format the C++ part of the code base automatically
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v20.1.0
-    hooks:
-      - id: clang-format
-        types_or: [c++, c, cuda]
-
-  # CMake format and lint the CMakeLists.txt files
-  - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: v0.6.13
-    hooks:
-      - id: cmake-format
-        additional_dependencies: [pyyaml]
-        types: [file]
-        files: (\.cmake|CMakeLists.txt)(.in)?$
-
   # Format configuration files with prettier
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.3
