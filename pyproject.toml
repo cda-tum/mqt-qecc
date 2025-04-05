@@ -18,7 +18,8 @@ authors = [
     { name = "Ludwig Schmid", email = "ludwig.s.schmid@tum.de" },
 ]
 keywords = ["MQT", "quantum-computing", "error-correction", "MaxSAT", "QLDPC"]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE.md"]
 
 classifiers = [
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
@@ -27,7 +28,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
