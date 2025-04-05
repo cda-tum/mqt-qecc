@@ -1,16 +1,15 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: "1.3"
-      jupytext_version: 1.16.7
-  kernelspec:
-    display_name: Python 3 (ipykernel)
-    language: python
-    name: python3
+file_format: mystnb
+kernelspec:
+  name: python3
+mystnb:
+  number_source_lines: true
 ---
+
+```{code-cell} ipython3
+:tags: [remove-cell]
+%config InlineBackend.figure_formats = ['svg']
+```
 
 # Fault tolerant state preparation of Pauli eigenstates for CSS codes
 
@@ -21,7 +20,7 @@ Currently it supports synthesizing circuits for preparing the $|0\rangle_L^k$ an
 
 A non-fault tolerant preparation circuit can be generated directly from a CSS code. Let's consider the [Steane code](https://errorcorrectionzoo.org/c/steane) which is a $[[7, 1, 3]]$ color code.
 
-```python
+```{code-cell} ipython3
 from mqt.qecc import CSSCode
 
 steane_code = CSSCode.from_code_name("Steane")
@@ -32,7 +31,7 @@ A state preparation circuit for the logical $|0\rangle_L$ of this code is a circ
 
 The code is small enough that we can generate a CNOT-optimal state preparation circuit for it:
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.circuit_synthesis import gate_optimal_prep_circuit
 
 non_ft_sp = gate_optimal_prep_circuit(steane_code, zero_state=True, max_timeout=2)
@@ -52,7 +51,7 @@ Verification circuits need to be carefully constructed such that only stabilizer
 
 QECC can automatically generate optimal verification circuits.
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.circuit_synthesis import gate_optimal_verification_circuit
 
 ft_sp = gate_optimal_verification_circuit(non_ft_sp)
@@ -69,7 +68,7 @@ If we want to see the probability of a logical error happening after post-select
 
 [^1]: https://www.nature.com/articles/srep19578
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.circuit_synthesis import NoisyNDFTStatePrepSimulator
 
 p = 0.05
@@ -91,7 +90,7 @@ print(f"Logical error rate for FT state preparation: {pl_ft}")
 
 The error rates seem quite close to each other. To properly judge the fault tolerance of the circuits we want to look at how the logical error rate scales with the physical error rate.
 
-```python
+```{code-cell} ipython3
 ps = [0.1, 0.05, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001]
 
 non_ft_simulator.plot_state_prep(ps, min_errors=50, name="non-FT", p_idle_factor=0.01)
@@ -122,7 +121,7 @@ The distance 5 code uses 17 qubits from this lattice, i.e., we have a $[[17, 1, 
 
 [^1]: https://arxiv.org/abs/1708.02246
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.circuit_synthesis import heuristic_prep_circuit
 from mqt.qecc.codes import SquareOctagonColorCode
 
@@ -134,7 +133,7 @@ cc_non_ft_sp.circ.draw(output="mpl", initial_state=True, scale=0.7)
 
 Even though optimal state preparation circuit synthesis seems out of range we can still synthesize good verification circuits in a short time if we give an initial guess on how many measurements we will need.
 
-```python
+```{code-cell} ipython3
 cc_ft_sp = gate_optimal_verification_circuit(
     cc_non_ft_sp, max_timeout=2, max_ancillas=3
 )
@@ -144,7 +143,7 @@ cc_ft_sp.draw(output="mpl", initial_state=True, fold=-1, scale=0.2)
 
 We see that the overhead for the verification overshadows the state preparation by a large margin. But this verification circuit is still much smaller than the naive variant of post-selecting on the stabilizer generators of the code.
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.circuit_synthesis import naive_verification_circuit
 
 cc_ft_naive = naive_verification_circuit(cc_non_ft_sp)
@@ -159,7 +158,7 @@ print(
 
 We expect that the distance 5 color code should be prepared with a better logical error rate than the Steane code. And this is indeed the case:
 
-```python
+```{code-cell} ipython3
 cc_simulator = NoisyNDFTStatePrepSimulator(cc_ft_sp, code=cc, zero_state=True)
 
 ps = [0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008]
@@ -180,13 +179,13 @@ For small codes ($d < 5$ i.e., we need to consider only a single error) this pro
 
 For this we come back to our $d=3$ Steane code.
 
-```python
+```{code-cell} ipython3
 non_ft_sp.circ.draw(output="mpl", initial_state=True)
 ```
 
 And initialize an instance of the deterministic verification helper class to facilitate the generation of the deterministic FT state preparation circuit.
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.circuit_synthesis import DeterministicVerificationHelper
 
 det_helper = DeterministicVerificationHelper(non_ft_sp)
@@ -194,7 +193,7 @@ det_helper = DeterministicVerificationHelper(non_ft_sp)
 
 Calling the `get_solution` method will generate the non-deterministic verification circuit using either the optimal or the heuristic method discussed above. The deterministic verification circuit, separated into X and Z correction layers) is then generated using the satisfiability solver.
 
-```python
+```{code-cell} ipython3
 det_verify = det_helper.get_solution(use_optimal_verification=True)
 det_verify_x, det_verify_z = det_verify
 ```
@@ -203,7 +202,7 @@ Such a `DeterministicVerification` object contains the stabilizer measurements f
 
 The non-deterministic verification measurements are stored in the `stabs` attribute as a list of numpy arrays where each array represents a stabilizer measurement.
 
-```python
+```{code-cell} ipython3
 det_verify_x.stabs
 ```
 
@@ -211,13 +210,13 @@ The deterministic verification measurements are stored in the `det_stabs` attrib
 
 For example for the Steane code whenever the non-deterministic verification triggers (1) the logical operator on qubits 2,3,6 hast to measured. If the outcome is 1, a Pauli correction on qubit 3 has to be applied, otherwise no correction is necessary.
 
-```python
+```{code-cell} ipython3
 det_verify_x.det_correction
 ```
 
 For the case where the non-deterministic verification measurements need to be flagged (not the case for the Steane code), the `hook_corrections` attribute contains the additional stabilizer measurements and corrections in the same format as the `det_stabs` attribute.
 
-```python
+```{code-cell} ipython3
 det_verify_x.hook_corrections
 ```
 
@@ -225,7 +224,7 @@ det_verify_x.hook_corrections
 
 The resulting `DeterministicVerification` object can be used to directly simulate the deterministic state preparation circuit using the [Qsample](https://github.com/dpwinter/qsample) under the hood. The `NoisyDFTStatePrepSimulator` class automatically constructs a valid Qsample protocol containing the correct circuits and conditional paths to simulate the deterministic state preparation. The passed Error Model and simulation parameters are directly passed to Qsample and explained in the [Qsample documentation](https://dpwinter.github.io/qsample/). Similarly also the Qsample callbacks can be used to e.g. directly plot the logical error rates, showing the expected quadratic scaling.
 
-```python
+```{code-cell} ipython3
 from qsample import callbacks, noise
 
 from mqt.qecc.circuit_synthesis import NoisyDFTStatePrepSimulator

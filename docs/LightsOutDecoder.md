@@ -1,16 +1,15 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: "1.3"
-      jupytext_version: 1.16.7
-  kernelspec:
-    display_name: Python 3 (ipykernel)
-    language: python
-    name: python3
+file_format: mystnb
+kernelspec:
+  name: python3
+mystnb:
+  number_source_lines: true
 ---
+
+```{code-cell} ipython3
+:tags: [remove-cell]
+%config InlineBackend.figure_formats = ['svg']
+```
 
 <!-- #region -->
 
@@ -53,7 +52,7 @@ First, we need to construct the lattice of the underlying quantum code. For this
 
 <!-- #endregion -->
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.codes import HexagonalColorCode
 
 side_length = 3
@@ -64,7 +63,7 @@ Then, using the lattice, we construct a `LightsOut` puzzle object that manages t
 In the formulation, each switch corresponds to a Boolean propositional variable and each check is realized as a parity constraint involving all switch variables surrounding a light.
 The satisfiability formulation is constructed using the `preconstruct_z3_instance` method. This method constructs parts of the formulation that are independent of the initial configuration of the LightsOut puzzle. This allows to reuse the formulation for different initial configurations.
 
-```python
+```{code-cell} ipython3
 from mqt.qecc.cc_decoder.decoder import LightsOut
 
 problem = LightsOut(lattice.faces_to_qubits, lattice.qubits_to_faces)
@@ -74,14 +73,14 @@ problem.preconstruct_z3_instance()
 Now we can construct the satisfiability formulation for a specific initial configuration of the LightsOut puzzle.
 To do so, we need to define a list that indicates which lights are initially on. For the example above, we can set the first light to be on and the other two to be off.
 
-```python
+```{code-cell} ipython3
 lights = [True, False, False]
 ```
 
 Now we can solve the LightsOut puzzle for the given initial configuration, i.e., we find a minimal set of switches that turns off all the lights.
 This is done using the `solve` method of the `LightsOut` object. This method takes the initial configuration of the LightsOut puzzle as input and returns a set of switches that constitute a solution to the LightsOut puzzle and the time needed to construct the satisfiability formulation and the solving time of the MaxSAT solver.
 
-```python
+```{code-cell} ipython3
 switches, constr_time, solve_time = problem.solve(lights)
 ```
 
@@ -94,7 +93,7 @@ Currently, the decoder is only implemented for the triangular color code and con
 
 To start `n` simulations for a distance `d` triangular color code assuming a bit-flip error rate of `p`, the following Python script can be used.
 
-```python3
+```{code-cell} ipython33
 from mqt.qecc.cc_decoder import decoder
 
 d = 21  # distance of the triangular code to simulate

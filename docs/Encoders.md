@@ -1,16 +1,15 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: "1.3"
-      jupytext_version: 1.16.7
-  kernelspec:
-    display_name: python11
-    language: python
-    name: python11
+file_format: mystnb
+kernelspec:
+  name: python3
+mystnb:
+  number_source_lines: true
 ---
+
+```{code-cell} ipython3
+:tags: [remove-cell]
+%config InlineBackend.figure_formats = ['svg']
+```
 
 # Encoder Circuit Synthesis for CSS Codes
 
@@ -18,7 +17,7 @@ QECC provides functionality for synthesizing encoding circuits of arbitrary CSS 
 
 Let's consider the synthesis of the encoding circuit of the $[[7,1,3]]$ Steane code.
 
-```python
+```{code-cell} ipython3
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis import (
     depth_optimal_encoding_circuit,
@@ -38,7 +37,7 @@ There is not a unique encoding circuit but usually we would like to obtain an en
 
 Under the hood, this uses the SMT solver [z3](https://github.com/Z3Prover/z3). Of course this method scales only up to a few qubits. Synthesizing depth-optimal circuits is usually faster than synthesizing gate-optimal circuits.
 
-```python
+```{code-cell} ipython3
 depth_opt, q_enc = depth_optimal_encoding_circuit(steane_code, max_timeout=5)
 
 print(f"Encoding qubits are qubits {q_enc}.")
@@ -48,7 +47,7 @@ print(f"Circuit has {depth_opt.num_nonlocal_gates()} CNOTs.")
 depth_opt.draw()
 ```
 
-```python
+```{code-cell} ipython3
 gate_opt, q_enc = gate_optimal_encoding_circuit(steane_code, max_timeout=5)
 
 print(f"Encoding qubits are qubits {q_enc}.")
@@ -64,7 +63,7 @@ In addition to the circuit, the synthesis methods also return the encoding qubit
 
 For larger codes, synthesizing optimal circuits is not feasible. In this case, QECC provides a heuristic synthesis method that tries to use as few CNOTs with the lowest depth as possible.
 
-```python
+```{code-cell} ipython3
 heuristic_circ, q_enc = heuristic_encoding_circuit(steane_code)
 
 print(f"Encoding qubits are qubits {q_enc}.")
@@ -82,7 +81,7 @@ As an exercise, let's construct the concatenated circuit.
 
 We start off by defining the code:
 
-```python
+```{code-cell} ipython3
 import numpy as np
 
 d = 2
@@ -101,7 +100,7 @@ We have to be careful with the logicals. Each _anticommuting_ pair of logicals d
 
 As before, we synthesize the encoding circuit:
 
-```python
+```{code-cell} ipython3
 encoder, q_enc = depth_optimal_encoding_circuit(code, max_timeout=5)
 
 print(f"Encoding qubits are qubits {q_enc}.")
@@ -115,7 +114,7 @@ Propagating Paulis from the encoding qubits at the input to the output will not 
 
 Concatenating the circuits can be done as follows with qiskit:
 
-```python
+```{code-cell} ipython3
 from qiskit import QuantumCircuit
 
 from mqt.qecc.circuit_synthesis.circuit_utils import reorder_qubits
@@ -143,7 +142,7 @@ Qubits $1$ and $2$ are still the encoding qubits and if we propagate Pauli $X$ a
 
 This circuit has $3$ times as many CNOT gates as the encoder for the unconcatenated code because we needed to encode 3 times. Instead of concatenating the encoder circuits we can synthesize the encoders directly from the stabilizers of the concatenated code. The stabilizers of the concatenated code are the stabilizers of the original code on the respective subset of qubits with the addition of the "encoded" stabilizers of the inner code. We have a choice of how exactly we encode the stabilizers of the inner code. In the circuit picture, we have a choice of how we "wire the qubits together". Depending on how we do this, the code might have different logical operators.
 
-```python
+```{code-cell} ipython3
 permutation = [3, 0, 2, 1]
 
 x_prod = (code.Lx[0] + code.Lx[1]) % 2
@@ -174,7 +173,7 @@ print(concatenated.z_logicals_as_pauli_strings())
 
 Now we can directly synthesize the encoder:
 
-```python
+```{code-cell} ipython3
 encoder_concat_direct, q_enc = depth_optimal_encoding_circuit(
     concatenated, max_timeout=5
 )
