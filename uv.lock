@@ -2,7 +2,8 @@ version = 1
 revision = 1
 requires-python = ">=3.9"
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
     "python_full_version < '3.10'",
@@ -25,7 +26,8 @@ name = "alabaster"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -416,7 +418,8 @@ name = "contourpy"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -932,7 +935,8 @@ name = "ipython"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
 ]
 dependencies = [
@@ -1201,7 +1205,8 @@ name = "kiwisolver"
 version = "1.4.8"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -1389,7 +1394,8 @@ name = "llvmlite"
 version = "0.44.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -1565,7 +1571,8 @@ name = "matplotlib"
 version = "3.10.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -1674,7 +1681,6 @@ dependencies = [
     { name = "pymatching" },
     { name = "qecsim" },
     { name = "qiskit", extra = ["qasm3-import"] },
-    { name = "qiskit-aer" },
     { name = "qsample" },
     { name = "scipy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "scipy", version = "1.15.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
@@ -1730,22 +1736,23 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "bposd", specifier = ">=1.6" },
-    { name = "fastcore", specifier = ">=1.7.10" },
-    { name = "ldpc", specifier = ">=0.1.53,<2" },
-    { name = "multiprocess", specifier = ">=0.70.16" },
-    { name = "numba", marker = "python_full_version < '3.12'", specifier = ">=0.57" },
+    { name = "fastcore", specifier = ">=1.8.1" },
+    { name = "ldpc", specifier = ">=0.1.60,<2" },
+    { name = "multiprocess", specifier = ">=0.70.17" },
+    { name = "numba", specifier = ">=0.57" },
     { name = "numba", marker = "python_full_version >= '3.12'", specifier = ">=0.59" },
-    { name = "numpy", marker = "python_full_version < '3.12'", specifier = ">=1.24" },
+    { name = "numba", marker = "python_full_version >= '3.13'", specifier = ">=0.61" },
+    { name = "numpy", specifier = ">=1.24.1" },
     { name = "numpy", marker = "python_full_version >= '3.12'", specifier = ">=1.26" },
-    { name = "pymatching", specifier = ">=2.2.1" },
+    { name = "numpy", marker = "python_full_version >= '3.13'", specifier = ">=2.1" },
+    { name = "pymatching", specifier = ">=2.2.2" },
     { name = "qecsim", specifier = ">=1.0b9" },
     { name = "qiskit", extras = ["qasm3-import"], specifier = ">=1.0.0" },
-    { name = "qiskit-aer", specifier = ">=0.15.0" },
     { name = "qsample", specifier = ">=0.0.2" },
-    { name = "scipy", marker = "python_full_version < '3.10'", specifier = ">=1.13.1" },
+    { name = "scipy", specifier = ">=1.13.1" },
     { name = "scipy", marker = "python_full_version >= '3.10'", specifier = ">=1.15.2" },
     { name = "stim", specifier = ">=1.13.0" },
-    { name = "urllib3", specifier = ">=1.26.20" },
+    { name = "urllib3", specifier = ">=2.3.0" },
     { name = "z3-solver", specifier = ">=4.12.2" },
 ]
 
@@ -1754,12 +1761,12 @@ dev = [
     { name = "furo", specifier = ">=2024.8.6" },
     { name = "ipywidgets", specifier = ">=8.1.5" },
     { name = "myst-nb", specifier = ">=1.2.0" },
-    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-console-scripts", specifier = ">=1.4.1" },
-    { name = "pytest-cov", specifier = ">=6" },
-    { name = "pytest-mock", specifier = ">=3.7" },
+    { name = "pytest-cov", specifier = ">=6.1.1" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
     { name = "qiskit", extras = ["qasm3-import", "visualization"], specifier = ">=1.0.0" },
-    { name = "setuptools-scm", specifier = ">=8.1" },
+    { name = "setuptools-scm", specifier = ">=8.2" },
     { name = "sphinx", specifier = ">=7.4.7" },
     { name = "sphinx", marker = "python_full_version >= '3.10'", specifier = ">=8.1.3" },
     { name = "sphinx", marker = "python_full_version >= '3.11'", specifier = ">=8.2.3" },
@@ -1768,14 +1775,14 @@ dev = [
     { name = "sphinx-design", specifier = ">=0.6.1" },
     { name = "sphinxcontrib-bibtex", specifier = ">=2.6.3" },
     { name = "sphinxcontrib-svg2pdfconverter", specifier = ">=1.3.0" },
-    { name = "sphinxext-opengraph", specifier = ">=0.9.1" },
+    { name = "sphinxext-opengraph", specifier = ">=0.10.0" },
 ]
 docs = [
     { name = "furo", specifier = ">=2024.8.6" },
     { name = "ipywidgets", specifier = ">=8.1.5" },
     { name = "myst-nb", specifier = ">=1.2.0" },
     { name = "qiskit", extras = ["qasm3-import", "visualization"], specifier = ">=1.0.0" },
-    { name = "setuptools-scm", specifier = ">=8.1" },
+    { name = "setuptools-scm", specifier = ">=8.2" },
     { name = "sphinx", specifier = ">=7.4.7" },
     { name = "sphinx", marker = "python_full_version >= '3.10'", specifier = ">=8.1.3" },
     { name = "sphinx", marker = "python_full_version >= '3.11'", specifier = ">=8.2.3" },
@@ -1784,13 +1791,13 @@ docs = [
     { name = "sphinx-design", specifier = ">=0.6.1" },
     { name = "sphinxcontrib-bibtex", specifier = ">=2.6.3" },
     { name = "sphinxcontrib-svg2pdfconverter", specifier = ">=1.3.0" },
-    { name = "sphinxext-opengraph", specifier = ">=0.9.1" },
+    { name = "sphinxext-opengraph", specifier = ">=0.10.0" },
 ]
 test = [
-    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-console-scripts", specifier = ">=1.4.1" },
-    { name = "pytest-cov", specifier = ">=6" },
-    { name = "pytest-mock", specifier = ">=3.7" },
+    { name = "pytest-cov", specifier = ">=6.1.1" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
 ]
 
 [[package]]
@@ -1867,7 +1874,8 @@ name = "myst-parser"
 version = "4.0.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -1941,7 +1949,8 @@ name = "networkx"
 version = "3.4.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -1990,7 +1999,8 @@ name = "numba"
 version = "0.61.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -2082,7 +2092,8 @@ name = "numpy"
 version = "2.1.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -2825,61 +2836,6 @@ visualization = [
 ]
 
 [[package]]
-name = "qiskit-aer"
-version = "0.17.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "numpy", version = "2.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "psutil" },
-    { name = "qiskit" },
-    { name = "scipy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "scipy", version = "1.15.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/0c/5e3ce625e991caabe2b6ca790e766b2a3c633c52b3fa76864902c4c5b676/qiskit_aer-0.17.0.tar.gz", hash = "sha256:8e17c6a10cea5ebcb0316b71ac2afaf4f2fb26ca2f124d9122f3bf1cf68d095c", size = 6551809 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/b2/c22dd5f31aee37d430caf98d1b00e1551af873f7fab09da36584f672fe34/qiskit_aer-0.17.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:869e13665fd8d3dde632d865e479fb230caae33d9d99fd03efbb6ffc31603728", size = 2476284 },
-    { url = "https://files.pythonhosted.org/packages/28/20/fcd2b499cbfea67ad9c8f778a0277bb71cae7de426916f4e690fc0d8a4fd/qiskit_aer-0.17.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:2be52044f9caf0e8cceb07229fd87bebf60b313a730e028a8c572abc0b719fc2", size = 2162875 },
-    { url = "https://files.pythonhosted.org/packages/74/2b/6b257e3368d5585ebcf12c0783425689aa7d199c0842e4d435563d526b93/qiskit_aer-0.17.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7a392743770c914bcb4362e6a43150585ab6558522bf1f0949c450602853ec8a", size = 6428570 },
-    { url = "https://files.pythonhosted.org/packages/c7/bb/7ccd516824e8fbcd26b81e3f3c7a934048603f7933b5d4ad3c7cd054f694/qiskit_aer-0.17.0-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:fd2e93011f7fe7fc5c825544af5d9fe1470df8e9152a4461f23f1a7fe8cf4c9b", size = 7940596 },
-    { url = "https://files.pythonhosted.org/packages/52/1e/019b76e028715416464e6627607b4c34e05dd726e0a952245d404bf38f5d/qiskit_aer-0.17.0-cp310-cp310-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:5649ba82970d10f8260b76380e090939565db0d208dc8dcbaaf420ecb3cbeb68", size = 7891379 },
-    { url = "https://files.pythonhosted.org/packages/74/68/5500012df73cea6a521cd7181778468cbdd4f1ecac4066ed46abd5b9985b/qiskit_aer-0.17.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0f7afe298b37c54974d4fbfc372cafb772200813da67cd4f334503a8b172c166", size = 12347051 },
-    { url = "https://files.pythonhosted.org/packages/19/30/cae10758965d51484628c47d45c0ab3299eb7b4a1723edc0401046f46860/qiskit_aer-0.17.0-cp310-cp310-win32.whl", hash = "sha256:ae5c0b1eea7ce6b9fba048d182504a4e41a1d58d77fa3fc9a7f7595228014acc", size = 6899174 },
-    { url = "https://files.pythonhosted.org/packages/82/37/fbd96e0578c2dd7e145be5b31f5a7513a4af6d211ff38f23002243c9f1af/qiskit_aer-0.17.0-cp310-cp310-win_amd64.whl", hash = "sha256:327a53430ba3c625e6041fde79cc56b1911f61cd97804c3f9b15ac5215c69261", size = 9521622 },
-    { url = "https://files.pythonhosted.org/packages/8d/01/aad537fc4b95f05ed343848f878d3f17b0f8562b62a39adc613465ded125/qiskit_aer-0.17.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:e0d34d1ca2272351cdf5f0d49da7649a98736a59d5f36523ddc66cfb4739de4a", size = 2477980 },
-    { url = "https://files.pythonhosted.org/packages/6e/09/f2fb722bd121b0868eb585f0ce2c37745e40d55ec1613eb3d3bdd3821e7f/qiskit_aer-0.17.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:5b3ba68b4c7432aab65796c23fbb82bcccfd3bf7a979bc16193db5d6ff48b10c", size = 2164451 },
-    { url = "https://files.pythonhosted.org/packages/69/ae/fc654bb0a8fece8ff4d269b38f6840183e239c083780c901c264cf328189/qiskit_aer-0.17.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:13455198a5928e38e3c9844976a91c24f88726126e257a44d0027b0d9c0402e1", size = 6429909 },
-    { url = "https://files.pythonhosted.org/packages/70/5e/67e6821010e59d803ca9549efaa948fccd83d6250581de03fdcbf7d4fbd2/qiskit_aer-0.17.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:79ec8397b9cd1f4d2f29a16dcec1853875f399704f98b76dcf6cef3464480807", size = 7941367 },
-    { url = "https://files.pythonhosted.org/packages/35/03/5c25712f539c663658232e8e3cab835faf1008a6df3b9e68b6a3f9335d1e/qiskit_aer-0.17.0-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:06e938a0347401c8bfd3c3229a7c88a1a97f7db182480726a267db391ca69077", size = 7891475 },
-    { url = "https://files.pythonhosted.org/packages/55/f9/97b6e96850dfa1dffc4a50229260496ccda62d0cf25bd0b921714945fa2e/qiskit_aer-0.17.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7c64d8fd639362cd50a53baa3500045b936add3905bdb8e678db3ef7e644001e", size = 12357024 },
-    { url = "https://files.pythonhosted.org/packages/0f/5c/dbf59c5e96b553c520c53c9715b3b195a91b9fdbd7e3d0bc9344fad59cce/qiskit_aer-0.17.0-cp311-cp311-win32.whl", hash = "sha256:d812a5d58e039cbd738ebfe0315f7e9a475c270d8c962117920b6c3d731f71ba", size = 6899589 },
-    { url = "https://files.pythonhosted.org/packages/5c/a8/91b7582cdf7408d07c30218bb9d01d39413192eb139be3ea662f88e1653d/qiskit_aer-0.17.0-cp311-cp311-win_amd64.whl", hash = "sha256:1b10e3dbdf1bdaaed8477d1140da160bbfbaa1313ff05400b7f6e4ec36773c49", size = 9522319 },
-    { url = "https://files.pythonhosted.org/packages/6e/c7/ea066c5b34991c57c9f73a0c169e951535bbe69b4e3b30995b77d3098a4a/qiskit_aer-0.17.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:83affcb117e2182ea193d46d735aa9bd73778346b87e9cfe8ba865ce350d4c3d", size = 2478468 },
-    { url = "https://files.pythonhosted.org/packages/d1/82/c22d06fd4f008048a6ffd0ace4e5dfdd5e69a53daf4ece60248617940efc/qiskit_aer-0.17.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4e3936e25833f42b431740ef494cc4502dc32f5aabb0f7305e98695d26104ade", size = 2165819 },
-    { url = "https://files.pythonhosted.org/packages/08/05/93a8345e8db97a557efb5d92b2a35269396ad75d2e8dd8cc2e1d8f9daf24/qiskit_aer-0.17.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8fea4d0733eeb32c89593a521d3d8ad705d76e6d16351e1e5066561aa64c6c41", size = 6432784 },
-    { url = "https://files.pythonhosted.org/packages/7b/4c/41efbf8986bf065bb23c63bd9c398437514f156dceea953b848ffc05d7bb/qiskit_aer-0.17.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ed17455b4c5523c49ee923fabdcb0e28137000fc470070e000d4b3216846f5c5", size = 7944679 },
-    { url = "https://files.pythonhosted.org/packages/f2/24/f2b6c017ecca6e61693a6869cd6ef338627986322f66a33de1cd3855c0c0/qiskit_aer-0.17.0-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:755284fd026c5eefdde716ec47a67ce862b11661a378b8a0867e96d0639fa991", size = 7893635 },
-    { url = "https://files.pythonhosted.org/packages/dc/39/72bb4f7f3287aafeec3ae079536c2f33da83b37e78ea11cb343762c068e8/qiskit_aer-0.17.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c4b54281e309ac9a8c7446149c29581195aac39f92e36bd7f9ad236b3a874b2", size = 12353778 },
-    { url = "https://files.pythonhosted.org/packages/8d/35/2db9a31f2356e98bf54dca236bd4ccd98e826d303840a6c442f2255a329c/qiskit_aer-0.17.0-cp312-cp312-win32.whl", hash = "sha256:fb73909ae556efc29cb4ccf4004a519b61e1d09126bc7571675f927627deb80c", size = 6900612 },
-    { url = "https://files.pythonhosted.org/packages/9d/3e/37630dc34a8ece87e4df6a1a50b48f3530f3e4327445aa601c3c21a92d36/qiskit_aer-0.17.0-cp312-cp312-win_amd64.whl", hash = "sha256:bfeafcb76fb864bfafd9d5dc1c90b3bf64b6918ff8d83466f516dc6e004f7f1f", size = 9524066 },
-    { url = "https://files.pythonhosted.org/packages/52/ce/6a5e3af70975f2d89b14939bd77a0eb3e0eb174209264bd7847c0bc8da2f/qiskit_aer-0.17.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:c8e4a25da10718535e3a856b0d9667c349e95bb0bdd9627e2cf6955de1186494", size = 2478388 },
-    { url = "https://files.pythonhosted.org/packages/30/3f/a605bcfb7112522a32d6df0acf53c3c9bf8365516ebae329ff2f3d59e676/qiskit_aer-0.17.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:4658878ca93d2d3b3d3bf051f482a76407e69a4a8a4de2087f0edf7b72df8fef", size = 2165999 },
-    { url = "https://files.pythonhosted.org/packages/d2/32/54f676a50deef939bb923076a0fc15bf0692502b99a79ce7d144121cb199/qiskit_aer-0.17.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e64606aacb61e776f5416afa987a79514666fa5447916c0e6d6dc6d5bf522ff4", size = 6432691 },
-    { url = "https://files.pythonhosted.org/packages/91/74/e0a4d3a03e5149c7ff05db3f5240ffdb4b9d9a0ac23ab8f8308b095723d4/qiskit_aer-0.17.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:cf3ffc81f9b66b9279c28a53762d6ae51cd97a40ec53853c7e9b05ba13c1cc4f", size = 7944176 },
-    { url = "https://files.pythonhosted.org/packages/20/08/9693c54a2148fffc8fe22138ff567276a20564a6519e5930153fb25297fd/qiskit_aer-0.17.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4e755a1eb0ed887eba4122193deadc050e7b6e9a6df3f00a25adaca34099286e", size = 12353412 },
-    { url = "https://files.pythonhosted.org/packages/59/f7/3006a462a93b8419f1e76c17b8b04ce05eab5bdcb53e9fd02b3102cea8f6/qiskit_aer-0.17.0-cp313-cp313-win32.whl", hash = "sha256:cf2f64421d74a54d3c2887bdaa86105006c3a08b59bd68e5d3f73a43ebc667dd", size = 6900812 },
-    { url = "https://files.pythonhosted.org/packages/61/78/2bd0bd64c77e0f578567f4a5ebfa2d022fa5185f2a0ea1ff9c737e52627e/qiskit_aer-0.17.0-cp313-cp313-win_amd64.whl", hash = "sha256:569b1a69f2ccd55e79dfb450a808334985c32c8f43b6728aad0b134a43c657e3", size = 9524112 },
-    { url = "https://files.pythonhosted.org/packages/92/cd/fa50944141c5ee6e36d4e074a03571e00653f6c7a8df489ac95edd06f8ba/qiskit_aer-0.17.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:7b14c0f4c3213708b2c5f3845739904dc166c48e67f32a5b5dc421bc62cc814b", size = 2476290 },
-    { url = "https://files.pythonhosted.org/packages/b3/dd/ea650c69f26b6e8f30c7b19d135e5dad0fd8c7742646a512657faae7c85f/qiskit_aer-0.17.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:3108bce48d637746d99057e1bc536f469135021e921d075dc383128c0e61d7fe", size = 2163129 },
-    { url = "https://files.pythonhosted.org/packages/72/95/a308c2d9d71b09952ad8ccc94bce038aba4a7c91347e0318f39768691b29/qiskit_aer-0.17.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e26bc4eb2238c8bac95b8097d58934b4ae7dd10af094dbe78d8a5ce436e1ecf1", size = 6430212 },
-    { url = "https://files.pythonhosted.org/packages/70/4b/43382c9d7ff4cf85be1dabd73aceb38d3193b00c79d43dae9e1106f1ff9d/qiskit_aer-0.17.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:055aa00b69eaacce71c8f2bca35631f96a08dae92692fd63cdf878d353f40ba3", size = 7940294 },
-    { url = "https://files.pythonhosted.org/packages/48/cd/2298734b4758706e6eafdb1f0c40cd7e1c8b3131b56ba21a3ac9869ca018/qiskit_aer-0.17.0-cp39-cp39-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:26d3d56b5e36c54a751e392a0830465ff74316f305f3449988cca96490efc3c3", size = 7894023 },
-    { url = "https://files.pythonhosted.org/packages/6a/e2/839e2c9d4626ed445a2bfecdba3202912cbc0687995d9a594b97905d43a3/qiskit_aer-0.17.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ad6300c88ec598f299b1dff1e4306149a7b7988dcc8c317638fd05ccf019f9bc", size = 12353480 },
-    { url = "https://files.pythonhosted.org/packages/aa/34/71946c2956c440bcf462a4a60f6d4e1b91539c62e2cd3ac53e7e7e771279/qiskit_aer-0.17.0-cp39-cp39-win32.whl", hash = "sha256:a09a93a1c92fafa3269fd221655e60819cb2bb8f5ecee1afafd4b4022889f9ab", size = 6899184 },
-    { url = "https://files.pythonhosted.org/packages/25/ef/58f3186d626ee12ee6e02667772cba112c105f9efd607d20b71b70044fcd/qiskit_aer-0.17.0-cp39-cp39-win_amd64.whl", hash = "sha256:24ed9e0f343982f3f8289770a21abef4cfbd2d9b1dc209bbb81f16c3c782a08b", size = 9508520 },
-]
-
-[[package]]
 name = "qiskit-qasm3-import"
 version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3143,7 +3099,8 @@ name = "scipy"
 version = "1.15.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
@@ -3343,7 +3300,8 @@ name = "sphinx"
 version = "8.2.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version == '3.11.*'",
 ]
 dependencies = [
