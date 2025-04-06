@@ -41,7 +41,7 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "z3-solver>=4.12",
+    "z3-solver>=4.12.2",
     "qecsim>=1.0b9",
     "ldpc>=0.1.53,<2", # temporary upper cap due to failures seen with ldpc v2
     "numpy>=1.26; python_version > '3.11'",
