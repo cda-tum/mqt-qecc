@@ -640,14 +640,14 @@ wheels = [
 
 [[package]]
 name = "fastcore"
-version = "1.8.0"
+version = "1.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0b/6f/27e593625a165bd10cd6aa1e39e5da81e180a35b3ae06ce72cb37329bffc/fastcore-1.8.0.tar.gz", hash = "sha256:d23e63aff4bcd06dde24cdf9f7ea13c48e7d274ae89e52e826df33c64869c976", size = 75111 }
+sdist = { url = "https://files.pythonhosted.org/packages/1b/57/4f2f658ffa0641aa629909d850d7d67df11d4fc809ad9f197f19cc0eab19/fastcore-1.8.1.tar.gz", hash = "sha256:82494b84925fc80bbcfc21c65208dd4c125df70e3d465ef788d75d42cc2afc58", size = 75352 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/d5/f6d4591b3ae2fc56b32d9f7845872f1e529fadc64c87384e36e75149ff87/fastcore-1.8.0-py3-none-any.whl", hash = "sha256:67739747f0f714d02944957271a11dcb4a9dd40012615e6f9d19add3e5d9e041", size = 78000 },
+    { url = "https://files.pythonhosted.org/packages/67/9b/93bd0191c4dd1e0e378c08509f63d7694b32e99568209bd81b3ee632df9c/fastcore-1.8.1-py3-none-any.whl", hash = "sha256:51ae5d328d7864c0dd70081b32a852ff242b70af372b4dcec204969e92356afd", size = 78125 },
 ]
 
 [[package]]
@@ -1676,6 +1676,8 @@ dependencies = [
     { name = "qiskit", extra = ["qasm3-import"] },
     { name = "qiskit-aer" },
     { name = "qsample" },
+    { name = "scipy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "scipy", version = "1.15.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "stim" },
     { name = "urllib3" },
     { name = "z3-solver" },
@@ -1685,16 +1687,12 @@ dependencies = [
 dev = [
     { name = "furo" },
     { name = "ipywidgets" },
-    { name = "matplotlib", version = "3.9.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "matplotlib", version = "3.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "myst-nb" },
     { name = "pytest" },
     { name = "pytest-console-scripts" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "qiskit", extra = ["qasm3-import", "visualization"] },
-    { name = "scipy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "scipy", version = "1.15.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "setuptools-scm" },
     { name = "sphinx", version = "7.4.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
@@ -1727,12 +1725,6 @@ test = [
     { name = "pytest-console-scripts" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
-]
-visualization = [
-    { name = "matplotlib", version = "3.9.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "matplotlib", version = "3.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "scipy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "scipy", version = "1.15.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 
 [package.metadata]
@@ -1746,10 +1738,12 @@ requires-dist = [
     { name = "numpy", marker = "python_full_version < '3.12'", specifier = ">=1.24" },
     { name = "numpy", marker = "python_full_version >= '3.12'", specifier = ">=1.26" },
     { name = "pymatching", specifier = ">=2.2.1" },
-    { name = "qecsim" },
+    { name = "qecsim", specifier = ">=1.0b9" },
     { name = "qiskit", extras = ["qasm3-import"], specifier = ">=1.0.0" },
     { name = "qiskit-aer", specifier = ">=0.15.0" },
     { name = "qsample", specifier = ">=0.0.2" },
+    { name = "scipy", marker = "python_full_version < '3.10'", specifier = ">=1.13.1" },
+    { name = "scipy", marker = "python_full_version >= '3.10'", specifier = ">=1.15.2" },
     { name = "stim", specifier = ">=1.13.0" },
     { name = "urllib3", specifier = ">=1.26.20" },
     { name = "z3-solver", specifier = ">=4.12" },
@@ -1759,14 +1753,12 @@ requires-dist = [
 dev = [
     { name = "furo", specifier = ">=2024.8.6" },
     { name = "ipywidgets", specifier = ">=8.1.5" },
-    { name = "matplotlib" },
     { name = "myst-nb", specifier = ">=1.2.0" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "pytest-console-scripts", specifier = ">=1.4.1" },
     { name = "pytest-cov", specifier = ">=6" },
     { name = "pytest-mock", specifier = ">=3.7" },
     { name = "qiskit", extras = ["qasm3-import", "visualization"], specifier = ">=1.0.0" },
-    { name = "scipy" },
     { name = "setuptools-scm", specifier = ">=8.1" },
     { name = "sphinx", specifier = ">=7.4.7" },
     { name = "sphinx", marker = "python_full_version >= '3.10'", specifier = ">=8.1.3" },
@@ -1799,10 +1791,6 @@ test = [
     { name = "pytest-console-scripts", specifier = ">=1.4.1" },
     { name = "pytest-cov", specifier = ">=6" },
     { name = "pytest-mock", specifier = ">=3.7" },
-]
-visualization = [
-    { name = "matplotlib" },
-    { name = "scipy" },
 ]
 
 [[package]]
@@ -2569,15 +2557,15 @@ wheels = [
 
 [[package]]
 name = "pytest-cov"
-version = "6.1.0"
+version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "coverage", extra = ["toml"] },
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/8c/039a7793f23f5cb666c834da9e944123f498ccc0753bed5fbfb2e2c11f87/pytest_cov-6.1.0.tar.gz", hash = "sha256:ec55e828c66755e5b74a21bd7cc03c303a9f928389c0563e50ba454a6dbe71db", size = 66651 }
+sdist = { url = "https://files.pythonhosted.org/packages/25/69/5f1e57f6c5a39f81411b550027bf72842c4567ff5fd572bed1edc9e4b5d9/pytest_cov-6.1.1.tar.gz", hash = "sha256:46935f7aaefba760e716c2ebfbe1c216240b9592966e7da99ea8292d4d3e2a0a", size = 66857 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/c5/8d6ffe9fc8f7f57b3662156ae8a34f2b8e7a754c73b48e689ce43145e98c/pytest_cov-6.1.0-py3-none-any.whl", hash = "sha256:cd7e1d54981d5185ef2b8d64b50172ce97e6f357e6df5cb103e828c7f993e201", size = 23743 },
+    { url = "https://files.pythonhosted.org/packages/28/d0/def53b4a790cfb21483016430ed828f64830dd981ebe1089971cd10cab25/pytest_cov-6.1.1-py3-none-any.whl", hash = "sha256:bddf29ed2d0ab6f4df17b4c55b0a657287db8684af9c42ea546b21b1041b3dde", size = 23841 },
 ]
 
 [[package]]
