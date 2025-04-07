@@ -311,11 +311,11 @@ class NoisyNDFTStatePrepSimulator:
         state = filtered_events[:, self.data_measurements]
 
         if self.zero_state:
-            checks = ((state@self.code.Hx.T) % 2).astype(np.int8)
+            checks = ((state @ self.code.Hx.T) % 2).astype(np.int8)
             observables = self.code.Lz % 2
             estimates = self.decoder.batch_decode_x(checks)
         else:
-            checks = ((state@self.code.Hz.T) % 2).astype(np.int8)
+            checks = ((state @ self.code.Hz.T) % 2).astype(np.int8)
             observables = self.code.Lx
             estimates = self.decoder.batch_decode_z(checks)
 
@@ -584,7 +584,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             range(n_measurements, n_measurements + self.code.n)
         )  # add measurements of the initial data qubit
         n_measurements += self.code.n
-        
+
         if self.zero_state:
             self.secondary_data_measurements = self.measure_x(
                 self.secondary_stim_circ, n_measurements, data_index=4 * self.code.n
@@ -667,7 +667,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
             shots, shots_per_batch, at_least_min_errors, min_errors
         )
 
-        p_l_error = np.sqrt(p_l * (1 - p_l) / (r_a*total_shots))
+        p_l_error = np.sqrt(p_l * (1 - p_l) / (r_a * total_shots))
         r_a_error = np.sqrt(r_a * (1 - r_a) / total_shots)
 
         return p_l, r_a, num_logical_errors, total_shots, p_l_error, r_a_error
@@ -723,7 +723,7 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
         #     shots, shots_per_batch, at_least_min_errors, min_errors
         # )
 
-        p_l_error = np.sqrt(p_l * (1 - p_l) / (r_a*total_shots))
+        p_l_error = np.sqrt(p_l * (1 - p_l) / (r_a * total_shots))
         r_a_error = np.sqrt(r_a * (1 - r_a) / total_shots)
 
         return p_l, r_a, num_logical_errors, total_shots, p_l_error, r_a_error
