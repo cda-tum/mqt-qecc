@@ -316,5 +316,3 @@ def compare_original_dynamic_gate_order(q: int, layout: dict, router: co.Shortes
 
     diff = np.linalg.norm(psi_out_complex.data()["statevector"] - psi_out_complex_2.data()["statevector"])
     return math.isclose(diff, 0, abs_tol=1e-14)
-
-
