@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from . import decoder, tn_decoder
+from . import decoder
+from .comparison import tn_decoder
 
 
 def cli() -> None:

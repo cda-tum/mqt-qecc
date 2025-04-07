@@ -13,39 +13,38 @@ please let us know at our {doc}`Support <Support>` page or by reaching out to us
 
 ---
 
-> ```{toctree}
-> :hidden: true
->
-> self
-> ```
->
-> ```{toctree}
-> :caption: User Guide
-> :glob: true
-> :maxdepth: 2
->
-> Installation
-> AnalogInfo
-> LightsOutDecoder
-> StatePrep
-> Encoders
-> Publications
-> ```
->
-> ```{toctree}
-> :caption: Developers
-> :glob: true
-> :maxdepth: 2
->
-> Contributing
-> DevelopmentGuide
-> Support
-> ```
->
-> ```{toctree}
-> :caption: API Reference
-> :glob: true
-> :maxdepth: 6
->
-> api/mqt/qecc/index
-> ```
+```{toctree}
+:hidden:
+
+self
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: User Guide
+
+Installation
+AnalogInfo
+LightsOutDecoder
+StatePrep
+Encoders
+Publications
+```
+
+```{toctree}
+:caption: Developers
+:glob:
+:maxdepth: 2
+
+Contributing
+DevelopmentGuide
+Support
+```
+
+```{toctree}
+:hidden:
+:maxdepth: 6
+:caption: API Reference
+
+api/mqt/qecc/index
+```

@@ -15,9 +15,9 @@ from ..codes import InvalidCSSCodeError
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
-    from qiskit import QuantumCircuit
+    from qiskit.circuit import QuantumCircuit
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
 
 logger = logging.getLogger(__name__)
 

@@ -10,14 +10,14 @@ import multiprocess
 import numpy as np
 import z3
 from ldpc import mod2
-from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit
 from stim import Circuit
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     import numpy.typing as npt
-    from qiskit import AncillaQubit, ClBit, Qubit
+    from qiskit.circuit import AncillaQubit, ClBit, Qubit
 
 
 logger = logging.getLogger(__name__)

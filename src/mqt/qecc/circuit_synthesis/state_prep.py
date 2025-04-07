@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import z3
 from ldpc import mod2
-from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag
 
 from ..codes import InvalidCSSCodeError
@@ -35,7 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from qiskit import DAGNode
     from qiskit.quantum_info import PauliList
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
 
 
 class StatePrepCircuit:

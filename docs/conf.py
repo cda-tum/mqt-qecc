@@ -87,7 +87,6 @@ pygments_style = "colorful"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "typing_extensions": ("https://typing-extensions.readthedocs.io/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "qiskit": ("https://docs.quantum.ibm.com/api/qiskit", None),
     "mqt": ("https://mqt.readthedocs.io/en/latest", None),
@@ -97,7 +96,7 @@ intersphinx_mapping = {
     "qecc": ("https://mqt.readthedocs.io/projects/qecc/en/latest", None),
     "syrec": ("https://mqt.readthedocs.io/projects/syrec/en/latest", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "z3": ("https://z3prover.github.io/api/html/namespacez3py.html", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
 }
 
 nitpick_ignore = [
@@ -107,6 +106,15 @@ nitpick_ignore = [
     ("py:class", "numpy.int_"),
     ("py:class", "numpy.int"),
     ("py:class", "numpy.float64"),
+    ("py:class", "z3.ModelRef"),
+    ("py:class", "z3.BoolRef"),
+    ("py:class", "stim.Circuit"),
+    ("py:class", "qsample.Circuit"),
+    ("py:class", "qsample.ErrorModel"),
+    ("py:class", "qsample.Circuit"),
+    ("py:class", "qsample.callbacks.Callback"),
+    ("py:class", "qsample.callbacks.CallbackList"),
+    ("py:class", "Ellipsis"),
 ]
 
 
