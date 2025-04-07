@@ -731,11 +731,11 @@ def measure_two_flagged_4(
     """Measure a 2-flagged weight 4 stabilizer. In this case only one flag is required.
 
     Args:
-        qc: QuantumCircuit
-        stab: list[Qubit] | npt.NDArray[np.int_]
-        ancilla: AncillaQubit
-        measurement_bit: ClBit
-        z_measurement: bool = True
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
     """
     assert len(stab) == 4
     flag_reg = AncillaRegister(1)

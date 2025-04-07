@@ -96,7 +96,19 @@ intersphinx_mapping = {
     "qcec": ("https://mqt.readthedocs.io/projects/qcec/en/latest", None),
     "qecc": ("https://mqt.readthedocs.io/projects/qecc/en/latest", None),
     "syrec": ("https://mqt.readthedocs.io/projects/syrec/en/latest", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "z3": ("https://z3prover.github.io/api/html/namespacez3py.html", None),
 }
+
+nitpick_ignore = [
+    ("py:class", "numpy.typing.NDArray"),
+    ("py:class", "numpy.int8"),
+    ("py:class", "numpy.int32"),
+    ("py:class", "numpy.int_"),
+    ("py:class", "numpy.int"),
+    ("py:class", "numpy.float64"),
+]
+
 
 myst_enable_extensions = [
     "amsmath",
