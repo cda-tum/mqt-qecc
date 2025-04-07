@@ -638,8 +638,8 @@ def random_steane_type_prep_circuits(
     """Return four circuits in permuted standard form that prepare the +1 eigenstate of the code w.r.t. the Z or X basis that can implement Steane-type FTSP.
 
     Args:
-            code: The CSS code to prepare the state for.
-            zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
+        code: The CSS code to prepare the state for.
+        zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
 
     Returns: A tuple of four state preparation circuits for the code.
     """
