@@ -27,7 +27,7 @@ class HexagonalLattice:
         self.G = nx.hexagonal_lattice_graph(m=m, n=n, periodic=False, with_positions=True, create_using=None)
         self.G_copy = copy.deepcopy(self.G)
 
-    def map_hex_to_triangular(self) -> dict:
+    def map_hex_to_triangular(self) -> dict[tuple[int, int], tuple[int, int, int]]:
         """Maps positions of hex lattice to dual triangular lattice.
 
         maps the positions of the G lattice to a triangular lattice such that
@@ -70,7 +70,7 @@ class HexagonalLattice:
 
         return dct
 
-    def distance_triangular(self, pos_1: tuple, pos_2: tuple) -> int:
+    def distance_triangular(self, pos_1: tuple[int, int], pos_2: tuple[int, int]) -> int:
         """Determines distance considering the triangular dual lattice.
 
         Args:
@@ -286,16 +286,17 @@ class ShortestFirstRouter(HexagonalLattice):
         self.layers_cnots = self.split_layer_terminal_pairs()
         self.layers_cnots_orig = self.layers_cnots.copy()
         # self.vdp_layers = self.find_total_vdp_layers()
+        self.vdp_layers = None
 
-    def split_layer_terminal_pairs(self) -> list[list[tuple[int, int]]]:
+    def split_layer_terminal_pairs(self) -> list[list[tuple[tuple[int, int], tuple[int, int]]]]:
         """Split Terminal Pairs into layers initially.
 
         split up the terminal pairs into layers which can be
         compiled in parallel in principle because no qubits overlap
         """
-        layers = []
-        current_layer = []
-        used_qubits = set()
+        layers: list[list[tuple[tuple[int, int], tuple[int, int]]]] = []
+        current_layer: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        used_qubits: set[tuple[int, int]] = set()
 
         for pair in self.terminal_pairs:
             if pair[0] in used_qubits or pair[1] in used_qubits:
@@ -319,8 +320,10 @@ class ShortestFirstRouter(HexagonalLattice):
         """
         lst_distances = []
         for t_p in self.terminal_pairs_orig:
-            tp1 = tuple(int(i) for i in t_p[0])
-            tp2 = tuple(int(i) for i in t_p[1])
+            p1, b1 = tuple(int(i) for i in t_p[0])
+            p2, b2 = tuple(int(i) for i in t_p[1])
+            tp1 = (p1, b1)
+            tp2 = (p2, b2)
             d = self.distance_triangular(tp1, tp2)
             lst_distances.append(d)
         return lst_distances
@@ -398,7 +401,12 @@ class ShortestFirstRouter(HexagonalLattice):
         self.layers_cnots_orig[layer] = sorted_terminal_pairs
         self.layers_cnots[layer] = sorted_terminal_pairs
 
-    def find_max_vdp_set(self, layer: int) -> tuple[dict, list[tuple[tuple[int, int], tuple[int, int]]]]:
+    def find_max_vdp_set(
+        self, layer: int
+    ) -> tuple[
+        dict[tuple[tuple[int, int], tuple[int, int]], list[tuple[int, int]]],
+        list[tuple[tuple[int, int], tuple[int, int]]],
+    ]:
         """Find largest VDP with shortest first.
 
         iteratively applies dijkstra and searches greedily the largest
@@ -464,7 +472,9 @@ class ShortestFirstRouter(HexagonalLattice):
 
         return vdp_dict, terminal_pairs_remainder
 
-    def find_all_vdp_layers(self, layer: int) -> list[dict]:
+    def find_all_vdp_layers(
+        self, layer: int
+    ) -> list[dict[tuple[tuple[int, int], tuple[int, int]], list[tuple[int, int]]]]:
         """Find VDP layers within a given initial layer.
 
         if find_max_VDP_set returns nonzero terminal_pairs_remainder
@@ -486,7 +496,7 @@ class ShortestFirstRouter(HexagonalLattice):
 
         return vdp_layers
 
-    def find_total_vdp_layers(self) -> list[dict]:
+    def find_total_vdp_layers(self) -> list[dict[tuple[tuple[int, int], tuple[int, int]], list[tuple[int, int]]]]:
         """Find all routes for all initial and secondary layers.
 
         finds total VDP layers, i.e. more than `all` meaning that
@@ -498,7 +508,7 @@ class ShortestFirstRouter(HexagonalLattice):
             vdp_layers_temp = self.find_all_vdp_layers(layer)
             vdp_layers += vdp_layers_temp
             # it might be possible that there are bugs. hence, check whether vdp layers really contains as main paths as there are gates.
-        keys = []
+        keys: list[tuple[tuple[int, int], tuple[int, int]]] = []
         for lst in vdp_layers:
             keys += lst.keys()
         assert len(keys) == len(self.terminal_pairs), (
@@ -507,7 +517,7 @@ class ShortestFirstRouter(HexagonalLattice):
         return vdp_layers
 
     def plot_lattice_paths(
-        self, layer: int, layout: dict | None = None, size: tuple[float, float] = (3.5, 3.5)
+        self, layer: int, layout: dict[int, tuple[int, int]] | None = None, size: tuple[float, float] = (3.5, 3.5)
     ) -> None:
         """Plots the graph and the corresponding VDP of a layer.
 
@@ -925,87 +935,6 @@ class ShortestFirstRouterTGates(HexagonalLattice):
             if isinstance(pair[0], int) and isinstance(pair[1], int) and pair not in {start, end}:
                 msg = f"The path does not coincide with the T gate location. There is a bug. terminal_pair = {pair} but path = {path}"
                 raise RuntimeError(msg)
-
-        # ----------------------------
-
-        """
-        for t_p in terminal_pairs_current:
-            #print(f"==========t_p = {t_p}============")
-            g_temp_temp = g_temp.copy()
-            if isinstance(t_p[0], tuple) and isinstance(t_p[1], tuple):
-                if dct_qubits[t_p[0]] or dct_qubits[t_p[1]]:
-                    flag_problem = True
-                    break
-                terminals_temp = [
-                    pair for pair in flattened_terminals_and_factories.copy()
-                    if pair != t_p[0] and pair != t_p[1]
-                ]
-                terminals_temp = list(set(terminals_temp))
-                g_temp_temp.remove_nodes_from(terminals_temp)
-                # find shortest path of t_p
-                try:
-                    path = nx.dijkstra_path(g_temp_temp, t_p[0], t_p[1])
-                except nx.NetworkXNoPath:
-                    # if no path could be found: stop and return remaining,
-                    # unallocated terminal pairs as well
-                    flag_problem = True
-                    # break
-                # update already used qubits
-                dct_qubits[t_p[0]] = True
-                dct_qubits[t_p[1]] = True
-
-            elif isinstance(t_p[0], int) and isinstance(t_p[1], int):
-                if dct_qubits[t_p]:
-                    flag_problem = True
-                    break
-                dist_factories = {}
-                for factory in self.factory_positions:
-                    g_temp_temp = g_temp.copy()
-                    #print("factory: ", factory, "time", self.factory_times[factory])
-                    if self.factory_times[factory] == 0: #only include available factories
-                        #print("factory time is fine")
-                        #remove other terminals
-                        terminals_temp = [
-                            pair for pair in flattened_terminals_and_factories.copy()
-                            if pair not in {t_p, factory}
-                        ]
-                        terminals_temp = list(set(terminals_temp))
-                        g_temp_temp.remove_nodes_from(terminals_temp)
-                        try:
-                            path = nx.dijkstra_path(g_temp_temp, t_p, factory)
-                        except nx.NetworkXNoPath:
-                            #print("no path found")
-                            continue
-                        dist_factories.update({factory: path})
-                #print("=======dist_factories==========", dist_factories)
-                #choose shortest available path or if no elements in dist_factories, flag_problem = True
-                if len(dist_factories) == 0:
-                    #print("no available factories")
-                    flag_problem = True
-                else:
-                    nearest_factory = min(dist_factories, key=lambda k: len(dist_factories[k]))
-                    #print("nearest factory", nearest_factory)
-                    path = dist_factories[nearest_factory]
-                    dct_qubits[t_p] = True
-                    self.factory_times[nearest_factory] = self.t #reset time
-
-            else:
-                msg = "Wrong elements in `terminal_pairs`."
-                raise TypeError(msg)
-
-            if flag_problem:
-                terminal_pairs_remainder = [
-                    s
-                    for s in terminal_pairs_current
-                    if s not in successful_terminals
-                ]
-                dct_qubits = dct_qubits_copy.copy()
-            else: #if no problem
-                for node in path[1:-1]:
-                    g_temp.remove_node(node)
-                successful_terminals.append(t_p)
-                vdp_dict.update({t_p: path})
-            """
 
         return vdp_dict, terminal_pairs_remainder
 

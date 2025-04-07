@@ -318,27 +318,3 @@ def compare_original_dynamic_gate_order(q: int, layout: dict, router: co.Shortes
     return math.isclose(diff, 0, abs_tol=1e-14)
 
 
-"""
-def brute_force_qubit_assignments(data_qubit_locs: list[tuple[int, int]], num: int) -> list[dict]:
-    #Bruteforces `num` qubit assignments for the given `data_qubit_locs`.
-    layouts_lst = []
-    counter_tot = 0
-    # introduce counter and dist to get a randomized set from the permutations generator
-    counter = 0
-    low_lim = 1e3
-    high_lim = 1e7
-    dist = random.randint(low_lim, high_lim) #high threshold because permutations will give us a huge amount of cases
-    for perm in itertools.permutations(range(len(data_qubit_locs))):
-        counter += 1
-        if counter == dist:
-            dct_temp = {}
-            for i,j in zip(perm, data_qubit_locs):
-                dct_temp.update({i: j})
-            layouts_lst.append(dct_temp)
-            counter = 0
-            dist = random.randint(low_lim, high_lim)
-            counter_tot += 1
-        if counter_tot == num:
-            break
-    return layouts_lst
-"""

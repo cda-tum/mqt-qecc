@@ -13,7 +13,7 @@ random.seed(45)
 
 def filter_factory_nodes(
     g: nx.Graph, factory_ring: list[tuple[int, int]], factories: list[tuple[int, int]]
-) -> tuple[nx.Graph, set, set]:
+) -> tuple[nx.Graph, set[tuple[int, int]], set[tuple[int, int]]]:
     """Filter ancillas from factory_ring which should be kept in the graph considering the included factories.
 
     Note that one should place the factories in a suitable way such that they are not weirdly connected.
@@ -56,7 +56,9 @@ def filter_factory_nodes(
     return g, kept_nodes, nodes_to_discard
 
 
-def gen_layout(layout_type: str, num_qubits: int, factories: list) -> tuple[nx.Graph, list]:
+def gen_layout(
+    layout_type: str, num_qubits: int, factories: list[tuple[int, int]]
+) -> tuple[nx.Graph, list[tuple[int, int]], list[tuple[int, int]]]:
     """Generates a Layout which does not suit the standard `rectangular` basic shape from networkx.hexagonal graph.
 
     # ! TODO automatize also these constructions.
@@ -71,6 +73,7 @@ def gen_layout(layout_type: str, num_qubits: int, factories: list) -> tuple[nx.G
     """
     assert layout_type in {"row", "sparse", "pair", "hex"}, "Wrong Layout type!"
     assert num_qubits in {24, 42, 60}, "The layouts are only defined for a few number of qubits."
+    data_qubit_locs: list[tuple[int, int]]
 
     if layout_type == "hex":
         if num_qubits == 24:
@@ -1516,10 +1519,10 @@ def gen_layout(layout_type: str, num_qubits: int, factories: list) -> tuple[nx.G
 
     # need to remove nodes between directly neighboring logical patches. a path between two directly neighboring edges would be wrong, because one cannot use an ancilla in between
     for data_qubit in data_qubit_locs:
-        neighbours = list(g.neighbors(data_qubit))
-        for n in neighbours:
-            if n in data_qubit_locs:  # if a neighbor is also a logical qubit
-                g.remove_edges_from([(data_qubit, n), (n, data_qubit)])
+        neighbours: list[tuple[int, int]] = list(g.neighbors(data_qubit))
+        for neigh in neighbours:
+            if neigh in data_qubit_locs:  # if a neighbor is also a logical qubit
+                g.remove_edges_from([(data_qubit, neigh), (neigh, data_qubit)])
     lat.G = g
 
     return lat.G, data_qubit_locs, factory_ring

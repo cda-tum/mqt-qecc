@@ -36,8 +36,8 @@ class HillClimbing:
 
     def __init__(
         self,
-        max_restarts: int,
-        max_iterations: int,
+        max_restarts: int | None,
+        max_iterations: int | None,
         circuit: list[tuple[int, int] | int],
         layout_type: str,
         m: int,

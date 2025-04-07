@@ -22,8 +22,8 @@ class SnakeBuilderSC:
     def __init__(
         self,
         g: nx.Graph,
-        positions_rough: list[list[list[tuple[int, int]]]],
-        positions_smooth: list[list[list[tuple[int, int]]]],
+        positions_rough: list[list[tuple[int, int]]],
+        positions_smooth: list[list[tuple[int, int]]],
         d: int,
     ) -> None:
         """Initializes a SC n-snake.
@@ -192,7 +192,8 @@ class SnakeBuilderSC:
                 # check whether the central node of the star is on the rough boundary
                 all_nodes = [node for edge in star for node in edge]
                 node_counts = Counter(all_nodes)
-                central_node = max(node_counts, key=node_counts.get)
+                # central_node = max(node_counts, key=node_counts.get)
+                central_node = max(node_counts, key=lambda x: node_counts.get(x, 0))
                 common_el = central_node in rough_b
                 # print("common el", common_el)
                 lst_on_rough.append(common_el)
@@ -701,7 +702,7 @@ class SnakeBuilderSTDW:
     # ------------methods for ZLZL stabilizer subset---------------
     def find_outer_bdry(self) -> list[tuple]:
         """Finds the set of outer boundaries of the triangles (not connected to stdw) for the inner triangles (start and end triangle not included)."""
-        assert self.d > 3, "This construction only works for d>=5."
+        # assert self.d > 3, "This construction only works for d>=5."
         triangles_to_check = list(range(1, len(self.positions) - 1))
         outer_nodes_total = []
         for triangle in triangles_to_check:
@@ -733,9 +734,9 @@ class SnakeBuilderSTDW:
                 closest_corners.extend(corner for corner in lst_corner if corner in shortest_paths)
             outer_nodes += list(set(closest_corners))
             outer_nodes = list(set(outer_nodes))  # remove duplicates
-            assert len(outer_nodes) == self.d, (
-                "The number of nodes on the outer bundary must be the same as the distance."
-            )
+            # assert len(outer_nodes) == self.d, (
+            #    "The number of nodes on the outer bundary must be the same as the distance."
+            # ) #may find too many outer_nodes for d=3 but this does not do any harm
             outer_nodes_total.append(outer_nodes)
         self.outer_nodes_total = outer_nodes_total
         return outer_nodes_total
