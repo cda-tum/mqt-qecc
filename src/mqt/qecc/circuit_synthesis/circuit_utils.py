@@ -9,11 +9,11 @@ def reorder_qubits(circ: QuantumCircuit, qubit_mapping: dict[int, int]) -> Quant
     """Reorders the qubits in a QuantumCircuit based on the given mapping.
 
     Parameters:
-        circuit (QuantumCircuit): The original quantum circuit.
-        qubit_mapping (dict[int, int]): A dictionary mapping original qubit indices to new qubit indices.
+        circuit: The original quantum circuit.
+        qubit_mapping: A dictionary mapping original qubit indices to new qubit indices.
 
     Returns:
-        QuantumCircuit: A new quantum circuit with qubits reordered.
+        A new quantum circuit with qubits reordered.
     """
     # Validate the qubit_mapping
     if sorted(qubit_mapping.keys()) != list(range(len(circ.qubits))) or sorted(qubit_mapping.values()) != list(
