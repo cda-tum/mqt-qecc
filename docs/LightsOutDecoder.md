@@ -124,4 +124,4 @@ options:
 
 <!-- #endregion -->
 
-Check out the [reference documentation](library/LightsOutDecoder.md) for more information.
+Check out the [reference documentation](#mqt.qecc.cc_decoder.decoder.LightsOut) for more information.
