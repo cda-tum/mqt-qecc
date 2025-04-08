@@ -111,14 +111,14 @@ Detecting such _hook errors_ can be achieved via flag-fault tolerant stabilizer 
 
 By default QECC automatically performs such additional measurements when necessary. The general construction is sketched in the following figure.
 
-```images/full_ft_scheme.svg
+```{image} images/full_ft_scheme.svg
 :width: 100%
 :alt: Construction of non-deterministic fault-tolerant state preparation circuits
 ```
 
 Let's consider a larger code to illustrate the point. The [square-octagon color code](https://errorcorrectionzoo.org/c/488_color) is defined on the following lattice:
 
-```images/488_color_code.svg
+```{image} images/488_color_code.svg
 :width: 50%
 :alt: Square-Octagon color code
 ```
@@ -251,4 +251,4 @@ sampling_stats = qsample_sim.dss_logical_error_rates(
 
 ## Circuits and Evaluations
 
-The circuits and benchmark scripts used for our non-deterministic work https://arxiv.org/abs/2408.11894, can be found [here](https://github.com/cda-tum/mqt-qecc/tree/main/scripts/ft_stateprep/eval) and for the deterministic work [here](https://github.com/cda-tum/mqt-qecc/tree/main/scripts/ft_stateprep/eval_det).
+The circuits and benchmark scripts used for our non-deterministic work {cite:labelpar}`peham2024automated`, can be found [here](https://github.com/cda-tum/mqt-qecc/tree/main/scripts/ft_stateprep/eval) and for the deterministic work {cite:labelpar}`schmid2024deterministic` [here](https://github.com/cda-tum/mqt-qecc/tree/main/scripts/ft_stateprep/eval_det).
