@@ -24,10 +24,10 @@ self
 :caption: User Guide
 
 Installation
-AnalogInfo
 LightsOutDecoder
 StatePrep
 Encoders
+AnalogInfo
 Publications
 ```
 
