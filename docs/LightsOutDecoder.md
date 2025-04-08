@@ -109,7 +109,7 @@ To start `n` simulations for a distance `d` triangular color code assuming a bit
 ```{code-cell} ipython33
 from mqt.qecc.cc_decoder import decoder
 
-d = 21  # distance of the triangular code to simulate
+d = 7  # distance of the triangular code to simulate
 p = 0.01  # (bit-flip) error rate
 n = 1000  # number of simulations to run
 decoder.run("hexagon", distance=d, error_rate=p, nr_sims=n)
