@@ -26,11 +26,18 @@ An important class of quantum codes, `CSS` codes can be seen as a certain combin
 
 An example of a quantum code is presented in the following figure.
 
-<img src="images/cc.png" alt="Triangular color code" width="50%">
+```images/cc.png
+:width: 50%
+:alt: Triangular color code
+```
 
 This is a quantum color code, that is defined on a three-valent and three-colorable lattice with triangular shape.
 Each vertex corresponds to a single bit of the code and the checks correspond to the faces, i.e., each face computes the sum (mod 2) of the bits around it. If a vector satisfies all checks, it is a codeword of the code. However, in case an error occurs on a single bit, the checks in which the bit is involved in, i.e., the faces around the vertex of the bit will indicate that the sum is not even anymore, and hence will indicate an error happened. This is illustrated in the following figure for a small triangular color code
-<img src="images/steane-ex.png" alt="Color code example" width="15%">
+
+```images/steane-ex.png
+:width: 15%
+:alt: Color code example
+```
 
 The decoding task is now, given a set of violated checks, i.e., marked faces, to find a set of bits to flip such that no check is violated anymore. In case of the example above, flipping the bit on the very top of the triangle is a valid decoding estimate.
 
@@ -38,11 +45,17 @@ The decoding task is now, given a set of violated checks, i.e., marked faces, to
 
 We solve the problem of decoding quantum codes by a reduction to the well-known mathematical puzzle `LightsOut`. Originally, the puzzle is defined on a rectangular lattice whose faces correspond to lights that can be turned on or off. Pressing a light toggles the light (from on to off and vice versa) as well as all adjacent lights around it. The puzzle starts out in an initial configuration where some lights are turned on and the goal is to find a sequence of lights to press (a sequence of `moves` such that all lights are turned off), as illustrated in the following figure:
 
-<img src="images/lo.png" alt="LightsOut puzzle" width="50%">
+```images/lo.png
+:width: 50%
+:alt: LightsOut puzzle
+```
 
 To show how this can be used to decode a code, consider the following variation where: the faces correspond to lights and the vertices correspond to switches that toggle all lights around them. For the triangular color code, the LightsOut variant and an example of an initial configuration and a solution to the puzzle is given in the following figure
 
-<img src="images/lights-out.png" alt="LightsOut color code" width="50%">
+```images/lights-out.png
+:width: 50%
+:alt: LightsOut color code
+```
 
 Our decoder uses a satisfiability formulation (MaxSAT) of the LightsOut puzzle, to find a minimal set of switches that turns off all the lights.
 
