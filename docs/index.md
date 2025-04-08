@@ -20,7 +20,7 @@ self
 ```
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 :caption: User Guide
 
 Installation
@@ -34,7 +34,7 @@ Publications
 ```{toctree}
 :caption: Developers
 :glob:
-:maxdepth: 2
+:maxdepth: 1
 
 Contributing
 DevelopmentGuide
@@ -42,8 +42,7 @@ Support
 ```
 
 ```{toctree}
-:hidden:
-:maxdepth: 6
+:maxdepth: 3
 :caption: API Reference
 
 api/mqt/qecc/index
