@@ -39,7 +39,7 @@ def main() -> None:
         d = args.distance
         code = CSSCode.from_code_name("surface", d)
         code_name = f"rotated_surface_d{d}"
-    elif "cc_4_8_8_d7" in code_name:
+    elif code_name == "cc_4_8_8_d7":
         d = 7
         code = SquareOctagonColorCode(d)
         lut_path = (Path("__file__") / "../../eval/luts/decoder_488_7.pickle").resolve()
@@ -49,10 +49,13 @@ def main() -> None:
         else:
             msg = "LUT file not found."
             raise ValueError(msg)
-    elif "cc_4_8_8" in code_name:
+    elif code_name == "cc_6_6_6_d7":
+        d = 7
+        code = HexagonalColorCode(d)
+    elif code_name == "cc_4_8_8_d5":
         d = 5
         code = SquareOctagonColorCode(d)
-    elif "cc_6_6_6" in code_name:
+    elif code_name == "cc_6_6_6_d5":
         d = 5
         code = HexagonalColorCode(d)
     elif code_name in available_codes:
@@ -71,7 +74,7 @@ def main() -> None:
     # else:
     circuits = []
     # load circuit from file
-    for _id in [0, 1, 2, 3] if code_name == "cc_4_8_8" else [0, 1, 2]:
+    for _id in [0, 1, 2, 3]:
         circ_file = circ_file_core + str(_id)
         circuits.append(QuantumCircuit.from_qasm_file(prefix / code_name / circ_file))
 
@@ -80,7 +83,7 @@ def main() -> None:
         circ2=circuits[1],
         code=code,
         circ3=circuits[2],
-        circ4=circuits[3] if code_name == "cc_4_8_8" else circuits[2],
+        circ4=circuits[3],
         p=args.p_error,
         p_idle=args.p_idle_factor * args.p_error,
         zero_state=args.zero_state,
