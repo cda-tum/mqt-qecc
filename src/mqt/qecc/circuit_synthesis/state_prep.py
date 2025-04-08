@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import z3
 from ldpc import mod2
-from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag
 
 from ..codes import InvalidCSSCodeError
@@ -35,7 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from qiskit import DAGNode
     from qiskit.quantum_info import PauliList
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
 
 
 class StatePrepCircuit:
@@ -534,7 +534,7 @@ def gate_optimal_verification_circuit(
     full_fault_tolerance: bool = True,
     flag_first_layer: bool = False,
 ) -> QuantumCircuit:
-    """Return a verified state preparation circuit.
+    r"""Return a verified state preparation circuit.
 
     The verification circuit is a set of stabilizers such that each propagated error in sp_circ anticommutes with some verification stabilizer.
 
@@ -545,7 +545,7 @@ def gate_optimal_verification_circuit(
         min_timeout: The minimum time to allow each search to run for.
         max_timeout: The maximum time to allow each search to run for.
         max_ancillas: The maximum number of ancillas to allow in each layer verification circuit.
-        full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
+        full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical \|0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical \|+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
         flag_first_layer: If True, the first verification layer (verifying X or Z errors) will also be flagged. If False, the potential hook errors introduced by the first layer will be caught by the second layer. This is only relevant if full_fault_tolerance is True.
     """
 
@@ -570,7 +570,7 @@ def heuristic_verification_circuit(
     full_fault_tolerance: bool = True,
     flag_first_layer: bool = False,
 ) -> QuantumCircuit:
-    """Return a verified state preparation circuit.
+    r"""Return a verified state preparation circuit.
 
     The method uses a greedy set covering heuristic to find a small set of stabilizers that verifies the state preparation circuit. The heuristic is not guaranteed to find the optimal set of stabilizers.
 
@@ -578,7 +578,7 @@ def heuristic_verification_circuit(
         sp_circ: The state preparation circuit to verify.
         max_covering_sets: The maximum number of covering sets to consider.
         find_coset_leaders: Whether to find coset leaders for the found measurements. This is done using SAT solvers so it can be slow.
-        full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical |0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical |+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
+        full_fault_tolerance: If True, the verification circuit will be constructed to be fault tolerant to all errors in the state preparation circuit. If False, the verification circuit will be constructed to be fault tolerant only to the type of errors that can cause a logical error. For a logical \|0> state preparation circuit, this means the verification circuit will be fault tolerant to X errors but not for Z errors. For a logical \|+> state preparation circuit, this means the verification circuit will be fault tolerant to Z errors but not for X errors.
         flag_first_layer: If True, the first verification layer (verifying X or Z errors) will also be flagged. If False, the potential hook errors introduced by the first layer will be caught by the second layer. This is only relevant if full_fault_tolerance is True.
     """
 

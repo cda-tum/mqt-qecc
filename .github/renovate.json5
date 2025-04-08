@@ -8,7 +8,7 @@
   },
   lockFileMaintenance: {
     "enabled": true,
-    // "automerge": true, disabled due to endless update loops caused by setuptools_scm
+    "automerge": true,
   },
   configMigration: true,
   labels: ["dependencies"],
@@ -33,6 +33,13 @@
       "description": "Automerge patch updates",
       "matchUpdateTypes": ["patch"],
       "automerge": true
+    },
+    {
+      description: "Automerge minor updates for stable dependencies",
+      matchManagers: ["pep621", "pre-commit"],
+      matchUpdateTypes: ["minor", "patch"],
+      matchCurrentVersion: "!/^0/",
+      automerge: true
     }
   ]
 }

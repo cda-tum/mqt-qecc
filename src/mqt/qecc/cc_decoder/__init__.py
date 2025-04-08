@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from ..codes import ColorCode, HexagonalColorCode, LatticeType, SquareOctagonColorCode
+from ..codes.color_code import ColorCode, LatticeType
+from ..codes.hexagonal_color_code import HexagonalColorCode
+from ..codes.square_octagon_color_code import SquareOctagonColorCode
 from .comparison import tn_decoder
 
 
