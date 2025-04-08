@@ -15,7 +15,6 @@ from qiskit.converters import circuit_to_dag
 from ..codes import InvalidCSSCodeError
 from .synthesis_utils import (
     build_css_circuit_from_cnot_list,
-    get_permutation_group,
     heuristic_gaussian_elimination,
     iterative_search_with_timeout,
     measure_flagged,
@@ -35,7 +34,6 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from qiskit import DAGNode
     from qiskit.quantum_info import PauliList
-    from sympy.combinatorics import Permutation
 
     from ..codes import CSSCode
 
@@ -230,23 +228,6 @@ class StatePrepCircuit:
         self.x_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
         self.z_fault_sets_unreduced: list[npt.NDArray[np.int8] | None] = [None for _ in range(self.max_errors + 1)]
 
-    def check_fs_overlap(self, fs_1: npt.NDArray[np.int8], fs_2: npt.NDArray[np.int8], x_error: bool = True) -> bool:
-        """Returns True if there is an overlap between both fault sets."""
-        # TODO: add method docstring and argument descriptions
-        # check if one of the fault sets is empty. If so, default is no overlap
-        if not fs_1.size or not fs_2.size:
-            return False
-        check_fn = self.code.stabilizer_eq_x_error if x_error else self.code.stabilizer_eq_z_error
-        return any(check_fn(f1, f2) for f1 in fs_1 for f2 in fs_2)
-        # check_fn = self.code.stabilizer_eq_x_error if x_error else self.code.stabilizer_eq_z_error
-        # for f1 in fs_1:
-        #     for f2 in fs_2:
-        #         if check_fn(f1, f2):
-        #             print(f"\nOverlap found: f1={f1}, f2={f2}\nx-error:{x_error}")
-        #             return True  # Return immediately after finding the first overlap
-        #
-        # return False  # Return False if no overlaps are found
-
 
 def _build_state_prep_circuit_from_back(
     checks: npt.NDArray[np.int8], cnots: list[tuple[int, int]], zero_state: bool = True
@@ -262,7 +243,14 @@ def _build_state_prep_circuit_from_back(
 
 
 def heuristic_prep_circuit(
-    code: CSSCode, optimize_depth: bool = True, zero_state: bool = True, penalty_cols: list[int] | None = None
+    code: CSSCode,
+    optimize_depth: bool = True,
+    zero_state: bool = True,
+    penalty_cols: list[tuple[int]] | None = None,
+    ref_x_fs: npt.NDArray[np.int8] | None = None,
+    ref_z_fs: npt.NDArray[np.int8] | None = None,
+    guide_by_x: bool = True,
+    ref_x_1fs: npt.NDArray[np.int8] | None = None,
 ) -> StatePrepCircuit:
     """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
 
@@ -282,88 +270,18 @@ def heuristic_prep_circuit(
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
     checks, cnots = heuristic_gaussian_elimination(
-        checks, parallel_elimination=optimize_depth, penalty_cols=penalty_cols
+        checks,
+        parallel_elimination=optimize_depth,
+        penalty_cols=penalty_cols,
+        code=code,
+        ref_x_fs=ref_x_fs,
+        ref_z_fs=ref_z_fs,
+        guide_by_x=guide_by_x,
+        ref_x_1fs=ref_x_1fs,
     )
 
     circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
-
-
-def fs_disjunct_spc(
-    code: CSSCode, automorph_generators: list[list[int]], optimize_depth: bool = True, zero_state: bool = True
-) -> dict[Permutation, list[npt.NDArray[np.int8]]]:
-    """Returns dictionary of permutations for the given QEC.
-
-    This function takes a QEC and the corresponding strong automorphism group. It then checks every permutation and
-    returns a dictionary with all permutations as keys and the overlapping propagated errors in the fault set.
-
-    Args:
-        code: The CSS code to prepare the state for.
-        optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
-        zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
-        automorph_generators: foobar
-    """
-    logger.info("Starting heuristic state preparation.")
-    if code.Hx is None or code.Hz is None:
-        msg = "The code must have both X and Z stabilizers defined."
-        raise InvalidCSSCodeError(msg)
-
-    checks = code.Hx if zero_state else code.Hz
-    assert checks is not None
-    checks, cnots = heuristic_gaussian_elimination(checks, parallel_elimination=optimize_depth)
-    # NOTE: everything above is code duplication from heuristic_prep_circuit()
-    # could this be simplified but then we would need an intermediate return of checks, cnots
-
-    permutation_group = get_permutation_group(group_generators=automorph_generators)
-    # BUG: I have those prints since the stateprep circuit below gives another fault set than the one
-    # returned all the way at the bottom without this if section and I do not understand why
-    circ = _build_state_prep_circuit_from_back(checks.copy(), cnots.copy(), zero_state)
-    stateprepcirc = StatePrepCircuit(circ, code, zero_state)
-
-    # NOTE: get fault sets based on code distance
-    stateprepcirc.compute_fault_set()
-    fault_set_1 = stateprepcirc.x_fault_sets[1]
-    if stateprepcirc.code.distance == 5:
-        fault_set_1 = fault_set_1[np.where(fault_set_1.sum(axis=1) > 2)]
-    if stateprepcirc.code.distance == 7:
-        stateprepcirc.compute_fault_set(2)
-        fault_set_2 = stateprepcirc.x_fault_sets[2]
-        fault_set_1 = fault_set_1[np.where(fault_set_1.sum(axis=1) > 3)]
-        fault_set_2 = fault_set_2[np.where(fault_set_2.sum(axis=1) > 3)]
-
-    original_faults = fault_set_1
-    if stateprepcirc.code.distance == 7:
-        original_faults = np.vstack(fault_set_1, fault_set_2)
-    return overlap_search(
-        code=code, fs_2b_permuted=fault_set_1, comp_faults=original_faults, permutation_group=permutation_group
-    )
-
-
-def overlap_search(
-    code: CSSCode,
-    fs_2b_permuted: npt.NDArray[np.int8],
-    comp_faults: npt.NDArray[np.int8],
-    permutation_group: list[Permutation],
-) -> dict[Permutation, list[npt.NDArray[np.int8]]]:
-    """Foobar."""
-    # HACK: Overlap search has 3 nested for loops, check for improvement
-    overlapping_faults: list[npt.NDArray[np.int8]] = []
-    perm_overlap: dict[Permutation, list[npt.NDArray[np.int8]]] = {}
-    print(f"fault set to be permuted:\n{fs_2b_permuted}")
-    print(f"comparison fault set:\n{comp_faults}")
-    for perm in permutation_group:
-        perm_fs = fs_2b_permuted[:, perm.array_form]
-        for pf in perm_fs:
-            for ff in comp_faults:
-                if code.stabilizer_eq_x_error(pf, ff):
-                    # FIX: without this print statement append gets changed to extend on save
-                    print(f"permutation: {perm}")
-                    print(f"stabilizer equivalent error: \n{pf}(permuted) and \n{ff}(not permuted)")
-                    overlapping_faults.append(pf)
-        perm_overlap[perm] = overlapping_faults
-        overlapping_faults = []
-
-    return perm_overlap
 
 
 def depth_optimal_prep_circuit(
