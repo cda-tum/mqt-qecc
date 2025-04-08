@@ -44,7 +44,7 @@ print(f"Encoding qubits are qubits {q_enc}.")
 print(f"Circuit has depth {depth_opt.depth()}.")
 print(f"Circuit has {depth_opt.num_nonlocal_gates()} CNOTs.")
 
-depth_opt.draw()
+depth_opt.draw('mpl')
 ```
 
 ```{code-cell} ipython3
@@ -54,7 +54,7 @@ print(f"Encoding qubits are qubits {q_enc}.")
 print(f"Circuit has depth {gate_opt.depth()}.")
 print(f"Circuit has {gate_opt.num_nonlocal_gates()} CNOTs.")
 
-gate_opt.draw()
+gate_opt.draw('mpl')
 ```
 
 QECC obtains optimal solutions for circuits by iteratively trying out different parameters to close in on the optimum. Each run will only be run until the number of seconds specified by `max_timeout`. If a solution is found in this time it is returned. Otherwise, `None` will be returned.
@@ -70,7 +70,7 @@ print(f"Encoding qubits are qubits {q_enc}.")
 print(f"Circuit has depth {heuristic_circ.depth()}.")
 print(f"Circuit has {heuristic_circ.num_nonlocal_gates()} CNOTs.")
 
-heuristic_circ.draw()
+heuristic_circ.draw('mpl')
 ```
 
 ## Synthesizing Encoders for Concatenated Codes
@@ -107,7 +107,7 @@ print(f"Encoding qubits are qubits {q_enc}.")
 print(f"Circuit has depth {encoder.depth()}.")
 print(f"Circuit has {encoder.num_nonlocal_gates()} CNOTs.")
 
-encoder.draw()
+encoder.draw('mpl')
 ```
 
 Propagating Paulis from the encoding qubits at the input to the output will not necessarily yield the exact logicals given above. But the logical operators will be stabilizer equivalent.
@@ -135,7 +135,7 @@ print(f"Encoding qubits are qubits {q_enc}.")
 print(f"Circuit has depth {encoder_concat_naive.depth()}.")
 print(f"Circuit has {encoder_concat_naive.num_nonlocal_gates()} CNOTs.")
 
-encoder_concat_naive.draw()
+encoder_concat_naive.draw('mpl')
 ```
 
 Qubits $1$ and $2$ are still the encoding qubits and if we propagate Pauli $X$ and $Z$ to the output, we find that this is indeed the encoder for an $[[8,2,2]]$ code.
@@ -182,7 +182,7 @@ print(f"Encoding qubits are qubits {q_enc}.")
 print(f"Circuit has depth {encoder_concat_direct.depth()}.")
 print(f"Circuit has {encoder_concat_direct.num_nonlocal_gates()} CNOTs.")
 
-encoder_concat_direct.draw()
+encoder_concat_direct.draw('mpl')
 ```
 
 We see that the circuit is more compact then the naively concatenated one. This is because the synthesis method exploits redundancy in the check matrix of the concatenated code.
