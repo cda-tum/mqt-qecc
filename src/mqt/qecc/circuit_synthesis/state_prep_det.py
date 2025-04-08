@@ -7,6 +7,7 @@ from itertools import product
 from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 import z3
 from ldpc import mod2
 
@@ -30,14 +31,12 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    import numpy.typing as npt
-
     from ..codes import CSSCode
 
-    Recovery = tuple[list[npt.NDArray[np.int8]], dict[int, npt.NDArray[np.int8]]]
-    Recoveries = dict[int, Recovery]
-    DeterministicCorrection = dict[int, tuple[list[npt.NDArray[np.int8]], Recoveries]]
-    Verification = list[npt.NDArray[np.int8]]
+Recovery = tuple[list[npt.NDArray[np.int8]], dict[int, npt.NDArray[np.int8]]]
+Recoveries = dict[int, Recovery]
+DeterministicCorrection = dict[int, tuple[list[npt.NDArray[np.int8]], Recoveries]]
+Verification = list[npt.NDArray[np.int8]]
 
 
 class DeterministicVerification:

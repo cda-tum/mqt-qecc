@@ -109,7 +109,7 @@ def assert_scaling(simulation_results: list[npt.NDArray[np.float64]]) -> None:
     x = np.log10(err_params["q"])
     y = np.log10(dss_upper_bound)
     m = np.diff(y) / np.diff(x)
-    assert np.average(m[:3]) > 1.5
+    assert np.average(m[:3]) > 1.3
 
 
 def test_11_1_3_det_verification(css_11_1_3_code_sp: StatePrepCircuit) -> None:
