@@ -124,6 +124,6 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.03.24
+    rev: 2025.04.07
     hooks:
       - id: validate-pyproject
