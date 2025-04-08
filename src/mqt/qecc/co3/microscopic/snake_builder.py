@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from collections import Counter
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -12,6 +13,9 @@ import numpy as np
 from matplotlib import cm
 from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 from mqt.qecc import CSSCode
 
@@ -273,7 +277,8 @@ class SnakeBuilderSC:
                 # only check for those lements which are NOT the central qubit
                 node_counts = Counter(plaquette_flat)
                 # print("node_counts", node_counts)
-                central_node = max(node_counts, key=node_counts.get)
+                # central_node = max(node_counts, key=node_counts.get)
+                central_node = max(node_counts, key=lambda x: node_counts.get(x, 0))
                 # print("central_node", central_node)
                 plaquette_flat = [node for node in plaquette_flat if node != central_node]
                 # print("plaquette_flat", plaquette_flat)
@@ -322,7 +327,9 @@ class SnakeBuilderSC:
 
         # add check whether there are q-num stabs = 1
 
-    def gen_checks(self) -> tuple[np.ndarray, np.ndarray, dict]:
+    def gen_checks(
+        self,
+    ) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.int_], dict[tuple[tuple[int, int], tuple[int, int]], int]]:
         """Return checks and translation dict."""
         trans_dict = {
             edge: i for i, edge in enumerate(self.qubit_edges)
@@ -343,7 +350,12 @@ class SnakeBuilderSC:
         self.trans_dict = trans_dict
         return hx, hz, trans_dict
 
-    def plot_stabs(self, opz: list | None = None, opx: list | None = None, size: tuple[int, int] = (8, 8)) -> None:
+    def plot_stabs(
+        self,
+        opz: list[tuple[tuple[int, int], tuple[int, int]]] | None = None,
+        opx: list[tuple[tuple[int, int], tuple[int, int]]] | None = None,
+        size: tuple[int, int] = (8, 8),
+    ) -> None:
         """Plots plaquettes and star operators as well as the snake itself.
 
         opz and opx are the logical operators retrieved via mqt.qecc.CSSCode which are already translated as edges on the graph.
@@ -359,7 +371,8 @@ class SnakeBuilderSC:
         for star in self.stars:
             all_nodes = [node for edge in star for node in edge]
             node_counts = Counter(all_nodes)
-            central_node = max(node_counts, key=node_counts.get)
+            # central_node = max(node_counts, key=node_counts.get)
+            central_node = max(node_counts, key=lambda x: node_counts.get(x, 0))
             for u, v in star:
                 if u == central_node:
                     start, end = u, v
@@ -385,11 +398,11 @@ class SnakeBuilderSC:
             square_pos = [pos[node] for node in square]
             square_pos = convex_hull(square_pos)
             # shrink the polygon a little
-            square_pos = np.array(square_pos)
-            centroid = square_pos.mean(axis=0)
+            square_pos_arr = np.array(square_pos)
+            centroid = square_pos_arr.mean(axis=0)
             factor = 0.6
-            square_pos = centroid + factor * (square_pos - centroid)
-            polygon = Polygon(square_pos, closed=True, color="green", alpha=0.3, label="Z Face")
+            square_pos_arr = centroid + factor * (square_pos_arr - centroid)
+            polygon = Polygon(square_pos_arr, closed=True, color="green", alpha=0.3, label="Z Face")
             ax.add_patch(polygon)
 
         nodes = self.boundary_nodes + self.inner_nodes  # all nodes
@@ -424,11 +437,11 @@ class SnakeBuilderSC:
         plt.legend(unique_handles, unique_legend.keys())
         plt.show()
 
-    def get_logical_operator_basis(self) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
+    def get_logical_operator_basis(self) -> npt.NDArray[np.int8]:
         """Generates Logical Operators of the snake.
 
         Returns:
-            tuple[np.ndarray[np.int32], np.ndarray[np.int32]]: logical operators.
+            npt.NDArray[np.int8]: logical operators.
         """
         hx, hz, _ = self.gen_checks()
         return CSSCode._compute_logical(np.array(hx), np.array(hz))  # noqa: SLF001
@@ -506,7 +519,9 @@ class SnakeBuilderSTDW:
 
         return [lst_corner, lst_boundary]
 
-    def find_interface_ancillas(self, triangle_0: int, triangle_1: int) -> list[tuple]:
+    def find_interface_ancillas(
+        self, triangle_0: int, triangle_1: int
+    ) -> list[tuple[tuple[int, int], tuple[int, int]]]:
         """Finds ancilla vertices on the interface between triangle_0 and triangle_1.
 
         Args:
@@ -536,7 +551,7 @@ class SnakeBuilderSTDW:
         ancillas = [el["path"][1] for el in next_nearest_neighbors]
 
         # only use those ancillas which do indeed have a nearest neighbor in the ancilla set (single ancillas not wanted)
-        ancilla_pairs = []
+        ancilla_pairs: list[tuple[tuple[int, int], tuple[int, int]]] = []
         for node in ancillas:
             neighbors = set(self.g.neighbors(node))
             valid_neighbors = neighbors.intersection(ancillas)
@@ -546,7 +561,7 @@ class SnakeBuilderSTDW:
 
         return ancilla_pairs
 
-    def hex_plaquettes(self) -> list:
+    def hex_plaquettes(self) -> list[set[tuple[int, int]]]:
         """Find all hexagonal plaquettes on original g.
 
         Returns:
@@ -555,7 +570,7 @@ class SnakeBuilderSTDW:
         cycles = list(nx.simple_cycles(self.g, length_bound=6))
         return [set(cycle) for cycle in cycles if len(cycle) == 6]
 
-    def find_stabilizers(self) -> tuple[list, list]:
+    def find_stabilizers(self) -> tuple[list[list[tuple[int, int]]], list[list[tuple[int, int]]]]:
         """Find stabilizers on self.positions.
 
         Returns:
@@ -563,14 +578,14 @@ class SnakeBuilderSTDW:
             because we assume a Z merge by default. but can be interchanged of course for a X merge.
         """
         total_nodes = []  # find all relevant nodes first
-        z_plaquettes = []
+        z_plaquettes: list[list[tuple[int, int]]] = []
 
         for triangle in self.positions:  # all nodes in the triangles
             total_nodes += triangle
 
         for i in range(len(self.positions) - 1):  # everything in the interface
             ancilla_pairs = self.find_interface_ancillas(i, i + 1)
-            z_plaquettes += ancilla_pairs  # pair stabs
+            z_plaquettes += [list(el) for el in ancilla_pairs]  # pair stabs
             ancillas_flattened = [item for sublist in ancilla_pairs for item in sublist]
             total_nodes += ancillas_flattened
 
@@ -579,10 +594,10 @@ class SnakeBuilderSTDW:
         for plaquette in hexagonal_plaquettes:
             overlap = set(plaquette) & set(total_nodes)
             if len(overlap) >= 3:  # Ensure a meaningful plaquette (full or partial)
-                z_plaquettes.append(overlap)
+                z_plaquettes.append(list(overlap))
 
         # filter out interface only plaquettes to distinguish x_plaquettes and z_plaquettes
-        x_plaquettes = []
+        x_plaquettes: list[list[tuple[int, int]]] = []
         for plaquette in z_plaquettes:
             if len(plaquette) == 6:  # pairs, weight-3, weight-5 in the interface NOT wanted for X stabs
                 # also remove the hex plaquettes within the interface (touching vertices of two triangles)
@@ -593,9 +608,9 @@ class SnakeBuilderSTDW:
                     else:
                         bools.append(True)
                 if all(bools):
-                    x_plaquettes.append(plaquette)  # only if above NOT fulfilled
+                    x_plaquettes.append(list(plaquette))  # only if above NOT fulfilled
             elif len(plaquette) == 4:
-                x_plaquettes.append(plaquette)
+                x_plaquettes.append(list(plaquette))
 
         self.total_nodes = total_nodes
         # build in assertion regarding number of each stabilizers, i have equations to check whether the number is right.
@@ -1321,28 +1336,23 @@ class SnakeBuilder:
         plt.show()
 
 
-def convex_hull(points: list[tuple]) -> list:
+def convex_hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
     """Find the convex hull of a set of 2D points."""
-    # Sort the points by x (and by y if x's are equal)
     points = sorted(points)
 
-    # Helper function: cross product of vectors OA and OB
     def cross(o: list, a: list, b: list) -> float:
         return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
 
-    # Build the lower hull
     lower = []
     for p in points:
         while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
             lower.pop()
         lower.append(p)
 
-    # Build the upper hull
     upper = []
     for p in reversed(points):
         while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
             upper.pop()
         upper.append(p)
 
-    # Remove the last point of each half because it is repeated at the beginning of the other half
     return lower[:-1] + upper[:-1]

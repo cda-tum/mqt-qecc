@@ -132,8 +132,8 @@ def generate_random_circuit(
     num_cnot_gates = round(min_depth * ratio) if tgate else min_depth
     num_t_gates = min_depth - num_cnot_gates
 
-    cnot_pairs = []
-    t_gates = []
+    cnot_pairs: list[tuple[int, int]] = []
+    t_gates: list[int] = []
     used_qubits = set()
 
     # Ensure each qubit is used at least once
@@ -185,28 +185,34 @@ def generate_random_circuit(
 
 
 def translate_layout_circuit(
-    pairs: list[tuple[int, int] | int], layout: dict
-) -> list[tuple[tuple[int, int]] | tuple[int, int]]:
+    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[int]]
+) -> list[tuple[tuple[int, int], tuple[int, int]] | tuple[int, int]]:
     """Translates a `pairs` circuit (with int labels) into the lattice's labels for a given layout.
 
     However, pairs does not only include tuple[int,int] but can include int as well for T gates. Then, layout will also include
     a list of factory positions in the key="factory_positions". but this will be ignored for this
     """
     # return [(layout[pair[0]], layout[pair[1]]) for pair in pairs]
-    terminal_pairs = [(layout[pair[0]], layout[pair[1]]) if isinstance(pair, tuple) else layout[pair] for pair in pairs]
-    terminal_pairs_updated = []
-    for el in terminal_pairs:
-        if isinstance(el[0], tuple) and isinstance(el[1], tuple):
-            tup1 = (int(el[0][0]), int(el[0][1]))
-            tup2 = (int(el[1][0]), int(el[1][1]))
-            terminal_pairs_updated.append((tup1, tup2))
+    # terminal_pairs = [(layout[pair[0]], layout[pair[1]]) if isinstance(pair, tuple) else layout[pair] for pair in pairs]
+    terminal_pairs: list[tuple[tuple[int, int], tuple[int, int]] | tuple[int, int]] = []
+    for pair in pairs:
+        if isinstance(pair, tuple):
+            pos1 = layout[pair[0]]
+            pos2 = layout[pair[1]]
+            pos1 = (int(pos1[0]), int(pos1[1]))
+            pos2 = (int(pos2[0]), int(pos2[1]))
+            terminal_pairs.append((pos1, pos2))
         else:
-            tup = (int(el[0]), int(el[1]))
-            terminal_pairs_updated.append(tup)
-    return terminal_pairs_updated
+            pos = layout[pair]
+            pos = (int(pos[0]), int(pos[1]))
+            terminal_pairs.append(pos)
+
+    return terminal_pairs
 
 
-def compare_original_dynamic_gate_order(q: int, layout: dict, router: co.ShortestFirstRouterTGatesDyn) -> bool:
+def compare_original_dynamic_gate_order(
+    q: int, layout: dict[int | str, tuple[int, int] | list[int]], router: co.ShortestFirstRouterTGatesDyn
+) -> bool:
     """Generates a qiskit circuit for both the order after doing dynamic routing and the original order.
 
     Hence, it is checked whether the many reorderings in dynamic routing are really safe and sound.
@@ -245,27 +251,27 @@ def compare_original_dynamic_gate_order(q: int, layout: dict, router: co.Shortes
         )
 
     reverse_mapping = {v: k for k, v in layout.items()}
-    translated_previous = []
+    translated_previous: list[tuple[int | str, ...] | int | str] = []
     for item in gates_previous:
         if isinstance(item, tuple):  # If it's a tuple, check if it's a nested pair
             if isinstance(item[0], tuple):  # If it's a tuple of tuples (nested)
                 translated_previous.append(tuple(reverse_mapping[sub] for sub in item))
             else:  # If it's a single tuple directly in the list
                 translated_previous.append(reverse_mapping[item])
-        else:  # If it's not a tuple (single number, shouldn't happen based on your input)
-            msg = f"Unexpected element in data: {item}"
-            raise TypeError(msg)
+        # else:  # If it's not a tuple (single number, shouldn't happen based on your input)
+        #    msg = f"Unexpected element in data: {item}"
+        #    raise TypeError(msg)
 
-    translated_routing = []
+    translated_routing: list[tuple[int | str, ...] | int | str] = []
     for item in gates_routing:
         if isinstance(item, tuple):  # If it's a tuple, check if it's a nested pair
             if isinstance(item[0], tuple):  # If it's a tuple of tuples (nested)
                 translated_routing.append(tuple(reverse_mapping[sub] for sub in item))
             else:  # If it's a single tuple directly in the list
                 translated_routing.append(reverse_mapping[item])
-        else:  # If it's not a tuple (single number, shouldn't happen based on your input)
-            msg = f"Unexpected element in data: {item}"
-            raise TypeError(msg)
+        # else:  # If it's not a tuple (single number, shouldn't happen based on your input)
+        #    msg = f"Unexpected element in data: {item}"
+        #    raise TypeError(msg)
 
     # switch on purpose two entries which is wrong to check whether this is recognized
     # temp = translated_routing[0]

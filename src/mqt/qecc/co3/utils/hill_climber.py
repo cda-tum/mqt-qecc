@@ -276,7 +276,7 @@ class HillClimbing:
             cost = len(vdp_layers)
         return cost
 
-    def gen_random_qubit_assignment(self) -> dict:
+    def gen_random_qubit_assignment(self) -> dict[int | str, tuple[int, int] | list[int]]:
         """Yields a random qubit assignment given the `data_qubit_locs`."""
         layout = {}
         perm = list(range(self.q))
