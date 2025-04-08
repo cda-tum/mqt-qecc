@@ -258,7 +258,11 @@ def heuristic_prep_circuit(
         code: The CSS code to prepare the state for.
         optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
         zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
-        penalty_cols: foobar
+        penalty_cols: tuples of CNOTs (control, target) which are initially added to the failed_cnots list and hence can only be applied once the control qubit has been used elsewhere
+        ref_x_fs: (Optional) reference x fault set which influences the construction of the circuit
+        ref_z_fs: (Optional) reference z fault set which influences the construction of the circuit
+        guide_by_x: Flag that decides wether dismissed CNOTs are free to placement again after either the control (x guided) or the target (z guided) has been used elsewhere
+        ref_x_1fs: (Optional) reference one error x fault set which ensures that no two error event of the newly constructed circuit cancels a one error event of the reference circuit
     """
     if penalty_cols is None:
         penalty_cols = []
