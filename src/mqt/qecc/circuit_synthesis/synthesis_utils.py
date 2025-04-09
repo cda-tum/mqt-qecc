@@ -10,14 +10,14 @@ import multiprocess
 import numpy as np
 import z3
 from ldpc import mod2
-from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit
 from stim import Circuit
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     import numpy.typing as npt
-    from qiskit import AncillaQubit, ClBit, Qubit
+    from qiskit.circuit import AncillaQubit, Clbit, Qubit
 
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def heuristic_gaussian_elimination(
         matrix: The matrix to perform Gaussian elimination on.
         parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     matrix = matrix.copy()
@@ -166,7 +166,7 @@ def gaussian_elimination_min_column_ops(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_eliminations: The maximum number of eliminations to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     n = matrix.shape[1]
@@ -235,7 +235,7 @@ def gaussian_elimination_min_parallel_eliminations(
         termination_criteria: A function that takes a boolean matrix as input and returns a Z3 boolean expression that is true if the matrix is considered reduced.
         max_parallel_steps: The maximum number of parallel elimination steps to perform.
 
-    returns:
+    Returns:
         The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
     """
     columns = np.array([
@@ -500,7 +500,7 @@ def _ancilla_cnot(qc: QuantumCircuit, qubit: Qubit | AncillaQubit, ancilla: Anci
         qc.cx(ancilla, qubit)
 
 
-def _flag_measure(qc: QuantumCircuit, flag: AncillaQubit, meas_bit: ClBit, z_measurement: bool) -> None:
+def _flag_measure(qc: QuantumCircuit, flag: AncillaQubit, meas_bit: Clbit, z_measurement: bool) -> None:
     if z_measurement:
         qc.h(flag)
     qc.measure(flag, meas_bit)
@@ -521,7 +521,7 @@ def measure_stab_unflagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a stabilizer without flags. The measurement is done in place.
@@ -546,7 +546,7 @@ def measure_flagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     t: int,
     z_measurement: bool = True,
 ) -> None:
@@ -613,7 +613,7 @@ def measure_one_flagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a 1-flagged stabilizer.
@@ -651,7 +651,7 @@ def measure_two_flagged_general(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13).
@@ -725,17 +725,17 @@ def measure_two_flagged_4(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a 2-flagged weight 4 stabilizer. In this case only one flag is required.
 
     Args:
-        qc: QuantumCircuit
-        stab: list[Qubit] | npt.NDArray[np.int_]
-        ancilla: AncillaQubit
-        measurement_bit: ClBit
-        z_measurement: bool = True
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
     """
     assert len(stab) == 4
     flag_reg = AncillaRegister(1)
@@ -770,7 +770,7 @@ def measure_two_flagged_5_or_6(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_5: bool = False,
 ) -> None:
@@ -827,7 +827,7 @@ def measure_w_flagged_5_or_6(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_5: bool = False,
 ) -> None:
@@ -890,7 +890,7 @@ def measure_two_flagged_7_or_8(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_7: bool = False,
 ) -> None:
@@ -955,7 +955,7 @@ def measure_three_flagged_7_or_8(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_7: bool = False,
 ) -> None:
@@ -1027,7 +1027,7 @@ def measure_two_flagged_11_or_12(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_11: bool = False,
 ) -> None:
@@ -1112,7 +1112,7 @@ def measure_three_flagged_12(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_11: bool = False,
 ) -> None:
