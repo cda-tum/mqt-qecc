@@ -41,8 +41,6 @@ For up to date software for decoding LDPC codes we refer to [quantumgizmos/ldpc]
 If you would like to use these features, they are available in `mqt.qecc` version <2.0.0.
 :::
 
-Basic usage for _lattice surgery compilation beyond the surface code_ is described [here](https://github.com/cda-tum/mqt-qecc/blob/ls-compilation/docs/Co3.rst) in the branch `ls-compilation` whose code quality improvements are work in progress.
-
 If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by
 creating an issue on [GitHub](https://github.com/cda-tum/mqt-qecc/issues).
 
