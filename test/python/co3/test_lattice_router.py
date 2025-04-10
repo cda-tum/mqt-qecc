@@ -206,11 +206,11 @@ def test_hex_qubit_locs():
 
 def test_dynamic_router():
     """Tests the dynamic routing."""
-    pairs = [(0, 1), (2, 3), (4, 5), (0, 2), 4, (1, 5), (0, 1), (2, 3)]
+    pairs: list[tuple[int, int]| int] = [(0, 1), (2, 3), (4, 5), (0, 2), 4, (1, 5), (0, 1), (2, 3)]
     m = 3
     n = 4
     factory_locs = [(1, 7), (3, 7)]
-    layout = {2: (1, 2), 5: (1, 3), 1: (2, 2), 3: (2, 3), 0: (3, 2), 4: (3, 3)}
+    layout: dict[int | str, tuple[int, int] | list[int]] = {2: (1, 2), 5: (1, 3), 1: (2, 2), 3: (2, 3), 0: (3, 2), 4: (3, 3)}
     terminal_pairs = co.translate_layout_circuit(pairs, layout)
     router = co.ShortestFirstRouterTGatesDyn(m, n, terminal_pairs, factory_locs, t=1)
     vdp_layers = router.find_total_vdp_layers_dyn()
@@ -249,7 +249,7 @@ def test_ordering_dyn_routing():
     # generate random circuit
     pairs = co.generate_random_circuit(q, min_depth=q, tgate=True, ratio=0.8)
     # generate random layout
-    layout = {}
+    layout: dict[int | str, tuple[int, int] | list[int]] = {}
     perm = list(range(len(data_qubit_locs)))
     random.shuffle(perm)
     for i, j in zip(
