@@ -185,7 +185,7 @@ def generate_random_circuit(
 
 
 def translate_layout_circuit(
-    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[int]]
+    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]
 ) -> list[tuple[tuple[int, int], tuple[int, int]] | tuple[int, int]]:
     """Translates a `pairs` circuit (with int labels) into the lattice's labels for a given layout.
 
@@ -197,21 +197,27 @@ def translate_layout_circuit(
     terminal_pairs: list[tuple[tuple[int, int], tuple[int, int]] | tuple[int, int]] = []
     for pair in pairs:
         if isinstance(pair, tuple):
-            pos1 = layout[pair[0]]
-            pos2 = layout[pair[1]]
-            pos1 = (int(pos1[0]), int(pos1[1]))
-            pos2 = (int(pos2[0]), int(pos2[1]))
+            pos1_raw = layout[pair[0]]
+            pos2_raw = layout[pair[1]]
+            if not isinstance(pos1_raw, tuple) or not isinstance(pos2_raw, tuple):
+                msg = "Expected tuple[int, int] in layout mapping."
+                raise TypeError(msg)
+            pos1 = (int(pos1_raw[0]), int(pos1_raw[1]))
+            pos2 = (int(pos2_raw[0]), int(pos2_raw[1]))
             terminal_pairs.append((pos1, pos2))
         else:
-            pos = layout[pair]
-            pos = (int(pos[0]), int(pos[1]))
+            pos_raw = layout[pair]
+            if not isinstance(pos_raw, tuple):
+                msg = "Expected tuple[int, int] in layout mapping."
+                raise TypeError(msg)
+            pos = (int(pos_raw[0]), int(pos_raw[1]))
             terminal_pairs.append(pos)
 
     return terminal_pairs
 
 
 def compare_original_dynamic_gate_order(
-    q: int, layout: dict[int | str, tuple[int, int] | list[int]], router: co.ShortestFirstRouterTGatesDyn
+    q: int, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]], router: co.ShortestFirstRouterTGatesDyn
 ) -> bool:
     """Generates a qiskit circuit for both the order after doing dynamic routing and the original order.
 

@@ -210,7 +210,7 @@ def test_dynamic_router():
     m = 3
     n = 4
     factory_locs = [(1, 7), (3, 7)]
-    layout: dict[int | str, tuple[int, int] | list[int]] = {
+    layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]] = {
         2: (1, 2),
         5: (1, 3),
         1: (2, 2),
@@ -256,7 +256,7 @@ def test_ordering_dyn_routing():
     # generate random circuit
     pairs = co.generate_random_circuit(q, min_depth=q, tgate=True, ratio=0.8)
     # generate random layout
-    layout: dict[int | str, tuple[int, int] | list[int]] = {}
+    layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]] = {}
     perm = list(range(len(data_qubit_locs)))
     random.shuffle(perm)
     for i, j in zip(

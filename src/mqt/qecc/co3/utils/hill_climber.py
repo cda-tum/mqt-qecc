@@ -7,6 +7,7 @@ import operator
 import pickle  # noqa: S403
 import random
 from pathlib import Path
+from typing import Any, TypedDict, cast
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -24,8 +25,14 @@ from .misc import translate_layout_circuit
 
 random.seed(45)
 
+class HistoryTemp(TypedDict, total=False):
+    """Type for history dictionaries."""
+    scores: list[int]
+    layout_init: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
+    layout_final: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
 
-def save_to_file(path: str, data: dict) -> None:
+
+def save_to_file(path: str, data: Any) -> None:  # noqa: ANN401
     """Safely saves data to a file."""
     with Path(path).open("wb") as pickle_file:
         pickle.dump(data, pickle_file)
@@ -36,8 +43,8 @@ class HillClimbing:
 
     def __init__(
         self,
-        max_restarts: int | None,
-        max_iterations: int | None,
+        max_restarts: int,
+        max_iterations: int,
         circuit: list[tuple[int, int] | int],
         layout_type: str,
         m: int,
@@ -48,7 +55,7 @@ class HillClimbing:
         free_rows: list[str] | None = None,
         t: int | None = None,
         optimize_factories: bool = False,
-        custom_layout: list[list, nx.Graph] | None = None,
+        custom_layout: list[list[tuple[int,int]] | nx.Graph] | None = None,
         routing: str = "static",
     ) -> None:
         """Initializes the Hill Climbing with Random Restarts algorithm.
@@ -70,7 +77,7 @@ class HillClimbing:
             free_rows (list[str] | None): Adds one or more rows to lattice, either top or right (easier to implement than also adding bottom, left). Defaults to None.
             t (int): waiting time for factories. Defaults to None
             optimize_factories (int): decides whether factories are optimized or not. Defaults to false.
-            custom_layout (list[list, nx.Graph] | None): Defaults to None because custom layouts not assumed to be standard. The first list in the list should be
+            custom_layout (list[list[tuple[int,int]] | nx.Graph] | None): Defaults to None because custom layouts not assumed to be standard. The first list in the list should be
                 a `data_qubits_loc` of the node locations of data qubits and nx.Graph the corresponding graph (possibly differing from the standard networkx hex graph shape)
                 With custom_layout one can avoid using the `free_rows` related stuff.
             routing (str): Defaults to static. Can be "static" or "dynamic". Chooses the routing scheme, whether the layout-agnostic initial layers are dynamically adapted or not.
@@ -90,9 +97,10 @@ class HillClimbing:
             )
             assert num_factories is not None, "If T gates included in circuit, `num_factories` must NOT be None."
             assert t is not None, "If T gates included in circuit, `num_factories` must NOT be None."
-            assert len(possible_factory_positions) >= num_factories, (
-                f"`possible_factory_positions` must have more or equal elements than `num_factories`. But {len(self.possible_factory_positions)} ? {num_factories}"
-            )
+            if possible_factory_positions is not None:
+                assert len(possible_factory_positions) >= num_factories, (
+                    f"`possible_factory_positions` must have more or equal elements than `num_factories`. But {len(possible_factory_positions)} ? {num_factories}"
+                )
         else:
             assert optimize_factories is False, "If no T gates present, optimize_factories must be false."
         self.possible_factory_positions = possible_factory_positions
@@ -125,8 +133,9 @@ class HillClimbing:
         elif layout_type == "hex":
             data_qubit_locs = lat.gen_layout_hex()
         elif layout_type == "custom":
-            data_qubit_locs = custom_layout[0]
-            self.lat.G = custom_layout[1]
+            if custom_layout is not None: #only for mypy
+                data_qubit_locs = custom_layout[0]
+                self.lat.G = custom_layout[1]
         else:
             msg = "unknown layout type"
             raise ValueError(msg)
@@ -139,7 +148,7 @@ class HillClimbing:
                 num for tup in self.circuit for num in (tup if isinstance(tup, tuple) else (tup,))
             ]
         else:
-            flattened_qubit_labels = [num for tup in self.circuit for num in tup]
+            flattened_qubit_labels =  [num for tup in self.circuit if isinstance(tup, tuple) for num in tup] #isinstance only added for mypy
         self.q = max(flattened_qubit_labels) + 1
         if self.q < len(self.data_qubit_locs):
             self.data_qubit_locs = self.data_qubit_locs[: self.q]  # cut-off unnecessary qubit spots.
@@ -225,45 +234,62 @@ class HillClimbing:
 
         return g
 
-    def evaluate_solution(self, layout: dict) -> int:
+    def evaluate_solution(self, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]) -> int:
         """Evaluates the layout=solution according to self.metric."""
         terminal_pairs = translate_layout_circuit(self.circuit, layout)
+        factory_positions: list[tuple[int,int]]
+        #if type(layout["factory_positions"]) is list[tuple[int,int]] or list:
         factory_positions = layout["factory_positions"]
+        #else:
+        #    msg = f"factory positions of layout must be list[tuple[int,int]]. But you got {type(layout['factory_positions'])}"
+        #    raise TypeError(msg)
+        router : ShortestFirstRouter | ShortestFirstRouterTGatesDyn | ShortestFirstRouterTGates
         if any(type(el) is int for el in self.circuit):
-            if self.routing == "static":
-                router = ShortestFirstRouterTGates(
-                    m=self.m, n=self.n, terminal_pairs=terminal_pairs, factory_positions=factory_positions, t=self.t
-                )
-            elif self.routing == "dynamic":
-                router = ShortestFirstRouterTGatesDyn(
-                    m=self.m, n=self.n, terminal_pairs=terminal_pairs, factory_positions=factory_positions, t=self.t
-                )
-            if self.layout_type == "custom":  # Must update the router's g to the customized g
-                router.G = self.lat.G.copy()
-            else:  # if not custom, update self.lat.G by the router's G because m,n might differ from initial values.
-                self.lat.G = router.G  # also add to self
-                if "left" in self.free_rows:
-                    router.G = self.add_left_g(router.G)
+            if self.t is not None:
+                if self.routing == "static":
+                    router = ShortestFirstRouterTGates(
+                        m=self.m, n=self.n, terminal_pairs=terminal_pairs, factory_positions=factory_positions, t=self.t
+                    )
+                elif self.routing == "dynamic":
+                    router = ShortestFirstRouterTGatesDyn(
+                        m=self.m, n=self.n, terminal_pairs=terminal_pairs, factory_positions=factory_positions, t=self.t
+                    )
+                if self.layout_type == "custom":  # Must update the router's g to the customized g
+                    router.G = self.lat.G.copy()
+                else:  # if not custom, update self.lat.G by the router's G because m,n might differ from initial values.
                     self.lat.G = router.G  # also add to self
+                    if self.free_rows is not None: #for mypy  # noqa: SIM102
+                        if "left" in self.free_rows:
+                            router.G = self.add_left_g(router.G)
+                            self.lat.G = router.G  # also add to self
+            else:
+                msg = "t must be not None if the circuit contains single integers for T gates."
+                raise ValueError(msg)
         else:  # only CNOTs
             if self.routing == "static":
-                router = ShortestFirstRouter(m=self.m, n=self.n, terminal_pairs=terminal_pairs)
+                terminal_pairs_cast = cast("list[tuple[tuple[int, int], tuple[int, int]]]", terminal_pairs)
+                router = ShortestFirstRouter(m=self.m, n=self.n, terminal_pairs=terminal_pairs_cast)
             elif self.routing == "dynamic":  # !todo adapt this, because if only cnots, t might not be defined
+                t = cast("int", self.t)
                 router = ShortestFirstRouterTGatesDyn(
-                    m=self.m, n=self.n, terminal_pairs=terminal_pairs, factory_positions=factory_positions, t=self.t
+                    m=self.m, n=self.n, terminal_pairs=terminal_pairs, factory_positions=factory_positions, t=t
                 )
             if self.layout_type == "custom":  # Must update the router's g to the customized g
                 router.G = self.lat.G.copy()
             else:
                 self.lat.G = router.G  # also add to self (but should be redundant right? self.lat.G and router.G should be the same anyways if no T gates present)
+        cost: int
         if self.metric == "crossing":
             if self.optimize_factories and any(type(el) is int for el in self.circuit):
+                router = cast("ShortestFirstRouterTGates | ShortestFirstRouterTGatesDyn", router) 
                 cost = np.sum(router.count_crossings_per_layer(t_crossings=True))
             elif self.optimize_factories is False and any(type(el) is int for el in self.circuit):
+                router = cast("ShortestFirstRouterTGates | ShortestFirstRouterTGatesDyn", router) 
                 cost = np.sum(router.count_crossings_per_layer(t_crossings=False))
             else:
                 cost = np.sum(router.count_crossings_per_layer())
         elif self.metric == "distance":
+            router = cast("ShortestFirstRouter", router) 
             distances = router.measure_terminal_pair_distances()
             cost = np.sum(distances)
             if any(type(el) is int for el in self.circuit):
@@ -272,13 +298,14 @@ class HillClimbing:
             if self.routing == "static":
                 vdp_layers = router.find_total_vdp_layers()
             elif self.routing == "dynamic":
+                router = cast("ShortestFirstRouterTGatesDyn", router) 
                 vdp_layers = router.find_total_vdp_layers_dyn()
             cost = len(vdp_layers)
         return cost
 
-    def gen_random_qubit_assignment(self) -> dict[int | str, tuple[int, int] | list[int]]:
+    def gen_random_qubit_assignment(self) -> dict[int | str, tuple[int, int] | list[tuple[int,int]]]:
         """Yields a random qubit assignment given the `data_qubit_locs`."""
-        layout = {}
+        layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]] = {}
         perm = list(range(self.q))
         random.shuffle(perm)
         for i, j in zip(
@@ -289,12 +316,14 @@ class HillClimbing:
         # Add generation of random choice of factory positions
         factory_positions = []
         if any(type(el) is int for el in self.circuit):
-            factory_positions = random.sample(self.possible_factory_positions, self.num_factories)
+            possible_factory_positions = cast("list[tuple[int,int]]", self.possible_factory_positions)
+            num_factories = cast("int", self.num_factories)
+            factory_positions = random.sample(possible_factory_positions, num_factories)
         layout.update({"factory_positions": factory_positions})
 
         return layout
 
-    def gen_neighborhood(self, layout: dict) -> list[dict]:
+    def gen_neighborhood(self, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]) -> list[dict[int | str, tuple[int, int] | list[tuple[int,int]]]]:
         """Creates the Neighborhood of a given layout by going through each terminal pair and swapping their positions.
 
         If there are no T gates, there will be l=len(terminal_pairs) elements in the neighborhood.
@@ -335,7 +364,12 @@ class HillClimbing:
 
         return neighborhood
 
-    def _parallel_hill_climbing(self, restart: int) -> tuple:
+    def _parallel_hill_climbing(self, restart: int) -> tuple[
+        int,
+        dict[int | str, tuple[int, int] | list[tuple[int,int]]],
+        int,
+        HistoryTemp
+    ]:
         """Helper method for parallel execution of hill climbing restarts.
 
         Args:
@@ -350,7 +384,7 @@ class HillClimbing:
 
         current_solution = self.gen_random_qubit_assignment()
         current_score = self.evaluate_solution(current_solution)
-        history_temp = {"scores": [], "layout_init": current_solution.copy()}
+        history_temp: HistoryTemp = {"scores": [], "layout_init": current_solution.copy()}
 
         for _ in range(self.max_iterations):
             neighbors = self.gen_neighborhood(current_solution)
@@ -374,7 +408,7 @@ class HillClimbing:
         history_temp.update({"layout_final": current_solution.copy()})
         return restart, current_solution, current_score, history_temp
 
-    def run(self, prefix: str, suffix: str, parallel: bool, processes: int = 8) -> tuple[dict, int, int, dict]:
+    def run(self, prefix: str, suffix: str, parallel: bool, processes: int = 8) -> tuple[dict[int | str, tuple[int, int] | list[tuple[int, int]]], int, int, dict[int,HistoryTemp]]:
         """Executes the Hill Climbing algorithm with random restarts.
 
         Args:
@@ -390,7 +424,7 @@ class HillClimbing:
         best_solution = None
         best_rep = None
         best_score = float("inf")  # Use '-inf' for maximization, 'inf' for minimization
-        score_history = {}
+        score_history: dict[int, HistoryTemp] = {}
         path = (
             prefix
             + f"hill_climbing_data_q{self.q}_numcnots{len(self.circuit)}_layout{self.layout_type}_metric{self.metric}_parallel{parallel}"
@@ -425,7 +459,7 @@ class HillClimbing:
 
                 current_solution = self.gen_random_qubit_assignment()
                 current_score = self.evaluate_solution(current_solution)
-                history_temp = {"scores": [], "layout_init": current_solution.copy()}
+                history_temp: HistoryTemp = {"scores": [], "layout_init": current_solution.copy()}
                 for _ in range(self.max_iterations):
                     neighbors = self.gen_neighborhood(current_solution)
                     if not neighbors:
@@ -455,10 +489,13 @@ class HillClimbing:
                     best_solution, best_score = current_solution, current_score
                     best_rep = restart
 
+        best_solution = cast("dict[int | str, tuple[int, int] | list[tuple[int, int]]]", best_solution)
+        best_score = cast("int", best_score)
+        best_rep = cast("int", best_rep)
         return best_solution, best_score, best_rep, score_history
 
     def plot_history(
-        self, score_history: dict, filename: str = "./hc_history_plot.pdf", size: tuple[float, float] = (5, 5)
+        self, score_history: HistoryTemp, filename: str = "./hc_history_plot.pdf", size: tuple[float, float] = (5, 5)
     ) -> None:
         """Plots the scores for each restart and iteration.
 
