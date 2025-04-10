@@ -235,7 +235,6 @@ def collect_data_space_time(
                 routing,
             )
             # hard coded for now
-            # prefix = "/mnt/c/Users/Laura/Documents/color_code_compilation/nbs-mqt-qecc/misc/"
             prefix = "./results"
             suffix = "test_250218"
             _, _, best_rep, score_history = hc.run(prefix, suffix, parallel, processes)
@@ -314,7 +313,6 @@ def collect_data_space_time(
                     routing,
                 )
                 # hard coded for now
-                # prefix = "/mnt/c/Users/Laura/Documents/color_code_compilation/nbs-mqt-qecc/misc/"
                 prefix = "./results"
                 suffix = "test_250218_2"
                 _, _, best_rep, score_history = hc.run(prefix, suffix, parallel, processes)

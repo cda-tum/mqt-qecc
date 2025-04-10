@@ -1,7 +1,5 @@
-"""Creates results for circuits with 24 qubits."""
+"""Creates results for circuits with 24 qubits. Run this from the src/mqt/qecc/co3/plots directory."""
 
-# from layouts import gen_layout, remove_edge_per_factory
-# from evaluation import collect_data_space_time, plot_space_time, plot_ratio_vs_t, plot_f_vs_t
 from __future__ import annotations
 
 import pickle  # noqa: S403
@@ -9,7 +7,7 @@ from pathlib import Path
 
 import mqt.qecc.co3 as co
 
-path = "./results/f_vs_time_q24_ratio08_small_row_250321_2_8_f_t_B"
+path = "./results/f_vs_time_q24_ratio08_small_row_250321_2_8_f_t_temp" #add you desired path here
 
 # ROW
 factories_q24_row = [(0, 3), (0, 9), (0, 15), (6, 6), (6, 12), (6, 18), (5, 3), (2, 2)]
@@ -25,7 +23,7 @@ hc_params = {
     "max_restarts": 10,
     "max_iterations": 50,
     "routing": "dynamic",
-    "optimize_factories": False,  # True, #want to count in factory crossings as well
+    "optimize_factories": False,
     "free_rows": None,
     "parallel": True,
     "processes": 8,
@@ -91,13 +89,10 @@ instances = [
 
 
 reps = 50
-both_metric = True
+both_metric = True #both metrics heuristic and exact are computed
 
 
 res_lst = co.plots.collect_data_space_time(instances, hc_params, reps, path, both_metric)
-# print(len(custom_layout_q24_row_f8_cc[1].edges()))
-# print(len(custom_layout_q24_row_f8_FSC[1].edges()))
-
 
 with Path(path).open("rb") as f:
     res_lst = pickle.load(f)  # noqa: S301
@@ -105,7 +100,7 @@ with Path(path).open("rb") as f:
 with Path(path).open("rb") as f:
     res_lst = pickle.load(f)  # noqa: S301
 
-path = "./results/f_vs_time_q24_ratio08_small_row_250321_2_8_f_t_B_metricrouting"
+path += "_metricrouting"
 
 with Path(path).open("rb") as f:
     res_lst_routing = pickle.load(f)  # noqa: S301
@@ -121,7 +116,6 @@ for i, res in enumerate(res_lst_routing):
     for ni, nf in zip(num_init_list, num_final_list):
         improvement_lst.append((ni - nf) / ni)
 
-# check improvements from hc. not too high for small ratios and sparser layouts.
 for i, res in enumerate(res_lst):
     layout_type = res["instances"][i]["layout_name"]
     q = res["instances"][i]["q"]

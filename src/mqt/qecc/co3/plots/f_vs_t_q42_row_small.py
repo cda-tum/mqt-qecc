@@ -1,4 +1,4 @@
-"""Creates results for circuits with 42 qubits."""
+"""Creates results for circuits with 42 qubits. Run this from the src/mqt/qecc/co3/plots directory."""
 
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ instances = [
 ]
 
 
-reps = 10
+reps = 50
 both_metric = True
 res_lst = co.plots.collect_data_space_time(instances, hc_params, reps, path, both_metric)
 
@@ -113,7 +113,7 @@ with Path(path).open("rb") as f:
 with Path(path).open("rb") as f:
     res_lst = pickle.load(f)  # noqa: S301
 
-path = "./results/f_vs_time_q42_ratio08_small_row_metricrouting"
+path += "_metricrouting"
 
 with Path(path).open("rb") as f:
     res_lst_routing = pickle.load(f)  # noqa: S301
