@@ -710,7 +710,7 @@ class SnakeBuilderSTDW:
         self.integer_labeling()
         h = np.zeros((len(plaquettes), self.q_tilde), dtype=int)
         for row, plaquette in enumerate(plaquettes):
-            if self.trans_dict is not None: #case distinction only for mypy
+            if self.trans_dict is not None:  # case distinction only for mypy
                 translated_plaquette = [int(self.trans_dict[node]) for node in plaquette]
             for el in translated_plaquette:
                 h[row, el] = 1
@@ -831,13 +831,15 @@ class SnakeBuilderSTDW:
 
     # helper functions for fill_triangle
     @staticmethod
-    def get_single_nodes(subset_stabs: list[list[tuple[int,int]]]) -> list[tuple[int,int]]:
+    def get_single_nodes(subset_stabs: list[list[tuple[int, int]]]) -> list[tuple[int, int]]:
         """Flatten a list of stabilizers."""
         flattened_nodes = [item for sublist in subset_stabs for item in sublist]
         counts = Counter(flattened_nodes)
         return [key for key, value in counts.items() if value == 1]
 
-    def get_neighboring_pairs(self, single_nodes_in_plaq: list[tuple[int,int]]) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    def get_neighboring_pairs(
+        self, single_nodes_in_plaq: list[tuple[int, int]]
+    ) -> list[tuple[tuple[int, int], tuple[int, int]]]:
         """Find pairs of single nodes which are neighbors on the graph."""
         return [
             pair
@@ -846,7 +848,9 @@ class SnakeBuilderSTDW:
         ]
 
     @staticmethod
-    def filter_disjoint_pairs(all_neighboring_pairs: list[tuple[tuple[int, int], tuple[int, int]]]) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    def filter_disjoint_pairs(
+        all_neighboring_pairs: list[tuple[tuple[int, int], tuple[int, int]]],
+    ) -> list[tuple[tuple[int, int], tuple[int, int]]]:
         """Find disjoint pairs of neighboring nodes on a plaquette."""
         disjoint_pairs = []
         for pair in all_neighboring_pairs:
@@ -857,15 +861,17 @@ class SnakeBuilderSTDW:
 
     @staticmethod
     def find_matching_plaquette(
-        pair: tuple[tuple[int, int], tuple[int, int]], filtered_z_plaquettes: list[list[tuple[int,int]]], subset_stabs: list[list[tuple[int,int]]]
-    ) -> list[tuple[int,int]] | None:
+        pair: tuple[tuple[int, int], tuple[int, int]],
+        filtered_z_plaquettes: list[list[tuple[int, int]]],
+        subset_stabs: list[list[tuple[int, int]]],
+    ) -> list[tuple[int, int]] | None:
         """Find plaquette which shares pair but is not in subset_stabs."""
         for plaquette in [plaq for plaq in filtered_z_plaquettes if plaq not in subset_stabs]:
             if all(node in plaquette for node in pair):
                 return plaquette
         return None
 
-    def find_stabilizers_zz(self) -> list[list[tuple[int,int]]]:
+    def find_stabilizers_zz(self) -> list[list[tuple[int, int]]]:
         """Summarizes the methods above and joins the subsets per triangle on the STDW."""
         n = len(self.positions)
         subset_z_stabs = []
@@ -873,7 +879,7 @@ class SnakeBuilderSTDW:
         for triangle_idx in range(1, n - 1):
             subset_stabs = self.fill_triangle(triangle_idx)
             subset_z_stabs += subset_stabs
-        #subset_z_stabs = list(map(set, {frozenset(s) for s in subset_z_stabs}))
+        # subset_z_stabs = list(map(set, {frozenset(s) for s in subset_z_stabs}))
         subset_z_stabs = [list(set(s)) for s in {frozenset(s) for s in subset_z_stabs}]
 
         # adapt the gaps connecting the snake with the logical patches
@@ -914,7 +920,7 @@ class SnakeBuilderSTDW:
                     "There is a correction to be done which you cannot do with the current stabilizer construction..."
                 )
                 # find stdw ancilla neighbor
-                neighbors: list[tuple[int,int]] = self.g.neighbors(node)
+                neighbors: list[tuple[int, int]] = self.g.neighbors(node)
                 pair = None
                 for neigh in neighbors:
                     if neigh in interface_ancillas_flat:
@@ -926,22 +932,22 @@ class SnakeBuilderSTDW:
                 subset_z_stabs.append(pair)
 
         # final removal of duplicates
-        #return list(map(set, {frozenset(s) for s in subset_z_stabs}))
+        # return list(map(set, {frozenset(s) for s in subset_z_stabs}))
         return [list(set(s)) for s in {frozenset(s) for s in subset_z_stabs}]
 
-    def test_zz_stabs(self, subset_z_stabs: list[list[tuple[int,int]]]) -> bool:
+    def test_zz_stabs(self, subset_z_stabs: list[list[tuple[int, int]]]) -> bool:
         """Checks whether all nodes are touched by stabilizers even number of times besides the logical operators."""
         # determine nodes on which the logical operators act.
         n = len(self.positions)
         [lst_corner, lst_boundary] = self.find_triangle_edges_corners(0)
         ancilla_pairs = self.find_interface_ancillas(0, 1)
         ancillas = [item for sublist in ancilla_pairs for item in sublist]
-        z_left_nodes: list[tuple[int,int]] = []
+        z_left_nodes: list[tuple[int, int]] = []
         for anc in ancillas:
             neighbors = self.g.neighbors(anc)
             z_left_nodes.extend(neigh for neigh in neighbors if neigh in lst_corner + lst_boundary)
 
-        closest_corners: list[tuple[int,int]] = []
+        closest_corners: list[tuple[int, int]] = []
         for node in z_left_nodes:
             shortest_paths = nx.single_source_shortest_path_length(
                 self.g, node, cutoff=3
@@ -953,7 +959,7 @@ class SnakeBuilderSTDW:
         [lst_corner, lst_boundary] = self.find_triangle_edges_corners(n - 1)
         ancilla_pairs = self.find_interface_ancillas(n - 2, n - 1)
         ancillas = [item for sublist in ancilla_pairs for item in sublist]
-        z_right_nodes: list[tuple[int,int]] = []
+        z_right_nodes: list[tuple[int, int]] = []
         for anc in ancillas:
             neighbors = self.g.neighbors(anc)
             z_right_nodes.extend(neigh for neigh in neighbors if neigh in lst_corner + lst_boundary)
@@ -980,7 +986,7 @@ class SnakeBuilderSTDW:
 class SnakeBuilder:
     """Constructs a snake with n Steane patches on specified vertices in G. Without ancillas in the interface."""
 
-    def __init__(self, g: nx.Graph, positions: list[dict[tuple[int,int], int]]) -> None:
+    def __init__(self, g: nx.Graph, positions: list[dict[tuple[int, int], int]]) -> None:
         """Initializes n snake.
 
         Args:
@@ -1051,14 +1057,14 @@ class SnakeBuilder:
         """Returns the standard separate steane stabilizer plaquettes."""
         return [[0, 2, 4, 6], [1, 2, 5, 6], [3, 4, 5, 6]]
 
-    def neighboring_vertex(self, vertex_0: tuple[int,int], vertex_1: tuple[int,int]) -> bool:
+    def neighboring_vertex(self, vertex_0: tuple[int, int], vertex_1: tuple[int, int]) -> bool:
         """Checks whether two vertices are adjacent."""
         neighbor = False
         if (vertex_0, vertex_1) in self.g.edges() or (vertex_1, vertex_0) in self.g.edges():
             neighbor = True
         return neighbor
 
-    def check_interface(self, i: int) -> dict[tuple[int,int],int]:
+    def check_interface(self, i: int) -> dict[tuple[int, int], int]:
         """Checks which edge of the ith steane tile is connected to the next (i+1) 0,2,1 edge."""
         next_edge = [key for key, value in self.positions[i + 1].items() if value in {0, 1, 2}]
         # find adjacent edge of ith steane to `next_edge`'s 0,1,2 edge
@@ -1074,7 +1080,9 @@ class SnakeBuilder:
         )
         return adjacent_edge
 
-    def check_paired_neighbor(self, pos_i_new: dict[tuple[int,int],int], pos_i1_new: dict[tuple[int,int],int]) -> bool:
+    def check_paired_neighbor(
+        self, pos_i_new: dict[tuple[int, int], int], pos_i1_new: dict[tuple[int, int], int]
+    ) -> bool:
         """Checks whether we can find a weight-8 x plaquette which actually connects neighbored plaqeuttes between i and i+1."""
         neighboring_pairs = []
         neighboring_two = False
@@ -1089,9 +1097,9 @@ class SnakeBuilder:
                         neighboring_two = True
         return neighboring_two
 
-    def generate_x_stabilizers(self) -> list[dict[tuple[int,int],int]]:
+    def generate_x_stabilizers(self) -> list[dict[tuple[int, int], int]]:
         """Subsequently builds the X stabilizers. Focus on the big `trillerpfeifen` weight-8 stabilizers."""
-        x_stabilizers: list[dict[tuple[int,int],int]] = []
+        x_stabilizers: list[dict[tuple[int, int], int]] = []
         compatible_x_stabs = self.compatible_x_stabs()
 
         # check at which interface the next steane tile is placed
@@ -1167,7 +1175,9 @@ class SnakeBuilder:
         self.x_stabilizers = x_stabilizers
         return x_stabilizers
 
-    def find_matching_dict(self, x_stabilizers: list[dict[tuple[int,int],int]], target_values: list[int], i: int) -> dict[tuple[int,int],int]:
+    def find_matching_dict(
+        self, x_stabilizers: list[dict[tuple[int, int], int]], target_values: list[int], i: int
+    ) -> dict[tuple[int, int], int]:
         """Finds the set of stabilizers in the ith patch which have the desired target_values."""
         target_set = set(target_values)  # Convert target_values to a set for fast lookup
         temp_keys = set(self.positions[i].keys())
@@ -1184,9 +1194,9 @@ class SnakeBuilder:
                 candidates.append(stabilizer_dict)
         return min(candidates, key=len)  # the shortest suitable candidate
 
-    def generate_z_stabilizers(self) -> list[dict[tuple[int,int],int]]:
+    def generate_z_stabilizers(self) -> list[dict[tuple[int, int], int]]:
         """Builds Z stabilizers based on X stabilizers."""
-        z_stabilizers: list[dict[tuple[int,int],int]] = []
+        z_stabilizers: list[dict[tuple[int, int], int]] = []
 
         # first, add all standard stabilizers
         standard_steane_plaquettes = self.standard_steane()
@@ -1232,12 +1242,12 @@ class SnakeBuilder:
             )
             # add to stabs
             stab_temp = {}
-            if weight_four is not None: #mypy
+            if weight_four is not None:  # mypy
                 for label in weight_four["i"]:
                     for key, val in current_patch.items():
                         if label == val:
                             stab_temp.update({key: val})
-            if weight_four is not None: #mypy
+            if weight_four is not None:  # mypy
                 for label in weight_four["i+1"]:
                     for key, val in next_patch.items():
                         if label == val:
@@ -1248,7 +1258,11 @@ class SnakeBuilder:
         return z_stabilizers
 
     @staticmethod
-    def find_matching_dict_z(x_stabs: list[dict[tuple[int,int],int]], current_patch: dict[tuple[int,int],int], next_patch: dict[tuple[int,int],int]) -> dict[tuple[int,int],int] | None:
+    def find_matching_dict_z(
+        x_stabs: list[dict[tuple[int, int], int]],
+        current_patch: dict[tuple[int, int], int],
+        next_patch: dict[tuple[int, int], int],
+    ) -> dict[tuple[int, int], int] | None:
         """Finds the x stabilizer which connects current_patch and next_patch."""
         current_keys = set(current_patch.keys())
         next_keys = set(next_patch.keys())
@@ -1259,11 +1273,21 @@ class SnakeBuilder:
                 return x_stab
         return None  # Return None if no match is found
 
-    def find_disjoint_dict(self, current_patch: dict[tuple[int,int],int], next_patch: dict[tuple[int,int],int], dict_list: list[dict[str, list[int]]], pair: list[int]) -> dict[str, list[int]] | None:
+    def find_disjoint_dict(
+        self,
+        current_patch: dict[tuple[int, int], int],
+        next_patch: dict[tuple[int, int], int],
+        dict_list: list[dict[str, list[int]]],
+        pair: list[int],
+    ) -> dict[str, list[int]] | None:
         """Finds a dictionary in which the total of integers in the values is disjoint to the given pair. AND the weight4 must bepairwise neighbors."""
         pair_set = set(pair)  # Convert the pair to a set for easy comparison
 
-        def neighboring_pair(current_patch: dict[tuple[int,int],int], next_patch: dict[tuple[int,int],int], dictionary: dict[str, list[int]]) -> bool | None:
+        def neighboring_pair(
+            current_patch: dict[tuple[int, int], int],
+            next_patch: dict[tuple[int, int], int],
+            dictionary: dict[str, list[int]],
+        ) -> bool | None:
             """Checks whether at least one neighboring pair in chosen 4-weight stab."""
             for label_i in dictionary["i"]:
                 for label_i1 in dictionary["i+1"]:
@@ -1314,7 +1338,7 @@ class SnakeBuilder:
 
         return checks_z, checks_x
 
-    def plot_stabilizers(self, stabilizers: list[dict[tuple[int,int], int]], size: tuple[int, int] = (7, 7)) -> None:
+    def plot_stabilizers(self, stabilizers: list[dict[tuple[int, int], int]], size: tuple[int, int] = (7, 7)) -> None:
         """Plots the faces of the stabilizers for a given list of stabilizers (either x or z)."""
         pos = nx.get_node_attributes(self.g, "pos")
         num_faces = len(stabilizers)
@@ -1347,16 +1371,16 @@ def convex_hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
     """Find the convex hull of a set of 2D points."""
     points = sorted(points)
 
-    def cross(o: tuple[float,float], a: tuple[float,float], b: tuple[float,float]) -> float:
+    def cross(o: tuple[float, float], a: tuple[float, float], b: tuple[float, float]) -> float:
         return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
 
-    lower: list[tuple[float,float]] = []
+    lower: list[tuple[float, float]] = []
     for p in points:
         while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
             lower.pop()
         lower.append(p)
 
-    upper: list[tuple[float,float]] = []
+    upper: list[tuple[float, float]] = []
     for p in reversed(points):
         while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
             upper.pop()

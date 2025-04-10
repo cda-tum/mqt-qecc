@@ -7,7 +7,7 @@ from pathlib import Path
 
 import mqt.qecc.co3 as co
 
-path = "./results/f_vs_time_q24_ratio08_small_row_250321_2_8_f_t_temp" #add you desired path here
+path = "./results/f_vs_time_q24_ratio08_small_row_250321_2_8_f_t_temp"  # add you desired path here
 
 # ROW
 factories_q24_row = [(0, 3), (0, 9), (0, 15), (6, 6), (6, 12), (6, 18), (5, 3), (2, 2)]
@@ -89,7 +89,7 @@ instances = [
 
 
 reps = 50
-both_metric = True #both metrics heuristic and exact are computed
+both_metric = True  # both metrics heuristic and exact are computed
 
 
 res_lst = co.plots.collect_data_space_time(instances, hc_params, reps, path, both_metric)
