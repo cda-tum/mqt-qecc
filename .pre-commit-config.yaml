@@ -37,6 +37,7 @@ repos:
     hooks:
       - id: nb-clean
         args:
+          - --preserve-cell-outputs
           - --remove-empty-cells
           - --preserve-cell-metadata
           - raw_mimetype
