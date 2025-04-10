@@ -3,7 +3,7 @@ Compilation beyond the Surface Code ``co3``
 
 This submodule contains an elementary routing routine for CNOT + T compilation on a hexagonal routing graph.
 Moreover the routing assumes that each accessible boundary can host both Z and X operators for lattice surgery.
-Hence, this code is only viable for color codes only. Adaptions needed to incorporate valid paths for e.g. the folded surface code substrate.
+Hence, this code is valid for color codes only. Adaptions needed to incorporate valid paths for e.g. the folded surface code substrate.
 
 Layouts
 #######
@@ -28,7 +28,7 @@ Optimization of qubit label allocation by Hill Climbing
 Once chosen a layout, one can optimize the qubit label allocation. This is crucial to exploit parallelism of the original circuit.
 The class ``HillClimbing`` performs a simple hill climbing routine to optimize the qubit label mapping based on a heuristic metric which computes the initial crossing of shortest paths as well as a more reliable (yet expensive) metric which computes the routing for each Hill climbing iteration and directly aims to reduce the resulting layers.
 
-Benchmark plots can be reproduced from pickle files in `src/mqt/qecc/co3/plots/numerics_summarized.ipynb`. The benchmarks (modulo random influences from randomly sampled circuits and randomized hill climbing restarts) can be done via `src/mqt/qecc/co3/plots/f_vs_t_q24_row_small.py` as well as `src/mqt/qecc/co3/plots/circuit_types.py`.
+Benchmark plots can be reproduced from pickle files in ``src/mqt/qecc/co3/plots/numerics_summarized.ipynb``. The benchmarks (modulo random influences from randomly sampled circuits and randomized hill climbing restarts) can be done via ``src/mqt/qecc/co3/plots/f_vs_t_q24_row_small.py`` as well as ``src/mqt/qecc/co3/plots/circuit_types.py``.
 
 Microscopic Details
 ###################
