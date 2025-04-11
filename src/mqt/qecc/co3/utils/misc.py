@@ -185,7 +185,7 @@ def generate_random_circuit(
 
 
 def translate_layout_circuit(
-    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]
+    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
 ) -> list[tuple[tuple[int, int], tuple[int, int]] | tuple[int, int]]:
     """Translates a `pairs` circuit (with int labels) into the lattice's labels for a given layout.
 
@@ -217,7 +217,7 @@ def translate_layout_circuit(
 
 
 def compare_original_dynamic_gate_order(
-    q: int, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]], router: co.ShortestFirstRouterTGatesDyn
+    q: int, layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]], router: co.ShortestFirstRouterTGatesDyn
 ) -> bool:
     """Generates a qiskit circuit for both the order after doing dynamic routing and the original order.
 
