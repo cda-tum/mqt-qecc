@@ -10,6 +10,7 @@ from qiskit import QuantumCircuit
 
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis.simulation import SteaneNDFTStatePrepSimulator
+from mqt.qecc.circuit_synthesis.state_prep import heuristic_prep_circuit
 from mqt.qecc.codes import HexagonalColorCode, SquareOctagonColorCode
 
 
@@ -27,6 +28,10 @@ def main() -> None:
     parser.add_argument("--zero_state", default=True, action="store_true", help="Synthesize logical |0> state.")
     parser.add_argument(
         "--plus_state", default=False, dest="zero_state", action="store_false", help="Synthesize logical |+> state."
+    )
+    parser.add_argument("--x_errors", default=True, action="store_true", help="Calculate error rates for X-errors")
+    parser.add_argument(
+        "--z_errors", default=False, dest="x_errors", action="store_false", help="Calculate error rates for Z errors"
     )
     parser.add_argument("-n", "--n_errors", type=int, default=500, help="Number of errors to sample")
     parser.add_argument(
@@ -84,12 +89,17 @@ def main() -> None:
         code=code,
         circ3=circuits[2],
         circ4=circuits[3],
+        check_circuit=None if args.x_errors else heuristic_prep_circuit(code, zero_state=False).circ,
         p=args.p_error,
         p_idle=args.p_idle_factor * args.p_error,
-        zero_state=args.zero_state,
         decoder=lut if code_name == "cc_4_8_8_d7" else None,
     )
-    res = sim.logical_error_rate(min_errors=args.n_errors)
+    if args.x_errors:
+        res = sim.logical_error_rate(min_errors=args.n_errors)
+    else:
+        sim.set_p(args.p_error, args.p_idle_factor * args.p_error)
+        res = sim.secondary_logical_error_rate(min_errors=args.n_errors)
+
     print(",".join([str(x) for x in res]))
 
 
