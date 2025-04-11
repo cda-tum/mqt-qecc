@@ -227,7 +227,7 @@ def heuristic_gaussian_elimination(
                     else:
                         failed_cnots = [fcnot for fcnot in failed_cnots if removed_cnot[1] != fcnot[1]]
                     failed_cnots.append(removed_cnot)
-                    print_dynamic_eliminations(eliminations, failed_cnots)
+                    # print_dynamic_eliminations(eliminations, failed_cnots)
                     backtrack_required = False
                     deadend = True
                     break
@@ -320,14 +320,14 @@ def heuristic_gaussian_elimination(
 
                     break
                 failed_cnots.append((int(i), int(j)))
-                print_dynamic_eliminations(eliminations, failed_cnots)
+                # print_dynamic_eliminations(eliminations, failed_cnots)
 
         else:
             i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
         if deadend:
             continue
         eliminations.append((int(i), int(j)))
-        print_dynamic_eliminations(eliminations, failed_cnots)
+        # print_dynamic_eliminations(eliminations, failed_cnots)
 
         if parallel_elimination:
             used_columns.append(i)
