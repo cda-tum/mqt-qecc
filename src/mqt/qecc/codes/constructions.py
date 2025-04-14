@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def construct_quantum_hamming_code(r: int) -> CSSCode:
     """Return the [[2^r, 2^r-r-1, 3]] quantum Hamming code."""
     h = _hamming_code_checks(r)
-    return CSSCode(3, h, h)
+    return CSSCode(h, h, 3)
 
 
 def construct_iceberg_code(m: int) -> CSSCode:
@@ -26,7 +26,7 @@ def construct_iceberg_code(m: int) -> CSSCode:
     """
     n = 2 * m
     h = np.array([[1] * n], dtype=np.int8)
-    return CSSCode(2, h, h)
+    return CSSCode(h, h, 2)
 
 
 def construct_many_hypercube_code(level: int) -> CSSCode:
@@ -41,7 +41,7 @@ def construct_many_hypercube_code(level: int) -> CSSCode:
         sx_rem = np.kron(np.eye(6, dtype=np.int8), code.Hx)
         sx = np.vstack((sx, sx_rem), dtype=np.int8)
         sz = sx
-        code = CSSCode(code.distance * 2, sx, sz)
+        code = CSSCode(sx, sz, code.distance * 2)
     return code
 
 
