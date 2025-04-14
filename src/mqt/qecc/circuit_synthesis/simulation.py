@@ -133,6 +133,7 @@ class NoisyNDFTStatePrepSimulator:
         used_qubits: list[int] = []
         targets = set()
         defaultdict(int)
+        [False for _ in circ.qubits]
         for layer in layers:
             layer_circ = dag_to_circuit(layer["graph"])
 
@@ -169,6 +170,8 @@ class NoisyNDFTStatePrepSimulator:
                     if not initialized[target]:
                         if target not in error_free_qubits:
                             stim_circuit.append_operation("X_ERROR", [target], [2 * self.p / 3])  # Wrong initialization
+                        if target in ctrls:
+                            stim_circuit.append_operation("H", [target])
                         initialized[target] = True
 
                     stim_circuit.append_operation("CX", [ctrl, target])
@@ -479,6 +482,8 @@ class SteaneNDFTStatePrepSimulator(NoisyNDFTStatePrepSimulator):
 
         self.has_one_ancilla = circ3 is None
 
+        circ1 = circ1.copy()
+        circ2 = circ2.copy()
         if self.has_one_ancilla:
             circ3 = QuantumCircuit()
             circ4 = QuantumCircuit()
