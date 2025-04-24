@@ -15,7 +15,7 @@
   </a>
 </p>
 
-# MQT QECC: A tool for Quantum Error Correcting Codes written in C++
+# MQT QECC: A tool for Quantum Error Correcting Codes
 
 A tool for quantum error correcting codes and numerical simulations developed as part of the [_Munich Quantum Toolkit (MQT)_](https://mqt.readthedocs.io) by the [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/).
 
