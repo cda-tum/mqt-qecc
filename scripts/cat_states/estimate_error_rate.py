@@ -53,7 +53,7 @@ def main() -> None:
     p = args.p_error
     n = args.n_samples
     experiment = CatStatePreparationExperiment(circ, circ, perm)
-    ra, ra_error, error_rates, error_rates_error = experiment.sample_cat_state(p, n,p_idle=0.01*p)
+    ra, ra_error, error_rates, error_rates_error = experiment.sample_cat_state(p, n, p_idle=0.01 * p)
 
     print(";".join([str(ra), str(ra_error), str(error_rates), str(error_rates_error)]))
 
