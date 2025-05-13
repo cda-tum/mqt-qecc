@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import stim
 from qiskit import ClassicalRegister, QuantumCircuit
+from qiskit.circuit import QuantumCircuit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from tqdm import tqdm
 
@@ -22,7 +23,7 @@ from .synthesis_utils import support
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
 
 logger = logging.getLogger(__name__)
 

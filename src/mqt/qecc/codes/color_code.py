@@ -34,7 +34,7 @@ class ColorCode(CSSCode):
         self.add_qubits()
         self.H: npt.NDArray[np.int_] = np.zeros((len(self.ancilla_qubits), len(self.data_qubits)), dtype=int)
         self.construct_layout()
-        CSSCode.__init__(self, distance, self.H, self.H)
+        CSSCode.__init__(self, self.H, self.H, distance)
         self.L = self.Lz
 
     def __hash__(self) -> int:

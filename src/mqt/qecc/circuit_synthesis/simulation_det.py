@@ -13,10 +13,10 @@ from .simulation import LutDecoder
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from qiskit import QuantumCircuit
+    from qiskit.circuit import QuantumCircuit
     from qsample.callbacks import Callback, CallbackList
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
     from .state_prep_det import DeterministicCorrection, DeterministicVerification
 
 

@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
     from z3 import ModelRef
 
-    from . import ColorCode
+    from ..codes.color_code import ColorCode
 
 
 @dataclass

@@ -11,7 +11,7 @@ import multiprocess
 import numpy as np
 import z3
 from ldpc import mod2
-from qiskit import AncillaRegister, ClassicalRegister, QuantumCircuit
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit
 from stim import Circuit
 from sympy.combinatorics import Permutation, PermutationGroup
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     import numpy.typing as npt
-    from qiskit import AncillaQubit, ClBit, Qubit
+    from qiskit.circuit import AncillaQubit, Clbit, Qubit
 
     from mqt.qecc.circuit_synthesis.state_prep import StatePrepCircuit
     from mqt.qecc.codes.css_code import CSSCode
@@ -125,7 +125,7 @@ def heuristic_gaussian_elimination(
         code: Code based on which the fault sets are checked for overlaps. (Overlap check is based on check matrices)
         ref_x_fs: (Optional) reference x fault set which influences the construction of the circuit
         ref_z_fs: (Optional) reference z fault set which influences the construction of the circuit
-        guide_by_x: Flag that decides wether dismissed CNOTs are free to placement again after either the control (x guided) or the target (z guided) has been used elsewhere
+        guide_by_x: Flag that decides whether dismissed CNOTs are free to placement again after either the control (x guided) or the target (z guided) has been used elsewhere
         ref_x_1fs: (Optional) reference one error x fault set which ensures that no two error event of the newly constructed circuit cancels a one error event of the reference circuit
 
     Returns:
@@ -831,7 +831,7 @@ def _ancilla_cnot(qc: QuantumCircuit, qubit: Qubit | AncillaQubit, ancilla: Anci
         qc.cx(ancilla, qubit)
 
 
-def _flag_measure(qc: QuantumCircuit, flag: AncillaQubit, meas_bit: ClBit, z_measurement: bool) -> None:
+def _flag_measure(qc: QuantumCircuit, flag: AncillaQubit, meas_bit: Clbit, z_measurement: bool) -> None:
     if z_measurement:
         qc.h(flag)
     qc.measure(flag, meas_bit)
@@ -852,7 +852,7 @@ def measure_stab_unflagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a stabilizer without flags. The measurement is done in place.
@@ -877,7 +877,7 @@ def measure_flagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     t: int,
     z_measurement: bool = True,
 ) -> None:
@@ -944,7 +944,7 @@ def measure_one_flagged(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a 1-flagged stabilizer.
@@ -982,7 +982,7 @@ def measure_two_flagged_general(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a 2-flagged stabilizer using the scheme of https://arxiv.org/abs/1708.02246 (page 13).
@@ -1056,17 +1056,17 @@ def measure_two_flagged_4(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
 ) -> None:
     """Measure a 2-flagged weight 4 stabilizer. In this case only one flag is required.
 
     Args:
-        qc: QuantumCircuit
-        stab: list[Qubit] | npt.NDArray[np.int_]
-        ancilla: AncillaQubit
-        measurement_bit: ClBit
-        z_measurement: bool = True
+        qc: The quantum circuit to add the measurement to.
+        stab: Support of the stabilizer to measure.
+        ancilla: Ancilla qubit to use for the measurement.
+        measurement_bit: Classical bit to store the measurement result of the ancilla.
+        z_measurement: Whether to measure the ancilla in the Z basis.
     """
     assert len(stab) == 4
     flag_reg = AncillaRegister(1)
@@ -1101,7 +1101,7 @@ def measure_two_flagged_5_or_6(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_5: bool = False,
 ) -> None:
@@ -1158,7 +1158,7 @@ def measure_w_flagged_5_or_6(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_5: bool = False,
 ) -> None:
@@ -1221,7 +1221,7 @@ def measure_two_flagged_7_or_8(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_7: bool = False,
 ) -> None:
@@ -1286,7 +1286,7 @@ def measure_three_flagged_7_or_8(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_7: bool = False,
 ) -> None:
@@ -1358,7 +1358,7 @@ def measure_two_flagged_11_or_12(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_11: bool = False,
 ) -> None:
@@ -1443,7 +1443,7 @@ def measure_three_flagged_12(
     qc: QuantumCircuit,
     stab: list[Qubit] | npt.NDArray[np.int_],
     ancilla: AncillaQubit,
-    measurement_bit: ClBit,
+    measurement_bit: Clbit,
     z_measurement: bool = True,
     weight_11: bool = False,
 ) -> None:
