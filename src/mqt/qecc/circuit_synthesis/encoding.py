@@ -16,9 +16,9 @@ from .synthesis_utils import build_css_circuit_from_cnot_list, heuristic_gaussia
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
-    from qiskit import QuantumCircuit
+    from qiskit.circuit import QuantumCircuit
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
 
 logger = logging.getLogger(__name__)
 
