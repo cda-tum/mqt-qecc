@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import stim
 from qiskit import QuantumCircuit, QuantumRegister
+from stim import Circuit
 
 
 def reorder_qubits(circ: QuantumCircuit, qubit_mapping: dict[int, int]) -> QuantumCircuit:
@@ -54,3 +55,31 @@ def relabel_qubits(circ: stim.Circuit, qubit_mapping: dict[int, int] | int) -> s
             relabelled_qubits = [q.value + qubit_mapping for q in op.targets_copy()]
         new_circ.append(op.name, relabelled_qubits)
     return new_circ
+
+
+def qiskit_to_stim_circuit(qc: QuantumCircuit) -> Circuit:
+    """Convert a Qiskit circuit to a Stim circuit."""
+    single_qubit_gate_map = {
+        "h": "H",
+        "x": "X",
+        "y": "Y",
+        "z": "Z",
+        "s": "S",
+        "sdg": "S_DAG",
+        "sx": "SQRT_X",
+        "measure": "MR",
+        "reset": "R",
+    }
+    stim_circuit = Circuit()
+    for gate in qc:
+        op = gate.operation.name
+        qubit = qc.find_bit(gate.qubits[0])[0]
+        if op in single_qubit_gate_map:
+            stim_circuit.append_operation(single_qubit_gate_map[op], [qubit])
+        elif op == "cx":
+            target = qc.find_bit(gate.qubits[1])[0]
+            stim_circuit.append_operation("CX", [qubit, target])
+        else:
+            msg = f"Unsupported gate: {op}"
+            raise ValueError(msg)
+    return stim_circuit

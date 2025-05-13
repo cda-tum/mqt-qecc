@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 import stim
 from qiskit import QuantumCircuit
-from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from .circuit_utils import relabel_qubits
+from .circuit_utils import qiskit_to_stim_circuit, relabel_qubits
 from .noise import CircuitLevelNoiseNoIdling
 
 if TYPE_CHECKING:
@@ -19,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def cat_state_balanced_tree(w: int) -> stim.Circuit:
-    """Build preparation circuit as perfect, balanced binary tree.
+    """Build preparation circuit as perfect, balanced binary tree. Only works if w is a power of two.
 
     Circuit will be built over qubits start_idx, ..., start_idx+w
     Args:
@@ -30,6 +28,11 @@ def cat_state_balanced_tree(w: int) -> stim.Circuit:
     Returns:
         noisy stim circuit preparing the cat state.
     """
+    # Check if w is a power of two
+    if (w & (w - 1)) != 0 or w == 0:
+        msg = "w must be a power of two."
+        raise ValueError(msg)
+
     circ = stim.Circuit()
     circ.append_operation("H", [0])
 
@@ -81,80 +84,11 @@ class CatStatePreparationExperiment:
             circ2: The second half of the cat state preparation circuit preparing the ancilla states. Qubits are assumed to be from 0 to n_qubits-1.
             permutation: The permutation to apply to the transversal CNOTs connecting the two halves.
         """
+        assert circ1.num_qubits == circ2.num_qubits, "The two circuits must have the same number of qubits."
         self.w = circ1.num_qubits
         self.circ = transversal_cnot(circ1, relabel_qubits(circ2, self.w), permutation)
         self.circ.append("MR", range(self.w, self.w * 2))
-        self.circ = QuantumCircuit.from_qasm_str(self.circ.to_qasm(open_qasm_version=2))
-
-    def to_stim_circ(self, p, p_idle) -> stim.Circuit:
-        """Convert a QuantumCircuit to a noisy STIM circuit.
-
-        A depolarizing error model is used:
-        - Single-qubit gates and idling qubits are followed by a single-qubit Pauli error with probability 2/9 p. This reflects the fact that two-qubit gates are more likely to fail.
-        - Two-qubit gates are followed by a two-qubit Pauli error with probability p/15.
-        - Measurements flip with a probability of 2/3 p.
-        - Qubit are initialized in the -1 Eigenstate with probability 2/3 p.
-        """
-        initialized = [False for _ in self.circ.qubits]
-        stim_circuit = stim.Circuit()
-        ctrls = []
-
-        def idle_error(used_qubits: list[int]) -> None:
-            for q in self.circ.qubits:
-                qubit = self.circ.find_bit(q)[0]
-                if initialized[qubit] and qubit not in used_qubits:
-                    stim_circuit.append_operation("DEPOLARIZE1", [self.circ.find_bit(q)[0]], [p_idle])
-
-        dag = circuit_to_dag(self.circ)
-        layers = dag.layers()
-        used_qubits: list[int] = []
-        targets = set()
-        defaultdict(int)
-        for layer in layers:
-            layer_circ = dag_to_circuit(layer["graph"])
-
-            # Apply idling errors to all qubits that were unused in the previous layer
-            if len(used_qubits) > 0:
-                idle_error(used_qubits)
-
-            used_qubits = []
-            for gate in layer_circ.data:
-                if gate.operation.name == "h":
-                    qubit = self.circ.find_bit(gate.qubits[0])[0]
-                    ctrls.append(qubit)
-                    if initialized[qubit]:
-                        stim_circuit.append_operation("H", [qubit])
-                        # stim_circuit.append_operation("DEPOLARIZE1", [qubit], [p])
-
-                        used_qubits.append(qubit)
-
-                elif gate.operation.name == "cx":
-                    ctrl = self.circ.find_bit(gate.qubits[0])[0]
-                    target = self.circ.find_bit(gate.qubits[1])[0]
-                    targets.add(target)
-                    if not initialized[ctrl]:
-                        if ctrl in ctrls:
-                            stim_circuit.append_operation("H", [ctrl])
-                            stim_circuit.append_operation("Z_ERROR", [ctrl], [2 * p / 3])  # Wrong initialization
-                        else:
-                            stim_circuit.append_operation("X_ERROR", [ctrl], [2 * p / 3])  # Wrong initialization
-                        initialized[ctrl] = True
-                    if not initialized[target]:
-                        stim_circuit.append_operation("X_ERROR", [target], [2 * p / 3])  # Wrong initialization
-                        initialized[target] = True
-
-                    stim_circuit.append_operation("CX", [ctrl, target])
-                    stim_circuit.append_operation("DEPOLARIZE2", [ctrl, target], [p])
-                    used_qubits.extend([ctrl, target])
-
-                elif gate.operation.name == "measure":
-                    anc = self.circ.find_bit(gate.qubits[0])[0]
-                    stim_circuit.append_operation("X_ERROR", [anc], [2 * p / 3])
-                    stim_circuit.append_operation("MR", [anc])
-                    used_qubits.append(anc)
-                    initialized[anc] = False
-
-        return stim_circuit
+        self.circ = qiskit_to_stim_circuit(QuantumCircuit.from_qasm_str(self.circ.to_qasm(open_qasm_version=2)))
 
     def _get_noisy_circ(self, p: float) -> stim.Circuit:
         """Return a noisy version of the cat state preparation circuit.
@@ -168,7 +102,7 @@ class CatStatePreparationExperiment:
         return CircuitLevelNoiseNoIdling(p).apply(self.circ)
 
     def sample_cat_state(
-        self, p: float, n_samples: int = 1024, batch_size: int | None = None, p_idle: float = 0.0
+        self, p: float, n_samples: int = 1024, batch_size: int | None = None
     ) -> tuple[float, float, npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """Sample the circuit under circuit-level noise in batches and accumulate statistics.
 
@@ -186,7 +120,7 @@ class CatStatePreparationExperiment:
             error_rates: The histogram of error rates.
             error_rates_error: The statistical error on the error rates.
         """
-        circ = self.to_stim_circ(p, p_idle)
+        circ = self._get_noisy_circ(p)
         circ.append("TICK")
         circ.append("MR", range(self.w))  # no noise on final measurement
 
@@ -207,11 +141,8 @@ class CatStatePreparationExperiment:
         n_batches = int(np.ceil(n_samples / batch_size))
 
         for _ in range(n_batches):
-            # Determine current batch size (last batch might be smaller)
             current_batch = min(batch_size, n_samples - total_samples)
 
-            # Compile the sampler and sample the current batch.
-            # (If possible, you could compile the sampler once outside the loop.)
             sampler = circ.compile_sampler()
             res = sampler.sample(current_batch).astype(int)
             total_samples += current_batch
@@ -222,7 +153,6 @@ class CatStatePreparationExperiment:
             state = res[filtered, w:]
             total_accepted += state.shape[0]
 
-            # Update the histogram for error weights.
             # Only update if some accepted events are present in the batch.
             if state.shape[0] > 0:
                 error_weights = np.min(np.vstack((state.sum(axis=1), w - state.sum(axis=1))), axis=0)
@@ -240,7 +170,7 @@ class CatStatePreparationExperiment:
         return acceptance_rate, acceptance_rate_error, error_rates, error_rates_error
 
     def plot_one_p(
-        self, p: float, n_samples: int = 1024, batch_size: int | None = None, ax: plt.Axes | None = None, p_idle=0.0
+        self, p: float, n_samples: int = 1024, batch_size: int | None = None, ax: plt.Axes | None = None
     ) -> None:
         """Plot histogram showing probabilities that a certain number of errors occurred in a cat state preparation experiment with a given physical error rate.
 
@@ -253,17 +183,13 @@ class CatStatePreparationExperiment:
         Returns:
             None
         """
-        ra, ra_err, hist, hist_err = self.sample_cat_state(p, n_samples, batch_size, p_idle=p_idle)
+        ra, ra_err, hist, hist_err = self.sample_cat_state(p, n_samples, batch_size)
         w = self.w
         x = np.arange(w // 2 + 1)
         if ax is None:
             _fig, ax = plt.subplots()
 
-        # Use a built-in style for a fresh look:
-        plt.style.use("seaborn-v0_8-dark")
-
-        # Use a colormap to assign each bar a unique color
-        cmap = plt.cm.plasma  # you can experiment with other colormaps such as viridis, magma, etc.
+        cmap = plt.cm.plasma
         colors = cmap(np.linspace(0, 1, len(x)))
 
         bar_width = 0.8

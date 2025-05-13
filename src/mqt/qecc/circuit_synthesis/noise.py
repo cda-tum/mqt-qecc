@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from stim import Circuit
 
-# from typing import TYPE_CHECKING
-
 
 class NoiseModel:
     """Class representing a noise model for a quantum circuit."""
