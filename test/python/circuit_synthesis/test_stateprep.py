@@ -286,7 +286,7 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """
     circ = color_code_d5_sp
 
-    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=5)
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=2)
 
     assert len(ver_stabs_layers) == 2  # 2 layers of verification measurements
 
