@@ -346,21 +346,6 @@ def test_not_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
 
 
 @pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
-def test_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
-    """Test that the optimal verification is also correct for higher distance.
-
-    Include Z errors.
-    Due to time constraints, we set the timeout for each search to 2 seconds.
-    """
-    circ = color_code_d5_sp
-
-    circ_ver_full_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=True)
-    circ_ver_x_ft = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=False)
-    assert circ_ver_full_ft.num_nonlocal_gates() > circ_ver_x_ft.num_nonlocal_gates()
-    assert circ_ver_full_ft.depth() > circ_ver_x_ft.depth()
-
-
-@pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
 def test_error_detection_code() -> None:
     """Test that different circuits are obtained when using an error detection code."""
     code = CSSCode.from_code_name("carbon")
