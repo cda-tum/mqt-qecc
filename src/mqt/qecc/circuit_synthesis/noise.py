@@ -16,11 +16,10 @@ class NoiseModel:
 class CircuitLevelNoiseNoIdling(NoiseModel):
     """Class representing circuit-level noise.
 
-    Circuit-level noise has two noise parameters p and p_idle and the following noisy operations:
-        - Qubit initialization flips with probability 2/3p.
-        - Measurements flip with probability 2/3 p.
-        - Single- and two-qubit gates are subject to depolarizing noise with probability p.
-        - Idle qubits are subject to depolarizing noise with probability p_idle.
+    The following noise model is applied to the circuit:
+        - Qubit initialization flips with probability 2/3p (depolaring noise after initialization).
+        - Measurements flip with probability 2/3p (depolarizing noise before measuring).
+        - Single- and two-qubit gates are subject to depolarizing noise of strength p.
     """
 
     def __init__(self, p: float) -> None:
@@ -28,7 +27,6 @@ class CircuitLevelNoiseNoIdling(NoiseModel):
 
         Args:
             p: The noise parameter for the noise model.
-            p_idle: The idle noise parameter for the noise model.
         """
         self.p = p
 
@@ -37,7 +35,6 @@ class CircuitLevelNoiseNoIdling(NoiseModel):
 
         Args:
             p: The noise parameter for the noise model.
-            p_idle: The idle noise parameter for the noise model.
         """
         self.p = p
 
