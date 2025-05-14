@@ -230,6 +230,7 @@ wille = "wille"
 ser = "ser"
 aer = "aer"
 anc = "anc"
+arange = "arange"
 
 
 [tool.repo-review]

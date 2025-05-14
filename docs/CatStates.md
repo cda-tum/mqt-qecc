@@ -65,7 +65,7 @@ samples = sampler.sample(n_samples).astype(int)
 error_weights = np.min(np.vstack((samples.sum(axis=1), 8 - samples.sum(axis=1))), axis=0)  # at most 4 bits can flipe
 hist = np.histogram(error_weights, bins=range(4 + 2))[0]/n_samples
 
-x = np.arrange(w // 2 + 1)
+x = np.arange(w // 2 + 1)
 _fig, ax = plt.subplots()
 
 cmap = plt.cm.plasma
