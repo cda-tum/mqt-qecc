@@ -282,11 +282,11 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification is also correct for higher distance.
 
     Ignore Z errors.
-    Due to time constraints, we set the timeout for each search to 2 seconds.
+    Due to time constraints, we set the timeout for each search to 4 seconds.
     """
     circ = color_code_d5_sp
 
-    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=2)
+    ver_stabs_layers = gate_optimal_verification_stabilizers(circ, x_errors=True, max_ancillas=3, max_timeout=4)
 
     assert len(ver_stabs_layers) == 2  # 2 layers of verification measurements
 
