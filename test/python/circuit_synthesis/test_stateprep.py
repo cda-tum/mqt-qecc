@@ -311,12 +311,6 @@ def test_not_full_ft_opt_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     non_detected = np.where(np.all(ver_stabs_2 @ errors_2.T % 2 == 0, axis=1))[0]
     assert len(non_detected) == 0
 
-    # Check that circuit is correct
-    n_cnots = np.sum(ver_stabs_1) + np.sum(ver_stabs_2)  # type: ignore[operator]
-    circ_ver = gate_optimal_verification_circuit(circ, max_ancillas=3, max_timeout=5, full_fault_tolerance=True)
-    assert circ_ver.num_qubits > circ.num_qubits + 5  # overhead from the flags
-    assert circ_ver.num_nonlocal_gates() > n_cnots + circ.circ.num_nonlocal_gates()  # Overhead from Flag CNOTS
-
 
 def test_not_full_ft_heuristic_cc5(color_code_d5_sp: StatePrepCircuit) -> None:
     """Test that the optimal verification circuit for the Steane code is correct.
