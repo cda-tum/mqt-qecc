@@ -126,7 +126,7 @@ We can now simulate this protocol and look at the error distribution on the data
 experiment.plot_one_p(p, n_samples=100000)
 ```
 
-Compared to the above case, the probability of weight-two and weight-four errors has decreased. However, we see that even though about 20% of states are discarded, the weight-four error on the data still occurs about as often on the data as a weight-two error. The reason for this is that both the data and the ancilla state are prepared using the same circuit structure. Consequently, they will have the same set of faults resulting from errors propagating through the circuit. Identical weight-four errors can then cancel out on the ancilla via the transversal CNOT and are subsequently not detected by the ancilla measurement. The situation is illustrated in [this crumble circuit](<https://algassert.com/crumble#circuit=Q(0,0)0;Q(0,1)1;Q(0,2)2;Q(0,3)3;Q(0,4)4;Q(0,5)5;Q(0,6)6;Q(0,7)7;Q(0,8)8;Q(0,9)9;Q(0,10)10;Q(0,11)11;Q(0,12)12;Q(0,13)13;Q(0,14)14;Q(0,15)15;H_0_8;TICK;CX_0_4_8_12;MARKX(0)0_8;TICK;CX_0_2_8_10;TICK;CX_0_1_2_3_4_6_8_9_10_11_12_14;TICK;CX_4_5_6_7_12_13_14_15;TICK;CX_0_8_1_9_2_10_3_11_4_12_5_13_6_14_7_15;TICK;MR_8_9_10_11_12_13_14_15;>).
+Compared to the above case, the probability of weight-two and weight-four errors has decreased. However, we see that even though about 60% of states are discarded, the weight-four error on the data still occurs about as often on the data as a weight-two error. The reason for this is that both the data and the ancilla state are prepared using the same circuit structure. Consequently, they will have the same set of faults resulting from errors propagating through the circuit. Identical weight-four errors can then cancel out on the ancilla via the transversal CNOT and are subsequently not detected by the ancilla measurement. The situation is illustrated in [this crumble circuit](<https://algassert.com/crumble#circuit=Q(0,0)0;Q(0,1)1;Q(0,2)2;Q(0,3)3;Q(0,4)4;Q(0,5)5;Q(0,6)6;Q(0,7)7;Q(0,8)8;Q(0,9)9;Q(0,10)10;Q(0,11)11;Q(0,12)12;Q(0,13)13;Q(0,14)14;Q(0,15)15;H_0_8;TICK;CX_0_4_8_12;MARKX(0)0_8;TICK;CX_0_2_8_10;TICK;CX_0_1_2_3_4_6_8_9_10_11_12_14;TICK;CX_4_5_6_7_12_13_14_15;TICK;CX_0_8_1_9_2_10_3_11_4_12_5_13_6_14_7_15;TICK;MR_8_9_10_11_12_13_14_15;>).
 
 ## Second Attempt at Fault-Tolerant State Preparation
 
@@ -204,7 +204,7 @@ e_1.plot_one_p(p, n_samples=10000000)
 
 At $p=0.05$ we only accept about $12\%$ of all states. We also see that while errors of weight three or higher are less likely as lower-weight errors, the distribution shows that higher-weight errors all occur more or less similarly often.
 
-When we permute the transversal CNOT slightly according to $\pi_2$, we suppress the errors slightly.
+When we permute the transversal CNOT slightly according to $\pi_2$, we also suppress the errors to some extent.
 
 ```{code-cell} ipython3
 :tags: [hide-input]
@@ -212,9 +212,9 @@ e_2.plot_one_p(p, n_samples=10000000)
 print(e_2.circ.to_crumble_url())
 ```
 
-We see that simply exchanging two qubits is not sufficient to protect the $w=16$ cat state against higher-weight errors cancelling out. There are, in fact many undetected weight-four errors that lead to a residual error of higher weight on the data qubits. One example is show in [this crumble circuit](<https://algassert.com/crumble#circuit=Q(0,0)0;Q(0,1)1;Q(0,2)2;Q(0,3)3;Q(0,4)4;Q(0,5)5;Q(0,6)6;Q(0,7)7;Q(0,8)8;Q(0,9)9;Q(0,10)10;Q(0,11)11;Q(0,12)12;Q(0,13)13;Q(0,14)14;Q(0,15)15;Q(0,16)16;Q(0,17)17;Q(0,18)18;Q(0,19)19;Q(0,20)20;Q(0,21)21;Q(0,22)22;Q(0,23)23;Q(0,24)24;Q(0,25)25;Q(0,26)26;Q(0,27)27;Q(0,28)28;Q(0,29)29;Q(0,30)30;Q(0,31)31;H_0_16;TICK;CX_0_8_16_24;MARKX(0)0_16;TICK;CX_0_4_16_20;TICK;CX_0_2_16_18;TICK;CX_0_1_2_3_4_6_16_17_18_19_20_22;TICK;CX_4_5_6_7_8_12_20_21_22_23_24_28;TICK;CX_8_10_24_26;TICK;CX_8_9_10_11_12_14_24_25_26_27_28_30;TICK;CX_12_13_14_15_28_29_30_31;TICK;TICK;CX_0_31;TICK;CX_1_17;TICK;CX_2_18;TICK;CX_3_19;TICK;CX_4_20;TICK;CX_5_21;TICK;CX_6_22;TICK;CX_7_23;TICK;CX_8_24;TICK;CX_9_25;TICK;CX_10_26;MARKX(0)16_31;TICK;CX_11_27;TICK;CX_12_28;TICK;CX_13_29;TICK;CX_14_30;TICK;CX_15_16;TICK;MR_16_17_18_19_20_21_22_23_24_25_26_27_28_29_30_31>).
+We see that simply exchanging two qubits is not sufficient to protect the $w=16$ cat state against higher-weight errors cancelling out. There are, in fact many undetected weight-four errors that lead to a residual error of higher weight on the data qubits. One example is shown in [this crumble circuit](<https://algassert.com/crumble#circuit=Q(0,0)0;Q(0,1)1;Q(0,2)2;Q(0,3)3;Q(0,4)4;Q(0,5)5;Q(0,6)6;Q(0,7)7;Q(0,8)8;Q(0,9)9;Q(0,10)10;Q(0,11)11;Q(0,12)12;Q(0,13)13;Q(0,14)14;Q(0,15)15;Q(0,16)16;Q(0,17)17;Q(0,18)18;Q(0,19)19;Q(0,20)20;Q(0,21)21;Q(0,22)22;Q(0,23)23;Q(0,24)24;Q(0,25)25;Q(0,26)26;Q(0,27)27;Q(0,28)28;Q(0,29)29;Q(0,30)30;Q(0,31)31;H_0_16;TICK;CX_0_8_16_24;MARKX(0)0_16;TICK;CX_0_4_16_20;TICK;CX_0_2_16_18;TICK;CX_0_1_2_3_4_6_16_17_18_19_20_22;TICK;CX_4_5_6_7_8_12_20_21_22_23_24_28;TICK;CX_8_10_24_26;TICK;CX_8_9_10_11_12_14_24_25_26_27_28_30;TICK;CX_12_13_14_15_28_29_30_31;TICK;TICK;CX_0_31;TICK;CX_1_17;TICK;CX_2_18;TICK;CX_3_19;TICK;CX_4_20;TICK;CX_5_21;TICK;CX_6_22;TICK;CX_7_23;TICK;CX_8_24;TICK;CX_9_25;TICK;CX_10_26;MARKX(0)16_31;TICK;CX_11_27;TICK;CX_12_28;TICK;CX_13_29;TICK;CX_14_30;TICK;CX_15_16;TICK;MR_16_17_18_19_20_21_22_23_24_25_26_27_28_29_30_31>).
 
-Since there are fewer combinations of errors that cancel out in such a fashion, the error rate still declines, but for a fault-tolerant preparation we would wish for an error of weight $t$ on the data to occur with probability $p^t$
+Since there are fewer combinations of errors that cancel out in such a fashion, the error rate still declines, but for a fault-tolerant preparation we would wish for an error of weight $t$ on the data to occur with probability $O(p^t)$
 
 Applying $\pi_3$ actually yields the desired result:
 
