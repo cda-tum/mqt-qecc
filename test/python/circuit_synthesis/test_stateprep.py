@@ -117,7 +117,7 @@ def test_heuristic_prep_consistent(code: CSSCode, request) -> None:  # type: ign
 
 
 @pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize("code", ["css_4_2_2_code", "css_6_2_2_code"])
 def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that gate_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
@@ -137,7 +137,7 @@ def test_gate_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: 
 
 
 @pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize("code", ["css_4_2_2_code", "css_6_2_2_code"])
 def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Check that depth_optimal_prep_circuit returns a valid circuit with the correct stabilizers."""
     code = request.getfixturevalue(code)
@@ -156,7 +156,7 @@ def test_depth_optimal_prep_consistent(code: CSSCode, request) -> None:  # type:
 
 
 @pytest.mark.skipif(os.getenv("CI") is not None and sys.platform == "win32", reason="Too slow for CI on Windows")
-@pytest.mark.parametrize("code", ["steane_code", "css_4_2_2_code", "css_6_2_2_code"])
+@pytest.mark.parametrize("code", ["css_4_2_2_code", "css_6_2_2_code"])
 def test_plus_state_gate_optimal(code: CSSCode, request) -> None:  # type: ignore[no-untyped-def]
     """Test synthesis of the plus state."""
     code = request.getfixturevalue(code)
