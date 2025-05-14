@@ -10,6 +10,7 @@ from mqt.qecc.circuit_synthesis.cat_states import CatStatePreparationExperiment,
 if TYPE_CHECKING:
     from qiskit import QuantumCircuit
 
+# permutations used in experiments for tree-structured cat state preparation
 permutations = {4: None, 8: [7, 1, 2, 3, 4, 5, 6, 0], 16: [0, 1, 6, 10, 13, 3, 5, 15, 2, 8, 11, 14, 4, 9, 12, 7]}
 
 
@@ -21,7 +22,7 @@ def tree(w: int) -> tuple[QuantumCircuit, list[int]]:
 
     circ = cat_state_balanced_tree(w)
     perm = permutations[w]
-    return circ, circ, perm
+    return circ, perm
 
 
 def line(w: int) -> tuple[QuantumCircuit, list[int]]:
@@ -34,7 +35,7 @@ def line(w: int) -> tuple[QuantumCircuit, list[int]]:
 
 
 def main() -> None:
-    """Run the logical error rate estimation for cat state preparation circuits."""
+    """Run error rate estimation for cat state preparation circuits."""
     parser = argparse.ArgumentParser(description="Estimate logical error rate for cat state preparation circuits")
 
     parser.add_argument("-p", "--p_error", type=float, help="Physical error rate")
@@ -53,7 +54,7 @@ def main() -> None:
     p = args.p_error
     n = args.n_samples
     experiment = CatStatePreparationExperiment(circ, circ, perm)
-    ra, ra_error, error_rates, error_rates_error = experiment.sample_cat_state(p, n, p_idle=0.01 * p)
+    ra, ra_error, error_rates, error_rates_error = experiment.sample_cat_state(p, n)
 
     print(";".join([str(ra), str(ra_error), str(error_rates), str(error_rates_error)]))
 
