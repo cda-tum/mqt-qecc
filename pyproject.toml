@@ -135,7 +135,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*", "sympy.*"]
 ignore_missing_imports = true
 
 
@@ -197,6 +197,7 @@ ignore = [
     "PLR2004", # Magic value used in comparison
     "PLC0415", # Import should be at top of file
     "S101",    # Use of assert detected
+    "T201",    # avoid removing print statements
 ]
 isort.required-imports = ["from __future__ import annotations"]
 
