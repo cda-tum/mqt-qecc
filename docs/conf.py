@@ -52,7 +52,12 @@ project_copyright = "2025, Chair for Design Automation, Technical University of 
 master_doc = "index"
 
 templates_path = ["_templates"]
-html_css_files = ["custom.css"]
+html_css_files = [
+    "custom.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/fontawesome.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/solid.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/brands.min.css",
+]
 
 
 # -- General configuration ---------------------------------------------------
@@ -189,6 +194,20 @@ html_theme_options = {
     "source_branch": "main",
     "source_directory": "docs/",
     "navigation_with_keys": True,
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/cda-tum/qecc/",
+            "html": "",
+            "class": "fa-brands fa-solid fa-github fa-2x",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/mqt-qecc/",
+            "html": "",
+            "class": "fa-brands fa-solid fa-python fa-2x",
+        },
+    ],
 }
 
 # -- Options for LaTeX output ------------------------------------------------
