@@ -10,7 +10,7 @@ on:
 jobs:
   python-packaging:
     name: 🐍 Packaging
-    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-packaging.yml@v1.9
+    uses: munich-quantum-toolkit/workflows/.github/workflows/reusable-python-packaging.yml@v1.10
     with:
       pure-python: true
 
