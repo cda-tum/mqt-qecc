@@ -105,6 +105,76 @@ def print_dynamic_eliminations(eliminations, failed_cnots) -> None:
 def heuristic_gaussian_elimination(
     matrix: npt.NDArray[np.int8],
     parallel_elimination: bool = True,
+) -> tuple[npt.NDArray[np.int8], list[tuple[int, int]]]:
+    """Perform Gaussian elimination on the column space of a matrix using as few eliminations as possible.
+
+    The algorithm utilizes a greedy heuristic to select the columns to eliminate in order to minimize the number of eliminations required.
+
+    The matrix is reduced until there are exactly rnk(matrix) columns with non-zero entries.
+
+    Args:
+        matrix: The matrix to perform Gaussian elimination on.
+        parallel_elimination: Whether to prioritize elimination steps that act on disjoint columns.
+
+    Returns:
+        The reduced matrix and a list of the elimination steps taken. The elimination steps are represented as tuples of the form (i, j) where i is the column being eliminated with and j is the column being eliminated.
+    """
+    matrix = matrix.copy()
+    rank = mod2.rank(matrix)
+
+    def is_reduced() -> bool:
+        return bool(len(np.where(np.all(matrix == 0, axis=0))[0]) == matrix.shape[1] - rank)
+
+    costs = np.array([
+        [np.sum((matrix[:, i] + matrix[:, j]) % 2) for j in range(matrix.shape[1])] for i in range(matrix.shape[1])
+    ])
+
+    costs -= np.sum(matrix, axis=0)
+    np.fill_diagonal(costs, 1)
+
+    used_columns = []  # type: list[np.int_]
+    eliminations = []  # type: list[tuple[int, int]]
+    while not is_reduced():
+        m = np.zeros((matrix.shape[1], matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
+        m[used_columns, :] = True
+        m[:, used_columns] = True
+        costs_unused = np.ma.array(costs, mask=m)  # type: ignore[no-untyped-call]
+
+        if np.all(costs_unused >= 0) or len(used_columns) == matrix.shape[1]:  # no more reductions possible
+            if used_columns == []:  # local minimum => get out by making matrix triangular
+                logger.warning("Local minimum reached. Making matrix triangular.")
+                matrix = mod2.row_echelon(matrix, full=True)[0]
+                costs = np.array([
+                    [np.sum((matrix[:, i] + matrix[:, j]) % 2) for j in range(matrix.shape[1])]
+                    for i in range(matrix.shape[1])
+                ])
+                costs -= np.sum(matrix, axis=0)
+                np.fill_diagonal(costs, 1)
+            else:  # try to move onto the next layer
+                used_columns = []
+            continue
+
+        i, j = np.unravel_index(np.argmin(costs_unused), costs.shape)
+        eliminations.append((int(i), int(j)))
+
+        if parallel_elimination:
+            used_columns.append(i)
+            used_columns.append(j)
+
+        # update matrix
+        matrix[:, j] = (matrix[:, i] + matrix[:, j]) % 2
+        # update costs
+        new_weights = np.sum((matrix[:, j][:, np.newaxis] + matrix) % 2, axis=0)
+        costs[j, :] = new_weights - np.sum(matrix, axis=0)
+        costs[:, j] = new_weights - np.sum(matrix[:, j])
+        np.fill_diagonal(costs, 1)
+
+    return matrix, eliminations
+
+
+def reference_guided_elimination(
+    matrix: npt.NDArray[np.int8],
+    parallel_elimination: bool = True,
     penalty_cols: list[tuple[int]] | None = None,
     code: CSSCode | None = None,
     ref_x_fs: npt.NDArray[np.int8] | None = None,
