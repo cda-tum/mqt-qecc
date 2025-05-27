@@ -71,30 +71,6 @@ class StatePrepCircuit:
         self.max_x_measurements = len(self.x_checks)
         self.max_z_measurements = len(self.z_checks)
 
-    def permute_circ(self, permutation: list[int]) -> None:
-        # TODO: add functionality that resets e.g. the fault sets
-        # are there other properties that need to be reset?
-        """Permutes the qubits in the given quantum circuit according to the specified permutation.
-
-        Args:
-        permutation (list): A list where the i-th element represents the new index of qubit i.
-        """
-        num_qubits = self.circ.num_qubits
-        if sorted(permutation) != list(range(num_qubits)):
-            msg = "Invalid permutation. It must be a reordering of [0, ..., num_qubits-1]."
-            raise ValueError(msg)
-
-        # Create a new circuit with the same number of qubits
-        permuted_circuit = QuantumCircuit(num_qubits)
-
-        # Remap gates according to the permutation
-        for instruction in self.circ.data:
-            operation = instruction.operation  # Gate operation
-            qubits = [permutation[self.circ.qubits.index(q)] for q in instruction.qubits]  # Permuted qubits
-            permuted_circuit.append(operation, qubits)
-
-        self.circ = permuted_circuit
-
     def set_error_detection(self, error_detection: bool) -> None:
         """Set whether the state preparation circuit is for error detection."""
         self.error_detection_code = error_detection
