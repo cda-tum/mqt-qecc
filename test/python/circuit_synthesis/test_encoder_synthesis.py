@@ -55,14 +55,14 @@ def shor() -> CSSCode:
 @pytest.fixture
 def css_4_2_2_code() -> CSSCode:
     """Return the 4,2,2  code."""
-    return CSSCode(2, np.array([[1] * 4]), np.array([[1] * 4]))
+    return CSSCode(np.array([[1] * 4]), np.array([[1] * 4]), 2)
 
 
 @pytest.fixture
 def css_6_2_2_code() -> CSSCode:
     """Return the 4,2,2  code."""
     return CSSCode(
-        2, np.array([[1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 1, 1]]), np.array([[1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 1, 1]])
+        np.array([[1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 1, 1]]), np.array([[1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 1, 1]]), 2
     )
 
 

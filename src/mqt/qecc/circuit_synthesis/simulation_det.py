@@ -13,10 +13,10 @@ from .simulation import LutDecoder
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from qiskit import QuantumCircuit
+    from qiskit.circuit import QuantumCircuit
     from qsample.callbacks import Callback, CallbackList
 
-    from ..codes import CSSCode
+    from ..codes.css_code import CSSCode
     from .state_prep_det import DeterministicCorrection, DeterministicVerification
 
 
@@ -118,7 +118,7 @@ class NoisyDFTStatePrepSimulator:
             self.decoder.generate_z_lut()
 
         # create protocol
-        self.protocol = qs.Protocol()
+        self.protocol = qs.Protocol(fault_tolerant=True)
         self._create_det_protocol(state_prep_circuit, verifications, code)
 
     def _create_det_protocol(
