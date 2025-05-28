@@ -414,6 +414,90 @@ def reference_guided_elimination(
     return matrix, eliminations
 
 
+class GaussianElimination:
+    def __init__(
+        self,
+        matrix: npt.NDArray[np.int8],
+        parallel_elimination: bool = True,
+        code: CSSCode | None = None,
+        ref_x_fs: npt.NDArray[np.int8] | None = None,
+        ref_z_fs: npt.NDArray[np.int8] | None = None,
+        ref_x_1fs: npt.NDArray[np.int8] | None = None,
+        ref_z_1fs: npt.NDArray[np.int8] | None = None,
+        penalty_cols: list[tuple[int]] | None = None,
+        guide_by_x: bool = True,
+    ) -> None:
+        self.matrix = matrix.copy()
+        self.parallel_eliminations = parallel_elimination
+        self.code = code
+        self.ref_x_fs = ref_x_fs or np.empty((0,), dtype=np.int8)
+        self.ref_z_fs = ref_z_fs or np.empty((0,), dtype=np.int8)
+        self.ref_x_1fs = ref_x_1fs or np.empty((0,), dtype=np.int8)
+        self.ref_z_1fs = ref_z_1fs or np.empty((0,), dtype=np.int8)
+        self.guide_by_x = guide_by_x
+        self.rank = mod2.rank(self.matrix)
+        self.eliminations = []
+        self.failed_cnots = []
+        self.used_columns = []
+        self.costs = self.compute_cost_matrix()
+
+    def is_reduced(self) -> bool:
+        return bool(len(np.where(np.all(self.matrix == 0, axis=0))[0]) == self.matrix.shape[1] - self.rank)
+
+    def compute_cost_matrix(self) -> None:
+        costs = np.array([
+            [np.sum((self.matrix[:, i] + self.matrix[:, j]) % 2) for j in range(self.matrix.shape[1])]
+            for i in range(self.matrix.shape[1])
+        ])
+        costs -= np.sum(self.matrix, axis=0)
+        np.fill_diagonal(costs, 1)
+        return costs
+
+    def mask_out_used_qubits(self):
+        m = np.zeros((self.matrix.shape[1], self.matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
+        m[self.used_columns, :] = True
+        m[:, self.used_columns] = True
+        return np.ma.array(self.costs, mask=m)  # type: ignore[no-untyped-call]
+
+    def triangular_reset(self) -> None:
+        logger.warning("Local minimum reached. Making matrix triangular.")
+        self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
+        self.costs = np.array([
+            [np.sum((self.matrix[:, i] + self.matrix[:, j]) % 2) for j in range(self.matrix.shape[1])]
+            for i in range(self.matrix.shape[1])
+        ])
+        self.costs -= np.sum(self.matrix, axis=0)
+        np.fill_diagonal(self.costs, 1)
+
+    def update_data_structures(self, i: int, j: int) -> None:
+        self.eliminations.append((int(i), int(j)))
+        if self.parallel_elimination:
+            self.used_columns.append(i)
+            self.used_columns.append(j)
+        # update matrix
+        self.matrix[:, j] = (self.matrix[:, i] + self.matrix[:, j]) % 2
+        # update costs
+        new_weights = np.sum((self.matrix[:, j][:, np.newaxis] + self.matrix) % 2, axis=0)
+        self.costs[j, :] = new_weights - np.sum(self.matrix, axis=0)
+        self.costs[:, j] = new_weights - np.sum(self.matrix[:, j])
+        np.fill_diagonal(self.costs, 1)
+
+    def basic_elimination(self) -> None:
+        while not self.is_reduced():
+            costs_unused = self.mask_out_used_qubits()
+
+            if (
+                np.all(costs_unused >= 0) or len(self.used_columns) == self.matrix.shape[1]
+            ):  # no more reductions possible
+                if self.used_columns == []:  # local minimum => get out by making matrix triangular
+                    self.triangular_reset()
+                else:
+                    self.used_columns = []
+                continue
+            i, j = np.unravel_index(np.argmin(costs_unused), self.costs.shape)
+            self.update_data_structures(i, j)
+
+
 def get_next_error(
     propagation_matrix: npt.NDArray[np.int8], cnot_gate: tuple[int, int], x_error: bool = True
 ) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
