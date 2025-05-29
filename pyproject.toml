@@ -58,8 +58,9 @@ dependencies = [
   "bposd>=1.6",
   "qecsim>=1.0b9",
   "qsample>=0.0.2",
-  "urllib3>=2.3.0", # Required by qsample (to be removed)
-  "fastcore>=1.8.1", # Required by qsample (to be removed)
+    "urllib3>=2.3.0", # Required by qsample (to be removed)
+    "fastcore>=1.8.1", # Required by qsample (to be removed)
+    "sinter>=1.14.0"
 ]
 dynamic = ["version"]
 
@@ -135,7 +136,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "sinter.*", "qsample.*", "pandas.*"]
 ignore_missing_imports = true
 
 
@@ -217,8 +218,7 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"*/cc_decoder/plots.py" = ["T201"]
-"scripts/*" = ["T201"]
+"scripts/**" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
