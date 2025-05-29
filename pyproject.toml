@@ -58,7 +58,7 @@ dependencies = [
   "bposd>=1.6",
   "qecsim>=1.0b9",
   "qsample>=0.0.2",
-    "urllib3>=2.3.0,<2.0", # Required by qsample (to be removed)
+    "urllib3>=2.3.0", # Required by qsample (to be removed)
     "fastcore>=1.8.1", # Required by qsample (to be removed)
     "sinter>=1.14.0"
 ]
