@@ -37,6 +37,7 @@ repos:
     hooks:
       - id: nb-clean
         args:
+          - --preserve-cell-outputs
           - --remove-empty-cells
           - --preserve-cell-metadata
           - raw_mimetype
@@ -105,7 +106,7 @@ repos:
         name: Disallow improper capitalization
         language: pygrep
         entry: PyBind|Numpy|Cmake|CCache|Github|PyTest|Mqt|Tum
-        exclude: .pre-commit-config.yaml
+        exclude: '(\.pre-commit-config\.yaml$|\.ipynb$)'
 
   # Check best practices for scientific Python code
   - repo: https://github.com/scientific-python/cookie
