@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import mqt.qecc.co3.utils.hill_climber as co
+import mqt.qecc.co3 as co
 
 
 def test_neighborhood():
@@ -11,11 +11,18 @@ def test_neighborhood():
     m = 4
     n = 4
     metric = "crossing"
-    circuit = [(5, 4), (3, 1), (2, 0)]
-    max_restarts = None
-    max_iterations = None
-    hc = co.HillClimbing(max_restarts, max_iterations, circuit, layout_type, m, n, metric)
-    layout = {1: (1, 2), 5: (1, 3), 3: (2, 2), 0: (2, 3), 4: (3, 2), 2: (3, 3)}
+    circuit: list[tuple[int, int] | int] = [(5, 4), (3, 1), (2, 0)]
+    max_restarts = 2  # just random value
+    max_iterations = 2
+    hc = co.utils.hill_climber.HillClimbing(max_restarts, max_iterations, circuit, layout_type, m, n, metric)
+    layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]] = {
+        1: (1, 2),
+        5: (1, 3),
+        3: (2, 2),
+        0: (2, 3),
+        4: (3, 2),
+        2: (3, 3),
+    }  # type to make mypy happy
 
     neighborhood = hc.gen_neighborhood(layout)
     aim_neighborhood = [
@@ -34,11 +41,19 @@ def test_crossing_metric():
     m = 4
     n = 4
     metric = "crossing"
-    circuit = [(5, 4), (3, 1), (2, 0)]
-    max_restarts = None
-    max_iterations = None
-    hc = co.HillClimbing(max_restarts, max_iterations, circuit, layout_type, m, n, metric)
-    layout = {1: (1, 2), 5: (1, 3), 3: (2, 2), 0: (2, 3), 4: (3, 2), 2: (3, 3), "factory_positions": []}
+    circuit: list[int | tuple[int, int]] = [(5, 4), (3, 1), (2, 0)]
+    max_restarts = 2  # random number
+    max_iterations = 2
+    hc = co.utils.hill_climber.HillClimbing(max_restarts, max_iterations, circuit, layout_type, m, n, metric)
+    layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]] = {
+        1: (1, 2),
+        5: (1, 3),
+        3: (2, 2),
+        0: (2, 3),
+        4: (3, 2),
+        2: (3, 3),
+        "factory_positions": [],
+    }
 
     cost = hc.evaluate_solution(layout)
     expected_cost = 2
@@ -49,7 +64,7 @@ def test_crossing_metric():
 
 def test_translate_layout_circuit():
     """Checks translate_layout_circuit from misc."""
-    pairs = [
+    pairs: list[tuple[int, int] | int] = [
         10,
         (10, 9),
         (1, 16),
@@ -102,7 +117,7 @@ def test_translate_layout_circuit():
         (8, 18),
     ]
 
-    layout = {
+    layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]] = {
         0: (2, 5),
         1: (2, 6),
         2: (3, 6),

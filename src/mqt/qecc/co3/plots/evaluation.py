@@ -6,6 +6,7 @@ import itertools
 import logging
 import pickle  # noqa: S403
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.patheffects as path_effects
 import matplotlib.pyplot as plt
@@ -14,10 +15,13 @@ from matplotlib.lines import Line2D
 
 import mqt.qecc.co3 as co
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
 
 def collect_data_space_time(
-    instances: list[dict], hc_params: dict, reps: int, path: str, both_metric: bool = False
-) -> list[dict]:
+    instances: list[dict[str, Any]], hc_params: dict[str, Any], reps: int, path: str, both_metric: bool = False
+) -> list[dict[str, Any]]:
     """Collects the data for a run which will compare space and time cost.
 
     Args:
@@ -371,7 +375,7 @@ def collect_data_space_time(
 
 
 def plot_improvement_circuit_types(
-    res_lst: list[dict], path: str = "./results", size: tuple[int, int] = (5, 4)
+    res_lst: list[dict[str, Any]], path: str = "./results", size: tuple[int, int] = (5, 4)
 ) -> None:
     """Based on a run of collect_data_space time with different circuit types and constant t, and constant factories.
 
@@ -603,13 +607,13 @@ def plot_improvement_circuit_types(
 
 
 def plot_f_vs_t(
-    res_lst: list[dict],
+    res_lst: list[dict[str, Any]],
     q: int,
     ratio: float,
     layout_name: str,
     min_depth: int,
     graphtype: str,
-    hc_params: dict,
+    hc_params: dict[str, Any],
     path: str = "./results",
     size: tuple[int, int] = (5, 4),
 ) -> None:
@@ -682,11 +686,11 @@ def plot_f_vs_t(
     available_t_dct = {t: i for i, t in enumerate(available_t)}
 
     # order the entries
-    available_t = sorted(available_t)
-    available_f = sorted(available_f)
+    available_t_sorted = sorted(available_t)
+    available_f_sorted = sorted(available_f)
 
-    available_f_dct = {f: i for i, f in enumerate(available_f)}
-    available_t_dct = {t: i for i, t in enumerate(available_t)}
+    available_f_dct = {f: i for i, f in enumerate(available_f_sorted)}
+    available_t_dct = {t: i for i, t in enumerate(available_t_sorted)}
 
     for el in dct_mat:
         f_idx = available_f_dct[len(el["factory_locs"])]
@@ -863,7 +867,7 @@ def plot_f_vs_t(
 
 
 def plot_ratio_vs_t(
-    res_lst: list[dict],
+    res_lst: list[dict[str, Any]],
     q: int,
     num_factories: int,
     layout_name: str,
@@ -938,8 +942,8 @@ def plot_ratio_vs_t(
     available_t_dct = {t: i for i, t in enumerate(available_t)}
 
     # order the entries
-    available_t = sorted(available_t)
-    available_ratio = sorted(available_ratio)
+    # available_t = sorted(available_t)
+    # available_ratio = sorted(available_ratio)
 
     for el in dct_mat:
         ratio_idx = available_ratio_dct[el["ratio"]]
@@ -1035,7 +1039,11 @@ def plot_ratio_vs_t(
 
 
 def plot_space_time(
-    instances: list[dict], hc_params: dict, res_lst: list[dict], path: str = "./results", size: tuple[int, int] = (5, 4)
+    instances: list[dict[str, Any]],
+    hc_params: dict[str, Any],
+    res_lst: list[dict[str, Any]],
+    path: str = "./results",
+    size: tuple[int, int] = (5, 4),
 ) -> None:
     """Plots the results from collect_data_space_time.
 
@@ -1138,8 +1146,8 @@ def plot_space_time(
 
 
 def plot_improvement_f_variation(
-    res_lst_crossing: list[dict],
-    res_lst_routing: list[dict],
+    res_lst_crossing: list[dict[str, Any]],
+    res_lst_routing: list[dict[str, Any]],
     t: int,
     ratio: float,
     q: int,
@@ -1268,9 +1276,9 @@ def plot_improvement_f_variation(
     data_abs_r = data_c.copy()
     data_abs_std_r = data_c.copy()
 
-    available_f_c = sorted(available_f_c)
+    # available_f_c = sorted(available_f_c)
 
-    available_f_dct = {f: i for i, f in enumerate(available_f_c)}
+    available_f_dct = {f: i for i, f in enumerate(sorted(available_f_c))}
     available_layout_dct = {f: i for i, f in enumerate(available_layout_c)}
 
     for el in dct_mat_c:
@@ -1344,20 +1352,20 @@ def plot_improvement_f_variation(
 
 
 def plot_f_vs_t_subfigs(
-    res_lst1: list[dict],
-    res_lst2: list[dict],
+    res_lst1: list[dict[str, Any]],
+    res_lst2: list[dict[str, Any]],
     q: int,
     ratio: float,
     layout_name: str,
     min_depth: int,
     graphtype: str,
-    hc_params: dict,
+    hc_params: dict[str, Any],
     path: str = "./results",
     size: tuple[int, int] = (5, 5),
 ) -> None:
     """Plots a Matrix Plot with variation in number of factories and t for two result lists in subplots."""
 
-    def process_res_list(res_lst: list) -> tuple:
+    def process_res_list(res_lst: list[dict[str, Any]]) -> tuple[Any, ...]:
         instances = res_lst[0]["instances"][: len(res_lst)]
         idx_include = [
             i
@@ -1371,8 +1379,8 @@ def plot_f_vs_t_subfigs(
 
         for i in idx_include:
             res = res_lst[i]
-            num_init_lst = res["num_init_lst"]
-            num_final_lst = res["num_final_lst"]
+            num_init_lst: list[int] = res["num_init_lst"]
+            num_final_lst: list[int] = res["num_final_lst"]
             improvements = [(ni - nf) / ni for ni, nf in zip(num_init_lst, num_final_lst)]
             dct_mat.append({
                 "mean_final_layers": np.mean(num_final_lst),
@@ -1410,7 +1418,7 @@ def plot_f_vs_t_subfigs(
 
     fig, axes = plt.subplots(2, 2, figsize=size, gridspec_kw={"width_ratios": [1, 1], "height_ratios": [1, 1]})
 
-    def plot_with_text(ax: plt.axes.Axes, data: np.ndarray, data_std: np.ndarray, r: int) -> plt.image.AxesImage:
+    def plot_with_text(ax: plt.axes.Axes, data: NDArray[Any], data_std: NDArray[Any], r: int) -> plt.image.AxesImage:
         im = ax.imshow(data, cmap="viridis", aspect="auto")
         for i in range(data.shape[0]):
             for j in range(data.shape[1]):
@@ -1427,7 +1435,7 @@ def plot_f_vs_t_subfigs(
                 ax.text(
                     j,
                     i + 0.25,
-                    "$\pm$" + str(round(data_std[i, j], r)),
+                    r"$\pm$" + str(round(data_std[i, j], r)),
                     ha="center",
                     va="center",
                     color="white",
@@ -1440,7 +1448,7 @@ def plot_f_vs_t_subfigs(
         ax.set_yticklabels(list(available_f_dct.keys()))
         return im
 
-    def plot_with_text_int(ax: plt.axes.Axes, data: np.ndarray, data_std: np.ndarray) -> plt.image.AxesImage:
+    def plot_with_text_int(ax: plt.axes.Axes, data: NDArray[Any], data_std: NDArray[Any]) -> plt.image.AxesImage:
         im = ax.imshow(data, cmap="viridis", aspect="auto")
         r = 0
         for i in range(data.shape[0]):
@@ -1458,7 +1466,7 @@ def plot_f_vs_t_subfigs(
                 ax.text(
                     j,
                     i + 0.25,
-                    "$\pm$" + str(int(round(data_std[i, j], r))),
+                    r"$\pm$" + str(int(round(data_std[i, j], r))),
                     ha="center",
                     va="center",
                     color="white",

@@ -25,11 +25,13 @@ from .misc import translate_layout_circuit
 
 random.seed(45)
 
+
 class HistoryTemp(TypedDict, total=False):
     """Type for history dictionaries."""
+
     scores: list[int]
-    layout_init: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
-    layout_final: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
+    layout_init: dict[int | str, Any]  # tuple[int, int] | list[tuple[int, int]]]
+    layout_final: dict[int | str, Any]  # tuple[int, int] | list[tuple[int, int]]]
 
 
 def save_to_file(path: str, data: Any) -> None:  # noqa: ANN401
@@ -55,7 +57,7 @@ class HillClimbing:
         free_rows: list[str] | None = None,
         t: int | None = None,
         optimize_factories: bool = False,
-        custom_layout: list[list[tuple[int,int]] | nx.Graph] | None = None,
+        custom_layout: list[list[tuple[int, int]] | nx.Graph] | None = None,
         routing: str = "static",
     ) -> None:
         """Initializes the Hill Climbing with Random Restarts algorithm.
@@ -133,7 +135,7 @@ class HillClimbing:
         elif layout_type == "hex":
             data_qubit_locs = lat.gen_layout_hex()
         elif layout_type == "custom":
-            if custom_layout is not None: #only for mypy
+            if custom_layout is not None:  # only for mypy
                 data_qubit_locs = custom_layout[0]
                 self.lat.G = custom_layout[1]
         else:
@@ -148,7 +150,9 @@ class HillClimbing:
                 num for tup in self.circuit for num in (tup if isinstance(tup, tuple) else (tup,))
             ]
         else:
-            flattened_qubit_labels =  [num for tup in self.circuit if isinstance(tup, tuple) for num in tup] #isinstance only added for mypy
+            flattened_qubit_labels = [
+                num for tup in self.circuit if isinstance(tup, tuple) for num in tup
+            ]  # isinstance only added for mypy
         self.q = max(flattened_qubit_labels) + 1
         if self.q < len(self.data_qubit_locs):
             self.data_qubit_locs = self.data_qubit_locs[: self.q]  # cut-off unnecessary qubit spots.
@@ -234,16 +238,22 @@ class HillClimbing:
 
         return g
 
-    def evaluate_solution(self, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]) -> int:
+    def evaluate_solution(self, layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]]) -> int:
         """Evaluates the layout=solution according to self.metric."""
         terminal_pairs = translate_layout_circuit(self.circuit, layout)
-        factory_positions: list[tuple[int,int]]
-        #if type(layout["factory_positions"]) is list[tuple[int,int]] or list:
-        factory_positions = layout["factory_positions"]
-        #else:
+        # factory_positions: list[tuple[int, int]]
+        # if type(layout["factory_positions"]) is list[tuple[int,int]] or list:
+        factory_positions_temp = layout["factory_positions"]
+        if isinstance(factory_positions_temp, list):
+            factory_positions: list[tuple[int, int]] = factory_positions_temp
+        else:
+            msg = "`layout['factory_positions']` must be of type list[tuple[int,int]] but this is not even a list."
+            raise TypeError(msg)
+
+        # else:
         #    msg = f"factory positions of layout must be list[tuple[int,int]]. But you got {type(layout['factory_positions'])}"
         #    raise TypeError(msg)
-        router : ShortestFirstRouter | ShortestFirstRouterTGatesDyn | ShortestFirstRouterTGates
+        router: ShortestFirstRouter | ShortestFirstRouterTGatesDyn | ShortestFirstRouterTGates
         if any(type(el) is int for el in self.circuit):
             if self.t is not None:
                 if self.routing == "static":
@@ -258,7 +268,7 @@ class HillClimbing:
                     router.G = self.lat.G.copy()
                 else:  # if not custom, update self.lat.G by the router's G because m,n might differ from initial values.
                     self.lat.G = router.G  # also add to self
-                    if self.free_rows is not None: #for mypy  # noqa: SIM102
+                    if self.free_rows is not None:  # for mypy  # noqa: SIM102
                         if "left" in self.free_rows:
                             router.G = self.add_left_g(router.G)
                             self.lat.G = router.G  # also add to self
@@ -281,15 +291,15 @@ class HillClimbing:
         cost: int
         if self.metric == "crossing":
             if self.optimize_factories and any(type(el) is int for el in self.circuit):
-                router = cast("ShortestFirstRouterTGates | ShortestFirstRouterTGatesDyn", router) 
+                router = cast("ShortestFirstRouterTGates | ShortestFirstRouterTGatesDyn", router)
                 cost = np.sum(router.count_crossings_per_layer(t_crossings=True))
             elif self.optimize_factories is False and any(type(el) is int for el in self.circuit):
-                router = cast("ShortestFirstRouterTGates | ShortestFirstRouterTGatesDyn", router) 
+                router = cast("ShortestFirstRouterTGates | ShortestFirstRouterTGatesDyn", router)
                 cost = np.sum(router.count_crossings_per_layer(t_crossings=False))
             else:
                 cost = np.sum(router.count_crossings_per_layer())
         elif self.metric == "distance":
-            router = cast("ShortestFirstRouter", router) 
+            router = cast("ShortestFirstRouter", router)
             distances = router.measure_terminal_pair_distances()
             cost = np.sum(distances)
             if any(type(el) is int for el in self.circuit):
@@ -298,14 +308,14 @@ class HillClimbing:
             if self.routing == "static":
                 vdp_layers = router.find_total_vdp_layers()
             elif self.routing == "dynamic":
-                router = cast("ShortestFirstRouterTGatesDyn", router) 
+                router = cast("ShortestFirstRouterTGatesDyn", router)
                 vdp_layers = router.find_total_vdp_layers_dyn()
             cost = len(vdp_layers)
         return cost
 
-    def gen_random_qubit_assignment(self) -> dict[int | str, tuple[int, int] | list[tuple[int,int]]]:
+    def gen_random_qubit_assignment(self) -> dict[int | str, tuple[int, int] | list[tuple[int, int]]]:
         """Yields a random qubit assignment given the `data_qubit_locs`."""
-        layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]] = {}
+        layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]] = {}
         perm = list(range(self.q))
         random.shuffle(perm)
         for i, j in zip(
@@ -323,7 +333,9 @@ class HillClimbing:
 
         return layout
 
-    def gen_neighborhood(self, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]) -> list[dict[int | str, tuple[int, int] | list[tuple[int,int]]]]:
+    def gen_neighborhood(
+        self, layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
+    ) -> list[dict[int | str, tuple[int, int] | list[tuple[int, int]]]]:
         """Creates the Neighborhood of a given layout by going through each terminal pair and swapping their positions.
 
         If there are no T gates, there will be l=len(terminal_pairs) elements in the neighborhood.
@@ -364,12 +376,9 @@ class HillClimbing:
 
         return neighborhood
 
-    def _parallel_hill_climbing(self, restart: int) -> tuple[
-        int,
-        dict[int | str, tuple[int, int] | list[tuple[int,int]]],
-        int,
-        HistoryTemp
-    ]:
+    def _parallel_hill_climbing(
+        self, restart: int
+    ) -> tuple[int, dict[int | str, tuple[int, int] | list[tuple[int, int]]], int, HistoryTemp]:
         """Helper method for parallel execution of hill climbing restarts.
 
         Args:
@@ -408,7 +417,9 @@ class HillClimbing:
         history_temp.update({"layout_final": current_solution.copy()})
         return restart, current_solution, current_score, history_temp
 
-    def run(self, prefix: str, suffix: str, parallel: bool, processes: int = 8) -> tuple[dict[int | str, tuple[int, int] | list[tuple[int, int]]], int, int, dict[int,HistoryTemp]]:
+    def run(
+        self, prefix: str, suffix: str, parallel: bool, processes: int = 8
+    ) -> tuple[dict[int | str, tuple[int, int] | list[tuple[int, int]]], int, int, dict[int, HistoryTemp]]:
         """Executes the Hill Climbing algorithm with random restarts.
 
         Args:
@@ -495,7 +506,10 @@ class HillClimbing:
         return best_solution, best_score, best_rep, score_history
 
     def plot_history(
-        self, score_history: HistoryTemp, filename: str = "./hc_history_plot.pdf", size: tuple[float, float] = (5, 5)
+        self,
+        score_history: dict[int, HistoryTemp],
+        filename: str = "./hc_history_plot.pdf",
+        size: tuple[float, float] = (5, 5),
     ) -> None:
         """Plots the scores for each restart and iteration.
 

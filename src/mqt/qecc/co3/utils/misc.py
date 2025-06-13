@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 random.seed(45)
 
 
-def generate_max_parallel_circuit(q: int, min_depth: int) -> list[tuple[int, int]]:
+def generate_max_parallel_circuit(
+    q: int, min_depth: int
+) -> list[tuple[int, int] | int]:  # actually only tuples but mypy needs the int elements too
     """Circuits with maximally parallelizable layers, i.e. per layer, ALL qubits are used in disjoint gates.
 
     CNOTS only.
@@ -27,7 +29,7 @@ def generate_max_parallel_circuit(q: int, min_depth: int) -> list[tuple[int, int
     Otherwise, the last layer might be a bit empty.
     """
     gates_counter = 0
-    circuit = []
+    circuit: list[tuple[int, int] | int] = []
     labels = list(range(q))
     while gates_counter <= min_depth:
         random.shuffle(labels)
@@ -40,7 +42,9 @@ def generate_max_parallel_circuit(q: int, min_depth: int) -> list[tuple[int, int
     return circuit
 
 
-def generate_min_parallel_circuit(q: int, min_depth: int, layer_size: int) -> list[tuple[int, int]]:
+def generate_min_parallel_circuit(
+    q: int, min_depth: int, layer_size: int
+) -> list[tuple[int, int] | int]:  # same as above
     """Circuits which have nearly no parallelism at all.
 
     CNOTS only.
@@ -89,7 +93,7 @@ def generate_min_parallel_circuit(q: int, min_depth: int, layer_size: int) -> li
         lst.append(temp)
 
     # flatten tuples
-    circuit = []
+    circuit: list[tuple[int, int] | int] = []
     for el in lst:
         circuit += el
 
@@ -185,7 +189,7 @@ def generate_random_circuit(
 
 
 def translate_layout_circuit(
-    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]]
+    pairs: list[tuple[int, int] | int], layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]]
 ) -> list[tuple[tuple[int, int], tuple[int, int]] | tuple[int, int]]:
     """Translates a `pairs` circuit (with int labels) into the lattice's labels for a given layout.
 
@@ -217,7 +221,7 @@ def translate_layout_circuit(
 
 
 def compare_original_dynamic_gate_order(
-    q: int, layout: dict[int | str, tuple[int, int] | list[tuple[int,int]]], router: co.ShortestFirstRouterTGatesDyn
+    q: int, layout: dict[int | str, tuple[int, int] | list[tuple[int, int]]], router: co.ShortestFirstRouterTGatesDyn
 ) -> bool:
     """Generates a qiskit circuit for both the order after doing dynamic routing and the original order.
 
