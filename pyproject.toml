@@ -60,7 +60,7 @@ dependencies = [
   "qsample>=0.0.2",
   "urllib3>=2.3.0", # Required by qsample (to be removed)
   "fastcore>=1.8.1", # Required by qsample (to be removed)
-  "setuptools<81", # Version cap required by qsample (to be removed)
+  "setuptools>=40,<81", # Version cap required by qsample (to be removed)
 ]
 dynamic = ["version"]
 
