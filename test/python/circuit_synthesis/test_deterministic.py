@@ -7,12 +7,20 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 from ldpc import mod2
-from qsample import noise
+
+try:
+    from qsample import noise
+
+    from mqt.qecc.circuit_synthesis.simulation_det import NoisyDFTStatePrepSimulator
+
+    HAS_QSAMPLE = True
+except ImportError:
+    HAS_QSAMPLE = False
+
 
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis import (
     DeterministicVerificationHelper,
-    NoisyDFTStatePrepSimulator,
     heuristic_prep_circuit,
 )
 
@@ -22,11 +30,13 @@ if TYPE_CHECKING:
     from mqt.qecc.circuit_synthesis import DeterministicVerification, StatePrepCircuit
 
 # Simulation parameters
-err_params = {"q": [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]}
-err_model = noise.E1_1
-shots_dss = 4000
-p_max = {"q": 0.01}
-L = 3
+
+if HAS_QSAMPLE:
+    err_params = {"q": [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]}
+    err_model = noise.E1_1
+    shots_dss = 4000
+    p_max = {"q": 0.01}
+    L = 3
 
 
 @pytest.fixture
@@ -112,6 +122,7 @@ def assert_scaling(simulation_results: list[npt.NDArray[np.float64]]) -> None:
     assert np.average(m[:3]) > 1.3
 
 
+@pytest.mark.skipif(not HAS_QSAMPLE, reason="Requires 'qsample' to be installed.")
 def test_11_1_3_det_verification(css_11_1_3_code_sp: StatePrepCircuit) -> None:
     """Test deterministic verification of the 11_1_3 code state preparation circuit."""
     verify_helper = DeterministicVerificationHelper(css_11_1_3_code_sp)
@@ -132,6 +143,7 @@ def test_11_1_3_det_verification(css_11_1_3_code_sp: StatePrepCircuit) -> None:
     assert_scaling(simulation_results)
 
 
+@pytest.mark.skipif(not HAS_QSAMPLE, reason="Requires 'qsample' to be installed.")
 def test_steane_det_verification(steane_code_sp_plus: StatePrepCircuit) -> None:
     """Test deterministic verification of the Steane code state preparation circuit."""
     verify_helper = DeterministicVerificationHelper(steane_code_sp_plus)
