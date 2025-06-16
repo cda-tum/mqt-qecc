@@ -42,6 +42,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
   "qiskit[qasm3-import]>=1.0.0",
+  "qiskit-aer>=0.17.0",
   "numpy>=2.1; python_version >= '3.13'",
   "numpy>=1.26; python_version >= '3.12'",
   "numpy>=1.24.1",
