@@ -74,8 +74,6 @@ qsample = [
   "qsample>=0.0.2",
   "urllib3>=2.3.0",
   "fastcore>=1.8.1",
-  "latextools",  # if needed directly
-  "fs",          # if needed by latextools
 ]
 
 [project.urls]
