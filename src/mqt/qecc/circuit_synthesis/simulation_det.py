@@ -12,7 +12,7 @@ try:
 except ImportError:
     msg = (
         "NoisyDFTStatePrepSimulator requires the optional dependency 'qsample'. "
-        "Install with: pip install mqt.qecc[qsample] or mqt.qecc[dev]"
+        "Install with: pip install mqt.qecc[qsample]"
     )
     raise ImportError(msg) from ImportError
 

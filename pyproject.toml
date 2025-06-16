@@ -69,6 +69,15 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "src/mqt/qecc/_version.py"
 
+[project.optional-dependencies]
+qsample = [
+  "qsample>=0.0.2",
+  "urllib3>=2.3.0",
+  "fastcore>=1.8.1",
+  "latextools",  # if needed directly
+  "fs",          # if needed by latextools
+]
+
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
@@ -262,15 +271,7 @@ test = [
   "pytest-cov>=6.1.1",
   "pytest-mock>=3.14.0",
 ]
-qsample = [
-  "qsample>=0.0.2",
-  "urllib3>=2.3.0",
-  "fastcore>=1.8.1",
-  "latextools",  # if needed directly
-  "fs",          # if needed by latextools
-]
 dev = [
   {include-group = "docs"},
   {include-group = "test"},
-  {include-group = "qsample"}
 ]
