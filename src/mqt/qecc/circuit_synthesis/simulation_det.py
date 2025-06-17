@@ -6,7 +6,16 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 import numpy as np
-import qsample as qs
+
+try:
+    import qsample as qs
+except ImportError:
+    msg = (
+        "NoisyDFTStatePrepSimulator requires the optional dependency 'qsample'. "
+        "Install with: pip install mqt.qecc[qsample]"
+    )
+    raise ImportError(msg) from ImportError
+
 
 from ..codes import InvalidCSSCodeError
 from .simulation import LutDecoder
