@@ -57,9 +57,6 @@ dependencies = [
   "pymatching>=2.2.2",
   "bposd>=1.6",
   "qecsim>=1.0b9",
-  "qsample>=0.0.2",
-  "urllib3>=2.3.0", # Required by qsample (to be removed)
-  "fastcore>=1.8.1", # Required by qsample (to be removed)
 ]
 dynamic = ["version"]
 
@@ -72,6 +69,13 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "src/mqt/qecc/_version.py"
 
+[project.optional-dependencies]
+qsample = [
+  "qsample>=0.0.2",
+  "urllib3>=2.3.0",
+  "fastcore>=1.8.1",
+]
+
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
@@ -81,6 +85,7 @@ Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 [project.scripts]
 "mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
 "mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
+
 
 
 [tool.pytest.ini_options]
