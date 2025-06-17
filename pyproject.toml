@@ -57,10 +57,7 @@ dependencies = [
   "pymatching>=2.2.2",
   "bposd>=1.6",
   "qecsim>=1.0b9",
-  "qsample>=0.0.2",
-    "urllib3>=2.3.0", # Required by qsample (to be removed)
-    "fastcore>=1.8.1", # Required by qsample (to be removed)
-    "sinter>=1.14.0"
+    "sinter>=1.14.0",
 ]
 dynamic = ["version"]
 
@@ -72,6 +69,13 @@ source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/mqt/qecc/_version.py"
+
+[project.optional-dependencies]
+qsample = [
+  "qsample>=0.0.2",
+  "urllib3>=2.3.0", # Required by qsample
+  "fastcore>=1.8.1", # Required by qsample
+]
 
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
@@ -219,7 +223,8 @@ isort.required-imports = ["from __future__ import annotations"]
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
     "I002", # Allow missing `from __future__ import annotations` import
 ]
-"scripts/**" = ["T201"]
+"*/cc_decoder/plots.py" = ["T201"]
+"scripts/*" = ["T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -231,6 +236,7 @@ wille = "wille"
 ser = "ser"
 aer = "aer"
 anc = "anc"
+arange = "arange"
 
 
 [tool.repo-review]
