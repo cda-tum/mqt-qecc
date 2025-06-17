@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from typing import cast
 
 from ..decoder import LightsOut
 from .dem_to_matrices import detector_error_model_to_check_matrices
@@ -12,7 +13,7 @@ from .dem_to_matrices import detector_error_model_to_check_matrices
 if TYPE_CHECKING:
     import stim
     from numpy.typing import NDArray
-
+    from numpy.typing import cast
 
 class MaxSatStim:
     """MaxSat stim decoder implementation."""
@@ -54,7 +55,7 @@ class MaxSatStim:
     @staticmethod
     def weight_function(x: np.float64) -> np.float64:
         """Return log likelihood weighting."""
-        return np.log([(1 - x) / x])[0].astype(np.float64)
+        return cast(np.float64, np.log([(1 - x) / x])[0])
 
     def decode(self, syndrome: NDArray[int]) -> tuple[NDArray[int], int]:
         """Decode the syndrome and return a prediction of which observables were flipped.
