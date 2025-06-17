@@ -9,8 +9,8 @@
 <p align="center">
   <a href="https://mqt.readthedocs.io">
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-dark.svg" width="60%">
-     <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-light.svg" width="60%" alt="MQT Logo">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-dark.svg" width="60%">
+      <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-light.svg" width="60%" alt="MQT Logo">
    </picture>
   </a>
 </p>
@@ -52,22 +52,22 @@ Among others, it is part of the [Munich Quantum Software Stack (MQSS)](https://w
 
 <p align="center">
   <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-logo-banner-dark.svg" width="90%">
-   <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-logo-banner-light.svg" width="90%" alt="MQT Partner Logos">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-logo-banner-dark.svg" width="90%">
+    <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-logo-banner-light.svg" width="90%" alt="MQT Partner Logos">
   </picture>
 </p>
 
-Thank you to all the contributors who have helped make MQT QECC a reality!
+Thank you to all the contributors who have helped make MQT Predictor a reality!
 
 <p align="center">
-<a href="https://github.com/cda-tum/qecc/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=cda-tum/qecc" />
+<a href="https://github.com/munich-quantum-toolkit/qecc/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=munich-quantum-toolkit/qecc" />
 </a>
 </p>
 
 ## Getting Started
 
-QECC is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux, macOS, as well as Windows and supports Python 3.9 to 3.13.
+`mqt.qecc` is available via [PyPI](https://pypi.org/project/mqt.qecc/) for Linux, macOS, as well as Windows and supports Python 3.9 to 3.13.
 
 ```console
 (venv) $ pip install mqt.qecc
@@ -84,7 +84,7 @@ If you use our tool for your research, we will be thankful if you refer to it by
   L. Schmid, T.Peham, L. Berent, M. Müller, and R. Wille, "Deterministic Fault-Tolerant State Preparation for Near-Term Quantum Error Correction: Automatic Synthesis Using Boolean Satisfiability".
 
 - [![a](https://img.shields.io/static/v1?label=arXiv&message=2311.01328&color=inactive&style=flat-square)](https://arxiv.org/abs/2408.11894)
-  T.Peham, L. Schmid, L. Berent, M. Müller, and R. Wille, "Automated Synthesis of Fault-Tolerant State Preparation Circuits for Quantum Error Correction Codes".
+  T. Peham, L. Schmid, L. Berent, M. Müller, and R. Wille, "Automated Synthesis of Fault-Tolerant State Preparation Circuits for Quantum Error Correction Codes".
 
 - [![a](https://img.shields.io/static/v1?label=arXiv&message=2311.01328&color=inactive&style=flat-square)](https://arxiv.org/abs/2311.01328)
   L. Berent, T. Hillmann, J. Eisert, R. Wille, and J. Roffe, "Analog information decoding of bosonic quantum LDPC codes".
@@ -104,6 +104,8 @@ If you use our tool for your research, we will be thankful if you refer to it by
   L. Berent, L. Burgholzer, and R.
   Wille, "[Software Tools for Decoding Quantum Low-Density Parity Check Codes](https://arxiv.org/abs/2209.01180),"
   in Asia and South Pacific Design Automation Conference (ASP-DAC), 2023
+
+---
 
 ## Acknowledgements
 
