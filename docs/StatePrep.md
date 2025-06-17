@@ -233,9 +233,11 @@ Due to [`qsample`](https://github.com/dpwinter/qsample) not being actively maint
 To use this feature, please locally install qsample or [install QECC with the qsample extra](Installation.md#optional-features).
 ```
 
-The resulting `DeterministicVerification` object can be used to directly simulate the deterministic state preparation circuit using the [Qsample](https://github.com/dpwinter/qsample) under the hood. The `NoisyDFTStatePrepSimulator` class automatically constructs a valid Qsample protocol containing the correct circuits and conditional paths to simulate the deterministic state preparation. The passed Error Model and simulation parameters are directly passed to Qsample and explained in the [Qsample documentation](https://dpwinter.github.io/qsample/). Similarly also the Qsample callbacks can be used to e.g. directly plot the logical error rates, showing the expected quadratic scaling.
+The resulting `DeterministicVerification` object can be used to directly simulate the deterministic state preparation circuit using the [Qsample](https://github.com/dpwinter/qsample) under the hood. The `NoisyDFTStatePrepSimulator` class automatically constructs a valid Qsample protocol containing the correct circuits and conditional paths to simulate the deterministic state preparation. The passed Error Model and simulation parameters are directly passed to Qsample and explained in the [Qsample documentation](https://dpwinter.github.io/qsample/). Similarly also the Qsample callbacks can be used to e.g. directly plot the logical error rates.
 
-```{code-cell} ipython3
+```{code-block} python
+:linenos:
+
 from qsample import callbacks, noise
 
 from mqt.qecc.circuit_synthesis import NoisyDFTStatePrepSimulator
