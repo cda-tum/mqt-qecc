@@ -1,10 +1,10 @@
 [![PyPI](https://img.shields.io/pypi/v/mqt.qecc?logo=pypi&style=flat-square)](https://pypi.org/project/mqt.qecc/)
 ![OS](https://img.shields.io/badge/os-linux%20%7C%20macos%20%7C%20windows-blue?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/ci.yml?branch=main&style=flat-square&logo=github&label=ci)](https://github.com/cda-tum/mqt-qecc/actions/workflows/ci.yml)
-[![CD](https://img.shields.io/github/actions/workflow/status/cda-tum/mqt-qecc/cd.yml?style=flat-square&logo=github&label=cd)](https://github.com/cda-tum/mqt-qecc/actions/workflows/cd.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/munich-quantum-toolkit/qecc/ci.yml?branch=main&style=flat-square&logo=github&label=ci)](https://github.com/munich-quantum-toolkit/qecc/actions/workflows/ci.yml)
+[![CD](https://img.shields.io/github/actions/workflow/status/munich-quantum-toolkit/qecc/cd.yml?style=flat-square&logo=github&label=cd)](https://github.com/munich-quantum-toolkit/qecc/actions/workflows/cd.yml)
 [![Documentation](https://img.shields.io/readthedocs/qecc?logo=readthedocs&style=flat-square)](https://mqt.readthedocs.io/projects/qecc)
-[![codecov](https://img.shields.io/codecov/c/github/cda-tum/mqt-qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/cda-tum/mqt-qecc)
+[![codecov](https://img.shields.io/codecov/c/github/munich-quantum-toolkit/qecc?style=flat-square&logo=codecov)](https://codecov.io/gh/munich-quantum-toolkit/qecc)
 
 <p align="center">
   <a href="https://mqt.readthedocs.io">
@@ -40,10 +40,10 @@ The tool can be used to:
 
 If you would like to use these features, they are available in `mqt.qecc` version <2.0.0.
 
-Basic usage for _lattice surgery compilation beyond the surface code_ is described [here](https://github.com/cda-tum/mqt-qecc/blob/ls-compilation/docs/Co3.rst) in the branch `ls-compilation` whose code quality improvements are work in progress.
+Basic usage for _lattice surgery compilation beyond the surface code_ is described [here](https://github.com/munich-quantum-toolkit/qecc/blob/ls-compilation/docs/Co3.rst) in the branch `ls-compilation` whose code quality improvements are work in progress.
 
 If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by
-creating an issue on [GitHub](https://github.com/cda-tum/mqt-qecc/issues).
+creating an issue on [GitHub](https://github.com/munich-quantum-toolkit/qecc/issues).
 
 ## Contributors and Supporters
 

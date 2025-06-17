@@ -78,10 +78,10 @@ qsample = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cda-tum/mqt-qecc"
+Homepage = "https://github.com/munich-quantum-toolkit/qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
-Issues = "https://github.com/cda-tum/mqt-qecc/issues"
-Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
+Issues = "https://github.com/munich-quantum-toolkit/qecc/issues"
+Discussions = "https://github.com/munich-quantum-toolkit/qecc/discussions"
 
 [project.scripts]
 "mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
