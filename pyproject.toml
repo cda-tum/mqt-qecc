@@ -1,3 +1,11 @@
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+# Copyright (c) 2025 Munich Quantum Software Company GmbH
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
+
 [build-system]
 requires = [
   "hatchling>=1.27.0",
@@ -222,6 +230,7 @@ isort.required-imports = ["from __future__ import annotations"]
 ]
 "*/cc_decoder/plots.py" = ["T201"]
 "scripts/*" = ["T201"]
+"lifted_hgp.py" = ["EXE002"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
