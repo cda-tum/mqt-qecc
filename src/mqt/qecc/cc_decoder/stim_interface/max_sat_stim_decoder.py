@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-from numpy.typing import cast
 
 from ..decoder import LightsOut
 from .dem_to_matrices import detector_error_model_to_check_matrices
