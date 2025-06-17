@@ -34,7 +34,7 @@ def plot_ler_vs_distance(code_dict: dict[float, Any], ax: Axes, pers: list[float
     ax.set_yscale("log")
     ax.legend()
     ax.set_ylabel("Logical failure rate")
-    ax.set_xlabel("Code distance $\it\{d\}$")
+    ax.set_xlabel(r"Code distance $\it\{d\}$")
 
 
 def threshold_fit(
