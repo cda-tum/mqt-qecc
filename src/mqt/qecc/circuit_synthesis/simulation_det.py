@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-try:  # pragma: no cover
+try:
     import qsample as qs
-except ImportError:  # pragma: no cover
+except ImportError:
     msg = (
         "NoisyDFTStatePrepSimulator requires the optional dependency 'qsample'. "
         "Install with: pip install mqt.qecc[qsample]"
