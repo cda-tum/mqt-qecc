@@ -9,7 +9,7 @@ import numpy as np
 
 try:  # pragma: no cover
     import qsample as qs
-except ImportError:
+except ImportError:  # pragma: no cover
     msg = (
         "NoisyDFTStatePrepSimulator requires the optional dependency 'qsample'. "
         "Install with: pip install mqt.qecc[qsample]"
