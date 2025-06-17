@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-try:
+try:  # pragma: no cover
     import qsample as qs
 except ImportError:
     msg = (
