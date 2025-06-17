@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-from typing import cast
+from numpy.typing import cast
 
 from ..decoder import LightsOut
 from .dem_to_matrices import detector_error_model_to_check_matrices
@@ -13,7 +13,7 @@ from .dem_to_matrices import detector_error_model_to_check_matrices
 if TYPE_CHECKING:
     import stim
     from numpy.typing import NDArray
-    from numpy.typing import cast
+
 
 class MaxSatStim:
     """MaxSat stim decoder implementation."""
