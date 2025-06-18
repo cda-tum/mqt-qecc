@@ -136,7 +136,7 @@ class LightsOut:
             wcnf = str(self.optimizer)
             # Note: This merely calls the solver. It does not interpret the output.
             #       This is just to measure the time it takes to solve the problem.
-            with Path("./solver-out_" + solver_path.split("/")[-1] + ".txt").open(
+            with Path("./solver-out_" + solver_path.rsplit("/", maxsplit=1)[-1] + ".txt").open(
                 "a+", encoding=locale.getpreferredencoding(False)
             ) as out:
                 start = timer()
@@ -215,7 +215,7 @@ def run(
     """Run the decoding simulation for a given distance and error rate."""
     code = code_from_string(lattice_type, distance)
     data = simulate_error_rate(code, error_rate, nr_sims, solver)
-    strg = solver.split("/")[-1]
+    strg = solver.rsplit("/", maxsplit=1)[-1]
     filename = f"./code={code.lattice_type},distance={code.distance},p={round(error_rate, 4)},solver={strg}.json"
     path = Path(results_dir)
     path.mkdir(parents=True, exist_ok=True)
