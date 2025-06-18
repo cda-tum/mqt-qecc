@@ -258,4 +258,4 @@ sampling_stats = qsample_sim.dss_logical_error_rates(
 
 ## Circuits and Evaluations
 
-The circuits and benchmark scripts used for our non-deterministic work {cite:labelpar}`peham2024automated`, can be found [here](https://github.com/cda-tum/mqt-qecc/tree/main/scripts/ft_stateprep/eval) and for the deterministic work {cite:labelpar}`schmid2024deterministic` [here](https://github.com/cda-tum/mqt-qecc/tree/main/scripts/ft_stateprep/eval_det).
+The circuits and benchmark scripts used for our non-deterministic work {cite:labelpar}`peham2024automated`, can be found [here](https://github.com/munich-quantum-toolkit/qecc/tree/main/scripts/ft_stateprep/eval) and for the deterministic work {cite:labelpar}`schmid2024deterministic` [here](https://github.com/munich-quantum-toolkit/qecc/tree/main/scripts/ft_stateprep/eval_det).

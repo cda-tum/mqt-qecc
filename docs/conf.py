@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Chair for Design Automation, TUM
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
 # All rights reserved.
 #
 # SPDX-License-Identifier: MIT
@@ -190,7 +190,7 @@ html_static_path = ["_static"]
 html_theme_options = {
     "light_logo": "mqt_dark.png",
     "dark_logo": "mqt_light.png",
-    "source_repository": "https://github.com/cda-tum/mqt-qecc/",
+    "source_repository": "https://github.com/munich-quantum-toolkit/qecc/",
     "source_branch": "main",
     "source_directory": "docs/",
     "navigation_with_keys": True,
