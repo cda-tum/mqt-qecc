@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 import stim
-from numpy.core.numeric import array_equal
+from numpy import array_equal
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
