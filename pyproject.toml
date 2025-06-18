@@ -57,6 +57,7 @@ dependencies = [
   "pymatching>=2.2.2",
   "bposd>=1.6",
   "qecsim>=1.0b9",
+  "sinter>=1.14.0",
 ]
 dynamic = ["version"]
 
@@ -85,7 +86,6 @@ Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
 [project.scripts]
 "mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
 "mqt.qecc.cc-decoder-plot" = "mqt.qecc.cc_decoder.plots:main"
-
 
 
 [tool.pytest.ini_options]
@@ -140,7 +140,7 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
-    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "sinter.*", "qsample.*", "pandas.*"]
 ignore_missing_imports = true
 
 
