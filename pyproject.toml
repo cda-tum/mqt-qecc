@@ -57,7 +57,7 @@ dependencies = [
   "pymatching>=2.2.2",
   "bposd>=1.6",
   "qecsim>=1.0b9",
-    "sinter>=1.14.0",
+  "sinter>=1.14.0",
 ]
 dynamic = ["version"]
 
@@ -73,8 +73,8 @@ version-file = "src/mqt/qecc/_version.py"
 [project.optional-dependencies]
 qsample = [
   "qsample>=0.0.2",
-  "urllib3>=2.3.0", # Required by qsample
-  "fastcore>=1.8.1", # Required by qsample
+  "urllib3>=2.3.0",
+  "fastcore>=1.8.1",
 ]
 
 [project.urls]
@@ -95,9 +95,8 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
-  'error',
-  'ignore:.*pkg_resources.*:DeprecationWarning:',
-  'ignore::UserWarning:.*(pkg_resources).*',
+  "error",
+  "ignore:.*pkg_resources.*:DeprecationWarning:",
   "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
   'ignore:.*qiskit.providers.provider.Provider.*:DeprecationWarning:',
   'ignore::DeprecationWarning:.*(simpleeval).*',
