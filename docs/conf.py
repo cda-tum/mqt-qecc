@@ -45,9 +45,9 @@ if TYPE_CHECKING:
 
 # -- Project information -----------------------------------------------------
 project = "QECC"
-author = "Chair for Design Automation, Technical University of Munich"
+author = "Chair for Design Automation, TUM"
 language = "en"
-project_copyright = "2025, Chair for Design Automation, Technical University of Munich"
+project_copyright = "2023 - 2025, Chair for Design Automation, TUM"
 
 master_doc = "index"
 
@@ -137,7 +137,6 @@ myst_heading_anchors = 3
 
 
 # -- Options for {MyST}NB ----------------------------------------------------
-
 nb_execution_mode = "cache"
 nb_mime_priority_overrides = [
     # builder name, mime type, priority
@@ -197,7 +196,7 @@ html_theme_options = {
     "footer_icons": [
         {
             "name": "GitHub",
-            "url": "https://github.com/cda-tum/qecc/",
+            "url": "https://github.com/munich-quantum-toolkit/qecc/",
             "html": "",
             "class": "fa-brands fa-solid fa-github fa-2x",
         },
@@ -211,7 +210,6 @@ html_theme_options = {
 }
 
 # -- Options for LaTeX output ------------------------------------------------
-
 numfig = True
 numfig_secnum_depth = 0
 
