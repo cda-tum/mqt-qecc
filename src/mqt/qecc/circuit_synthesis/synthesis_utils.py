@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import logging
 import sys
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 import multiprocess
@@ -414,6 +415,12 @@ def reference_guided_elimination(
     return matrix, eliminations
 
 
+class CandidateAction(Enum):
+    SKIP = auto()              # Ignore this candidate and continue the loop
+    RESTART_SEARCH = auto()    # Reset used_columns and break to restart the search
+    TRIGGER_BACKTRACK = auto() # Call backtrack() and break
+    EVALUATE = auto()          # Proceed with full validation (overlap checks)
+
 class GaussianElimination:
     def __init__(
         self,
@@ -437,39 +444,176 @@ class GaussianElimination:
         self.guide_by_x = guide_by_x
         self.rank = mod2.rank(self.matrix)
         self.eliminations = []
-        self.failed_cnots = []
+        self.failed_cnots = penalty_cols or [] # NOTE: this is already a feature and not necessarily default
         self.used_columns = []
-        self.costs = self.compute_cost_matrix()
+        self.costs = self._compute_cost_matrix()
+
+    def basic_elimination(self) -> None:
+        while not self.is_reduced():
+            costs_unused = self._mask_out_used_qubits()
+            if self._handle_stagnation(costs_unused):
+                continue
+            i, j = np.unravel_index(np.argmin(costs_unused), self.costs.shape)
+            self._apply_cnot_to_matrix(i, j)
+
+    def reference_based_construction(self) -> None:
+        self._validate_inputs()
+        self._modify_matrix_structure()
+        self._ref_based_init()
+        while not self.is_reduced():
+            costs_unused = self._mask_out_used_qubits()
+            if self._handle_stagnation(costs_unused):
+                continue
+            candidate_pairs = self._get_candidate_pairs(costs_unused)
+            for i, j in candidate_pairs:
+                action = self._get_candidate_action(i,j, costs_unused[i,j])
+                if action == CandidateAction.SKIP:
+                    continue
+                if action == CandidateAction.RESTART_SEARCH:
+                    self.used_columns = []
+                    self.backtrack_required = True
+                    break
+
+                if action == CandidateAction.TRIGGER_BACKTRACK:
+                    if self.stack:
+                        self._backtrack()
+                    else:
+                        # This case means we backtracked to the beginning and still failed.
+                        logger.error("Backtracking stack is empty. No solution found.")
+                    break
+
+                if action == CandidateAction.EVALUATE:
+                    is_valid, new_errors = self._cnot_is_valid_against_references(i,j)
+                    if is_valid:
+                        self.used_cnots.append((int(i), int(j)))
+                        self._commit_to_cnot(i,j,new_errors)
+                        self._apply_cnot_to_matrix(int(i),int(j))
+                        break
+                    self.failed_cnots.append((int(i), int(j)))
+                    continue
 
     def is_reduced(self) -> bool:
         return bool(len(np.where(np.all(self.matrix == 0, axis=0))[0]) == self.matrix.shape[1] - self.rank)
 
-    def compute_cost_matrix(self) -> None:
-        costs = np.array([
-            [np.sum((self.matrix[:, i] + self.matrix[:, j]) % 2) for j in range(self.matrix.shape[1])]
-            for i in range(self.matrix.shape[1])
-        ])
-        costs -= np.sum(self.matrix, axis=0)
-        np.fill_diagonal(costs, 1)
-        return costs
+    def _get_candidate_action(self, i: int, j: int, costs: int) -> CandidateAction:
+        if (int(i), int(j)) in self.failed_cnots or (int(i), int(j)) in self.used_cnots:
+            return CandidateAction.SKIP
 
-    def mask_out_used_qubits(self):
-        m = np.zeros((self.matrix.shape[1], self.matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
-        m[self.used_columns, :] = True
-        m[:, self.used_columns] = True
-        return np.ma.array(self.costs, mask=m)  # type: ignore[no-untyped-call]
+        if costs >= 0:
+            if self.backtrack_required:
+                return CandidateAction.TRIGGER_BACKTRACK
+            return CandidateAction.RESTART_SEARCH
+        return CandidateAction.EVALUATE
 
-    def triangular_reset(self) -> None:
+    def _cnot_is_valid_against_references(self, i: int, j: int) -> tuple[bool, dict]:
+        found_cnot: bool = False
+        new_x_error, _next_x_propagation_matrix = get_next_error(
+            propagation_matrix=self.x_propagation_matrix.copy(), cnot_gate=(int(i), int(j))
+        )
+        new_z_error, _next_z_propagation_matrix = get_next_error(
+            propagation_matrix=self.z_propagation_matrix.copy(), cnot_gate=(int(i), int(j)), x_error=False
+        )
+
+        if self._check_error_existence(new_x_error, self.overlapping_errors_x):
+            return found_cnot, {}
+        if self._check_error_existence(new_z_error, self.overlapping_errors_z):
+            return found_cnot, {}
+
+        new_x_error = np.expand_dims(new_x_error, axis=0)
+        new_z_error = np.expand_dims(new_z_error, axis=0)
+
+        new_z_error_tuple = tuple(new_z_error.flatten())
+        new_x_error_tuple = tuple(new_x_error.flatten())
+
+        x_overlap = self._check_overlap(self.ref_x_fs, self.ref_x_1fs, self.current_x_fs, new_x_error)
+        z_overlap = self._check_overlap(self.ref_z_fs, self.ref_z_1fs, self.current_z_fs, new_z_error, x_error=False)
+
+        if self.ref_x_fs.size and self.ref_z_fs.size:
+            # Both sets provided: Enter if **both** overlaps fail
+            found_cnot = not (x_overlap or z_overlap)
+            if not found_cnot:
+                self.overlapping_errors_x.add(new_x_error_tuple)
+                self.overlapping_errors_z.add(new_z_error_tuple)
+        elif self.ref_x_fs.size:
+            # Only x-set provided: Enter if **x_overlap** fails
+            found_cnot = not x_overlap
+            if not found_cnot:
+                self.overlapping_errors_x.add(new_x_error_tuple)
+        elif self.ref_z_fs.size:
+            # Only z-set provided: Enter if **z_overlap** fails
+            found_cnot = not z_overlap
+            if not found_cnot:
+                self.overlapping_errors_z.add(new_z_error_tuple)
+        return found_cnot, {"new_x_error": new_x_error, "new_z_error": new_z_error, "x_overlap": x_overlap, "z_overlap": z_overlap}
+
+    def _commit_to_cnot(self, i: int, j: int, new_errors: dict) -> None:
+        self.stack.append((
+            self.x_propagation_matrix.copy(),
+            self.z_propagation_matrix.copy(),
+            self.used_columns.copy(),
+            self.matrix.copy(),
+            self.costs.copy(),
+            self.used_cnots.copy(),
+            self.failed_cnots.copy(),
+        ))
+        if self.guide_by_x:
+            self.failed_cnots = [fcnot for fcnot in self.failed_cnots if int(i) != fcnot[0]]
+        else:
+            self.failed_cnots = [fcnot for fcnot in self.failed_cnots if int(j) != fcnot[1]]
+
+        if self.ref_x_fs.size and not new_errors.x_overlap:
+            self.current_x_fs = np.vstack((self.current_x_fs, new_errors["new_x_error"]), dtype=np.int8)
+        if self.ref_z_fs.size and not new_errors.z_overlap:
+            self.current_z_fs = np.vstack((self.current_z_fs, new_errors["new_z_error"]), dtype=np.int8)
+
+    def _backtrack(self) -> None:
+        self.x_propagation_matrix, self.z_propagation_matrix, self.used_columns, self.matrix, self.costs, self.used_cnots, _ = self.stack.pop()
+        removed_cnot = self.eliminations.pop()
+        if self.guide_by_x:
+            failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[0] != fcnot[0]]
+        else:
+            failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[1] != fcnot[1]]
+        failed_cnots.append(removed_cnot)
+        # print_dynamic_eliminations(eliminations, failed_cnots)
+        self.backtrack_required = False
+
+    def _validate_inputs(self) -> None:
+        """Here will be some checks that ensure that the reference based construction can actually be executed."""
+        has_refs = bool(self.ref_x_fs.size or self.ref_z_fs.size)
+        has_code = self.code is not None
+        if has_refs ^ has_code:  # xor
+            return
+        msg = "Must provide either both a reference fault set and CSS code, or neither."
+        raise ValueError(msg)
+
+    def _ref_based_init(self) -> None:
+        self.x_propagation_matrix: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.z_propagation_matrix: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.backtrack_required: bool = False
+        self.overlapping_errors_x = set()
+        self.overlapping_errors_z = set()
+        self.stack = []
+        self.current_x_fs = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.current_z_fs = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.used_cnots = []
+        self.eliminations = []
+
+    def _handle_stagnation(self, costs_unused: npt.NDArray[np.int8]) -> bool:
+        """Handles local minima or full column usage. Returns True if reset occurred."""
+        if np.all(costs_unused >= 0) or len(self.used_columns) == self.matrix.shape[1]:
+            if not self.used_columns:  # Local minimum
+                self._triangular_reset()
+            else:
+                self.used_columns = []
+            return True
+        return False
+
+    def _triangular_reset(self) -> None:
         logger.warning("Local minimum reached. Making matrix triangular.")
         self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
-        self.costs = np.array([
-            [np.sum((self.matrix[:, i] + self.matrix[:, j]) % 2) for j in range(self.matrix.shape[1])]
-            for i in range(self.matrix.shape[1])
-        ])
-        self.costs -= np.sum(self.matrix, axis=0)
-        np.fill_diagonal(self.costs, 1)
+        self.costs = self._compute_cost_matrix()
 
-    def update_data_structures(self, i: int, j: int) -> None:
+    def _apply_cnot_to_matrix(self, i: int, j: int) -> None:
         self.eliminations.append((int(i), int(j)))
         if self.parallel_elimination:
             self.used_columns.append(i)
@@ -482,21 +626,56 @@ class GaussianElimination:
         self.costs[:, j] = new_weights - np.sum(self.matrix[:, j])
         np.fill_diagonal(self.costs, 1)
 
-    def basic_elimination(self) -> None:
-        while not self.is_reduced():
-            costs_unused = self.mask_out_used_qubits()
+    def _compute_cost_matrix(self) -> None:
+        costs = np.array([
+            [np.sum((self.matrix[:, i] + self.matrix[:, j]) % 2) for j in range(self.matrix.shape[1])]
+            for i in range(self.matrix.shape[1])
+        ])
+        costs -= np.sum(self.matrix, axis=0)
+        np.fill_diagonal(costs, 1)
+        return costs
 
-            if (
-                np.all(costs_unused >= 0) or len(self.used_columns) == self.matrix.shape[1]
-            ):  # no more reductions possible
-                if self.used_columns == []:  # local minimum => get out by making matrix triangular
-                    self.triangular_reset()
-                else:
-                    self.used_columns = []
-                continue
-            i, j = np.unravel_index(np.argmin(costs_unused), self.costs.shape)
-            self.update_data_structures(i, j)
+    def _mask_out_used_qubits(self) -> npt.NDArray[np.int8]:
+        m = np.zeros((self.matrix.shape[1], self.matrix.shape[1]), dtype=bool)  # type: npt.NDArray[np.bool_]
+        m[self.used_columns, :] = True
+        m[:, self.used_columns] = True
+        return np.ma.array(self.costs, mask=m)  # type: ignore[no-untyped-call]
 
+    def _modify_matrix_structure(self) -> None:
+        """This should not neccessary but for distance seven codes this was the only way to reliably produce
+        solutions.
+        """
+        if self.code and self.code.distance > 5:
+            if self.ref_z_fs.size and not self.ref_x_fs.size:
+                self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
+            if self.ref_z_fs.size and self.ref_x_fs.size:
+                self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
+
+    def _get_candidate_pairs(self, costs_unused: npt.NDArray[np.int8]) -> list[tuple[int]]:
+        # Get all valid (i, j) pairs sorted by cost
+        candidate_indices = np.argsort(costs_unused.flatten())  # Flatten and sort by value
+        return [np.unravel_index(idx, self.costs.shape) for idx in candidate_indices]
+
+    def _check_overlap(self, ref_fs, ref_1_fs, current_fs, new_error, x_error: bool = True) -> bool:
+        overlap: bool = True
+        if ref_fs.size:
+            overlap = self.code.check_fs_overlap(ref_fs, new_error, x_error=x_error)
+            if ref_1_fs.size and not overlap:
+                trial_2_fs = (current_fs + new_error) % 2
+                trial_2_fs = self._filter_fault_set(trial_2_fs, int((self.code.distance - 1) / 2))
+                overlap = self.code.check_fs_overlap(ref_1_fs, trial_2_fs, x_error=x_error)
+        return overlap
+
+    @staticmethod
+    def _check_error_existence(error: npt.NDArray[np.int8], error_memory: set) -> bool:
+        # INFO: Quickly check if new error is known to cause overlap. This saves another long overlap check.
+        error_tuple = tuple(error.flatten())
+        return error_tuple in error_memory
+
+    @staticmethod
+    def _filter_fault_set(fault_set: npt.NDArray[np.int8], threshold: int) -> npt.NDArray[np.int8]:
+        """Filter fault sets based on a sum threshold."""
+        return fault_set[np.where(fault_set.sum(axis=1) > threshold)]
 
 def get_next_error(
     propagation_matrix: npt.NDArray[np.int8], cnot_gate: tuple[int, int], x_error: bool = True
