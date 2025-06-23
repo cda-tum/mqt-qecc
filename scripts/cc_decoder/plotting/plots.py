@@ -11,15 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import operator
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from matplotlib import pyplot as plt
-
-import operator
-
 from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
