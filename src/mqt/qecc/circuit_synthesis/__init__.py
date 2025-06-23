@@ -25,6 +25,7 @@ __all__ = [
     "DeterministicVerificationHelper",
     "LutDecoder",
     "NoisyDFTStatePrepSimulator",
+    "NoisyNDFTStatePrepSimulator",
     "StatePrepCircuit",
     "SteaneNDFTStatePrepSimulator",
     "VerificationNDFTStatePrepSimulator",

@@ -57,9 +57,7 @@ dependencies = [
   "pymatching>=2.2.2",
   "bposd>=1.6",
   "qecsim>=1.0b9",
-  "qsample>=0.0.2",
-  "urllib3>=2.3.0", # Required by qsample (to be removed)
-  "fastcore>=1.8.1", # Required by qsample (to be removed)
+  "sinter>=1.14.0",
 ]
 dynamic = ["version"]
 
@@ -71,6 +69,13 @@ source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/mqt/qecc/_version.py"
+
+[project.optional-dependencies]
+qsample = [
+  "qsample>=0.0.2",
+  "urllib3>=2.3.0",
+  "fastcore>=1.8.1",
+]
 
 [project.urls]
 Homepage = "https://github.com/cda-tum/mqt-qecc"
@@ -135,7 +140,13 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["qiskit.*", "qecsim.*", "qiskit_aer.*", "matplotlib.*", "scipy.*", "ldpc.*", "pytest_console_scripts.*",
+<<<<<<< HEAD
     "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*", "sympy.*"]
+||||||| b466f00
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "qsample.*", "pandas.*"]
+=======
+    "z3.*", "bposd.*", "numba.*", "pymatching.*", "stim.*", "multiprocess.*", "sinter.*", "qsample.*", "pandas.*"]
+>>>>>>> origin
 ignore_missing_imports = true
 
 
@@ -231,6 +242,7 @@ wille = "wille"
 ser = "ser"
 aer = "aer"
 anc = "anc"
+arange = "arange"
 
 
 [tool.repo-review]
