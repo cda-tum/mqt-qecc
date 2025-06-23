@@ -18,11 +18,13 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 from matplotlib import pyplot as plt
 
-if TYPE_CHECKING:
-    from matplotlib.axes import Axes
 import operator
 
 from scipy.optimize import curve_fit
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
 
 ler_k = "logical_error_rates"
 ler_eb_k = "logical_error_rate_ebs"
