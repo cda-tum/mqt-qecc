@@ -416,10 +416,11 @@ def reference_guided_elimination(
 
 
 class CandidateAction(Enum):
-    SKIP = auto()              # Ignore this candidate and continue the loop
-    RESTART_SEARCH = auto()    # Reset used_columns and break to restart the search
-    TRIGGER_BACKTRACK = auto() # Call backtrack() and break
-    EVALUATE = auto()          # Proceed with full validation (overlap checks)
+    SKIP = auto()  # Ignore this candidate and continue the loop
+    RESTART_SEARCH = auto()  # Reset used_columns and break to restart the search
+    TRIGGER_BACKTRACK = auto()  # Call backtrack() and break
+    EVALUATE = auto()  # Proceed with full validation (overlap checks)
+
 
 class GaussianElimination:
     def __init__(
@@ -444,7 +445,7 @@ class GaussianElimination:
         self.guide_by_x = guide_by_x
         self.rank = mod2.rank(self.matrix)
         self.eliminations = []
-        self.failed_cnots = penalty_cols or [] # NOTE: this is already a feature and not necessarily default
+        self.failed_cnots = penalty_cols or []  # NOTE: this is already a feature and not necessarily default
         self.used_columns = []
         self.costs = self._compute_cost_matrix()
 
@@ -466,7 +467,7 @@ class GaussianElimination:
                 continue
             candidate_pairs = self._get_candidate_pairs(costs_unused)
             for i, j in candidate_pairs:
-                action = self._get_candidate_action(i,j, costs_unused[i,j])
+                action = self._get_candidate_action(i, j, costs_unused[i, j])
                 if action == CandidateAction.SKIP:
                     continue
                 if action == CandidateAction.RESTART_SEARCH:
@@ -483,11 +484,11 @@ class GaussianElimination:
                     break
 
                 if action == CandidateAction.EVALUATE:
-                    is_valid, new_errors = self._cnot_is_valid_against_references(i,j)
+                    is_valid, new_errors = self._cnot_is_valid_against_references(i, j)
                     if is_valid:
                         self.used_cnots.append((int(i), int(j)))
-                        self._commit_to_cnot(i,j,new_errors)
-                        self._apply_cnot_to_matrix(int(i),int(j))
+                        self._commit_to_cnot(i, j, new_errors)
+                        self._apply_cnot_to_matrix(int(i), int(j))
                         break
                     self.failed_cnots.append((int(i), int(j)))
                     continue
@@ -544,7 +545,12 @@ class GaussianElimination:
             found_cnot = not z_overlap
             if not found_cnot:
                 self.overlapping_errors_z.add(new_z_error_tuple)
-        return found_cnot, {"new_x_error": new_x_error, "new_z_error": new_z_error, "x_overlap": x_overlap, "z_overlap": z_overlap}
+        return found_cnot, {
+            "new_x_error": new_x_error,
+            "new_z_error": new_z_error,
+            "x_overlap": x_overlap,
+            "z_overlap": z_overlap,
+        }
 
     def _commit_to_cnot(self, i: int, j: int, new_errors: dict) -> None:
         self.stack.append((
@@ -567,7 +573,15 @@ class GaussianElimination:
             self.current_z_fs = np.vstack((self.current_z_fs, new_errors["new_z_error"]), dtype=np.int8)
 
     def _backtrack(self) -> None:
-        self.x_propagation_matrix, self.z_propagation_matrix, self.used_columns, self.matrix, self.costs, self.used_cnots, _ = self.stack.pop()
+        (
+            self.x_propagation_matrix,
+            self.z_propagation_matrix,
+            self.used_columns,
+            self.matrix,
+            self.costs,
+            self.used_cnots,
+            _,
+        ) = self.stack.pop()
         removed_cnot = self.eliminations.pop()
         if self.guide_by_x:
             failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[0] != fcnot[0]]
@@ -642,7 +656,7 @@ class GaussianElimination:
         return np.ma.array(self.costs, mask=m)  # type: ignore[no-untyped-call]
 
     def _modify_matrix_structure(self) -> None:
-        """This should not neccessary but for distance seven codes this was the only way to reliably produce
+        """This should not necessary but for distance seven codes this was the only way to reliably produce
         solutions.
         """
         if self.code and self.code.distance > 5:
@@ -676,6 +690,7 @@ class GaussianElimination:
     def _filter_fault_set(fault_set: npt.NDArray[np.int8], threshold: int) -> npt.NDArray[np.int8]:
         """Filter fault sets based on a sum threshold."""
         return fault_set[np.where(fault_set.sum(axis=1) > threshold)]
+
 
 def get_next_error(
     propagation_matrix: npt.NDArray[np.int8], cnot_gate: tuple[int, int], x_error: bool = True
