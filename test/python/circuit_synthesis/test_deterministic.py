@@ -9,9 +9,10 @@ import pytest
 from ldpc import mod2
 
 try:
-    from mqt.qecc.circuit_synthesis.simulation_det import NoisyDFTStatePrepSimulator, import_qsample
+    from qsample import noise
 
-    qsample = import_qsample()
+    from mqt.qecc.circuit_synthesis.simulation_det import NoisyDFTStatePrepSimulator
+
     HAS_QSAMPLE = True
 except ImportError:
     HAS_QSAMPLE = False
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 
 if HAS_QSAMPLE:
     err_params = {"q": [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]}
-    err_model = qsample.noise.E1_1
+    err_model = noise.E1_1
     shots_dss = 4000
     p_max = {"q": 0.01}
     L = 3
