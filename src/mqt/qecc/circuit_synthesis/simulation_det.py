@@ -2,31 +2,54 @@
 
 from __future__ import annotations
 
+import warnings
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
-
-try:
-    import qsample as qs
-except ImportError:
-    msg = (
-        "NoisyDFTStatePrepSimulator requires the optional dependency 'qsample'. "
-        "Install with: pip install mqt.qecc[qsample]"
-    )
-    raise ImportError(msg) from ImportError
-
+from qsample import Circuit
 
 from ..codes import InvalidCSSCodeError
 from .simulation import LutDecoder
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     import numpy.typing as npt
     from qiskit.circuit import QuantumCircuit
+    from qsample import ErrorModel
     from qsample.callbacks import Callback, CallbackList
 
     from ..codes.css_code import CSSCode
     from .state_prep_det import DeterministicCorrection, DeterministicVerification
+
+
+def import_qsample() -> ModuleType:
+    """Import qsample and catch the deprecation warning for pkg_resources."""
+    try:
+        with warnings.catch_warnings():
+            # Filter only the specific deprecation warning coming from qsample/pkg_resources
+            warnings.filterwarnings(
+                "ignore",
+                category=UserWarning,
+                message=r".*pkg_resources is deprecated.*",
+            )
+            warnings.filterwarnings(
+                "ignore",
+                category=DeprecationWarning,
+                message=r".*pkg_resources\.declare_namespace.*",
+            )
+            import qsample
+        return cast("ModuleType", qsample)
+    except ImportError:
+        msg = (
+            "NoisyDFTStatePrepSimulator requires the optional dependency 'qsample'. "
+            "Install with: pip install mqt.qecc[qsample]"
+        )
+        raise ImportError(msg) from ImportError
+
+
+qs = import_qsample()
 
 
 class UnsupportedCodeError(ValueError):
@@ -38,17 +61,17 @@ def _support_int(array: npt.NDArray[np.int8]) -> list[int]:
     return [int(i) for i in np.where(array)[0]]
 
 
-def return_correction(outcome: int, corrections: dict[int, npt.NDArray[np.int8]], zero_state: bool) -> qs.Circuit:
+def return_correction(outcome: int, corrections: dict[int, npt.NDArray[np.int8]], zero_state: bool) -> Circuit:
     """Return the det correction circuit for the given outcome of the D-verification."""
     correction = _support_int(corrections[outcome])
     if len(correction) == 0:
-        return qs.Circuit([], noisy=False)
+        return Circuit([], noisy=False)
     correction_circuit = []
     if zero_state:
         correction_circuit.append({"X": set(correction)})
     else:
         correction_circuit.append({"Z": set(correction)})
-    return qs.Circuit(correction_circuit, noisy=False)
+    return Circuit(correction_circuit, noisy=False)
 
 
 def ndv_outcome_check(outcome: int, correction_index: int, num_measurements: int, cutoff: int, flag: bool) -> bool:
@@ -94,7 +117,7 @@ class NoisyDFTStatePrepSimulator:
         state_prep_circuit: QuantumCircuit,
         verifications: tuple[DeterministicVerification, DeterministicVerification],
         code: CSSCode,
-        err_model: type[qs.ErrorModel] = qs.noise.E1_1,
+        err_model: type[ErrorModel] = qs.noise.E1_1,
         zero_state: bool = True,
     ) -> None:
         """Initialize the simulator.
@@ -346,7 +369,7 @@ class NoisyDFTStatePrepSimulator:
         z_stabs: bool,
         hook_corrections: list[DeterministicCorrection] | None = None,
         noisy: bool = True,
-    ) -> qs.Circuit:
+    ) -> Circuit:
         """Create the deterministic verification circuit for the given verification stabilizers.
 
         Args:
@@ -357,7 +380,7 @@ class NoisyDFTStatePrepSimulator:
         """
         num_stabs = len(verification_stabilizers)
         if num_stabs == 0:
-            return qs.Circuit([{"I": {0}}], noisy=False)
+            return Circuit([{"I": {0}}], noisy=False)
         if hook_corrections is None:
             hook_corrections = [{}] * num_stabs
 
@@ -404,11 +427,11 @@ class NoisyDFTStatePrepSimulator:
         self._ancilla_index = flag_ancilla_index
         if len(circuit) == 0:
             # qsample does not like empty circuits
-            return qs.Circuit([{"I": {0}}], noisy=False)
-        return qs.Circuit(circuit, noisy=noisy)
+            return Circuit([{"I": {0}}], noisy=False)
+        return Circuit(circuit, noisy=noisy)
 
 
-def qiskit_to_qsample(qiskit_circuit: QuantumCircuit) -> qs.Circuit:
+def qiskit_to_qsample(qiskit_circuit: QuantumCircuit) -> Circuit:
     """Convert a Qiskit circuit to a qsample circuit. Only supports H, X, Y, Z, CX, and MEASURE gates."""
     custom_circuit = [{"init": set(range(qiskit_circuit.num_qubits))}]
     for circ_instruction in qiskit_circuit.data:
@@ -425,4 +448,4 @@ def qiskit_to_qsample(qiskit_circuit: QuantumCircuit) -> qs.Circuit:
         else:
             qubits = tuple(qiskit_circuit.qubits.index(q) for q in qargs)
         custom_circuit.append({gate_name: {qubits}})
-    return qs.Circuit(custom_circuit, noisy=True)
+    return Circuit(custom_circuit, noisy=True)
