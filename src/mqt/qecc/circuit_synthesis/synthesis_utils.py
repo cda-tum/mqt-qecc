@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import functools
 import logging
-import sys
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
@@ -88,18 +87,18 @@ def iterative_search_with_timeout(
     return None, max_param
 
 
-def print_dynamic_eliminations(eliminations, failed_cnots) -> None:
-    """Prints the eliminations list dynamically on a single line.
-
-    Parameters:
-    - eliminations: List of (control, target) tuples representing CNOT operations.
-    """
-    # Clear both lines
-    sys.stdout.write("\r" + " " * 1000 + "\r")  # Clear line 1
-
-    # Print the updated lists
-    sys.stdout.write(f"\rCurrent Eliminations: {eliminations} | Failed CNOTs: {failed_cnots}")
-    sys.stdout.flush()
+# def print_dynamic_eliminations(eliminations, failed_cnots) -> None:
+#     """Prints the eliminations list dynamically on a single line.
+#
+#     Parameters:
+#     - eliminations: List of (control, target) tuples representing CNOT operations.
+#     """
+#     # Clear both lines
+#     sys.stdout.write("\r" + " " * 1000 + "\r")  # Clear line 1
+#
+#     # Print the updated lists
+#     sys.stdout.write(f"\rCurrent Eliminations: {eliminations} | Failed CNOTs: {failed_cnots}")
+#     sys.stdout.flush()
 
 
 def heuristic_gaussian_elimination(
@@ -448,7 +447,7 @@ class GaussianElimination:
         self.ref_z_1fs = ref_z_1fs or np.empty((0,), dtype=np.int8)
         self.guide_by_x = guide_by_x
         self.rank = mod2.rank(self.matrix)
-        self.eliminations = []
+        self.eliminations: list[tuple[int]] = []
         self.failed_cnots = penalty_cols or []  # NOTE: this is already a feature and not necessarily default
         self.used_columns: list[int] = []
         self.costs = self._compute_cost_matrix()
@@ -463,7 +462,7 @@ class GaussianElimination:
             if self._handle_stagnation(costs_unused):
                 continue
             i, j = np.unravel_index(np.argmin(costs_unused), self.costs.shape)
-            self._apply_cnot_to_matrix(i, j)
+            self._apply_cnot_to_matrix(int(i), int(j))
 
     def reference_based_construction(self) -> None:
         """Reference based heuristic Gaussian elimination.
@@ -486,7 +485,7 @@ class GaussianElimination:
                     continue
                 if action == CandidateAction.RESTART_SEARCH:
                     self.used_columns = []
-                    self.backtrack_required = True
+                    self.backtrack_required: bool = True
                     break
 
                 if action == CandidateAction.TRIGGER_BACKTRACK:
@@ -621,11 +620,11 @@ class GaussianElimination:
         self.backtrack_required: bool = False
         self.overlapping_errors_x = set()
         self.overlapping_errors_z = set()
-        self.stack = []
+        self.stack: list[tuple] = []
         self.current_x_fs = np.eye(self.matrix.shape[1], dtype=np.int8)
         self.current_z_fs = np.eye(self.matrix.shape[1], dtype=np.int8)
-        self.used_cnots = []
-        self.eliminations = []
+        self.used_cnots: list[tuple[int]] = []
+        self.eliminations: list[tuple[int]] = []
 
     def _handle_stagnation(self, costs_unused: npt.NDArray[np.int8]) -> bool:
         """Handles local minima or full column usage. Returns True if reset occurred."""
