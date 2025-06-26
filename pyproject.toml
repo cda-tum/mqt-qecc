@@ -96,6 +96,8 @@ log_cli_level = "INFO"
 xfail_strict = true
 filterwarnings = [
   "error",
+  "ignore:pkg_resources is deprecated:UserWarning", # Due to qsample, do not remove!
+  "ignore:Deprecated call to `pkg_resources\\.declare_namespace\\('.+'\\)`\\.:DeprecationWarning", # Due to qsample, do not remove!
   "ignore:.*The retworkx package is deprecated*:DeprecationWarning:pymatching",
   'ignore::DeprecationWarning:.*(simpleeval).*',
   # Qiskit 1.3 deprecations
