@@ -415,6 +415,8 @@ def reference_guided_elimination(
 
 
 class CandidateAction(Enum):
+    """Class to help distinguish the control flow of the reference based heuristic gaussian elimination."""
+
     SKIP = auto()  # Ignore this candidate and continue the loop
     RESTART_SEARCH = auto()  # Reset used_columns and break to restart the search
     TRIGGER_BACKTRACK = auto()  # Call backtrack() and break
@@ -422,6 +424,8 @@ class CandidateAction(Enum):
 
 
 class GaussianElimination:
+    """Class to apply Gaussian Elimination on a given Matrix."""
+
     def __init__(
         self,
         matrix: npt.NDArray[np.int8],
@@ -434,6 +438,7 @@ class GaussianElimination:
         penalty_cols: list[tuple[int]] | None = None,
         guide_by_x: bool = True,
     ) -> None:
+        """Initialiser for the basic functionality."""
         self.matrix = matrix.copy()
         self.parallel_elimination = parallel_elimination
         self.code = code
@@ -445,10 +450,14 @@ class GaussianElimination:
         self.rank = mod2.rank(self.matrix)
         self.eliminations = []
         self.failed_cnots = penalty_cols or []  # NOTE: this is already a feature and not necessarily default
-        self.used_columns = []
+        self.used_columns: list[int] = []
         self.costs = self._compute_cost_matrix()
 
     def basic_elimination(self) -> None:
+        """Basic heuristic Gaussian elimination.
+
+        Calculates CNOTS and Check matrix.
+        """
         while not self.is_reduced():
             costs_unused = self._mask_out_used_qubits()
             if self._handle_stagnation(costs_unused):
@@ -457,6 +466,12 @@ class GaussianElimination:
             self._apply_cnot_to_matrix(i, j)
 
     def reference_based_construction(self) -> None:
+        """Reference based heuristic Gaussian elimination.
+
+        This version takes reference fault sets into consideration and only applies cnots that
+        do not cause an overlap of the reference fault set and the fault set of the newly
+        created circuit.
+        """
         self._validate_inputs()
         self._modify_matrix_structure()
         self._ref_based_init()
@@ -493,6 +508,7 @@ class GaussianElimination:
                     continue
 
     def is_reduced(self) -> bool:
+        """Method decides if the Gaussian elimination has successfully ended."""
         return bool(len(np.where(np.all(self.matrix == 0, axis=0))[0]) == self.matrix.shape[1] - self.rank)
 
     def _get_candidate_action(self, i: int, j: int, costs: int) -> CandidateAction:
@@ -583,10 +599,10 @@ class GaussianElimination:
         ) = self.stack.pop()
         removed_cnot = self.eliminations.pop()
         if self.guide_by_x:
-            failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[0] != fcnot[0]]
+            self.failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[0] != fcnot[0]]
         else:
-            failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[1] != fcnot[1]]
-        failed_cnots.append(removed_cnot)
+            self.failed_cnots = [fcnot for fcnot in self.failed_cnots if removed_cnot[1] != fcnot[1]]
+        self.failed_cnots.append(removed_cnot)
         # print_dynamic_eliminations(eliminations, failed_cnots)
         self.backtrack_required = False
 
@@ -639,7 +655,7 @@ class GaussianElimination:
         self.costs[:, j] = new_weights - np.sum(self.matrix[:, j])
         np.fill_diagonal(self.costs, 1)
 
-    def _compute_cost_matrix(self) -> None:
+    def _compute_cost_matrix(self) -> npt.NDArray[np.int8]:
         costs = np.array([
             [np.sum((self.matrix[:, i] + self.matrix[:, j]) % 2) for j in range(self.matrix.shape[1])]
             for i in range(self.matrix.shape[1])
@@ -655,9 +671,7 @@ class GaussianElimination:
         return np.ma.array(self.costs, mask=m)  # type: ignore[no-untyped-call]
 
     def _modify_matrix_structure(self) -> None:
-        """This should not necessary but for distance seven codes this was the only way to reliably produce
-        solutions.
-        """
+        """This should not necessary but for distance seven codes this was the only way to reliably produce solutions."""
         if self.code and self.code.distance > 5:
             if self.ref_z_fs.size and not self.ref_x_fs.size:
                 self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
@@ -669,7 +683,14 @@ class GaussianElimination:
         candidate_indices = np.argsort(costs_unused.flatten())  # Flatten and sort by value
         return [np.unravel_index(idx, self.costs.shape) for idx in candidate_indices]
 
-    def _check_overlap(self, ref_fs, ref_1_fs, current_fs, new_error, x_error: bool = True) -> bool:
+    def _check_overlap(
+        self,
+        ref_fs: npt.NDArray[np.int8],
+        ref_1_fs: npt.NDArray[np.int8],
+        current_fs: npt.NDArray[np.int8],
+        new_error: npt.NDArray[np.int8],
+        x_error: bool = True,
+    ) -> bool:
         overlap: bool = True
         if ref_fs.size:
             overlap = self.code.check_fs_overlap(ref_fs, new_error, x_error=x_error)
