@@ -435,7 +435,7 @@ class GaussianElimination:
         guide_by_x: bool = True,
     ) -> None:
         self.matrix = matrix.copy()
-        self.parallel_eliminations = parallel_elimination
+        self.parallel_elimination = parallel_elimination
         self.code = code
         self.ref_x_fs = ref_x_fs or np.empty((0,), dtype=np.int8)
         self.ref_z_fs = ref_z_fs or np.empty((0,), dtype=np.int8)
