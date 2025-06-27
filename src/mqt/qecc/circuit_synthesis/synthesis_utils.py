@@ -435,8 +435,8 @@ class GaussianElimination:
     def __init__(
         self,
         matrix: npt.NDArray[np.int8],
+        code: CSSCode,
         parallel_elimination: bool = True,
-        code: CSSCode | None = None,
         ref_x_fs: npt.NDArray[np.int8] | None = None,
         ref_z_fs: npt.NDArray[np.int8] | None = None,
         ref_x_1fs: npt.NDArray[np.int8] | None = None,
@@ -471,7 +471,7 @@ class GaussianElimination:
             tuple[
                 npt.NDArray[np.int8],
                 npt.NDArray[np.int8],
-                list[tuple[int, int]],
+                list[int],
                 npt.NDArray[np.int8],
                 npt.NDArray[np.int8],
                 list[tuple[int, int]],
@@ -481,7 +481,6 @@ class GaussianElimination:
         self.current_x_fs: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
         self.current_z_fs: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
         self.used_cnots: list[tuple[int, int]] = []
-        self.eliminations: list[tuple[int, int]] = []
 
     def basic_elimination(self) -> None:
         """Basic heuristic Gaussian elimination.
@@ -516,7 +515,7 @@ class GaussianElimination:
                     continue
                 if action == CandidateAction.RESTART_SEARCH:
                     self.used_columns = []
-                    self.backtrack_required: bool = True
+                    self.backtrack_required = True
                     break
 
                 if action == CandidateAction.TRIGGER_BACKTRACK:
@@ -690,7 +689,7 @@ class GaussianElimination:
 
     def _modify_matrix_structure(self) -> None:
         """This should not necessary but for distance seven codes this was the only way to reliably produce solutions."""
-        if self.code and self.code.distance > 5:
+        if self.code.distance > 5:
             if self.ref_z_fs.size and not self.ref_x_fs.size:
                 self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
             if self.ref_z_fs.size and self.ref_x_fs.size:
@@ -699,7 +698,8 @@ class GaussianElimination:
     def _get_candidate_pairs(self, costs_unused: npt.NDArray[np.int8]) -> list[tuple[int, int]]:
         # Get all valid (i, j) pairs sorted by cost
         candidate_indices = np.argsort(costs_unused.flatten())  # Flatten and sort by value
-        return [np.unravel_index(idx, self.costs.shape) for idx in candidate_indices]
+        return [(int(i), int(j)) for idx in candidate_indices for i, j in [np.unravel_index(idx, self.costs.shape)]]
+        # return [np.unravel_index(idx, self.costs.shape) for idx in candidate_indices]
 
     def _check_overlap(
         self,
