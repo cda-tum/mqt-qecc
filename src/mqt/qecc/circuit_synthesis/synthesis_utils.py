@@ -441,7 +441,7 @@ class GaussianElimination:
         ref_z_fs: npt.NDArray[np.int8] | None = None,
         ref_x_1fs: npt.NDArray[np.int8] | None = None,
         ref_z_1fs: npt.NDArray[np.int8] | None = None,
-        penalty_cols: list[tuple[int]] | None = None,
+        penalty_cols: list[tuple[int, int]] | None = None,
         guide_by_x: bool = True,
     ) -> None:
         """Initialiser for the basic functionality."""
@@ -454,10 +454,34 @@ class GaussianElimination:
         self.ref_z_1fs = ref_z_1fs or np.empty((0,), dtype=np.int8)
         self.guide_by_x = guide_by_x
         self.rank = mod2.rank(self.matrix)
-        self.eliminations: list[tuple[int]] = []
-        self.failed_cnots = penalty_cols or []  # NOTE: this is already a feature and not necessarily default
+        self.eliminations: list[tuple[int, int]] = []
+        self.failed_cnots: list[tuple[int, int]] = (
+            penalty_cols or []
+        )  # NOTE: this is already a feature and not necessarily default
         self.used_columns: list[int] = []
         self.costs = self._compute_cost_matrix()
+
+    def _ref_based_init(self) -> None:
+        self.x_propagation_matrix: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.z_propagation_matrix: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.backtrack_required: bool = False
+        self.overlapping_errors_x: set[npt.NDArray[np.int8]] = set()
+        self.overlapping_errors_z: set[npt.NDArray[np.int8]] = set()
+        self.stack: list[
+            tuple[
+                npt.NDArray[np.int8],
+                npt.NDArray[np.int8],
+                list[tuple[int, int]],
+                npt.NDArray[np.int8],
+                npt.NDArray[np.int8],
+                list[tuple[int, int]],
+                list[tuple[int, int]],
+            ]
+        ] = []
+        self.current_x_fs: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.current_z_fs: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
+        self.used_cnots: list[tuple[int, int]] = []
+        self.eliminations: list[tuple[int, int]] = []
 
     def basic_elimination(self) -> None:
         """Basic heuristic Gaussian elimination.
@@ -527,7 +551,7 @@ class GaussianElimination:
             return CandidateAction.RESTART_SEARCH
         return CandidateAction.EVALUATE
 
-    def _cnot_is_valid_against_references(self, i: int, j: int) -> tuple[bool, dict]:
+    def _cnot_is_valid_against_references(self, i: int, j: int) -> tuple[bool, dict[str, npt.NDArray[np.int8]]]:
         found_cnot: bool = False
         new_x_error, _next_x_propagation_matrix = get_next_error(
             propagation_matrix=self.x_propagation_matrix.copy(), cnot_gate=(int(i), int(j))
@@ -573,7 +597,7 @@ class GaussianElimination:
             "z_overlap": z_overlap,
         }
 
-    def _commit_to_cnot(self, i: int, j: int, new_errors: dict) -> None:
+    def _commit_to_cnot(self, i: int, j: int, new_errors: dict[str, npt.NDArray[np.int8]]) -> None:
         self.stack.append((
             self.x_propagation_matrix.copy(),
             self.z_propagation_matrix.copy(),
@@ -588,9 +612,9 @@ class GaussianElimination:
         else:
             self.failed_cnots = [fcnot for fcnot in self.failed_cnots if int(j) != fcnot[1]]
 
-        if self.ref_x_fs.size and not new_errors.x_overlap:
+        if self.ref_x_fs.size and not new_errors["x_overlap"]:
             self.current_x_fs = np.vstack((self.current_x_fs, new_errors["new_x_error"]), dtype=np.int8)
-        if self.ref_z_fs.size and not new_errors.z_overlap:
+        if self.ref_z_fs.size and not new_errors["z_overlap"]:
             self.current_z_fs = np.vstack((self.current_z_fs, new_errors["new_z_error"]), dtype=np.int8)
 
     def _backtrack(self) -> None:
@@ -620,18 +644,6 @@ class GaussianElimination:
             return
         msg = "Must provide either both a reference fault set and CSS code, or neither."
         raise ValueError(msg)
-
-    def _ref_based_init(self) -> None:
-        self.x_propagation_matrix: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
-        self.z_propagation_matrix: npt.NDArray[np.int8] = np.eye(self.matrix.shape[1], dtype=np.int8)
-        self.backtrack_required: bool = False
-        self.overlapping_errors_x = set()
-        self.overlapping_errors_z = set()
-        self.stack: list[tuple] = []
-        self.current_x_fs = np.eye(self.matrix.shape[1], dtype=np.int8)
-        self.current_z_fs = np.eye(self.matrix.shape[1], dtype=np.int8)
-        self.used_cnots: list[tuple[int]] = []
-        self.eliminations: list[tuple[int]] = []
 
     def _handle_stagnation(self, costs_unused: npt.NDArray[np.int8]) -> bool:
         """Handles local minima or full column usage. Returns True if reset occurred."""
@@ -684,7 +696,7 @@ class GaussianElimination:
             if self.ref_z_fs.size and self.ref_x_fs.size:
                 self.matrix = mod2.row_echelon(self.matrix, full=True)[0]
 
-    def _get_candidate_pairs(self, costs_unused: npt.NDArray[np.int8]) -> list[tuple[int]]:
+    def _get_candidate_pairs(self, costs_unused: npt.NDArray[np.int8]) -> list[tuple[int, int]]:
         # Get all valid (i, j) pairs sorted by cost
         candidate_indices = np.argsort(costs_unused.flatten())  # Flatten and sort by value
         return [np.unravel_index(idx, self.costs.shape) for idx in candidate_indices]
@@ -707,7 +719,7 @@ class GaussianElimination:
         return overlap
 
     @staticmethod
-    def _check_error_existence(error: npt.NDArray[np.int8], error_memory: set) -> bool:
+    def _check_error_existence(error: npt.NDArray[np.int8], error_memory: set[npt.NDArray[np.int8]]) -> bool:
         # INFO: Quickly check if new error is known to cause overlap. This saves another long overlap check.
         error_tuple = tuple(error.flatten())
         return error_tuple in error_memory
