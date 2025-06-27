@@ -1,3 +1,10 @@
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
+
 """Implementation of the Stim decoder for the MaxSat algorithm."""
 
 from __future__ import annotations

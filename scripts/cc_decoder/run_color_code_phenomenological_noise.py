@@ -1,3 +1,10 @@
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
+
 """This script is used to run the color code phenomenological noise simulation."""
 
 from __future__ import annotations

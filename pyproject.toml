@@ -1,3 +1,10 @@
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
+
 [build-system]
 requires = [
   "hatchling>=1.27.0",
@@ -78,10 +85,10 @@ qsample = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cda-tum/mqt-qecc"
+Homepage = "https://github.com/munich-quantum-toolkit/qecc"
 Documentation = "https://mqt.readthedocs.io/projects/qecc"
-Issues = "https://github.com/cda-tum/mqt-qecc/issues"
-Discussions = "https://github.com/cda-tum/mqt-qecc/discussions"
+Issues = "https://github.com/munich-quantum-toolkit/qecc/issues"
+Discussions = "https://github.com/munich-quantum-toolkit/qecc/discussions"
 
 [project.scripts]
 "mqt.qecc.cc-decoder" = "mqt.qecc.cc_decoder.cli:cli"
@@ -233,6 +240,7 @@ isort.required-imports = ["from __future__ import annotations"]
 ]
 "*/cc_decoder/plots.py" = ["T201"]
 "scripts/*" = ["T201"]
+"lifted_hgp.py" = ["EXE002"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
