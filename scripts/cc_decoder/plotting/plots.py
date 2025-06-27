@@ -1,21 +1,28 @@
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
+
 """Plotting functions for the paper."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import operator
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
-import operator
 
-from scipy.optimize import curve_fit
 
 ler_k = "logical_error_rates"
 ler_eb_k = "logical_error_rate_ebs"
