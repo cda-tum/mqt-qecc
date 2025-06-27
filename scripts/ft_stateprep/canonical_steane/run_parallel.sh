@@ -1,5 +1,10 @@
 #!/bin/bash
-
+# Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+# All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+#
+# Licensed under the MIT License
 
 declare -a p=("0.001" "0.0015" "0.002" "0.0025" "0.003" "0.0035" "0.004" "0.0045" "0.005" "0.0055" "0.006" "0.0065" "0.007" "0.0075" "0.008" "0.0085" "0.009" "0.0095" "0.01")
 
