@@ -10,19 +10,14 @@
 from __future__ import annotations
 
 import argparse
+import pickle
 from pathlib import Path
 
 from qiskit import QuantumCircuit
 
 from mqt.qecc import CSSCode
-from mqt.qecc.circuit_synthesis import (
-    VerificationNDFTStatePrepSimulator,
-    gate_optimal_prep_circuit,
-    gate_optimal_verification_circuit,
-    heuristic_prep_circuit,
-    heuristic_verification_circuit,
-    naive_verification_circuit,
-)
+from mqt.qecc.circuit_synthesis.simulation import SteaneNDFTStatePrepSimulator
+from mqt.qecc.circuit_synthesis.state_prep import heuristic_prep_circuit
 from mqt.qecc.codes import HexagonalColorCode, SquareOctagonColorCode
 
 
@@ -41,17 +36,14 @@ def main() -> None:
     parser.add_argument(
         "--plus_state", default=False, dest="zero_state", action="store_false", help="Synthesize logical |+> state."
     )
+    parser.add_argument("--x_errors", default=True, action="store_true", help="Calculate error rates for X-errors")
+    parser.add_argument(
+        "--z_errors", default=False, dest="x_errors", action="store_false", help="Calculate error rates for Z errors"
+    )
     parser.add_argument("-n", "--n_errors", type=int, default=500, help="Number of errors to sample")
-    parser.add_argument("--exact_circ", default=False, action="store_true", help="Use exact synthesis")
-    parser.add_argument("--heuristic_circ", dest="exact_circ", action="store_false", help="Use heuristic synthesis")
-    parser.add_argument("--exact_ver", default=True, action="store_true", help="Use exact verification")
-    parser.add_argument("--heuristic_ver", dest="exact_ver", action="store_false", help="Use heuristic verification")
-    parser.add_argument("--naive_ver", default=False, action="store_true", help="Use naive verification")
-    parser.add_argument("--no_ver", action="store_true", help="Use no verification")
     parser.add_argument(
         "-d", "--distance", type=int, default=3, help="Code Distance (only required for surface and color codes)"
     )
-    parser.add_argument("--no_parallel_gates", default=False, action="store_true")
 
     args = parser.parse_args()
     code_name = args.code
@@ -59,10 +51,23 @@ def main() -> None:
         d = args.distance
         code = CSSCode.from_code_name("surface", d)
         code_name = f"rotated_surface_d{d}"
-    elif "cc_4_8_8" in code_name:
+    elif code_name == "cc_4_8_8_d7":
+        d = 7
+        code = SquareOctagonColorCode(d)
+        lut_path = (Path("__file__") / "../../eval/luts/decoder_488_7.pickle").resolve()
+        if lut_path.exists():
+            with lut_path.open("rb") as f:
+                lut = pickle.load(f)
+        else:
+            msg = "LUT file not found."
+            raise ValueError(msg)
+    elif code_name == "cc_6_6_6_d7":
+        d = 7
+        code = HexagonalColorCode(d)
+    elif code_name == "cc_4_8_8_d5":
         d = 5
         code = SquareOctagonColorCode(d)
-    elif "cc_6_6_6" in code_name:
+    elif code_name == "cc_6_6_6_d5":
         d = 5
         code = HexagonalColorCode(d)
     elif code_name in available_codes:
@@ -71,42 +76,37 @@ def main() -> None:
         raise ValueError("Code " + code_name + " not available. Available codes: " + ", ".join(available_codes))
 
     prefix = (Path(__file__) / "../circuits/").resolve()
-    sp_circ_name = "opt" if args.exact_circ else "heuristic"
-    ver_circ_name = ("opt" if args.exact_ver else "heuristic") if not args.naive_ver else "naive"
-
-    state_name = "zero" if args.zero_state else "plus"
-    ft_name = "non_ft" if args.no_ver else "ft"
-    circ_file = f"{state_name}_{ft_name}_{sp_circ_name}_{ver_circ_name}.qasm"
+    circ_file_core = f"{code_name}_heuristic_"
 
     # check if file exists
-    if not (prefix / code_name / circ_file).exists():
-        # create circuit
-        circ = None
-        if args.exact_circ:
-            circ = gate_optimal_prep_circuit(code, zero_state=args.zero_state, max_timeout=600)
-        else:
-            circ = heuristic_prep_circuit(code, zero_state=args.zero_state)
+    # if not (prefix / code_name / circ_file).exists():
+    #     # create circuit
+    #     # NOTE: error message for missing circuits
+    #     pass
+    # else:
+    circuits = []
+    # load circuit from file
+    for _id in [0, 1, 2, 3]:
+        circ_file = circ_file_core + str(_id)
+        circuits.append(QuantumCircuit.from_qasm_file(prefix / code_name / circ_file))
 
-        assert circ is not None
-        if args.naive_ver:
-            qc = naive_verification_circuit(circ)
-        elif args.exact_ver:
-            qc = gate_optimal_verification_circuit(circ, max_timeout=600)
-        else:
-            qc = heuristic_verification_circuit(circ)
-    else:
-        # load circuit from file
-        qc = QuantumCircuit.from_qasm_file(prefix / code_name / circ_file)
-
-    sim = VerificationNDFTStatePrepSimulator(
-        qc,
+    sim = SteaneNDFTStatePrepSimulator(
+        circ1=circuits[0],
+        circ2=circuits[1],
         code=code,
+        circ3=circuits[2],
+        circ4=circuits[3],
+        check_circuit=None if args.x_errors else heuristic_prep_circuit(code, zero_state=False).circ,
         p=args.p_error,
         p_idle=args.p_idle_factor * args.p_error,
-        zero_state=args.zero_state,
-        parallel_gates=not args.no_parallel_gates,
+        decoder=lut if code_name == "cc_4_8_8_d7" else None,
     )
-    res = sim.logical_error_rate(min_errors=args.n_errors)
+    if args.x_errors:
+        res = sim.logical_error_rate(min_errors=args.n_errors)
+    else:
+        sim.set_p(args.p_error, args.p_idle_factor * args.p_error)
+        res = sim.secondary_logical_error_rate(min_errors=args.n_errors)
+
     print(",".join([str(x) for x in res]))
 
 

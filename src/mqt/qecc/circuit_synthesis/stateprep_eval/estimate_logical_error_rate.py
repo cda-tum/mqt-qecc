@@ -16,7 +16,7 @@ from qiskit import QuantumCircuit
 
 from mqt.qecc import CSSCode
 from mqt.qecc.circuit_synthesis import (
-    NoisyNDFTStatePrepSimulator,
+    VerificationNDFTStatePrepSimulator,
     gate_optimal_prep_circuit,
     gate_optimal_verification_circuit,
     heuristic_prep_circuit,
@@ -97,7 +97,7 @@ def main() -> None:
         # load circuit from file
         qc = QuantumCircuit.from_qasm_file(prefix / code_name / circ_file)
 
-    sim = NoisyNDFTStatePrepSimulator(
+    sim = VerificationNDFTStatePrepSimulator(
         qc, code=code, p=args.p_error, zero_state=args.zero_state, parallel_gates=not args.no_parallel_gates
     )
     sim.logical_error_rate(min_errors=args.n_errors)
