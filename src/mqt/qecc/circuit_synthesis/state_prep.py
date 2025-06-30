@@ -244,7 +244,7 @@ def heuristic_prep_circuit(
 
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
-    ge = GaussianElimination(matrix=checks, parallel_elimination=optimize_depth)
+    ge = GaussianElimination(matrix=checks, code=code, parallel_elimination=optimize_depth)
     ge.basic_elimination()
 
     circ = _build_state_prep_circuit_from_back(ge.matrix, ge.eliminations, zero_state)
