@@ -129,7 +129,7 @@ class GaussianElimination:
         ref_z_fs: npt.NDArray[np.int8] | None = None,
         ref_x_1fs: npt.NDArray[np.int8] | None = None,
         ref_z_1fs: npt.NDArray[np.int8] | None = None,
-        penalty_cols: list[tuple[int, int]] | None = None,
+        penalty_cnots: list[tuple[int, int]] | None = None,
         guide_by_x: bool = True,
     ) -> None:
         """Initialiser for the basic functionality."""
@@ -144,7 +144,7 @@ class GaussianElimination:
         self.rank = mod2.rank(self.matrix)
         self.eliminations: list[tuple[int, int]] = []
         self.failed_cnots: list[tuple[int, int]] = (
-            penalty_cols or []
+            penalty_cnots or []
         )  # NOTE: this is already a feature and not necessarily default
         self.used_columns: list[int] = []
         self.costs = self._compute_cost_matrix()
