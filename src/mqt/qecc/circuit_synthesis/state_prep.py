@@ -23,7 +23,6 @@ from ..codes import InvalidCSSCodeError
 from .synthesis_utils import (
     GaussianElimination,
     build_css_circuit_from_cnot_list,
-    heuristic_gaussian_elimination,
     iterative_search_with_timeout,
     measure_flagged,
     odd_overlap,
@@ -245,12 +244,10 @@ def heuristic_prep_circuit(
 
     checks = code.Hx if zero_state else code.Hz
     assert checks is not None
-    checks, cnots = heuristic_gaussian_elimination(
-        checks,
-        parallel_elimination=optimize_depth,
-    )
+    ge = GaussianElimination(matrix=checks, parallel_elimination=optimize_depth)
+    ge.basic_elimination()
 
-    circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
+    circ = _build_state_prep_circuit_from_back(ge.matrix, ge.eliminations, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
 
 
@@ -265,7 +262,7 @@ def heuristic_reference_prep_circuit(
     ref_x_1fs: npt.NDArray[np.int8] | None = None,
     ref_z_1fs: npt.NDArray[np.int8] | None = None,
 ) -> StatePrepCircuit:
-    """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis.
+    """Return a circuit that prepares the +1 eigenstate of the code w.r.t. the Z or X basis and based on (a) reference fault set(s).
 
     Args:
         code: The CSS code to prepare the state for.
@@ -299,18 +296,6 @@ def heuristic_reference_prep_circuit(
         guide_by_x=guide_by_x,
     )
     ge.reference_based_construction()
-    # checks, cnots = reference_guided_elimination(
-    #     checks,
-    #     parallel_elimination=optimize_depth,
-    #     penalty_cols=penalty_cols,
-    #     code=code,
-    #     ref_x_fs=ref_x_fs,
-    #     ref_z_fs=ref_z_fs,
-    #     guide_by_x=guide_by_x,
-    #     ref_x_1fs=ref_x_1fs,
-    # )
-
-    # circ = _build_state_prep_circuit_from_back(checks, cnots, zero_state)
     circ = _build_state_prep_circuit_from_back(ge.matrix, ge.eliminations, zero_state)
     return StatePrepCircuit(circ, code, zero_state)
 
