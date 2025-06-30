@@ -258,7 +258,7 @@ def heuristic_reference_prep_circuit(
     code: CSSCode,
     optimize_depth: bool = True,
     zero_state: bool = True,
-    penalty_cols: list[tuple[int]] | None = None,
+    penalty_cnots: list[tuple[int, int]] | None = None,
     guide_by_x: bool = True,
     ref_x_fs: npt.NDArray[np.int8] | None = None,
     ref_z_fs: npt.NDArray[np.int8] | None = None,
@@ -271,15 +271,15 @@ def heuristic_reference_prep_circuit(
         code: The CSS code to prepare the state for.
         optimize_depth: If True, optimize the depth of the circuit. This may lead to a higher number of CNOTs.
         zero_state: If True, prepare the +1 eigenstate of the Z basis. If False, prepare the +1 eigenstate of the X basis.
-        penalty_cols: tuples of CNOTs (control, target) which are initially added to the failed_cnots list and hence can only be applied once the control qubit has been used elsewhere
+        penalty_cnots: tuples of CNOTs (control, target) which are initially added to the failed_cnots list and hence can only be applied once the control qubit has been used elsewhere
         guide_by_x: Flag that decides whether dismissed CNOTs are free to placement again after either the control (x guided) or the target (z guided) has been used elsewhere
         ref_x_fs: (Optional) reference x fault set which influences the construction of the circuit
         ref_z_fs: (Optional) reference z fault set which influences the construction of the circuit
         ref_x_1fs: (Optional) reference one error x fault set which ensures that no two error event of the newly constructed circuit cancels a one error event of the reference circuit
         ref_z_1fs: (Optional) reference one error z fault set which ensures that no two error event of the newly constructed circuit cancels a one error event of the reference circuit
     """
-    if penalty_cols is None:
-        penalty_cols = []
+    if penalty_cnots is None:
+        penalty_cnots = []
     logger.info("Starting heuristic state preparation.")
     if code.Hx is None or code.Hz is None:
         msg = "The code must have both X and Z stabilizers defined."
@@ -295,7 +295,7 @@ def heuristic_reference_prep_circuit(
         ref_z_fs=ref_z_fs,
         ref_x_1fs=ref_x_1fs,
         ref_z_1fs=ref_z_1fs,
-        penalty_cols=penalty_cols,
+        penalty_cnots=penalty_cnots,
         guide_by_x=guide_by_x,
     )
     ge.reference_based_construction()
