@@ -494,7 +494,7 @@ def check_mutually_disjointness_spcs(
     return c_spcs
 
 
-def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
+def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
     """Get fault sets based on the code distance.
 
     Only the faults sets that are of interest for the fault tolerant state preparation are being returned.
@@ -507,7 +507,7 @@ def get_fs_based_on_d(spc: StatePrepCircuit) -> tuple[npt.NDArray[np.int8]]:
         tuple: first entry the x fault set and second entry the z fault set.
     """
 
-    def compute_fault_sets(level: int = 1) -> tuple[npt.NDArray[np.int8]]:
+    def compute_fault_sets(level: int = 1) -> tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]]:
         """Helper function to compute fault sets at a given level."""
         spc.compute_fault_set(level)
         spc.compute_fault_set(level, x_errors=False)
