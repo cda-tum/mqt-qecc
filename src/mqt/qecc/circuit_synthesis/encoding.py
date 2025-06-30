@@ -19,7 +19,11 @@ import z3
 from ldpc import mod2
 
 from ..codes import InvalidCSSCodeError
-from .synthesis_utils import build_css_circuit_from_cnot_list, heuristic_gaussian_elimination, optimal_elimination
+from .synthesis_utils import (
+    GaussianElimination,
+    build_css_circuit_from_cnot_list,
+    optimal_elimination,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
@@ -51,10 +55,13 @@ def heuristic_encoding_circuit(
     if balance_checks:
         _balance_matrix(logicals)
 
-    checks, cnots = heuristic_gaussian_elimination(
-        np.vstack((checks, logicals)),
-        parallel_elimination=optimize_depth,
-    )
+    ge = GaussianElimination(matrix=np.vstack((checks, logicals)), code=code, parallel_elimination=optimize_depth)
+    ge.basic_elimination()
+    checks, cnots = ge.matrix, ge.eliminations
+    # checks, cnots = heuristic_gaussian_elimination(
+    #     np.vstack((checks, logicals)),
+    #     parallel_elimination=optimize_depth,
+    # )
 
     # after reduction there still might be some overlap between initialized qubits and encoding qubits, we simply perform CNOTs to correct this
     encoding_qubits = np.where(checks[n_checks:, :].sum(axis=0) != 0)[0]
