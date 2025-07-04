@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+from .circuits import CNOTCircuit
 from .encoding import depth_optimal_encoding_circuit, gate_optimal_encoding_circuit, heuristic_encoding_circuit
 from .simulation import LutDecoder, NoisyNDFTStatePrepSimulator
 from .state_prep import (
@@ -26,6 +27,7 @@ from .state_prep_det import DeterministicVerification, DeterministicVerification
 from .synthesis_utils import qiskit_to_stim_circuit
 
 __all__ = [
+    "CNOTCircuit",
     "DeterministicVerification",
     "DeterministicVerificationHelper",
     "LutDecoder",
