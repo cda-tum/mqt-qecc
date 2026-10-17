@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import collections
-import datetime
+import datetime as dt
 import itertools
 import logging
 import pathlib
@@ -1439,9 +1439,7 @@ class TeleportationRouter(BasicRouter):
             raise ValueError(msg)
 
         schedule: Any = []
-        filename = (
-            f"schedule_{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d_%H-%M-%S')}.pkl"  # logging filename
-        )
+        filename = f"schedule_{dt.datetime.now(dt.UTC).strftime('%Y-%m-%d_%H-%M-%S')}.pkl"  # logging filename
 
         available_gaps: list[pos] = []  # a list of gap positions which are free due to moves
         danger_qubits: dict[
