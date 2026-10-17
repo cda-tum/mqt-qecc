@@ -7,7 +7,7 @@
 
 """benchmark runs for varying depths. Run this from /scripts/cococo/evaluations_movable_logical_qubits/fix_q_vary_depth."""
 
-import datetime
+import datetime as dt
 import json
 import pathlib
 import pickle  # ruff:ignore[suspicious-pickle-import]
@@ -57,7 +57,7 @@ gates_str = "_".join(map(str, gates_list))
 
 use_dag = True
 
-date_str = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d")
+date_str = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d")
 path = f"circuit_depths_m{m}_n{n}_layout{layout_type}_sigma{sigma}_ncirc{n_circ}_num_gates{gates_str}_{date_str}_usedag{use_dag}_p.pkl"
 
 
