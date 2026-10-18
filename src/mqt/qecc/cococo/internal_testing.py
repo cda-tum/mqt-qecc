@@ -95,7 +95,6 @@ def check_order_dyn_gates_st(
             # cnot
             terminal_pairs_trans.append((layout_rev[el[0]], layout_rev[el[1]]))
         elif isinstance(el, tuple):
-            el = cast("pos", el)
             terminal_pairs_trans.append(layout_rev[el])
     gates_schedule = []
     for vdp_dict in vdp_layers:
