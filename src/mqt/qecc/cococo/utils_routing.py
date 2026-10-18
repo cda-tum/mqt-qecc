@@ -170,7 +170,6 @@ class BasicRouter:
 
         for pair in terminal_pairs:
             if isinstance(pair[0], tuple) and isinstance(pair[1], tuple):  # cnot
-                pair = cast("tuple[pos, pos]", pair)
                 if pair[0] in used_qubits or pair[1] in used_qubits:
                     layers.append(current_layer)
                     current_layer = [pair]
@@ -181,7 +180,6 @@ class BasicRouter:
             else:  # t
                 assert isinstance(pair[0], int)
                 assert isinstance(pair[1], int)
-                pair = cast("pos", pair)
                 if pair in used_qubits:
                     layers.append(current_layer)
                     current_layer = [pair]
@@ -216,12 +214,10 @@ class BasicRouter:
         flattened_terminals: list[pos] = []
         for item in list(layer).copy():
             if isinstance(item[0], tuple) and isinstance(item[1], tuple):  # cnot
-                item = cast("tuple[pos, pos]", item)
                 flattened_terminals.extend(list(item))
             else:  # t
                 assert isinstance(item[0], int)
                 assert isinstance(item[1], int)
-                item = cast("pos", item)
                 flattened_terminals.append(item)
         for t in flattened_terminals:
             dct_qubits.update({t: False})
@@ -311,13 +307,11 @@ class BasicRouter:
                 t_p = tp_list[shortest_idx]  # terminal_pairs_current[shortest_idx]
                 # update already used qubits based on chosen t_p path
                 if isinstance(t_p[0], tuple) and isinstance(t_p[1], tuple):  # cnot
-                    t_p = cast("tuple[pos, pos]", t_p)
                     dct_qubits[t_p[0]] = True
                     dct_qubits[t_p[1]] = True
                 else:  # t
                     assert isinstance(t_p[0], int)
                     assert isinstance(t_p[1], int)
-                    t_p = cast("pos", t_p)
                     dct_qubits[t_p] = True
                     # update the times of the factory patch (which is the position at one end of the path)
                     if shortest_path[0] == t_p:
@@ -567,12 +561,10 @@ class BasicRouter:
             temp: list[pos] = []
             for item in layer:
                 if isinstance(item[0], tuple) and isinstance(item[1], tuple):  # cnot
-                    item = cast("tuple[pos, pos]", item)
                     temp.extend(list(item))
                 else:  # t
                     assert isinstance(item[0], int)
                     assert isinstance(item[1], int)
-                    item = cast("pos", item)
                     temp.append(item)
             flattened_terminals_and_factories += temp
 
@@ -937,12 +929,10 @@ class TeleportationRouter(BasicRouter):
         result: list[pos | tuple[pos, pos]] = []
         for item in lst:
             if isinstance(item[0], tuple) and isinstance(item[1], tuple):  # cnot
-                item = cast("tuple[pos, pos]", item)
                 result.append(cast("tuple[pos, pos]", tuple(new if sub == old else sub for sub in item)))
             else:  # t
                 assert isinstance(item[0], int)
                 assert isinstance(item[1], int)
-                item = cast("pos", item)
                 result.append(new if item == old else item)
         return result
 

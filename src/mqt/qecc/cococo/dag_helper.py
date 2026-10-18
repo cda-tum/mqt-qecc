@@ -69,7 +69,6 @@ def terminal_pairs_into_dag(terminal_pairs: Sequence[pos | tuple[pos, pos]], lay
         if isinstance(pair[0], tuple) and isinstance(pair[1], tuple):  # cnot gate
             terminal_pairs_trans.append((layout_rev[pair[0]], layout_rev[pair[1]]))
         elif isinstance(pair, tuple):  # t gate
-            pair = cast("pos", pair)
             terminal_pairs_trans.append(layout_rev[pair])
         else:
             msg = "other gate types not implemented yet"  # type: ignore[unreachable]
@@ -172,7 +171,6 @@ def push_remainder_into_layers_dag(
             gate = (layout_rev[pair[0]], layout_rev[pair[1]])
             dag.apply_operation_front(CXGate(), qargs=[dag.qubits[gate[0]], dag.qubits[gate[1]]], cargs=[])
         elif isinstance(pair, tuple):  # t gate
-            pair = cast("pos", pair)
             gate2 = layout_rev[pair]
             dag.apply_operation_front(TGate(), qargs=[dag.qubits[gate2]], cargs=[])
         else:
