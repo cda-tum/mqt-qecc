@@ -159,8 +159,10 @@ repos:
 
   ## Check Python types with ty
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: 61480a9eddba3de40a4cabde24c42e82f27e94f6 # v0.0.90 + uv 0.13.4
+    rev: 61480a9eddba3de40a4cabde24c42e82f27e94f6 # uv 0.13.4 wrapper
     hooks:
       - id: ty
+        # shortcut: keep ty 0.0.86 until the new 0.0.90 diagnostics are fixed.
+        entry: uv check --quiet --preview-features=check-command --ty-version=0.0.86
         args: [--isolated]
         priority: 8
