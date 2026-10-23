@@ -149,7 +149,7 @@ packages = [ "src/mqt" ]
 
 
 [tool.uv]
-required-version = ">=0.5.20"
+required-version = ">=0.13.4"
 environments = [
   "sys_platform == 'darwin' and platform_machine == 'arm64'",
   "sys_platform == 'linux'",
