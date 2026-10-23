@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -112,8 +112,6 @@ class ConcatenatedCode(StabilizerCode):
 class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
     """A concatenated CSS code."""
 
-    inner_codes: Sequence[CSSCode]
-
     def __init__(self, outer_code: CSSCode, inner_codes: CSSCode | Sequence[CSSCode]) -> None:
         """Initialize a concatenated CSS code.
 
@@ -151,7 +149,7 @@ class ConcatenatedCSSCode(ConcatenatedCode, CSSCode):
         concatenated = np.zeros((self.n), dtype=np.int8)
         offset = 0
         for i in range(self.outer_code.n):
-            c = self.inner_codes[i]
+            c = cast("CSSCode", self.inner_codes[i])
             new_offset = offset + c.n
             if check[i] == 1:
                 logical = c.Lx if operator == "X" else c.Lz
